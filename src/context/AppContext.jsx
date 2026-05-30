@@ -38,6 +38,8 @@ const defaultData = {
     { day: 'S', calories: 0, steps: 0, workout: false },
     { day: 'D', calories: 0, steps: 0, workout: false },
   ],
+  activeSession: [],
+  sessionHistory: [],
   runSessions: [
     { date: 'Aujourd\'hui', km: 5.2, time: '27:30', pace: '5:17/km', calories: 420 },
     { date: 'Mardi', km: 8.0, time: '42:15', pace: '5:17/km', calories: 640 },

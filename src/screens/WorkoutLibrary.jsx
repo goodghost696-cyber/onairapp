@@ -52,10 +52,13 @@ export default function WorkoutLibrary({ section }) {
   )
 
   function addExercise(ex) {
-    const newEx = { name: ex.name, sets: 3, reps: 10, weight: 0 }
-    updateData('todayWorkouts', [...appData.todayWorkouts, newEx])
+    const newEx = { name: ex.name, id: ex.id, sets: [{ reps: '', kg: '' }] }
+    updateData('activeSession', [...(appData.activeSession || []), newEx])
     setAdded(prev => ({ ...prev, [ex.id]: true }))
     setToast(true)
+    setTimeout(() => {
+      navigate('/workout')
+    }, 800)
     setTimeout(() => setAdded(prev => ({ ...prev, [ex.id]: false })), 1500)
     setTimeout(() => setToast(false), 2000)
   }
@@ -79,8 +82,8 @@ export default function WorkoutLibrary({ section }) {
       <div className="screen" style={{ paddingBottom: 110 }}>
         <div className="screen-header" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '20px 0 8px' }}>
           <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }} onClick={() => navigate('/workout')}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="var(--text-primary)">
-              <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" strokeWidth="1.5" strokeLinecap="round">
+              <polyline points="15 18 9 12 15 6"/>
             </svg>
           </button>
           <h1 className="text-xl bold">{SECTION_NAMES[section]}</h1>

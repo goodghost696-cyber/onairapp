@@ -3,44 +3,46 @@ import '../styles/nav.css'
 
 const tabs = [
   {
-    path: '/dashboard', label: 'Home',
+    path: '/dashboard',
     icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+        <polyline points="9 22 9 12 15 12 15 22"/>
       </svg>
     )
   },
   {
-    path: '/nutrition', label: 'Nutrition',
+    path: '/nutrition',
     icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M18.06 22.99h1.66c.84 0 1.53-.64 1.63-1.46L23 5.05h-5V1h-1.97v4.05h-4.97l.3 2.34c1.71.47 3.31 1.32 4.27 2.26 1.44 1.42 2.43 2.89 2.43 5.29v8.05zM1 21.99V21h15.03v.99c0 .55-.45 1-1.01 1H2.01c-.56 0-1.01-.45-1.01-1zm15.03-7c0-1.96-.96-3.37-2.34-4.73-1.13-1.09-2.83-1.95-4.69-2.15V5.99H7v2.12C4.17 8.46 1 10.08 1 14.99v1h15.03v-1z"/>
-      </svg>
-    )
-  },
-  {
-    path: '/workout', label: 'Workout',
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M20.57 14.86L22 13.43 20.57 12 17 15.57 8.43 7 12 3.43 10.57 2 9.14 3.43 7.71 2 5.57 4.14 4.14 2.71 2.71 4.14l1.43 1.43L2 7.71l1.43 1.43L2 10.57 3.43 12 7 8.43 15.57 17 12 20.57 13.43 22l1.43-1.43L16.29 22l2.14-2.14 1.43 1.43 1.43-1.43-1.43-1.43L22 16.29z"/>
-      </svg>
-    )
-  },
-  {
-    path: '/run', label: 'Run',
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-        <circle cx="13.49" cy="3.01" r="2"/>
-        <path d="M6.28 23.65L8 22l5-5 2 2 2.07-2.07C15.17 15.96 14 14.11 14 12c0-.68.12-1.32.32-1.93L11 13H8l-3 7.65L6.28 23.65zm14.12-4.9L19 17.5l-3.5 3.5 1.41 1.41L19 19.83l1.41 1.41.41-.41.41-.41-.41-2.67z"/>
-      </svg>
-    )
-  },
-  {
-    path: '/ai-coach', label: 'AI',
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <path d="M12 2a10 10 0 100 20 10 10 0 000-20z"/>
-        <circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/>
+        <path d="M12 6v6l4 2"/>
+      </svg>
+    )
+  },
+  {
+    path: '/workout',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M6.5 6.5h11M6.5 17.5h11M6.5 12h11M3 6.5h.01M3 12h.01M3 17.5h.01M21 6.5h-.01M21 12h-.01M21 17.5h-.01"/>
+      </svg>
+    )
+  },
+  {
+    path: '/run',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="5" r="2"/>
+        <path d="M8 21l2-8-2-3h8l-2 3 2 8"/>
+        <path d="M6 12l-2 2M18 12l2 2"/>
+      </svg>
+    )
+  },
+  {
+    path: '/ai-coach',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
       </svg>
     )
   },
@@ -49,24 +51,14 @@ const tabs = [
 export default function BottomNav() {
   const navigate = useNavigate()
   const location = useLocation()
-
   return (
     <nav className="bottom-nav">
       {tabs.map(tab => {
         const active = location.pathname === tab.path || (tab.path === '/workout' && location.pathname.startsWith('/workout'))
         return (
-          <div
-            key={tab.path}
-            className={`nav-btn${active ? ' active' : ''}`}
-            onClick={() => {
-              navigator.vibrate && navigator.vibrate(6)
-              navigate(tab.path)
-            }}
-          >
-            <span className="nav-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              {tab.icon}
-            </span>
-            <span className="nav-label">{tab.label}</span>
+          <div key={tab.path} className={`nav-btn${active ? ' active' : ''}`}
+            onClick={() => { navigator.vibrate && navigator.vibrate(6); navigate(tab.path) }}>
+            {tab.icon}
           </div>
         )
       })}

@@ -1,31 +1,35 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { MOCK_MEMBERS } from './CoachDashboard'
+import CoachNav from '../components/CoachNav'
 
 const API_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY
+const STATUS_COLORS = { 'ON TRACK': 'var(--success)', 'AT RISK': 'var(--warning)', 'INACTIVE': 'var(--danger)' }
 
-const MOCK_MEMBERS = [
-  { id: 2, name: 'Léo', lastSeen: 'Aujourd\'hui', sessions: 5, status: 'ON TRACK', calories: 1847, sleep: '7h23', steps: 8247 },
-  { id: 3, name: 'Sarah', lastSeen: 'Hier', sessions: 3, status: 'AT RISK', calories: 1200, sleep: '4h50', steps: 4200 },
-  { id: 4, name: 'Marcus', lastSeen: 'Il y a 5 jours', sessions: 1, status: 'INACTIVE', calories: 900, sleep: '6h10', steps: 2100 },
-  { id: 5, name: 'Amina', lastSeen: 'Aujourd\'hui', sessions: 6, status: 'ON TRACK', calories: 2100, sleep: '8h05', steps: 11000 },
-]
-
-const STATUS_COLORS = {
-  'ON TRACK': 'var(--success)',
-  'AT RISK': 'var(--warning)',
-  'INACTIVE': 'var(--danger)',
+const MOCK_OBJECTIVES = {
+  default: ['5 séances cette semaine', '2500 kcal/jour', '8h de sommeil', '10 000 pas/jour']
 }
+
+const weekDays = ['L', 'M', 'M', 'J', 'V', 'S', 'D']
 
 export default function MemberDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { user } = useAuth()
   const [analysis, setAnalysis] = useState('')
   const [loading, setLoading] = useState(false)
+  const [showMessage, setShowMessage] = useState(false)
+  const [message, setMessage] = useState('')
+  const [msgSent, setMsgSent] = useState(false)
 
   const member = MOCK_MEMBERS.find(m => m.id === parseInt(id))
-  if (!member) return <div className="app-wrapper"><div className="screen"><p className="text-base text-muted" style={{marginTop:40}}>Membre introuvable.</p></div></div>
+  if (!member) return (
+    <div className="app-wrapper"><div className="screen"><p className="text-base text-muted" style={{ marginTop: 40 }}>Membre introuvable.</p></div></div>
+  )
+
+  const color = STATUS_COLORS[member.status] || 'var(--text-muted)'
+
+  // Mock weekly sessions data
+  const sessionsSeed = [1,0,1,1,0,0,0].map((v, i) => ({ day: weekDays[i], count: (member.id + i) % 3 === 0 ? 1 : v }))
 
   async function generateAnalysis() {
     setLoading(true)
@@ -42,20 +46,7 @@ export default function MemberDetail() {
         body: JSON.stringify({
           model: 'claude-sonnet-4-20250514',
           max_tokens: 400,
-          system: `Tu es Thomas, coach chez ON AIR Fitness Clichy.
-Tu dois faire un bilan court et précis sur un de tes adhérents.
-
-Données de ${member.name} :
-- Séances ce mois : ${member.sessions}
-- Dernière visite : ${member.lastSeen}
-- Calories moy. : ${member.calories} kcal
-- Sommeil moy. : ${member.sleep}
-- Pas/jour moy. : ${member.steps}
-- Statut : ${member.status}
-
-Génère un bilan coach de 3 phrases maximum. Direct, professionnel, actionnable.
-Termine par une recommandation concrète pour la semaine.
-Pas de bullet points. Pas de titre. Juste le texte.`,
+          system: `Tu es Thomas, coach chez ON AIR Fitness Clichy. Bilan court sur ${member.name}. Données : séances ${member.sessions}/mois, dernière visite ${member.lastSeen}, calories ${member.calories} kcal, sommeil ${member.sleep}, pas ${member.steps}, statut ${member.status}, objectif ${member.goal}. 3 phrases max. Direct, pro, actionnable. Termine par une reco concrète. Pas de bullet points. Pas de titre.`,
           messages: [{ role: 'user', content: `Bilan pour ${member.name}` }],
         }),
       })
@@ -69,68 +60,100 @@ Pas de bullet points. Pas de titre. Juste le texte.`,
     }
   }
 
-  const color = STATUS_COLORS[member.status] || 'var(--text-muted)'
+  function sendMessage() {
+    setMsgSent(true)
+    setTimeout(() => { setShowMessage(false); setMsgSent(false); setMessage('') }, 1500)
+  }
 
   return (
     <div className="app-wrapper">
-      <div className="screen" style={{ paddingBottom: 40 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '20px 0 8px' }}>
+      <div className="screen" style={{ paddingBottom: 110 }}>
+        <div className="screen-header" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '20px 0 8px' }}>
           <button style={{ background: 'none', border: 'none', cursor: 'pointer' }} onClick={() => navigate('/coach')}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="var(--text-primary)">
-              <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
-            </svg>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" strokeWidth="1.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
           </button>
-          <div style={{ flex: 1 }}>
-            <h1 className="text-xl bold">{member.name}</h1>
-          </div>
-          <span style={{
-            border: `1px solid ${color}`, color,
-            fontSize: 10, padding: '3px 8px',
-            letterSpacing: 1, textTransform: 'uppercase', fontWeight: 700,
-          }}>{member.status}</span>
+          <h1 className="text-xl bold" style={{ flex: 1 }}>{member.name}</h1>
+          <span style={{ border: `1px solid ${color}`, color, fontSize: 9, padding: '3px 8px', borderRadius: 4, letterSpacing: 1, textTransform: 'uppercase', fontWeight: 700 }}>{member.status}</span>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
           {[
+            { label: 'Objectif', val: member.goal },
             { label: 'Séances', val: member.sessions },
-            { label: 'Dernière visite', val: member.lastSeen },
             { label: 'Calories moy.', val: `${member.calories} kcal` },
             { label: 'Sommeil moy.', val: member.sleep },
             { label: 'Pas/jour', val: member.steps.toLocaleString() },
+            { label: 'Poids', val: `${member.weight} kg` },
           ].map(s => (
-            <div key={s.label} className="card" style={{ padding: '14px 16px' }}>
+            <div key={s.label} className="card card-animated" style={{ '--delay': '0ms', padding: '12px 16px' }}>
               <div className="text-xs text-muted">{s.label}</div>
-              <div className="text-base bold" style={{ marginTop: 4 }}>{s.val}</div>
+              <div className="text-sm bold" style={{ marginTop: 4 }}>{s.val}</div>
             </div>
           ))}
         </div>
 
-        <div style={{ marginTop: 24 }}>
-          <div className="section-label">ANALYSE IA</div>
-          <button
-            className="btn-accent"
-            onClick={generateAnalysis}
-            disabled={loading}
-            style={{ opacity: loading ? 0.7 : 1 }}
-          >
-            {loading ? 'GÉNÉRATION EN COURS...' : 'GÉNÉRER ANALYSE IA'}
-          </button>
-
-          {analysis && (
-            <div className="card" style={{ marginTop: 16, animation: 'fadeIn 400ms ease-out' }}>
-              <p className="text-base" style={{ lineHeight: '24px' }}>{analysis}</p>
-              <p className="text-xs text-muted" style={{ marginTop: 12 }}>Généré par AI Coach ON AIR</p>
-            </div>
-          )}
+        {/* Weekly sessions chart */}
+        <div className="section-label">SÉANCES CETTE SEMAINE</div>
+        <div className="card" style={{ marginBottom: 8 }}>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end', height: 48 }}>
+            {sessionsSeed.map((d, i) => (
+              <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                <div style={{ width: '100%', height: d.count > 0 ? '40px' : '8px', background: d.count > 0 ? 'var(--accent)' : 'var(--border)', borderRadius: '3px 3px 0 0' }} />
+                <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>{d.day}</span>
+              </div>
+            ))}
+          </div>
         </div>
 
-        <style>{`
-          @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
-          }
-        `}</style>
+        {/* Objectives */}
+        <div className="section-label">OBJECTIFS ASSIGNÉS</div>
+        <div className="card" style={{ marginBottom: 8 }}>
+          {MOCK_OBJECTIVES.default.map((obj, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: i < MOCK_OBJECTIVES.default.length - 1 ? '0.5px solid var(--border)' : 'none' }}>
+              <div style={{ width: 18, height: 18, borderRadius: '50%', border: '1.5px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: i % 2 === 0 ? 'var(--success)' : 'var(--border)' }} />
+              </div>
+              <span className="text-sm">{obj}</span>
+            </div>
+          ))}
+          <button style={{ background: 'none', border: '0.5px dashed var(--border)', color: 'var(--accent)', fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', padding: '8px 16px', borderRadius: 8, cursor: 'pointer', width: '100%', marginTop: 10 }}>
+            + ASSIGNER UN OBJECTIF
+          </button>
+        </div>
+
+        {/* Message button */}
+        <button className="btn-ghost" style={{ marginBottom: 16 }} onClick={() => setShowMessage(true)}>
+          ENVOYER UN MESSAGE
+        </button>
+
+        {/* AI Analysis */}
+        <div className="section-label">ANALYSE IA</div>
+        <button className="btn-accent" onClick={generateAnalysis} disabled={loading} style={{ opacity: loading ? 0.7 : 1, marginBottom: analysis ? 0 : 16 }}>
+          {loading ? 'GÉNÉRATION EN COURS...' : 'GÉNÉRER ANALYSE IA'}
+        </button>
+        {analysis && (
+          <div className="card" style={{ marginTop: 12, animation: 'fadeIn 400ms ease-out' }}>
+            <p className="text-base" style={{ lineHeight: '24px' }}>{analysis}</p>
+            <p className="text-xs text-muted" style={{ marginTop: 10 }}>Généré par AI Coach ON AIR</p>
+          </div>
+        )}
+        <style>{`@keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }`}</style>
       </div>
+
+      {/* Message modal */}
+      {showMessage && (
+        <>
+          <div onClick={() => setShowMessage(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 200 }} />
+          <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 390, background: 'var(--surface)', borderRadius: '20px 20px 0 0', padding: '24px 20px 40px', zIndex: 201 }}>
+            <h2 className="text-lg bold" style={{ marginBottom: 16 }}>Message à {member.name}</h2>
+            <textarea value={message} onChange={e => setMessage(e.target.value)} placeholder="Écris ton message..." style={{ width: '100%', minHeight: 100, background: 'var(--surface-2)', border: '0.5px solid var(--border)', borderRadius: 10, color: 'var(--text-primary)', fontSize: 15, padding: '12px', resize: 'none', outline: 'none', fontFamily: 'inherit' }} />
+            <button className="btn-accent" onClick={sendMessage} style={{ marginTop: 12 }}>
+              {msgSent ? '✓ ENVOYÉ' : 'ENVOYER'}
+            </button>
+          </div>
+        </>
+      )}
+      <CoachNav />
     </div>
   )
 }
