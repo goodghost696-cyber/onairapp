@@ -13,8 +13,10 @@
   --success: #1FD66B;
   --warning: #F5A623;
   --danger: #FF3B3B;
-  --radius: 0px;
-  --radius-pill: 50px;
+  --radius: 16px;
+  --radius-card: 16px;
+  --radius-pill: 100px;
+  --radius-btn: 12px;
 }
 
 html, body {
@@ -55,7 +57,7 @@ input {
   font-size: 15px;
   width: 100%;
   outline: none;
-  border-radius: 0;
+  border-radius: 10px;
 }
 input::placeholder { color: var(--text-muted); }
 input:focus { border-color: var(--accent); }
@@ -77,6 +79,7 @@ button {
   width: 100%;
   display: block;
   transition: background 150ms;
+  border-radius: var(--radius-btn);
 }
 .btn-accent:hover { background: var(--accent-hover); }
 
@@ -90,6 +93,7 @@ button {
   padding: 16px;
   width: 100%;
   display: block;
+  border-radius: var(--radius-btn);
 }
 
 .text-xs { font-size: 11px; line-height: 14px; text-transform: uppercase; letter-spacing: 0.1em; }
@@ -112,6 +116,7 @@ button {
   border: 1px solid var(--border);
   padding: 16px;
   margin-bottom: 12px;
+  border-radius: var(--radius-card);
 }
 
 .section-label {

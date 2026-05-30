@@ -76,6 +76,32 @@ export default function Dashboard() {
           ))}
         </div>
 
+        <div
+          className="card-animated"
+          style={{ '--delay': '200ms', cursor: 'pointer', marginBottom: 8 }}
+          onClick={() => navigate('/rings')}
+        >
+          <div className="flex justify-between items-center" style={{ padding: '12px 0' }}>
+            <span className="text-sm text-secondary">MES OBJECTIFS</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{
+                background: 'var(--accent)', color: '#fff',
+                fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 50,
+              }}>
+                {[
+                  { current: appData.calories, target: appData.calorieGoal },
+                  { current: appData.weeklyWorkouts, target: appData.weeklyGoal },
+                  { current: appData.water, target: appData.waterGoal },
+                  { current: appData.kmRun, target: 40 },
+                ].filter(r => r.current >= r.target).length}/4
+              </span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--accent)">
+                <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
         <div className="section-label">SÉANCES CETTE SEMAINE</div>
         <div className="card card-animated" style={{ '--delay': '380ms' }}>
           <div className="flex justify-between items-center" style={{ marginBottom: 12 }}>

@@ -13,6 +13,8 @@ import AICoach from './screens/AICoach'
 import Scan from './screens/Scan'
 import CoachDashboard from './screens/CoachDashboard'
 import MemberDetail from './screens/MemberDetail'
+import WorkoutLibrary from './screens/WorkoutLibrary'
+import Rings from './screens/Rings'
 
 function ProtectedRoute({ children, role }) {
   const { user } = useAuth()
@@ -40,6 +42,10 @@ export default function App() {
       <Route path="/scan" element={<ProtectedRoute role="member"><Scan /></ProtectedRoute>} />
       <Route path="/coach" element={<ProtectedRoute role="coach"><CoachDashboard /></ProtectedRoute>} />
       <Route path="/coach/member/:id" element={<ProtectedRoute role="coach"><MemberDetail /></ProtectedRoute>} />
+      <Route path="/workout/maison" element={<ProtectedRoute role="member"><WorkoutLibrary section="maison" /></ProtectedRoute>} />
+      <Route path="/workout/salle" element={<ProtectedRoute role="member"><WorkoutLibrary section="salle" /></ProtectedRoute>} />
+      <Route path="/workout/dehors" element={<ProtectedRoute role="member"><WorkoutLibrary section="dehors" /></ProtectedRoute>} />
+      <Route path="/rings" element={<ProtectedRoute role="member"><Rings /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
