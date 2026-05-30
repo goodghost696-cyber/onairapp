@@ -1,0 +1,52 @@
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes headerIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes cardIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes barFill {
+    from { width: 0%; }
+    to   { width: var(--w); }
+  }
+
+  @keyframes cupFill {
+    0%   { transform: scale(1); }
+    35%  { transform: scale(1.22); }
+    65%  { transform: scale(0.94); }
+    100% { transform: scale(1); }
+  }
+
+  .screen-header {
+    animation: headerIn 320ms ease-out forwards;
+  }
+
+  .card-animated {
+    animation: cardIn 300ms ease-out forwards;
+    animation-delay: var(--delay, 0ms);
+    opacity: 0;
+  }
+
+  .cup.just-filled {
+    animation: cupFill 300ms ease forwards;
+  }
+
+  .macro-fill {
+    animation: barFill 500ms ease-out forwards;
+    animation-delay: var(--delay, 0ms);
+  }
+}
+
+.card:active {
+  transform: scale(0.985);
+  transition: transform 100ms ease;
+}
+
+button:active {
+  transform: scale(0.96);
+  transition: transform 80ms ease;
+}

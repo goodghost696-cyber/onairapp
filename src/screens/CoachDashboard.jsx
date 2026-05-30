@@ -54,8 +54,8 @@ export default function CoachDashboard() {
 
   return (
     <div className="app-wrapper">
-      <div className="screen" style={{ paddingBottom: 100 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 0 8px' }}>
+      <div className="screen" style={{ paddingBottom: 110 }}>
+        <div className="screen-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 0 8px' }}>
           <div>
             <span className="text-xs text-accent bold">ON AIR</span>
             <span className="text-xs text-muted" style={{ marginLeft: 12 }}>Coach · {user?.name}</span>
@@ -74,8 +74,8 @@ export default function CoachDashboard() {
             { label: 'Adhérents', val: 4 },
             { label: 'Séances ce mois', val: 23 },
             { label: 'Alertes', val: alerts.length },
-          ].map(m => (
-            <div key={m.label} className="card" style={{ textAlign: 'center', padding: 16 }}>
+          ].map((m, idx) => (
+            <div key={m.label} className="card card-animated" style={{ textAlign: 'center', padding: 16, '--delay': `${50 + idx * 60}ms` }}>
               <div className="text-2xl bold" style={{ color: m.label === 'Alertes' ? 'var(--danger)' : 'var(--text-primary)' }}>{m.val}</div>
               <div className="text-xs text-muted" style={{ marginTop: 4 }}>{m.label}</div>
             </div>

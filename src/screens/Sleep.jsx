@@ -7,12 +7,12 @@ export default function Sleep() {
 
   return (
     <div className="app-wrapper">
-      <div className="screen">
-        <div style={{ padding: '20px 0 8px' }}>
+      <div className="screen" style={{ paddingBottom: 110 }}>
+        <div className="screen-header" style={{ padding: '20px 0 8px' }}>
           <span className="text-xs text-accent bold">SOMMEIL</span>
         </div>
 
-        <div className="card" style={{ textAlign: 'center', padding: 32 }}>
+        <div className="card card-animated" style={{ textAlign: 'center', padding: 32, '--delay': '50ms' }}>
           <div className="text-2xl bold" style={{ fontSize: 48, lineHeight: 1 }}>
             {appData.sleep.hours}h{String(appData.sleep.minutes).padStart(2,'0')}
           </div>
@@ -21,7 +21,7 @@ export default function Sleep() {
         </div>
 
         <div className="section-label">CETTE SEMAINE</div>
-        <div className="card">
+        <div className="card card-animated" style={{ '--delay': '150ms' }}>
           <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end', height: 80 }}>
             {appData.sleepData.map((d, i) => (
               <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>

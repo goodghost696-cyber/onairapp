@@ -7,26 +7,26 @@ export default function Workout() {
 
   return (
     <div className="app-wrapper">
-      <div className="screen">
-        <div style={{ padding: '20px 0 8px' }}>
+      <div className="screen" style={{ paddingBottom: 110 }}>
+        <div className="screen-header" style={{ padding: '20px 0 8px' }}>
           <span className="text-xs text-accent bold">WORKOUT</span>
         </div>
 
         <h1 className="text-xl bold" style={{ marginBottom: 24 }}>Séance du jour</h1>
 
-        <div className="card" style={{ marginBottom: 8 }}>
+        <div className="card card-animated" style={{ marginBottom: 8, '--delay': '50ms' }}>
           <div className="flex justify-between items-center">
             <span className="text-sm text-muted">Séances cette semaine</span>
             <span className="text-lg bold text-accent">{appData.weeklyWorkouts}/{appData.weeklyGoal}</span>
           </div>
           <div className="progress-bar" style={{ height: 4, marginTop: 12 }}>
-            <div className="progress-fill" style={{ width: `${appData.weeklyWorkouts/appData.weeklyGoal*100}%` }} />
+            <div className="progress-fill macro-fill" style={{ '--w': `${appData.weeklyWorkouts/appData.weeklyGoal*100}%`, '--delay': '100ms' }} />
           </div>
         </div>
 
         <div className="section-label">EXERCICES</div>
         {appData.todayWorkouts.map((ex, i) => (
-          <div key={i} className="card exercise-card">
+          <div key={i} className="card exercise-card card-animated" style={{ '--delay': `${100 + i * 60}ms` }}>
             <div className="flex justify-between items-center">
               <span className="text-base bold">{ex.name}</span>
               <span className="text-sm bold text-accent">{ex.weight}kg</span>

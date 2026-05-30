@@ -28,8 +28,8 @@ export default function Dashboard() {
 
   return (
     <div className="app-wrapper">
-      <div className="screen dashboard-screen">
-        <div className="dash-header">
+      <div className="screen dashboard-screen" style={{ paddingBottom: 110 }}>
+        <div className="screen-header dash-header">
           <span className="text-xs text-accent bold">ON AIR</span>
           <button style={{ background: 'none', border: 'none', padding: 4, cursor: 'pointer' }} onClick={handleLogout}>
             <LogoutIcon />
@@ -41,18 +41,20 @@ export default function Dashboard() {
           <p className="text-sm text-secondary">Voyons où tu en es.</p>
         </div>
 
-        <div className="dash-ring-row">
+        <div className="dash-ring-row card-animated" style={{ '--delay': '50ms' }}>
           <CalorieRing current={appData.calories} goal={appData.calorieGoal} />
           <div className="dash-macros">
             {[
               { label: 'Protéines', val: appData.protein, goal: appData.proteinGoal, unit: 'g' },
               { label: 'Glucides', val: appData.carbs, goal: appData.carbsGoal, unit: 'g' },
               { label: 'Lipides', val: appData.fat, goal: appData.fatGoal, unit: 'g' },
-            ].map(m => (
+            ].map((m, idx) => (
               <div key={m.label} className="macro-item">
                 <span className="text-xs text-muted">{m.label}</span>
                 <span className="text-sm bold">{m.val}<span className="text-muted">/{m.goal}{m.unit}</span></span>
-                <div className="progress-bar"><div className="progress-fill" style={{ width: `${Math.min(m.val/m.goal*100,100)}%` }} /></div>
+                <div className="progress-bar">
+                  <div className="progress-fill macro-fill" style={{ '--w': `${Math.min(m.val/m.goal*100,100)}%`, '--delay': `${idx * 100}ms` }} />
+                </div>
               </div>
             ))}
           </div>
@@ -65,8 +67,8 @@ export default function Dashboard() {
             { label: 'Course', val: `${appData.kmRun}km`, sub: 'aujourd\'hui' },
             { label: 'Hydration', val: `${appData.water}ml`, sub: `/${appData.waterGoal}ml` },
             { label: 'Sommeil', val: `${appData.sleep.hours}h${appData.sleep.minutes}`, sub: appData.sleep.quality },
-          ].map(m => (
-            <div key={m.label} className="metric-card card">
+          ].map((m, idx) => (
+            <div key={m.label} className="metric-card card card-animated" style={{ '--delay': `${100 + idx * 60}ms` }}>
               <span className="text-xs text-muted">{m.label}</span>
               <span className="text-lg bold" style={{ display: 'block', marginTop: 4 }}>{m.val}</span>
               <span className="text-xs text-muted">{m.sub}</span>
@@ -75,13 +77,13 @@ export default function Dashboard() {
         </div>
 
         <div className="section-label">SÉANCES CETTE SEMAINE</div>
-        <div className="card">
+        <div className="card card-animated" style={{ '--delay': '380ms' }}>
           <div className="flex justify-between items-center" style={{ marginBottom: 12 }}>
             <span className="text-lg bold">{appData.weeklyWorkouts}/{appData.weeklyGoal}</span>
             <span className="text-xs text-muted">séances</span>
           </div>
           <div className="progress-bar" style={{ height: 6 }}>
-            <div className="progress-fill" style={{ width: `${appData.weeklyWorkouts/appData.weeklyGoal*100}%` }} />
+            <div className="progress-fill macro-fill" style={{ '--w': `${appData.weeklyWorkouts/appData.weeklyGoal*100}%`, '--delay': '450ms' }} />
           </div>
         </div>
 
