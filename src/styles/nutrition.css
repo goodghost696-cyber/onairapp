@@ -1,0 +1,5 @@
+.macro-row {
+  display: flex;
+  justify-content: space-around;
+}
+.meal-card { cursor: default; }
