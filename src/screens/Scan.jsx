@@ -4,7 +4,6 @@ import { useApp } from '../context/AppContext'
 import NutriscoreBadge from '../components/NutriscoreBadge'
 import BottomNav from '../components/BottomNav'
 
-const API_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY
 const MEAL_TYPES = ['Petit-déjeuner', 'Déjeuner', 'Dîner', 'Snack']
 
 export default function Scan() {
@@ -30,13 +29,10 @@ export default function Scan() {
       const base64 = reader.result.split(',')[1]
       const mediaType = file.type
       try {
-        const response = await fetch('https://api.anthropic.com/v1/messages', {
+        const response = await fetch('/api/claude', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'x-api-key': API_KEY,
-            'anthropic-version': '2023-06-01',
-            'anthropic-dangerous-direct-browser-calls': 'true',
           },
           body: JSON.stringify({
             model: 'claude-sonnet-4-20250514',

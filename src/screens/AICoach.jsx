@@ -4,7 +4,6 @@ import BottomNav from '../components/BottomNav'
 import { useAuth } from '../context/AuthContext'
 import { useApp } from '../context/AppContext'
 
-const API_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY
 
 function TypingIndicator() {
   return (
@@ -58,13 +57,10 @@ export default function AICoach() {
     const history = [...messages, userMsg].map(m => ({ role: m.role, content: m.content }))
 
     try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
+      const res = await fetch('/api/claude', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': API_KEY,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-calls': 'true',
         },
         body: JSON.stringify({
           model: 'claude-sonnet-4-20250514',

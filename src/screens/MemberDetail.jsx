@@ -3,7 +3,6 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { MOCK_MEMBERS } from './CoachDashboard'
 import CoachNav from '../components/CoachNav'
 
-const API_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY
 const STATUS_COLORS = { 'ON TRACK': 'var(--success)', 'AT RISK': 'var(--warning)', 'INACTIVE': 'var(--danger)' }
 
 const MOCK_OBJECTIVES = {
@@ -35,13 +34,10 @@ export default function MemberDetail() {
     setLoading(true)
     setAnalysis('')
     try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
+      const res = await fetch('/api/claude', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': API_KEY,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-calls': 'true',
         },
         body: JSON.stringify({
           model: 'claude-sonnet-4-20250514',
