@@ -11,8 +11,12 @@ const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
-    const stored = localStorage.getItem('onair_user')
-    return stored ? JSON.parse(stored) : null
+    try {
+      const saved = localStorage.getItem('onair_user')
+      return saved ? JSON.parse(saved) : null
+    } catch {
+      return null
+    }
   })
 
   function login(email, password) {
@@ -31,7 +35,14 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('onair_user')
   }
 
-  return <AuthContext.Provider value={{ user, login, logout }}>{children}</AuthContext.Provider>
+  function register(firstName, email, password) {
+    const newUser = { id: Date.now(), email, name: firstName, role: 'member' }
+    setUser(newUser)
+    localStorage.setItem('onair_user', JSON.stringify(newUser))
+    return { success: true, user: newUser }
+  }
+
+  return <AuthContext.Provider value={{ user, login, logout, register }}>{children}</AuthContext.Provider>
 }
 
 export function useAuth() {

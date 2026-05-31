@@ -15,8 +15,9 @@ const tabs = [
     path: '/nutrition',
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 2a10 10 0 100 20 10 10 0 000-20z"/>
-        <path d="M12 6v6l4 2"/>
+        <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 002-2V2"/>
+        <path d="M7 2v20"/>
+        <path d="M21 15V2a5 5 0 00-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/>
       </svg>
     )
   },
@@ -24,15 +25,11 @@ const tabs = [
     path: '/workout',
     icon: (
       <svg width="20" height="20" viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="2" y="8" width="18" height="2" rx="1"/>
-        <line x1="7" y1="8" x2="7" y2="18"/>
-        <line x1="15" y1="8" x2="15" y2="18"/>
-        <line x1="5" y1="18" x2="9" y2="18"/>
-        <line x1="13" y1="18" x2="17" y2="18"/>
-        <line x1="7" y1="4" x2="7" y2="8"/>
-        <line x1="15" y1="4" x2="15" y2="8"/>
-        <line x1="4" y1="4" x2="10" y2="4"/>
-        <line x1="12" y1="4" x2="18" y2="4"/>
+        <line x1="7" y1="11" x2="15" y2="11"/>
+        <rect x="1" y="8.5" width="3.5" height="5" rx="1.5"/>
+        <rect x="17.5" y="8.5" width="3.5" height="5" rx="1.5"/>
+        <rect x="4.5" y="7" width="2.5" height="8" rx="1"/>
+        <rect x="15" y="7" width="2.5" height="8" rx="1"/>
       </svg>
     )
   },
@@ -40,9 +37,9 @@ const tabs = [
     path: '/run',
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="5" r="2"/>
-        <path d="M8 21l2-8-2-3h8l-2 3 2 8"/>
-        <path d="M6 12l-2 2M18 12l2 2"/>
+        <circle cx="13" cy="4" r="2"/>
+        <path d="M7 21l3-8 3 4 3-6 3 4"/>
+        <path d="M3 11h5l2-3h5"/>
       </svg>
     )
   },
@@ -55,11 +52,11 @@ const tabs = [
     )
   },
   {
-    path: '/ai-coach',
+    path: '/settings',
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="10"/>
-        <path d="M12 8v4l3 3"/>
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/>
       </svg>
     )
   },

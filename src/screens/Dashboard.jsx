@@ -119,13 +119,22 @@ export default function Dashboard() {
             { label: 'Nutrition', path: '/nutrition' },
             { label: 'Workout', path: '/workout' },
             { label: 'Run', path: '/run' },
-            { label: 'AI Coach', path: '/ai-coach' },
             { label: 'Bilan', path: '/weekly' },
           ].map(s => (
             <button key={s.path} className="shortcut-btn" onClick={() => navigate(s.path)}>
               <span className="text-xs">{s.label}</span>
             </button>
           ))}
+        </div>
+
+        <div className="card" style={{ cursor: 'pointer', background: 'linear-gradient(135deg, rgba(224,0,0,0.15), rgba(224,0,0,0.05))', border: '0.5px solid rgba(224,0,0,0.3)', marginTop: 8 }} onClick={() => navigate('/ai-coach')}>
+          <div className="flex justify-between items-center">
+            <div>
+              <div className="text-base bold">TON COACH IA</div>
+              <div className="text-sm text-muted">Questions nutrition, programme, analyse</div>
+            </div>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
         </div>
       </div>
       <BottomNav />

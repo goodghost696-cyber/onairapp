@@ -143,7 +143,7 @@ RÈGLES ABSOLUES :
           position: 'absolute',
           top: 73,
           left: 0, right: 0,
-          bottom: inputAreaHeight + 90,
+          bottom: 185,
           overflowY: 'auto',
           padding: '16px',
           display: 'flex',

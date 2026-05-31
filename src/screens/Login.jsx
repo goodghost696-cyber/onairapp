@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 
 export default function Login() {
   const navigate = useNavigate()
-  const { login } = useAuth()
+  const { login, register } = useAuth()
   const [tab, setTab] = useState('login') // 'login' | 'signup'
 
   // Login state
@@ -33,10 +33,11 @@ export default function Login() {
     if (!firstName || !se || !sp || !confirm || !code) { setSignupError('Tous les champs sont requis'); return }
     if (sp !== confirm) { setSignupError('Les mots de passe ne correspondent pas'); return }
     if (code !== 'ONAIR2026') { setSignupError("Code invalide. Contacte ton coach."); return }
-    const newUser = { id: Date.now(), email: se, name: firstName, role: 'member' }
-    localStorage.setItem('onair_user', JSON.stringify(newUser))
-    setSignupSuccess(true)
-    setTimeout(() => navigate('/dashboard'), 800)
+    const result = register(firstName, se, sp)
+    if (result.success) {
+      setSignupSuccess(true)
+      setTimeout(() => navigate('/dashboard'), 800)
+    }
   }
 
   return (

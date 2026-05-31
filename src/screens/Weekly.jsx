@@ -2,6 +2,25 @@ import { useNavigate } from 'react-router-dom'
 import BottomNav from '../components/BottomNav'
 import { useApp } from '../context/AppContext'
 
+const weekData = [
+  { day: 'L', calories: 2100, goal: 2400 },
+  { day: 'M', calories: 1950, goal: 2400 },
+  { day: 'M', calories: 2300, goal: 2400 },
+  { day: 'J', calories: 1800, goal: 2400 },
+  { day: 'V', calories: 2400, goal: 2400 },
+  { day: 'S', calories: 0,    goal: 2400 },
+  { day: 'D', calories: 1847, goal: 2400 },
+]
+const maxCal = Math.max(...weekData.map(d => d.calories), 1)
+
+function calBarColor(cal, goal) {
+  if (cal === 0) return 'var(--surface-2)'
+  const pct = cal / goal
+  if (pct >= 1) return 'var(--success)'
+  if (pct >= 0.8) return 'var(--accent)'
+  return 'var(--warning)'
+}
+
 export default function Weekly() {
   const navigate = useNavigate()
   const { appData } = useApp()
@@ -16,19 +35,16 @@ export default function Weekly() {
           <span className="text-xs text-accent bold">BILAN SEMAINE</span>
         </div>
 
-        <div className="section-label">CALORIES / JOUR</div>
-        <div className="card card-animated" style={{ '--delay': '50ms' }}>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end', height: 80 }}>
-            {appData.weeklyData.map((d, i) => (
+        <div className="section-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span>CALORIES / JOUR</span>
+          <span style={{ color: 'var(--text-muted)' }}>Objectif : 2 400 kcal</span>
+        </div>
+        <div className="card" style={{ marginBottom: 16 }}>
+          <div style={{ display: 'flex', gap: 6, alignItems: 'flex-end', height: 64 }}>
+            {weekData.map((d, i) => (
               <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                <div style={{
-                  width: '100%',
-                  height: `${d.calories / appData.calorieGoal * 100}%`,
-                  background: d.workout ? 'var(--accent)' : 'var(--border)',
-                  minHeight: d.calories > 0 ? 4 : 2,
-                  borderRadius: 2,
-                }} />
-                <span className="text-xs text-muted">{d.day}</span>
+                <div style={{ width: '100%', height: `${d.calories > 0 ? Math.max((d.calories/maxCal)*56, 6) : 4}px`, background: calBarColor(d.calories, d.goal), borderRadius: '3px 3px 0 0', transition: 'height 600ms ease' }} />
+                <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>{d.day}</span>
               </div>
             ))}
           </div>

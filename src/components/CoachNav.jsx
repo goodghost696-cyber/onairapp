@@ -4,6 +4,7 @@ import '../styles/nav.css'
 const tabs = [
   {
     path: '/coach',
+    label: 'Board',
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
@@ -12,6 +13,7 @@ const tabs = [
   },
   {
     path: '/coach/clients',
+    label: 'Clients',
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
@@ -31,6 +33,7 @@ const tabs = [
   },
   {
     path: '/coach/settings',
+    label: 'Réglages',
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="3"/>
@@ -47,7 +50,14 @@ export default function CoachNav() {
   return (
     <nav className="bottom-nav">
       {tabs.map(tab => {
-        const active = location.pathname === tab.path || location.pathname.startsWith(tab.path + '/')
+        let active
+        if (tab.path === '/coach') {
+          active = location.pathname === '/coach'
+        } else if (tab.path === '/coach/clients') {
+          active = location.pathname === '/coach/clients'
+        } else {
+          active = location.pathname === tab.path || location.pathname.startsWith(tab.path + '/')
+        }
         return (
           <div key={tab.path} className={`nav-btn${active ? ' active' : ''}`}
             onClick={() => { navigator.vibrate && navigator.vibrate(6); navigate(tab.path) }}>

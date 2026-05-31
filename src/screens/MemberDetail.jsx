@@ -95,13 +95,15 @@ export default function MemberDetail() {
         {/* Weekly sessions chart */}
         <div className="section-label">SÉANCES CETTE SEMAINE</div>
         <div className="card" style={{ marginBottom: 8 }}>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end', height: 48 }}>
-            {sessionsSeed.map((d, i) => (
-              <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                <div style={{ width: '100%', height: d.count > 0 ? '40px' : '8px', background: d.count > 0 ? 'var(--accent)' : 'var(--border)', borderRadius: '3px 3px 0 0' }} />
-                <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>{d.day}</span>
-              </div>
-            ))}
+          <div style={{ width: '100%' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
+              {sessionsSeed.map((d, i) => (
+                <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                  <div style={{ width: '100%', height: d.count > 0 ? 36 : 6, background: d.count > 0 ? 'var(--accent)' : 'var(--border)', borderRadius: '3px 3px 0 0' }} />
+                  <span style={{ fontSize: 9, color: 'var(--text-muted)', overflow: 'hidden', width: '100%', textAlign: 'center' }}>{d.day}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
