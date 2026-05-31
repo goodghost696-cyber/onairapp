@@ -1,14 +1,19 @@
+import { useNavigate } from 'react-router-dom'
 import BottomNav from '../components/BottomNav'
 import { useApp } from '../context/AppContext'
 
 export default function Sleep() {
+  const navigate = useNavigate()
   const { appData } = useApp()
   const maxH = 10
 
   return (
     <div className="app-wrapper">
       <div className="screen" style={{ paddingBottom: 110 }}>
-        <div className="screen-header" style={{ padding: '20px 0 8px' }}>
+        <div className="screen-header" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '20px 0 8px' }}>
+          <button style={{ background: 'none', border: 'none', cursor: 'pointer' }} onClick={() => navigate('/dashboard')}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" strokeWidth="1.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
           <span className="text-xs text-accent bold">SOMMEIL</span>
         </div>
 

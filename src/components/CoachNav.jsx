@@ -21,6 +21,15 @@ const tabs = [
     )
   },
   {
+    path: '/coach/messages',
+    label: 'Messages',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+      </svg>
+    )
+  },
+  {
     path: '/coach/settings',
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -38,7 +47,7 @@ export default function CoachNav() {
   return (
     <nav className="bottom-nav">
       {tabs.map(tab => {
-        const active = location.pathname === tab.path
+        const active = location.pathname === tab.path || location.pathname.startsWith(tab.path + '/')
         return (
           <div key={tab.path} className={`nav-btn${active ? ' active' : ''}`}
             onClick={() => { navigator.vibrate && navigator.vibrate(6); navigate(tab.path) }}>

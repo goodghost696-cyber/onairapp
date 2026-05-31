@@ -29,6 +29,35 @@ function RingProgress({ current, target, color, size = 80 }) {
   )
 }
 
+const RING_ICONS = {
+  calories: (
+    <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+      <path d="M9 2c0 3-3 4-3 7a3 3 0 006 0c0-3-3-4-3-7z"/>
+    </svg>
+  ),
+  sessions: (
+    <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+      <line x1="6" y1="9" x2="12" y2="9"/>
+      <rect x="1" y="7" width="3" height="4" rx="1"/>
+      <rect x="14" y="7" width="3" height="4" rx="1"/>
+      <rect x="4" y="6" width="2" height="6" rx="1"/>
+      <rect x="12" y="6" width="2" height="6" rx="1"/>
+    </svg>
+  ),
+  hydration: (
+    <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+      <path d="M9 2L4 10a5 5 0 0010 0L9 2z"/>
+    </svg>
+  ),
+  run: (
+    <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+      <circle cx="12" cy="3" r="1.5"/>
+      <path d="M8 16l2-5 3 3"/>
+      <path d="M6 10l2-3 4 1 2-3"/>
+    </svg>
+  ),
+}
+
 export default function Rings() {
   const navigate = useNavigate()
   const { user } = useAuth()
@@ -37,10 +66,10 @@ export default function Rings() {
   const [dismissed, setDismissed] = useState({})
 
   const rings = [
-    { id: 'calories', label: 'Calories', current: appData.calories, target: appData.calorieGoal, unit: 'kcal', color: '#E00000', icon: '🔥' },
-    { id: 'sessions', label: 'Séances', current: appData.weeklyWorkouts, target: appData.weeklyGoal, unit: '/sem', color: '#1FD66B', icon: '💪' },
-    { id: 'hydration', label: 'Hydratation', current: appData.water, target: appData.waterGoal, unit: 'ml', color: '#2EA8FF', icon: '💧' },
-    { id: 'run', label: 'Course', current: appData.kmRun, target: 40, unit: 'km', color: '#F5A623', icon: '🏃' },
+    { id: 'calories', label: 'Calories', current: appData.calories, target: appData.calorieGoal, unit: 'kcal', color: '#E00000' },
+    { id: 'sessions', label: 'Séances', current: appData.weeklyWorkouts, target: appData.weeklyGoal, unit: '/sem', color: '#1FD66B' },
+    { id: 'hydration', label: 'Hydratation', current: appData.water, target: appData.waterGoal, unit: 'ml', color: '#2EA8FF' },
+    { id: 'run', label: 'Course', current: appData.kmRun, target: 40, unit: 'km', color: '#F5A623' },
   ]
 
   useEffect(() => {
@@ -83,12 +112,16 @@ export default function Rings() {
             return (
               <div key={ring.id} className="card card-animated" style={{ '--delay': `${i * 80}ms`, padding: 20, textAlign: 'center', position: 'relative' }}>
                 {complete && (
-                  <div style={{ position: 'absolute', top: 8, right: 8, fontSize: 14 }}>⭐</div>
+                  <div style={{ position: 'absolute', top: 8, right: 8 }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                  </div>
                 )}
                 <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative', marginBottom: 12 }}>
                   <RingProgress current={ring.current} target={ring.target} color={ring.color} />
-                  <div style={{ position: 'absolute', textAlign: 'center' }}>
-                    <div style={{ fontSize: 10, fontWeight: 700 }}>{ring.icon}</div>
+                  <div style={{ position: 'absolute', textAlign: 'center', color: ring.color }}>
+                    {RING_ICONS[ring.id]}
                   </div>
                 </div>
                 <div className="text-sm bold">{ring.label}</div>
@@ -117,7 +150,7 @@ export default function Rings() {
             OBJECTIF ATTEINT
           </div>
           <div className="text-xl bold">{celebration.label}</div>
-          <div className="text-base text-secondary">Bien joué, {user?.name}. 💪</div>
+          <div className="text-base text-secondary" style={{ marginTop: 8 }}>Bien joué, {user?.name}.</div>
           <button className="btn-accent" onClick={dismissCelebration} style={{ marginTop: 8, maxWidth: 200 }}>
             CONTINUER
           </button>

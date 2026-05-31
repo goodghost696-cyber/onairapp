@@ -23,8 +23,16 @@ const tabs = [
   {
     path: '/workout',
     icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M6.5 6.5h11M6.5 17.5h11M6.5 12h11M3 6.5h.01M3 12h.01M3 17.5h.01M21 6.5h-.01M21 12h-.01M21 17.5h-.01"/>
+      <svg width="20" height="20" viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2" y="8" width="18" height="2" rx="1"/>
+        <line x1="7" y1="8" x2="7" y2="18"/>
+        <line x1="15" y1="8" x2="15" y2="18"/>
+        <line x1="5" y1="18" x2="9" y2="18"/>
+        <line x1="13" y1="18" x2="17" y2="18"/>
+        <line x1="7" y1="4" x2="7" y2="8"/>
+        <line x1="15" y1="4" x2="15" y2="8"/>
+        <line x1="4" y1="4" x2="10" y2="4"/>
+        <line x1="12" y1="4" x2="18" y2="4"/>
       </svg>
     )
   },
@@ -39,10 +47,19 @@ const tabs = [
     )
   },
   {
-    path: '/ai-coach',
+    path: '/messages',
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+      </svg>
+    )
+  },
+  {
+    path: '/ai-coach',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M12 8v4l3 3"/>
       </svg>
     )
   },

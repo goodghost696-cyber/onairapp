@@ -1,5 +1,9 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+html {
+  background: #0D0D0D;
+}
+
 :root {
   --bg: #0D0D0D;
   --surface: #1A1A1A;
@@ -19,29 +23,31 @@
   --radius-btn: 12px;
 }
 
-html, body {
-  background: var(--bg);
+body {
+  background: #0D0D0D;
+  display: flex;
+  justify-content: center;
+  min-height: 100vh;
+  overflow-x: hidden;
   color: var(--text-primary);
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
   font-size: 15px;
   line-height: 22px;
   -webkit-font-smoothing: antialiased;
-  min-height: 100vh;
 }
 
 #root {
-  display: flex;
-  justify-content: center;
+  width: 100%;
+  max-width: 390px;
   min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+  background: var(--bg);
 }
 
 .app-wrapper {
   width: 100%;
-  max-width: 390px;
-  min-height: 100vh;
-  background: var(--bg);
   position: relative;
-  overflow-x: hidden;
 }
 
 .screen {

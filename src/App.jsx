@@ -16,6 +16,11 @@ import MemberDetail from './screens/MemberDetail'
 import WorkoutLibrary from './screens/WorkoutLibrary'
 import Rings from './screens/Rings'
 import ClientsList from './screens/ClientsList'
+import Messages from './screens/Messages'
+import Conversation from './screens/Conversation'
+import CoachMessages from './screens/CoachMessages'
+import Settings from './screens/Settings'
+import CoachSettings from './screens/CoachSettings'
 
 function ProtectedRoute({ children, requiredRole }) {
   const { user } = useAuth()
@@ -48,6 +53,12 @@ export default function App() {
       <Route path="/coach" element={<ProtectedRoute requiredRole="coach"><CoachDashboard /></ProtectedRoute>} />
       <Route path="/coach/member/:id" element={<ProtectedRoute requiredRole="coach"><MemberDetail /></ProtectedRoute>} />
       <Route path="/coach/clients" element={<ProtectedRoute requiredRole="coach"><ClientsList /></ProtectedRoute>} />
+      <Route path="/messages" element={<ProtectedRoute requiredRole="member"><Messages /></ProtectedRoute>} />
+      <Route path="/messages/coach" element={<ProtectedRoute requiredRole="member"><Conversation /></ProtectedRoute>} />
+      <Route path="/coach/messages" element={<ProtectedRoute requiredRole="coach"><CoachMessages /></ProtectedRoute>} />
+      <Route path="/coach/messages/:memberId" element={<ProtectedRoute requiredRole="coach"><Conversation isCoach /></ProtectedRoute>} />
+      <Route path="/settings" element={<ProtectedRoute requiredRole="member"><Settings /></ProtectedRoute>} />
+      <Route path="/coach/settings" element={<ProtectedRoute requiredRole="coach"><CoachSettings /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )

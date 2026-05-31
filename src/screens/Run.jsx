@@ -1,6 +1,5 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import BottomNav from '../components/BottomNav'
-import { useCountUp } from '../hooks/useCountUp'
 
 const paceData = [
   { km: '1', pace: 5.75, label: '5:45' },
@@ -16,37 +15,40 @@ const maxPace = Math.max(...paceData.map(p => p.pace))
 const elevationBars = [20, 28, 35, 42, 38, 30, 25, 32, 40, 35, 28, 22]
 const maxElev = Math.max(...elevationBars)
 
-// Realistic street circuit path for Clichy
-const CIRCUIT_PATH = "M 50 170 C 55 140, 65 110, 90 85 C 115 60, 150 48, 185 52 C 215 56, 240 72, 258 95 C 272 114, 278 138, 272 162 C 265 186, 248 202, 225 210 C 198 219, 168 218, 142 208 C 112 196, 85 196, 65 185 Z"
+const CIRCUIT_PATH = "M 40,180 L 40,60 L 120,60 L 120,30 L 260,30 L 260,80 L 300,80 L 300,180 L 220,180 L 220,140 L 100,140 L 100,180 Z"
 
 export default function Run() {
   const [running, setRunning] = useState(false)
-  const [dotPos, setDotPos] = useState({ x: 50, y: 170 })
-  const animRef = useRef(null)
-  const startTime = useRef(null)
+  const [seconds, setSeconds] = useState(0)
+  const [distance, setDistance] = useState(0)
 
   useEffect(() => {
-    const duration = 4000
-    // Approximate ellipse for dot travel
-    const cx = 161, cy = 131, rx = 118, ry = 83
-    function animate(ts) {
-      if (!startTime.current) startTime.current = ts
-      const t = ((ts - startTime.current) % duration) / duration
-      const angle = t * 2 * Math.PI - Math.PI / 2
-      setDotPos({
-        x: cx + rx * Math.cos(angle),
-        y: cy + ry * Math.sin(angle),
-      })
-      animRef.current = requestAnimationFrame(animate)
-    }
-    animRef.current = requestAnimationFrame(animate)
-    return () => cancelAnimationFrame(animRef.current)
-  }, [])
+    if (!running) return
+    const interval = setInterval(() => {
+      setSeconds(s => s + 1)
+      setDistance(d => Math.round((d + 0.0032) * 10000) / 10000)
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [running])
+
+  const formatTime = (s) => {
+    const m = Math.floor(s / 60)
+    const sec = s % 60
+    return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`
+  }
+
+  const pace = distance > 0.05
+    ? `${Math.floor(seconds / 60 / distance)}:${String(Math.round((seconds / distance) % 60)).padStart(2,'0')}`
+    : '--:--'
+
+  const displayDist = running || seconds > 0 ? distance.toFixed(2) : '5.24'
+  const displayTime = running || seconds > 0 ? formatTime(seconds) : '27:18'
+  const displayPace = running || seconds > 0 ? pace : '5:12'
 
   const metrics1 = [
-    { label: 'DISTANCE', val: '5.24 km' },
-    { label: 'PACE', val: '5:12 /km' },
-    { label: 'DURÉE', val: '27:18' },
+    { label: 'DISTANCE', val: `${displayDist} km` },
+    { label: 'PACE', val: `${displayPace} /km` },
+    { label: 'DURÉE', val: displayTime },
   ]
   const metrics2 = [
     { label: 'DÉNIVELÉ', val: '48 m' },
@@ -61,126 +63,100 @@ export default function Run() {
           <span className="text-xs text-accent bold">RUN</span>
         </div>
 
-        {/* Metrics grid */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 8 }}>
           {metrics1.map(m => (
-            <div key={m.label} className="card" style={{ textAlign: 'center', padding: '14px 8px' }}>
-              <div style={{ fontSize: 18, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>{m.val}</div>
+            <div key={m.label} className="card" style={{ textAlign: 'center', padding: '14px 6px' }}>
+              <div style={{ fontSize: 16, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>{m.val}</div>
               <div className="text-xs text-muted" style={{ marginTop: 4 }}>{m.label}</div>
             </div>
           ))}
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 16 }}>
           {metrics2.map(m => (
-            <div key={m.label} className="card" style={{ textAlign: 'center', padding: '14px 8px' }}>
-              <div style={{ fontSize: 15, fontWeight: 700 }}>{m.val}</div>
+            <div key={m.label} className="card" style={{ textAlign: 'center', padding: '14px 6px' }}>
+              <div style={{ fontSize: 14, fontWeight: 700 }}>{m.val}</div>
               <div className="text-xs text-muted" style={{ marginTop: 4 }}>{m.label}</div>
             </div>
           ))}
         </div>
 
-        {/* Map */}
+        {/* Pace chart - ABOVE map */}
+        <div className="card" style={{ marginBottom: 16 }}>
+          <div className="flex justify-between items-center" style={{ marginBottom: 8 }}>
+            <span className="text-xs text-muted">ALLURE PAR KM</span>
+            <span className="text-xs text-accent">Meilleure : 5:05/km</span>
+          </div>
+          <div style={{ display: 'flex', gap: 6, alignItems: 'flex-end', height: 48 }}>
+            {paceData.map((p, i) => (
+              <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+                <div style={{ width: '100%', height: `${(p.pace/maxPace)*42}px`, background: i === 2 ? 'var(--accent)' : 'var(--surface-2)', borderRadius: '3px 3px 0 0' }} />
+                <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>{p.km}</span>
+              </div>
+            ))}
+          </div>
+          <p style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 8, lineHeight: '14px' }}>Chaque barre représente ton allure sur 1 km. Plus la barre est haute, plus tu es rapide.</p>
+        </div>
+
+        {/* Street-grid circuit map */}
         <div style={{
-          background: 'var(--surface)',
-          borderRadius: 16,
+          background: 'var(--surface)', borderRadius: 16,
           border: '0.5px solid var(--border)',
-          boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.4), inset 0 -1px 4px rgba(255,255,255,0.02)',
-          padding: 16,
-          position: 'relative',
-          overflow: 'hidden',
-          marginBottom: 16,
+          boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.4)',
+          padding: 12, position: 'relative', overflow: 'hidden', marginBottom: 16,
         }}>
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 40, background: 'linear-gradient(to bottom, rgba(0,0,0,0.3), transparent)', pointerEvents: 'none', zIndex: 1 }} />
-          <svg width="100%" viewBox="0 0 320 240" style={{ display: 'block' }}>
+          <svg width="100%" viewBox="0 0 340 220" style={{ display: 'block' }}>
             <defs>
-              <linearGradient id="routeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <linearGradient id="routeGrad2" x1="0%" y1="0%" x2="100%" y2="0%">
                 <stop offset="0%" stopColor="#1FD66B"/>
-                <stop offset="45%" stopColor="#E00000"/>
-                <stop offset="75%" stopColor="#F5A623"/>
+                <stop offset="40%" stopColor="#E00000"/>
+                <stop offset="70%" stopColor="#F5A623"/>
                 <stop offset="100%" stopColor="#E00000"/>
               </linearGradient>
-              <filter id="glow">
-                <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
-                <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
-              </filter>
             </defs>
+            {Array.from({length:18}).map((_,i) => <line key={`v${i}`} x1={i*20} y1={0} x2={i*20} y2={220} stroke="rgba(255,255,255,0.03)" strokeWidth={1}/>)}
+            {Array.from({length:12}).map((_,i) => <line key={`h${i}`} x1={0} y1={i*20} x2={340} y2={i*20} stroke="rgba(255,255,255,0.03)" strokeWidth={1}/>)}
 
-            {/* Grid */}
-            {Array.from({ length: 17 }).map((_, i) => (
-              <line key={`v${i}`} x1={i*20} y1={0} x2={i*20} y2={240} stroke="rgba(255,255,255,0.03)" strokeWidth={1}/>
-            ))}
-            {Array.from({ length: 13 }).map((_, i) => (
-              <line key={`h${i}`} x1={0} y1={i*20} x2={320} y2={i*20} stroke="rgba(255,255,255,0.03)" strokeWidth={1}/>
-            ))}
+            <path id="circuit-path-run" d={CIRCUIT_PATH} style={{ display: 'none' }} />
 
-            {/* Terrain fill */}
-            <path d={`${CIRCUIT_PATH}`} fill="rgba(224,0,0,0.05)" />
+            <path d={CIRCUIT_PATH} fill="rgba(224,0,0,0.04)" stroke="rgba(0,0,0,0.4)" strokeWidth={5} />
+            <path d={CIRCUIT_PATH} fill="none" stroke="url(#routeGrad2)" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
 
-            {/* Shadow path */}
-            <path d={CIRCUIT_PATH} fill="none" stroke="rgba(0,0,0,0.5)" strokeWidth={6} strokeLinecap="round" strokeLinejoin="round" transform="translate(2,3)" />
+            <circle cx="40" cy="180" r="6" fill="var(--success)" />
+            <circle cx="40" cy="180" r="3" fill="white" />
 
-            {/* Main route */}
-            <path d={CIRCUIT_PATH} fill="none" stroke="url(#routeGrad)" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" filter="url(#glow)" />
+            <circle r="6" fill="var(--accent)">
+              <animateMotion dur="6s" repeatCount="indefinite" rotate="auto">
+                <mpath href="#circuit-path-run"/>
+              </animateMotion>
+            </circle>
+            <circle r="10" fill="rgba(224,0,0,0.2)">
+              <animateMotion dur="6s" repeatCount="indefinite" rotate="auto">
+                <mpath href="#circuit-path-run"/>
+              </animateMotion>
+            </circle>
 
-            {/* Distance markers */}
-            <text x="185" y="46" fill="rgba(255,255,255,0.35)" fontSize="9" fontWeight="600">1km</text>
-            <text x="262" y="100" fill="rgba(255,255,255,0.35)" fontSize="9" fontWeight="600">2km</text>
-            <text x="255" y="175" fill="rgba(255,255,255,0.35)" fontSize="9" fontWeight="600">3km</text>
-
-            {/* Street names */}
-            <text x="90" y="58" fill="rgba(255,255,255,0.20)" fontSize="8" transform="rotate(-10,90,58)">Rue H. Barbusse</text>
-            <text x="195" y="220" fill="rgba(255,255,255,0.20)" fontSize="8">Bd Victor Hugo</text>
-            <text x="55" y="145" fill="rgba(255,255,255,0.20)" fontSize="8" transform="rotate(-60,55,145)">Av. de Clichy</text>
-
-            {/* Start marker */}
-            <circle cx="50" cy="170" r="6" fill="var(--success)" />
-            <circle cx="50" cy="170" r="3" fill="white" />
-
-            {/* Animated dot with pulse */}
-            <circle cx={dotPos.x} cy={dotPos.y} r="10" fill="rgba(224,0,0,0.25)" />
-            <circle cx={dotPos.x} cy={dotPos.y} r="6" fill="rgba(224,0,0,0.5)" />
-            <circle cx={dotPos.x} cy={dotPos.y} r="4" fill="var(--accent)" />
-
-            {/* Corner label */}
-            <text x="195" y="233" fill="rgba(255,255,255,0.15)" fontSize="8">Clichy · Simulation</text>
+            <text x="220" y="213" fill="rgba(255,255,255,0.15)" fontSize="9">Clichy · Simulation</text>
           </svg>
         </div>
 
-        {/* Elevation profile */}
+        {/* Elevation */}
         <div className="card" style={{ marginBottom: 16 }}>
           <div className="flex justify-between items-center" style={{ marginBottom: 10 }}>
             <span className="text-xs text-muted">DÉNIVELÉ</span>
             <span className="text-xs text-accent">48m</span>
           </div>
-          <div style={{ display: 'flex', gap: 4, alignItems: 'flex-end', height: 50 }}>
+          <div style={{ display: 'flex', gap: 3, alignItems: 'flex-end', height: 44 }}>
             {elevationBars.map((h, i) => {
               const pct = h / maxElev
-              const r = Math.round(31 + (245-31)*pct)
-              const g = Math.round(214 + (163-214)*pct)
-              const b = Math.round(107 + (35-107)*pct)
-              return (
-                <div key={i} style={{ flex: 1, height: `${h}px`, background: `rgb(${r},${g},${b})`, borderRadius: '2px 2px 0 0', opacity: 0.85 }} />
-              )
+              const g = Math.round(214 - 51*pct)
+              return <div key={i} style={{ flex: 1, height: `${h}px`, background: `rgb(${Math.round(31+214*pct)},${g},${Math.round(107-72*pct)})`, borderRadius: '2px 2px 0 0', opacity: 0.85 }} />
             })}
-          </div>
-        </div>
-
-        {/* Pace chart */}
-        <div className="card" style={{ marginBottom: 16 }}>
-          <div className="text-xs text-muted" style={{ marginBottom: 10 }}>ALLURE PAR KM</div>
-          <div style={{ display: 'flex', gap: 6, alignItems: 'flex-end', height: 56 }}>
-            {paceData.map((p, i) => (
-              <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                <div style={{ width: '100%', height: `${(p.pace/maxPace)*48}px`, background: i === 2 ? 'var(--accent)' : 'var(--surface-2)', borderRadius: '3px 3px 0 0' }} />
-                <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>{p.km}</span>
-              </div>
-            ))}
           </div>
         </div>
 
         {/* Controls */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-          <button onClick={() => { setRunning(r => !r); navigator.vibrate && navigator.vibrate([50,30,50]) }} style={{
+          <button onClick={() => { setRunning(r => !r); if (!running) { setSeconds(0); setDistance(0) }; navigator.vibrate && navigator.vibrate([50,30,50]) }} style={{
             width: 64, height: 64, borderRadius: '50%',
             background: running ? 'var(--danger)' : 'var(--success)',
             border: 'none', cursor: 'pointer',
