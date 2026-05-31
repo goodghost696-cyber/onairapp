@@ -17,6 +17,27 @@ export default function Scan() {
   const [sheetOpen, setSheetOpen] = useState(false)
   const [mealType, setMealType] = useState('Déjeuner')
 
+  const resizeImage = (file, maxWidth = 800) => {
+    return new Promise((resolve) => {
+      const img = new Image()
+      const canvas = document.createElement('canvas')
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        img.onload = () => {
+          const ratio = Math.min(maxWidth / img.width, maxWidth / img.height)
+          canvas.width = img.width * ratio
+          canvas.height = img.height * ratio
+          const ctx = canvas.getContext('2d')
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+          const resized = canvas.toDataURL('image/jpeg', 0.8)
+          resolve(resized)
+        }
+        img.src = e.target.result
+      }
+      reader.readAsDataURL(file)
+    })
+  }
+
   // --- Mode 1: Food photo via Anthropic Vision ---
   async function handleFoodPhoto(e) {
     const file = e.target.files?.[0]
@@ -24,42 +45,38 @@ export default function Scan() {
     setLoading(true)
     setError(null)
     setMealResult(null)
-    const reader = new FileReader()
-    reader.onload = async () => {
-      const base64 = reader.result.split(',')[1]
-      const mediaType = file.type
-      try {
-        const response = await fetch('/api/claude', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'claude-sonnet-4-20250514',
-            max_tokens: 1000,
-            messages: [{
-              role: 'user',
-              content: [
-                { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
-                { type: 'text', text: `Analyse ce repas et identifie chaque aliment visible.\nPour chaque aliment, estime la quantité en grammes et calcule les macronutriments.\nRéponds UNIQUEMENT en JSON valide, sans texte avant ou après, dans ce format exact:\n{\n  "meal_name": "nom du repas",\n  "items": [\n    {\n      "name": "nom aliment",\n      "grams": 150,\n      "kcal": 200,\n      "proteins": 20,\n      "carbs": 15,\n      "fats": 8\n    }\n  ],\n  "total": {\n    "kcal": 400,\n    "proteins": 35,\n    "carbs": 30,\n    "fats": 12\n  }\n}` }
-              ]
-            }]
-          })
+    try {
+      const resizedDataUrl = await resizeImage(file)
+      const base64 = resizedDataUrl.split(',')[1]
+      const mediaType = 'image/jpeg'
+      const response = await fetch('/api/claude', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          messages: [{
+            role: 'user',
+            content: [
+              { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
+              { type: 'text', text: `Analyse ce repas et identifie chaque aliment visible.\nPour chaque aliment, estime la quantité en grammes et calcule les macronutriments.\nRéponds UNIQUEMENT en JSON valide, sans texte avant ou après, dans ce format exact:\n{\n  "meal_name": "nom du repas",\n  "items": [\n    {\n      "name": "nom aliment",\n      "grams": 150,\n      "kcal": 200,\n      "proteins": 20,\n      "carbs": 15,\n      "fats": 8\n    }\n  ],\n  "total": {\n    "kcal": 400,\n    "proteins": 35,\n    "carbs": 30,\n    "fats": 12\n  }\n}` }
+            ]
+          }]
         })
-        const data = await response.json()
-        const text = data.content[0].text
-        // Extract JSON from response (might have surrounding text)
-        const jsonMatch = text.match(/\{[\s\S]*\}/)
-        if (!jsonMatch) throw new Error('No JSON')
-        const parsed = JSON.parse(jsonMatch[0])
-        setMealResult(parsed)
-        setSheetOpen(true)
-      } catch {
-        setError('Reconnaissance impossible. Réessaie avec une meilleure photo.')
-      }
-      setLoading(false)
+      })
+      if (!response.ok) throw new Error(`HTTP ${response.status}`)
+      const data = await response.json()
+      const text = data.content[0].text
+      const cleaned = text.replace(/```json|```/g, '').trim()
+      const jsonMatch = cleaned.match(/\{[\s\S]*\}/)
+      if (!jsonMatch) throw new Error('No JSON')
+      const parsed = JSON.parse(jsonMatch[0])
+      setMealResult(parsed)
+      setSheetOpen(true)
+    } catch {
+      setError('Reconnaissance impossible. Réessaie avec une meilleure photo.')
     }
-    reader.readAsDataURL(file)
+    setLoading(false)
   }
 
   // --- Mode 2: Barcode via Quagga ---
