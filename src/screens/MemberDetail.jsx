@@ -40,7 +40,7 @@ export default function MemberDetail() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
+          model: 'claude-sonnet-4-6',
           max_tokens: 400,
           system: `Tu es Thomas, coach chez ON AIR Fitness Clichy. Bilan court sur ${member.name}. Données : séances ${member.sessions}/mois, dernière visite ${member.lastSeen}, calories ${member.calories} kcal, sommeil ${member.sleep}, pas ${member.steps}, statut ${member.status}, objectif ${member.goal}. 3 phrases max. Direct, pro, actionnable. Termine par une reco concrète. Pas de bullet points. Pas de titre.`,
           messages: [{ role: 'user', content: `Bilan pour ${member.name}` }],
