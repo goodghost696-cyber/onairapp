@@ -1,170 +1,174 @@
 import { useLanguage } from '../context/LanguageContext';
+import { useExerciseImage } from '../hooks/useExerciseImage';
 import '../styles/ExerciseModal.css';
+
+const WGER_IDS = {
+  m1: 10,
+  m2: 111,
+  m3: 75,
+  m4: 168,
+  m5: 99,
+  m6: 37,
+  m7: 85,
+  m8: 291,
+  s1: 192,
+  s2: 6,
+  s3: 227,
+  s4: 31,
+  s5: 69,
+  s6: 91,
+  s7: 121,
+  s8: 313,
+  d1: 272,
+  d2: 31,
+  d3: 105,
+  d4: 247,
+  d5: 85,
+  d6: 111,
+  d7: 272,
+  d8: 31,
+};
 
 const EXERCISE_DATA = {
   m1: {
-    image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&q=80',
     muscles_primary: ['Pectoraux', 'Triceps'],
     muscles_secondary: ['Épaules'],
     steps: ["Mains à largeur des épaules, corps aligné.", "Descends jusqu'à 90°, coudes serrés.", "Pousse fort en expirant."],
     muscle_group: 'chest'
   },
   m2: {
-    image: 'https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=400&q=80',
     muscles_primary: ['Quadriceps', 'Fessiers'],
     muscles_secondary: ['Ischio-jambiers'],
     steps: ["Pieds à largeur des épaules, orteils légèrement tournés.", "Descends comme pour t'asseoir, genoux dans l'axe.", "Remonte en contractant les fessiers."],
     muscle_group: 'legs'
   },
   m3: {
-    image: 'https://images.unsplash.com/photo-1566241142559-40e1dab266c6?w=400&q=80',
     muscles_primary: ['Core', 'Abdos'],
     muscles_secondary: ['Épaules', 'Fessiers'],
     steps: ["Appui sur les avant-bras, corps droit.", "Contracte les abdos et les fessiers.", "Tiens la position sans creuser le dos."],
     muscle_group: 'core'
   },
   m4: {
-    image: 'https://images.unsplash.com/photo-1601422407692-ec4eeec1d9b3?w=400&q=80',
     muscles_primary: ['Full body'],
     muscles_secondary: ['Cardio'],
     steps: ["Debout, puis squat et mains au sol.", "Saute les pieds en arrière en position pompe.", "Reviens et saute en l'air, mains en haut."],
     muscle_group: 'fullbody'
   },
   m5: {
-    image: 'https://images.unsplash.com/photo-1597452485669-2c7bb5fef90d?w=400&q=80',
     muscles_primary: ['Quadriceps', 'Fessiers'],
     muscles_secondary: ['Ischio-jambiers', 'Core'],
     steps: ["Grand pas en avant, buste droit.", "Descends le genou arrière vers le sol.", "Pousse sur le pied avant pour revenir."],
     muscle_group: 'legs'
   },
   m6: {
-    image: 'https://images.unsplash.com/photo-1530822847156-5df684ec5ee1?w=400&q=80',
     muscles_primary: ['Triceps'],
     muscles_secondary: ['Épaules', 'Pectoraux'],
     steps: ["Mains sur une chaise derrière toi, jambes tendues.", "Descends en pliant les coudes à 90°.", "Pousse pour revenir à la position initiale."],
     muscle_group: 'arms'
   },
   m7: {
-    image: 'https://images.unsplash.com/photo-1599058917765-a780eda07a3e?w=400&q=80',
     muscles_primary: ['Core', 'Cardio'],
     muscles_secondary: ['Épaules'],
     steps: ["Position pompe, mains sous les épaules.", "Ramène les genoux vers la poitrine en alternant.", "Garde le rythme, abdos contractés."],
     muscle_group: 'core'
   },
   m8: {
-    image: 'https://images.unsplash.com/photo-1544033527-b192daee1f5b?w=400&q=80',
     muscles_primary: ['Fessiers', 'Ischio-jambiers'],
     muscles_secondary: ['Core'],
     steps: ["Allongé sur le dos, pieds à plat, genoux fléchis.", "Pousse sur les talons pour lever les hanches.", "Contracte les fessiers en haut, redescends lentement."],
     muscle_group: 'legs'
   },
   s1: {
-    image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&q=80',
     muscles_primary: ['Pectoraux', 'Triceps'],
     muscles_secondary: ['Épaules'],
     steps: ["Barre à largeur des épaules, dos légèrement cambré.", "Descends la barre jusqu'à effleurer la poitrine.", "Pousse explosif, coudes pas trop écartés."],
     muscle_group: 'chest'
   },
   s2: {
-    image: 'https://images.unsplash.com/photo-1566241142559-40e1dab266c6?w=400&q=80',
     muscles_primary: ['Quadriceps', 'Fessiers'],
     muscles_secondary: ['Ischio-jambiers', 'Core'],
     steps: ["Barre sur les trapèzes, pieds à largeur des épaules.", "Descends cuisses parallèles au sol minimum.", "Remonte en poussant dans le sol, dos droit."],
     muscle_group: 'legs'
   },
   s3: {
-    image: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=400&q=80',
     muscles_primary: ['Ischio-jambiers', 'Dos'],
     muscles_secondary: ['Fessiers', 'Trapèzes'],
     steps: ["Barre au sol, dos plat, hanches en arrière.", "Tire la barre en gardant dos neutre.", "Debout, épaules en arrière, repose contrôlé."],
     muscle_group: 'back'
   },
   s4: {
-    image: 'https://images.unsplash.com/photo-1598971639058-fab3c3109a3a?w=400&q=80',
     muscles_primary: ['Dos', 'Biceps'],
     muscles_secondary: ['Core'],
     steps: ["Prise pronation ou supination, bras tendus.", "Tire le menton au-dessus de la barre.", "Redescends lentement, bras complètement tendus."],
     muscle_group: 'back'
   },
   s5: {
-    image: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=400&q=80',
     muscles_primary: ['Épaules', 'Triceps'],
     muscles_secondary: ['Trapèzes'],
     steps: ["Barre à hauteur des épaules, prise légèrement plus large.", "Pousse la barre au-dessus de la tête.", "Redescends à hauteur du menton, contrôlé."],
     muscle_group: 'shoulders'
   },
   s6: {
-    image: 'https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=400&q=80',
     muscles_primary: ['Ischio-jambiers', 'Fessiers'],
     muscles_secondary: ['Dos bas'],
     steps: ["Barre en main, dos plat, légère flexion des genoux.", "Penche le buste en avant, barre près des jambes.", "Reviens avec les hanches, pas le dos."],
     muscle_group: 'legs'
   },
   s7: {
-    image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&q=80',
     muscles_primary: ['Pectoraux haut', 'Triceps'],
     muscles_secondary: ['Épaules'],
     steps: ["Banc incliné à 30-45°, haltères en main.", "Descends les haltères jusqu'à la poitrine haute.", "Pousse en arc de cercle, contracte les pecs."],
     muscle_group: 'chest'
   },
   s8: {
-    image: 'https://images.unsplash.com/photo-1598971639058-fab3c3109a3a?w=400&q=80',
     muscles_primary: ['Dos', 'Biceps'],
     muscles_secondary: ['Core'],
     steps: ["Assis face à la poulie, dos droit.", "Tire la poignée vers le nombril, coudes en arrière.", "Retiens la charge en revenant, dos droit."],
     muscle_group: 'back'
   },
   d1: {
-    image: 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=400&q=80',
     muscles_primary: ['Full body', 'Cardio'],
     muscles_secondary: ['Quadriceps', 'Fessiers'],
     steps: ["Départ en position basse, explosif.", "Sprint maximal sur 100m.", "Récupère 2-3 min entre les séries."],
     muscle_group: 'fullbody'
   },
   d2: {
-    image: 'https://images.unsplash.com/photo-1598971639058-fab3c3109a3a?w=400&q=80',
     muscles_primary: ['Dos', 'Biceps'],
     muscles_secondary: ['Core'],
     steps: ["Barre fixe, prise en supination ou pronation.", "Tire jusqu'au menton au-dessus de la barre.", "Redescends contrôlé, bras complètement tendus."],
     muscle_group: 'back'
   },
   d3: {
-    image: 'https://images.unsplash.com/photo-1601422407692-ec4eeec1d9b3?w=400&q=80',
     muscles_primary: ['Quadriceps', 'Fessiers'],
     muscles_secondary: ['Explosivité'],
     steps: ["Debout face à la box, pieds à largeur des épaules.", "Squat partiel puis saut explosif sur la box.", "Atterris en douceur, descends en contrôle."],
     muscle_group: 'legs'
   },
   d4: {
-    image: 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=400&q=80',
     muscles_primary: ['Cardio', 'Mollets'],
     muscles_secondary: ['Coordination'],
     steps: ["Poignées à hauteur des hanches, saute légèrement.", "Fais tourner la corde avec les poignets.", "Maintiens le rythme, reste sur l'avant du pied."],
     muscle_group: 'fullbody'
   },
   d5: {
-    image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&q=80',
     muscles_primary: ['Full body', 'Core'],
     muscles_secondary: ['Épaules'],
     steps: ["À quatre pattes, dos plat, genoux décollés.", "Avance main droite + pied gauche simultanément.", "Garde le dos horizontal, rythme régulier."],
     muscle_group: 'fullbody'
   },
   d6: {
-    image: 'https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=400&q=80',
     muscles_primary: ['Quadriceps', 'Équilibre'],
     muscles_secondary: ['Fessiers', 'Core'],
     steps: ["Debout sur une jambe, autre jambe tendue devant.", "Descends en squat sur une jambe.", "Remonte en poussant fort, garde l'équilibre."],
     muscle_group: 'legs'
   },
   d7: {
-    image: 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=400&q=80',
     muscles_primary: ['Cardio', 'Fessiers'],
     muscles_secondary: ['Ischio-jambiers'],
     steps: ["Trouve une côte, départ en bas.", "Sprint maximum en montée, penche le buste.", "Redescends en marchant pour récupérer."],
     muscle_group: 'fullbody'
   },
   d8: {
-    image: 'https://images.unsplash.com/photo-1598971639058-fab3c3109a3a?w=400&q=80',
     muscles_primary: ['Dos', 'Pectoraux', 'Triceps'],
     muscles_secondary: ['Core'],
     steps: ["Traction jusqu'au menton au-dessus de la barre.", "Pousse les coudes vers le bas pour passer la barre.", "Dips en haut, redescends contrôlé."],
@@ -251,6 +255,31 @@ const MUSCLE_SVG = {
   ),
 };
 
+const ExerciseImage = ({ exerciseId }) => {
+  const wgerId = WGER_IDS[exerciseId];
+  const { imageUrl, loading } = useExerciseImage(wgerId);
+
+  if (loading) return (
+    <div className="modal-image-placeholder">
+      <div className="modal-image-spinner" />
+    </div>
+  );
+
+  if (!imageUrl) return (
+    <div className="modal-image-placeholder">
+      <span className="modal-image-fallback">Aucune image disponible</span>
+    </div>
+  );
+
+  return (
+    <img
+      src={imageUrl}
+      alt="Exercise"
+      className="modal-image"
+    />
+  );
+};
+
 export const ExerciseModal = ({ exercise, onClose, onAdd }) => {
   const { t } = useLanguage();
   const data = EXERCISE_DATA[exercise?.id];
@@ -262,12 +291,7 @@ export const ExerciseModal = ({ exercise, onClose, onAdd }) => {
       <div className="exercise-modal">
         <div className="modal-handle" />
 
-        <img
-          src={data.image}
-          alt={exercise.name}
-          className="modal-image"
-          onError={(e) => { e.target.style.display = 'none'; }}
-        />
+        <ExerciseImage exerciseId={exercise.id} />
 
         <div className="modal-content">
           <h2 className="modal-title">{exercise.name}</h2>
