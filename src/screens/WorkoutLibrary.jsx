@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import BottomNav from '../components/BottomNav'
 import { useApp } from '../context/AppContext'
 import { useLanguage } from '../context/LanguageContext'
+import { ExerciseModal } from '../components/ExerciseModal'
 
 const EXERCISES = {
   maison: [
@@ -46,6 +47,7 @@ export default function WorkoutLibrary({ section }) {
   const [search, setSearch] = useState('')
   const [added, setAdded] = useState({})
   const [toast, setToast] = useState(false)
+  const [selectedExercise, setSelectedExercise] = useState(null)
 
   const exercises = EXERCISES[section] || []
   const filtered = exercises.filter(e =>
@@ -58,9 +60,7 @@ export default function WorkoutLibrary({ section }) {
     updateData('activeSession', [...(appData.activeSession || []), newEx])
     setAdded(prev => ({ ...prev, [ex.id]: true }))
     setToast(true)
-    setTimeout(() => {
-      navigate('/workout')
-    }, 800)
+    setTimeout(() => navigate('/workout'), 800)
     setTimeout(() => setAdded(prev => ({ ...prev, [ex.id]: false })), 1500)
     setTimeout(() => setToast(false), 2000)
   }
@@ -104,14 +104,19 @@ export default function WorkoutLibrary({ section }) {
         </div>
 
         {filtered.map((ex, i) => (
-          <div key={ex.id} className="card card-animated" style={{ '--delay': `${i * 60}ms`, display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8, padding: '14px 16px' }}>
+          <div
+            key={ex.id}
+            className="card card-animated"
+            style={{ '--delay': `${i * 60}ms`, display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8, padding: '14px 16px', cursor: 'pointer' }}
+            onClick={() => setSelectedExercise(ex)}
+          >
             <div style={{ width: 60, height: 60, background: 'var(--surface-2)', borderRadius: 12, flexShrink: 0 }} />
             <div style={{ flex: 1 }}>
               <div className="text-base bold">{ex.name}</div>
               <div className="text-sm text-muted">{ex.muscles}</div>
             </div>
             <button
-              onClick={() => addExercise(ex)}
+              onClick={(e) => { e.stopPropagation(); addExercise(ex) }}
               style={{
                 background: 'transparent',
                 border: `1px solid ${added[ex.id] ? 'var(--success)' : 'var(--accent)'}`,
@@ -126,6 +131,15 @@ export default function WorkoutLibrary({ section }) {
           </div>
         ))}
       </div>
+
+      {selectedExercise && (
+        <ExerciseModal
+          exercise={selectedExercise}
+          onClose={() => setSelectedExercise(null)}
+          onAdd={addExercise}
+        />
+      )}
+
       <BottomNav />
     </div>
   )
