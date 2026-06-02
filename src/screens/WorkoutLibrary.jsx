@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import BottomNav from '../components/BottomNav'
 import { useApp } from '../context/AppContext'
+import { useLanguage } from '../context/LanguageContext'
 
 const EXERCISES = {
   maison: [
@@ -41,6 +42,7 @@ const SECTION_NAMES = { maison: 'Maison', salle: 'Salle', dehors: 'Dehors' }
 export default function WorkoutLibrary({ section }) {
   const navigate = useNavigate()
   const { appData, updateData } = useApp()
+  const { t } = useLanguage()
   const [search, setSearch] = useState('')
   const [added, setAdded] = useState({})
   const [toast, setToast] = useState(false)
@@ -76,7 +78,7 @@ export default function WorkoutLibrary({ section }) {
         transition: 'top 300ms cubic-bezier(0.34,1.56,0.64,1)',
         whiteSpace: 'nowrap',
       }}>
-        Ajouté à ta séance ✓
+        {t('added_to_session')}
       </div>
 
       <div className="screen" style={{ paddingBottom: 110 }}>
@@ -96,7 +98,7 @@ export default function WorkoutLibrary({ section }) {
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Rechercher un exercice..."
+            placeholder={t('search_exercise')}
             style={{ paddingLeft: 40 }}
           />
         </div>
@@ -119,7 +121,7 @@ export default function WorkoutLibrary({ section }) {
                 transition: 'all 200ms ease',
               }}
             >
-              {added[ex.id] ? '✓ AJOUTÉ' : '+ AJOUTER'}
+              {added[ex.id] ? t('added') : t('add_btn')}
             </button>
           </div>
         ))}

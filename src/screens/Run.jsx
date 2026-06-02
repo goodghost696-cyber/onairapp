@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import BottomNav from '../components/BottomNav'
+import { useLanguage } from '../context/LanguageContext'
 
 const paceData = [
   { km: '1', pace: 5.75, label: '5:45' },
@@ -18,6 +19,7 @@ const maxElev = Math.max(...elevationBars)
 const CIRCUIT_PATH = "M 40,180 L 40,60 L 120,60 L 120,30 L 260,30 L 260,80 L 300,80 L 300,180 L 220,180 L 220,140 L 100,140 L 100,180 Z"
 
 export default function Run() {
+  const { t } = useLanguage()
   const [running, setRunning] = useState(false)
   const [seconds, setSeconds] = useState(0)
   const [distance, setDistance] = useState(0)
@@ -46,14 +48,14 @@ export default function Run() {
   const displayPace = running || seconds > 0 ? pace : '5:12'
 
   const metrics1 = [
-    { label: 'DISTANCE', val: `${displayDist} km` },
-    { label: 'PACE', val: `${displayPace} /km` },
-    { label: 'DURÉE', val: displayTime },
+    { label: t('distance'), val: `${displayDist} km` },
+    { label: t('pace'), val: `${displayPace} /km` },
+    { label: t('duration'), val: displayTime },
   ]
   const metrics2 = [
-    { label: 'DÉNIVELÉ', val: '48 m' },
-    { label: 'FREQ. CARD.', val: '142 bpm' },
-    { label: 'CALORIES', val: '487' },
+    { label: t('elevation'), val: '48 m' },
+    { label: t('heart_rate'), val: '142 bpm' },
+    { label: t('calories_burned'), val: '487' },
   ]
 
   return (
@@ -80,11 +82,11 @@ export default function Run() {
           ))}
         </div>
 
-        {/* Pace chart - ABOVE map */}
+        {/* Pace chart */}
         <div className="card" style={{ marginBottom: 16 }}>
           <div className="flex justify-between items-center" style={{ marginBottom: 8 }}>
-            <span className="text-xs text-muted">ALLURE PAR KM</span>
-            <span className="text-xs text-accent">Meilleure : 5:05/km</span>
+            <span className="text-xs text-muted">{t('pace_per_km')}</span>
+            <span className="text-xs text-accent">{t('best_pace')} : 5:05/km</span>
           </div>
           <div style={{ display: 'flex', gap: 6, alignItems: 'flex-end', height: 48 }}>
             {paceData.map((p, i) => (
@@ -142,7 +144,7 @@ export default function Run() {
         {/* Elevation */}
         <div className="card" style={{ marginBottom: 16 }}>
           <div className="flex justify-between items-center" style={{ marginBottom: 10 }}>
-            <span className="text-xs text-muted">DÉNIVELÉ</span>
+            <span className="text-xs text-muted">{t('elevation')}</span>
             <span className="text-xs text-accent">48m</span>
           </div>
           <div style={{ display: 'flex', gap: 3, alignItems: 'flex-end', height: 44 }}>
@@ -163,13 +165,13 @@ export default function Run() {
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             boxShadow: `0 4px 20px ${running ? 'rgba(255,59,59,0.4)' : 'rgba(31,214,107,0.4)'}`,
           }}>
-            <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1, color: '#000', textTransform: 'uppercase' }}>{running ? 'STOP' : 'START'}</span>
+            <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1, color: '#000', textTransform: 'uppercase' }}>{running ? t('stop') : t('start')}</span>
           </button>
-          <span style={{ fontSize: 11, color: 'var(--success)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>GPS · Signal fort</span>
+          <span style={{ fontSize: 11, color: 'var(--success)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{t('gps_strong')}</span>
         </div>
 
         <div className="card" style={{ textAlign: 'center' }}>
-          <div className="text-xs text-muted" style={{ marginBottom: 6 }}>CETTE SEMAINE</div>
+          <div className="text-xs text-muted" style={{ marginBottom: 6 }}>{t('this_week')}</div>
           <div className="text-sm text-secondary">32.6 km · 5 sorties · Avg 5:18/km</div>
         </div>
       </div>

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useApp } from '../context/AppContext'
+import { useLanguage } from '../context/LanguageContext'
 import BottomNav from '../components/BottomNav'
 
 function Toggle({ on, onToggle }) {
@@ -26,6 +27,7 @@ export default function Settings() {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
   const { appData, updateData } = useApp()
+  const { lang, setLanguage, t } = useLanguage()
   const [notifs, setNotifs] = useState({ hydration: true, session: true, weekly: true })
 
   const [profile, setProfile] = useState({ name: user?.name || '', email: user?.email || '', weight: '78', height: '180' })
@@ -42,32 +44,32 @@ export default function Settings() {
     <div className="app-wrapper">
       <div className="screen" style={{ paddingBottom: 110 }}>
         <div className="screen-header" style={{ padding: '20px 0 12px' }}>
-          <h1 className="text-xl bold">Paramètres</h1>
+          <h1 className="text-xl bold">{t('settings_title')}</h1>
         </div>
 
-        <div className="section-label">PROFIL</div>
+        <div className="section-label">{t('profile_section')}</div>
         <div className="card">
-          <Field label="Prénom" value={profile.name} onChange={v => setProfile(p => ({...p, name: v}))} />
-          <Field label="Email" value={profile.email} onChange={v => setProfile(p => ({...p, email: v}))} type="email" />
-          <Field label="Poids (kg)" value={profile.weight} onChange={v => setProfile(p => ({...p, weight: v}))} type="number" />
-          <Field label="Taille (cm)" value={profile.height} onChange={v => setProfile(p => ({...p, height: v}))} type="number" />
+          <Field label={t('first_name')} value={profile.name} onChange={v => setProfile(p => ({...p, name: v}))} />
+          <Field label={t('email')} value={profile.email} onChange={v => setProfile(p => ({...p, email: v}))} type="email" />
+          <Field label={t('weight')} value={profile.weight} onChange={v => setProfile(p => ({...p, weight: v}))} type="number" />
+          <Field label={t('height')} value={profile.height} onChange={v => setProfile(p => ({...p, height: v}))} type="number" />
         </div>
 
-        <div className="section-label">OBJECTIFS</div>
+        <div className="section-label">{t('goals_section')}</div>
         <div className="card">
-          <Field label="Calories/jour" value={goals.calories} onChange={v => setGoals(g => ({...g, calories: v}))} type="number" />
-          <Field label="Protéines (g)" value={goals.protein} onChange={v => setGoals(g => ({...g, protein: v}))} type="number" />
-          <Field label="Eau (ml)" value={goals.water} onChange={v => setGoals(g => ({...g, water: v}))} type="number" />
-          <Field label="Pas/jour" value={goals.steps} onChange={v => setGoals(g => ({...g, steps: v}))} type="number" />
+          <Field label={t('calories_day')} value={goals.calories} onChange={v => setGoals(g => ({...g, calories: v}))} type="number" />
+          <Field label={t('proteins')} value={goals.protein} onChange={v => setGoals(g => ({...g, protein: v}))} type="number" />
+          <Field label={t('water_goal')} value={goals.water} onChange={v => setGoals(g => ({...g, water: v}))} type="number" />
+          <Field label={t('steps_goal')} value={goals.steps} onChange={v => setGoals(g => ({...g, steps: v}))} type="number" />
         </div>
-        <button className="btn-ghost" onClick={saveGoals} style={{ marginBottom: 8 }}>ENREGISTRER LES OBJECTIFS</button>
+        <button className="btn-ghost" onClick={saveGoals} style={{ marginBottom: 8 }}>{t('save_goals')}</button>
 
-        <div className="section-label">NOTIFICATIONS</div>
+        <div className="section-label">{t('notifications_section')}</div>
         <div className="card">
           {[
-            { key: 'hydration', label: 'Rappel hydratation' },
-            { key: 'session', label: 'Rappel séance' },
-            { key: 'weekly', label: 'Bilan hebdo' },
+            { key: 'hydration', label: t('hydration_reminder') },
+            { key: 'session', label: t('workout_reminder') },
+            { key: 'weekly', label: t('weekly_recap_notif') },
           ].map(n => (
             <div key={n.key} className="flex justify-between items-center" style={{ padding: '14px 0', borderBottom: '0.5px solid var(--border)' }}>
               <span className="text-sm text-secondary">{n.label}</span>
@@ -76,9 +78,26 @@ export default function Settings() {
           ))}
         </div>
 
-        <div className="section-label">COMPTE</div>
+        <div className="section-label">{t('language_section')}</div>
+        <div className="lang-selector">
+          {[
+            { code: 'fr', label: 'Français', flag: '🇫🇷' },
+            { code: 'en', label: 'English', flag: '🇬🇧' },
+            { code: 'es', label: 'Español', flag: '🇪🇸' },
+          ].map(l => (
+            <button
+              key={l.code}
+              className={`lang-btn${lang === l.code ? ' active' : ''}`}
+              onClick={() => setLanguage(l.code)}
+            >
+              {l.flag} {l.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="section-label">{t('account_section')}</div>
         <button onClick={() => { logout(); navigate('/') }} style={{ width: '100%', padding: 16, background: 'transparent', border: '1px solid var(--danger)', color: 'var(--danger)', fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', borderRadius: 12, cursor: 'pointer', marginBottom: 16 }}>
-          SE DÉCONNECTER
+          {t('logout')}
         </button>
       </div>
       <BottomNav />

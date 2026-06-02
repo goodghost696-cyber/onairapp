@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useApp } from '../context/AppContext'
+import { useLanguage } from '../context/LanguageContext'
 import BottomNav from '../components/BottomNav'
 import CalorieRing from '../components/CalorieRing'
 import '../styles/dashboard.css'
@@ -17,6 +18,7 @@ export default function Dashboard() {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
   const { appData } = useApp()
+  const { t } = useLanguage()
 
   function handleLogout() {
     logout()
@@ -24,7 +26,7 @@ export default function Dashboard() {
   }
 
   const hour = new Date().getHours()
-  const greeting = hour < 12 ? 'Morning' : hour < 18 ? 'Afternoon' : 'Evening'
+  const greeting = hour < 12 ? t('greeting_morning') : hour < 18 ? t('greeting_afternoon') : t('greeting_evening')
 
   return (
     <div className="app-wrapper">
@@ -38,7 +40,7 @@ export default function Dashboard() {
 
         <div style={{ marginBottom: 24 }}>
           <h1 className="text-xl bold">{greeting}, {user?.name}.</h1>
-          <p className="text-sm text-secondary">Voyons où tu en es.</p>
+          <p className="text-sm text-secondary">{t('see_progress')}</p>
         </div>
 
         <div className="dash-ring-row card-animated" style={{ '--delay': '50ms' }}>
@@ -60,12 +62,12 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="section-label">ACTIVITÉ</div>
+        <div className="section-label">{t('activity')}</div>
         <div className="dash-metrics-grid">
           {[
-            { label: 'Pas', val: appData.steps.toLocaleString(), sub: `/${appData.stepsGoal.toLocaleString()}` },
-            { label: 'Course', val: `${appData.kmRun}km`, sub: 'aujourd\'hui' },
-            { label: 'Hydration', val: `${appData.water}ml`, sub: `/${appData.waterGoal}ml` },
+            { label: t('steps'), val: appData.steps.toLocaleString(), sub: `/${appData.stepsGoal.toLocaleString()}` },
+            { label: 'Course', val: `${appData.kmRun}km`, sub: "aujourd'hui" },
+            { label: t('water'), val: `${appData.water}ml`, sub: `/${appData.waterGoal}ml` },
             { label: 'Sommeil', val: `${appData.sleep.hours}h${appData.sleep.minutes}`, sub: appData.sleep.quality },
           ].map((m, idx) => (
             <div key={m.label} className="metric-card card card-animated" style={{ '--delay': `${100 + idx * 60}ms` }}>
@@ -82,7 +84,7 @@ export default function Dashboard() {
           onClick={() => navigate('/rings')}
         >
           <div className="flex justify-between items-center" style={{ padding: '12px 0' }}>
-            <span className="text-sm text-secondary">MES OBJECTIFS</span>
+            <span className="text-sm text-secondary">{t('my_goals')}</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{
                 background: 'var(--accent)', color: '#fff',
@@ -102,23 +104,23 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="section-label">SÉANCES CETTE SEMAINE</div>
+        <div className="section-label">{t('weekly_sessions')}</div>
         <div className="card card-animated" style={{ '--delay': '380ms' }}>
           <div className="flex justify-between items-center" style={{ marginBottom: 12 }}>
             <span className="text-lg bold">{appData.weeklyWorkouts}/{appData.weeklyGoal}</span>
-            <span className="text-xs text-muted">séances</span>
+            <span className="text-xs text-muted">{t('workouts_done')}</span>
           </div>
           <div className="progress-bar" style={{ height: 6 }}>
             <div className="progress-fill macro-fill" style={{ '--w': `${appData.weeklyWorkouts/appData.weeklyGoal*100}%`, '--delay': '450ms' }} />
           </div>
         </div>
 
-        <div className="section-label">RACCOURCIS</div>
+        <div className="section-label">{t('shortcuts')}</div>
         <div className="dash-shortcuts">
           {[
-            { label: 'Nutrition', path: '/nutrition' },
-            { label: 'Workout', path: '/workout' },
-            { label: 'Run', path: '/run' },
+            { label: t('nutrition'), path: '/nutrition' },
+            { label: t('workout'), path: '/workout' },
+            { label: t('run'), path: '/run' },
             { label: 'Bilan', path: '/weekly' },
           ].map(s => (
             <button key={s.path} className="shortcut-btn" onClick={() => navigate(s.path)}>
@@ -130,8 +132,8 @@ export default function Dashboard() {
         <div className="card" style={{ cursor: 'pointer', background: 'linear-gradient(135deg, rgba(224,0,0,0.15), rgba(224,0,0,0.05))', border: '0.5px solid rgba(224,0,0,0.3)', marginTop: 8 }} onClick={() => navigate('/ai-coach')}>
           <div className="flex justify-between items-center">
             <div>
-              <div className="text-base bold">TON COACH IA</div>
-              <div className="text-sm text-muted">Questions nutrition, programme, analyse</div>
+              <div className="text-base bold">{t('ai_coach_card')}</div>
+              <div className="text-sm text-muted">{t('ai_coach_sub')}</div>
             </div>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
           </div>

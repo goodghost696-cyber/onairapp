@@ -346,3 +346,27 @@ button {
   cursor: pointer;
   margin-top: 4px;
 }
+
+/* ── Language selector ── */
+.lang-selector {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.lang-btn {
+  flex: 1;
+  padding: 10px 8px;
+  border-radius: 10px;
+  border: 0.5px solid var(--border);
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 150ms ease;
+  font-family: inherit;
+}
+.lang-btn.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(224,0,0,0.08);
+}

@@ -2,10 +2,9 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { FOOD_DATABASE } from '../context/AppContext'
+import { useLanguage } from '../context/LanguageContext'
 import BottomNav from '../components/BottomNav'
 import NutriscoreBadge from '../components/NutriscoreBadge'
-
-const MEAL_TYPES = ['Petit-déjeuner', 'Déjeuner', 'Dîner', 'Snack']
 
 function calcNutrition(food, grams) {
   return {
@@ -19,6 +18,7 @@ function calcNutrition(food, grams) {
 export default function Nutrition() {
   const navigate = useNavigate()
   const { appData, updateData } = useApp()
+  const { t } = useLanguage()
   const [sheetOpen, setSheetOpen] = useState(false)
   const [step, setStep] = useState(1)
   const [search, setSearch] = useState('')
@@ -26,6 +26,8 @@ export default function Nutrition() {
   const [grams, setGrams] = useState(100)
   const [mealType, setMealType] = useState('Déjeuner')
   const [toast, setToast] = useState('')
+
+  const MEAL_TYPES = [t('breakfast'), t('lunch'), t('dinner'), t('snack')]
 
   const filtered = FOOD_DATABASE.filter(f => f.name.toLowerCase().includes(search.toLowerCase()))
   const preview = selectedFood ? calcNutrition(selectedFood, grams) : null
@@ -71,7 +73,7 @@ export default function Nutrition() {
             <span className="text-sm text-muted">{new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'short' })}</span>
             <button onClick={() => navigate('/scan')} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, color: 'var(--accent)' }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h.01M18 14h.01M14 18h.01M18 18h.01M14 14v4h4v-4z" strokeLinejoin="round"/></svg>
-              <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase' }}>SCANNER</span>
+              <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase' }}>{t('scan')}</span>
             </button>
           </div>
         </div>
@@ -79,7 +81,7 @@ export default function Nutrition() {
         <div className="card" style={{ marginBottom: 16 }}>
           <div className="flex justify-between items-center" style={{ marginBottom: 10 }}>
             <div><span className="text-2xl bold">{appData.calories}</span><span className="text-sm text-muted"> / {appData.calorieGoal} kcal</span></div>
-            <span className="text-sm text-muted">{appData.calorieGoal - appData.calories} restantes</span>
+            <span className="text-sm text-muted">{appData.calorieGoal - appData.calories} {t('to_goal')}</span>
           </div>
           <div className="progress-bar" style={{ height: 5 }}>
             <div className="progress-fill" style={{ width: `${Math.min(appData.calories/appData.calorieGoal*100,100)}%` }} />
@@ -99,7 +101,7 @@ export default function Nutrition() {
           </div>
         </div>
 
-        <div className="section-label">REPAS D'AUJOURD'HUI</div>
+        <div className="section-label">{t('today_meals')}</div>
         {appData.meals.map(meal => (
           <div key={meal.id} className="card" style={{ marginBottom: 8 }}>
             <div className="flex justify-between items-center">
@@ -150,8 +152,8 @@ export default function Nutrition() {
       }}>
         {step === 1 ? (
           <>
-            <h2 className="text-lg bold" style={{ marginBottom: 16 }}>Ajouter un aliment</h2>
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher un aliment..." style={{ marginBottom: 12 }} autoFocus />
+            <h2 className="text-lg bold" style={{ marginBottom: 16 }}>{t('add_food_title')}</h2>
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder={t('search_food')} style={{ marginBottom: 12 }} autoFocus />
             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               {filtered.map(f => (
                 <div key={f.id} onClick={() => selectFood(f)} style={{
@@ -173,7 +175,7 @@ export default function Nutrition() {
               <h2 className="text-lg bold">{selectedFood?.name}</h2>
             </div>
             <div style={{ marginBottom: 16 }}>
-              <label className="text-xs text-muted" style={{ display: 'block', marginBottom: 8 }}>QUANTITÉ (g)</label>
+              <label className="text-xs text-muted" style={{ display: 'block', marginBottom: 8 }}>{t('quantity').toUpperCase()}</label>
               <input type="number" value={grams} onChange={e => setGrams(Math.max(1, parseInt(e.target.value) || 1))} style={{ fontSize: 24, fontWeight: 700, textAlign: 'center', fontVariantNumeric: 'tabular-nums' }} />
             </div>
             {preview && (
@@ -192,17 +194,17 @@ export default function Nutrition() {
               </div>
             )}
             <div style={{ display: 'flex', gap: 8, marginBottom: 16, overflowX: 'auto' }}>
-              {MEAL_TYPES.map(t => (
-                <button key={t} onClick={() => setMealType(t)} style={{
-                  background: mealType === t ? 'var(--accent)' : 'var(--surface-2)',
+              {MEAL_TYPES.map(mt => (
+                <button key={mt} onClick={() => setMealType(mt)} style={{
+                  background: mealType === mt ? 'var(--accent)' : 'var(--surface-2)',
                   border: '0.5px solid var(--border)',
-                  color: mealType === t ? '#000' : 'var(--text-secondary)',
+                  color: mealType === mt ? '#000' : 'var(--text-secondary)',
                   fontSize: 11, fontWeight: 700, padding: '8px 14px', borderRadius: 50,
                   whiteSpace: 'nowrap', flexShrink: 0, cursor: 'pointer',
-                }}>{t}</button>
+                }}>{mt}</button>
               ))}
             </div>
-            <button className="btn-accent" onClick={addFood}>AJOUTER</button>
+            <button className="btn-accent" onClick={addFood}>{t('add')}</button>
           </>
         )}
       </div>

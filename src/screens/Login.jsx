@@ -1,18 +1,18 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useLanguage } from '../context/LanguageContext'
 
 export default function Login() {
   const navigate = useNavigate()
   const { login, register } = useAuth()
-  const [tab, setTab] = useState('login') // 'login' | 'signup'
+  const { t } = useLanguage()
+  const [tab, setTab] = useState('login')
 
-  // Login state
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
 
-  // Signup state
   const [signupData, setSignupData] = useState({ firstName: '', email: '', password: '', confirm: '', code: '' })
   const [signupError, setSignupError] = useState('')
   const [signupSuccess, setSignupSuccess] = useState(false)
@@ -23,7 +23,7 @@ export default function Login() {
     if (result.success) {
       navigate(result.user.role === 'coach' ? '/coach' : '/dashboard')
     } else {
-      setError('Email ou mot de passe incorrect')
+      setError(t('wrong_credentials'))
     }
   }
 
@@ -31,8 +31,8 @@ export default function Login() {
     setSignupError('')
     const { firstName, email: se, password: sp, confirm, code } = signupData
     if (!firstName || !se || !sp || !confirm || !code) { setSignupError('Tous les champs sont requis'); return }
-    if (sp !== confirm) { setSignupError('Les mots de passe ne correspondent pas'); return }
-    if (code !== 'ONAIR2026') { setSignupError("Code invalide. Contacte ton coach."); return }
+    if (sp !== confirm) { setSignupError(t('passwords_no_match')); return }
+    if (code !== 'ONAIR2026') { setSignupError(t('invalid_code')); return }
     const result = register(firstName, se, sp)
     if (result.success) {
       setSignupSuccess(true)
@@ -64,36 +64,36 @@ export default function Login() {
 
         {/* Tabs */}
         <div style={{ display: 'flex', borderBottom: '0.5px solid var(--border)', marginBottom: 28 }}>
-          {['login', 'signup'].map(t => (
-            <button key={t} onClick={() => { setTab(t); setError(''); setSignupError('') }} style={{
+          {['login', 'signup'].map(tabKey => (
+            <button key={tabKey} onClick={() => { setTab(tabKey); setError(''); setSignupError('') }} style={{
               flex: 1, background: 'none', border: 'none', cursor: 'pointer',
               fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase',
-              color: tab === t ? 'var(--accent)' : 'var(--text-muted)',
-              borderBottom: tab === t ? '2px solid var(--accent)' : '2px solid transparent',
+              color: tab === tabKey ? 'var(--accent)' : 'var(--text-muted)',
+              borderBottom: tab === tabKey ? '2px solid var(--accent)' : '2px solid transparent',
               padding: '12px 0', marginBottom: -1,
             }}>
-              {t === 'login' ? 'CONNEXION' : 'INSCRIPTION'}
+              {tabKey === 'login' ? t('login_tab') : t('signup_tab')}
             </button>
           ))}
         </div>
 
         {tab === 'login' ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <input type="email" placeholder="ton@email.com" value={email} onChange={e => setEmail(e.target.value)} />
-            <input type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleLogin()} />
+            <input type="email" placeholder={t('email_placeholder')} value={email} onChange={e => setEmail(e.target.value)} />
+            <input type="password" placeholder={t('password_placeholder')} value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleLogin()} />
             {error && <span style={{ fontSize: 11, color: 'var(--danger)', letterSpacing: '0.05em' }}>{error}</span>}
-            <button className="btn-accent" onClick={handleLogin} style={{ marginTop: 4 }}>SE CONNECTER</button>
+            <button className="btn-accent" onClick={handleLogin} style={{ marginTop: 4 }}>{t('connect_btn')}</button>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <input type="text" placeholder="Prénom" value={signupData.firstName} onChange={e => setSignupData(d => ({ ...d, firstName: e.target.value }))} />
-            <input type="email" placeholder="ton@email.com" value={signupData.email} onChange={e => setSignupData(d => ({ ...d, email: e.target.value }))} />
-            <input type="password" placeholder="Mot de passe" value={signupData.password} onChange={e => setSignupData(d => ({ ...d, password: e.target.value }))} />
-            <input type="password" placeholder="Confirmer mot de passe" value={signupData.confirm} onChange={e => setSignupData(d => ({ ...d, confirm: e.target.value }))} />
-            <input type="text" placeholder="Code d'accès ON AIR" value={signupData.code} onChange={e => setSignupData(d => ({ ...d, code: e.target.value }))} />
+            <input type="text" placeholder={t('first_name_placeholder')} value={signupData.firstName} onChange={e => setSignupData(d => ({ ...d, firstName: e.target.value }))} />
+            <input type="email" placeholder={t('email_placeholder')} value={signupData.email} onChange={e => setSignupData(d => ({ ...d, email: e.target.value }))} />
+            <input type="password" placeholder={t('password_placeholder')} value={signupData.password} onChange={e => setSignupData(d => ({ ...d, password: e.target.value }))} />
+            <input type="password" placeholder={t('confirm_password')} value={signupData.confirm} onChange={e => setSignupData(d => ({ ...d, confirm: e.target.value }))} />
+            <input type="text" placeholder={t('access_code')} value={signupData.code} onChange={e => setSignupData(d => ({ ...d, code: e.target.value }))} />
             {signupError && <span style={{ fontSize: 11, color: 'var(--danger)' }}>{signupError}</span>}
-            {signupSuccess && <span style={{ fontSize: 11, color: 'var(--success)' }}>Bienvenue {signupData.firstName} 👋 Ton compte ON AIR est créé.</span>}
-            <button className="btn-accent" onClick={handleSignup} style={{ marginTop: 4 }}>CRÉER MON COMPTE</button>
+            {signupSuccess && <span style={{ fontSize: 11, color: 'var(--success)' }}>{t('welcome_toast')} {signupData.firstName} 👋 {t('account_created')}</span>}
+            <button className="btn-accent" onClick={handleSignup} style={{ marginTop: 4 }}>{t('signup_btn')}</button>
           </div>
         )}
 

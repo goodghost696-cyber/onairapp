@@ -1,8 +1,11 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
+import { useLanguage } from '../context/LanguageContext'
 import NutriscoreBadge from '../components/NutriscoreBadge'
 import BottomNav from '../components/BottomNav'
+
+const LANG_NAMES = { fr: 'français', en: 'English', es: 'español' }
 
 function CameraIcon() {
   return (
@@ -50,11 +53,14 @@ const resizeImage = (file, maxWidth = 800) => {
 export default function Scan() {
   const navigate = useNavigate()
   const { appData, updateData } = useApp()
+  const { lang, t } = useLanguage()
   const [loading, setLoading] = useState(false)
   const [currentMode, setCurrentMode] = useState(null)
   const [error, setError] = useState(null)
   const [result, setResult] = useState(null)
   const [selectedMeal, setSelectedMeal] = useState('Déjeuner')
+
+  const mealOptions = [t('breakfast'), t('lunch'), t('dinner'), t('snack')]
 
   const handleImage = async (file, mode) => {
     if (!file) return
@@ -66,6 +72,7 @@ export default function Scan() {
     try {
       const resized = await resizeImage(file)
       const base64 = resized.split(',')[1]
+      const langName = LANG_NAMES[lang]
 
       const prompt = mode === 'barcode'
         ? `This image contains a product barcode or packaging.
@@ -82,7 +89,8 @@ export default function Scan() {
              "carbs_100g": 57,
              "fats_100g": 31
            }
-           If no barcode visible, still try to identify the product from packaging.`
+           If no barcode visible, still try to identify the product from packaging.
+           Réponds en ${langName}. Les noms des aliments doivent être en ${langName}.`
         : `Analyse this food image and identify every visible food item.
            Estimate quantities in grams and calculate macronutrients.
            Reply ONLY in valid JSON, no text before or after:
@@ -104,7 +112,8 @@ export default function Scan() {
                "carbs": 45,
                "fats": 12
              }
-           }`
+           }
+           Réponds en ${langName}. Les noms des aliments doivent être en ${langName}.`
 
       const response = await fetch('/api/claude', {
         method: 'POST',
@@ -199,23 +208,23 @@ export default function Scan() {
 
   function handleAddToMeal() {
     if (!result) return
-    const t = result.data.total
+    const t2 = result.data.total
     const newMeal = {
       id: Date.now(),
       name: result.data.meal_name,
-      calories: t.kcal,
-      protein: t.proteins,
-      carbs: t.carbs,
-      fat: t.fats,
+      calories: t2.kcal,
+      protein: t2.proteins,
+      carbs: t2.carbs,
+      fat: t2.fats,
       nutriscore: result.data.nutriscore || 'B',
       time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
       mealType: selectedMeal,
     }
     updateData('meals', [...appData.meals, newMeal])
-    updateData('calories', appData.calories + t.kcal)
-    updateData('protein', (appData.protein || 0) + t.proteins)
-    updateData('carbs', (appData.carbs || 0) + t.carbs)
-    updateData('fat', (appData.fat || 0) + t.fats)
+    updateData('calories', appData.calories + t2.kcal)
+    updateData('protein', (appData.protein || 0) + t2.proteins)
+    updateData('carbs', (appData.carbs || 0) + t2.carbs)
+    updateData('fat', (appData.fat || 0) + t2.fats)
     navigate('/nutrition')
   }
 
@@ -232,7 +241,7 @@ export default function Scan() {
               <polyline points="15 18 9 12 15 6"/>
             </svg>
           </button>
-          <h1 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>Reconnaître un aliment</h1>
+          <h1 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{t('recognize_food')}</h1>
         </div>
 
         {/* Input buttons — always visible */}
@@ -242,7 +251,7 @@ export default function Scan() {
             <label htmlFor="camera-input" className="scan-btn primary">
               <CameraIcon />
               <div style={{ flex: 1 }}>
-                <span style={{ display: 'block', fontSize: 13, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase' }}>PRENDRE UNE PHOTO</span>
+                <span style={{ display: 'block', fontSize: 13, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase' }}>{t('take_photo')}</span>
                 <span className="scan-btn-sub">Appareil photo · Repas ou produit</span>
               </div>
             </label>
@@ -259,7 +268,7 @@ export default function Scan() {
             <label htmlFor="gallery-input" className="scan-btn secondary">
               <GalleryIcon />
               <div style={{ flex: 1 }}>
-                <span style={{ display: 'block', fontSize: 13, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase' }}>CHOISIR DANS LA PELLICULE</span>
+                <span style={{ display: 'block', fontSize: 13, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase' }}>{t('gallery')}</span>
                 <span className="scan-btn-sub">Sélectionner une photo existante</span>
               </div>
             </label>
@@ -275,7 +284,7 @@ export default function Scan() {
             <label htmlFor="barcode-input" className="scan-btn tertiary">
               <BarcodeIcon />
               <div style={{ flex: 1 }}>
-                <span style={{ display: 'block', fontSize: 13, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase' }}>SCANNER UN CODE-BARRES</span>
+                <span style={{ display: 'block', fontSize: 13, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase' }}>{t('scan_barcode')}</span>
                 <span className="scan-btn-sub">Photo du code-barres d'un produit</span>
               </div>
             </label>
@@ -295,9 +304,9 @@ export default function Scan() {
           <div className="scan-loading">
             <div className="scan-loading-ring" />
             <p className="scan-loading-text">
-              {currentMode === 'barcode' ? 'Identification du produit...' : 'Claude analyse ton repas...'}
+              {currentMode === 'barcode' ? t('identifying') : t('analyzing')}
             </p>
-            <p className="scan-loading-sub">Quelques secondes</p>
+            <p className="scan-loading-sub">{t('few_seconds')}</p>
           </div>
         )}
 
@@ -347,7 +356,7 @@ export default function Scan() {
               ))}
             </div>
             <div className="scan-meal-selector">
-              {['Petit-déjeuner', 'Déjeuner', 'Dîner', 'Snack'].map(meal => (
+              {mealOptions.map(meal => (
                 <button
                   key={meal}
                   className={`meal-chip ${selectedMeal === meal ? 'active' : ''}`}
@@ -358,10 +367,10 @@ export default function Scan() {
               ))}
             </div>
             <button className="scan-add-btn" onClick={handleAddToMeal}>
-              AJOUTER AU REPAS
+              {t('add_to_meal')}
             </button>
             <button className="scan-retry-btn" onClick={() => { setResult(null); setError(null) }}>
-              RECOMMENCER
+              {t('retry')}
             </button>
           </div>
         )}
@@ -369,7 +378,7 @@ export default function Scan() {
         {/* Retry after error */}
         {error && !result && (
           <button className="scan-retry-btn" onClick={() => { setError(null); setLoading(false) }}>
-            RECOMMENCER
+            {t('retry')}
           </button>
         )}
       </div>

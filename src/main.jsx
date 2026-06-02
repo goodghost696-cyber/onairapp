@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom'
 import App from './App'
 import { AuthProvider } from './context/AuthContext'
 import { AppProvider } from './context/AppContext'
+import { LanguageProvider } from './context/LanguageContext'
 import './styles/global.css'
 import './styles/animations.css'
 
@@ -17,9 +18,11 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
       <AuthProvider>
-        <AppProvider>
-          <App />
-        </AppProvider>
+        <LanguageProvider>
+          <AppProvider>
+            <App />
+          </AppProvider>
+        </LanguageProvider>
       </AuthProvider>
     </BrowserRouter>
   </React.StrictMode>

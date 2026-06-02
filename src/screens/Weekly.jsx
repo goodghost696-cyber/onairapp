@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import BottomNav from '../components/BottomNav'
 import { useApp } from '../context/AppContext'
+import { useLanguage } from '../context/LanguageContext'
 
 const weekData = [
   { day: 'L', calories: 2100, goal: 2400 },
@@ -24,6 +25,7 @@ function calBarColor(cal, goal) {
 export default function Weekly() {
   const navigate = useNavigate()
   const { appData } = useApp()
+  const { t } = useLanguage()
 
   return (
     <div className="app-wrapper">
@@ -32,12 +34,12 @@ export default function Weekly() {
           <button style={{ background: 'none', border: 'none', cursor: 'pointer' }} onClick={() => navigate('/dashboard')}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" strokeWidth="1.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
           </button>
-          <span className="text-xs text-accent bold">BILAN SEMAINE</span>
+          <span className="text-xs text-accent bold">{t('weekly_recap')}</span>
         </div>
 
         <div className="section-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>CALORIES / JOUR</span>
-          <span style={{ color: 'var(--text-muted)' }}>Objectif : 2 400 kcal</span>
+          <span>{t('daily_calories')}</span>
+          <span style={{ color: 'var(--text-muted)' }}>{t('goal')} : 2 400 kcal</span>
         </div>
         <div className="card" style={{ marginBottom: 16 }}>
           <div style={{ display: 'flex', gap: 6, alignItems: 'flex-end', height: 64 }}>
@@ -50,12 +52,12 @@ export default function Weekly() {
           </div>
         </div>
 
-        <div className="section-label">RÉSUMÉ</div>
+        <div className="section-label">{t('summary')}</div>
         {[
-          { label: 'Séances réalisées', val: `${appData.weeklyWorkouts}/${appData.weeklyGoal}` },
-          { label: 'Moy. calories', val: `${Math.round(appData.weeklyData.filter(d=>d.calories>0).reduce((s,d)=>s+d.calories,0)/appData.weeklyData.filter(d=>d.calories>0).length)} kcal` },
-          { label: 'Total km courus', val: `${appData.kmRun} km` },
-          { label: 'Moy. pas/jour', val: appData.steps.toLocaleString() },
+          { label: t('workouts_done'), val: `${appData.weeklyWorkouts}/${appData.weeklyGoal}` },
+          { label: t('avg_sleep'), val: `${Math.round(appData.weeklyData.filter(d=>d.calories>0).reduce((s,d)=>s+d.calories,0)/appData.weeklyData.filter(d=>d.calories>0).length)} kcal` },
+          { label: t('distance_run'), val: `${appData.kmRun} km` },
+          { label: t('steps'), val: appData.steps.toLocaleString() },
         ].map((r, idx) => (
           <div key={r.label} className="card flex justify-between items-center card-animated" style={{ padding: '14px 16px', '--delay': `${100 + idx * 60}ms` }}>
             <span className="text-sm text-secondary">{r.label}</span>

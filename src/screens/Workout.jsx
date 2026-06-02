@@ -2,12 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import BottomNav from '../components/BottomNav'
 import { useApp } from '../context/AppContext'
-
-const sections = [
-  { key: 'maison', name: 'Exercices Maison', sub: 'Bodyweight · Sans équipement' },
-  { key: 'salle', name: 'Exercices Salle', sub: 'Machines · Charges libres' },
-  { key: 'dehors', name: 'Exercices Dehors', sub: 'Running · Calisthenics · HIIT' },
-]
+import { useLanguage } from '../context/LanguageContext'
 
 function SetRow({ set, index, onUpdate, onCheck }) {
   const [checked, setChecked] = useState(false)
@@ -52,7 +47,7 @@ function SetRow({ set, index, onUpdate, onCheck }) {
   )
 }
 
-function ExerciseCard({ exercise, onUpdate, onRemove }) {
+function ExerciseCard({ exercise, onUpdate, onRemove, addSetLabel }) {
   const [expanded, setExpanded] = useState(true)
 
   function addSet() {
@@ -89,7 +84,7 @@ function ExerciseCard({ exercise, onUpdate, onRemove }) {
             background: 'none', border: '0.5px dashed var(--border)',
             color: 'var(--text-muted)', fontSize: 11, letterSpacing: 1, textTransform: 'uppercase',
             padding: '8px 16px', borderRadius: 8, cursor: 'pointer', width: '100%', marginTop: 8,
-          }}>+ AJOUTER UNE SÉRIE</button>
+          }}>{addSetLabel}</button>
         </div>
       )}
     </div>
@@ -99,7 +94,14 @@ function ExerciseCard({ exercise, onUpdate, onRemove }) {
 export default function Workout() {
   const navigate = useNavigate()
   const { appData, updateData } = useApp()
+  const { t } = useLanguage()
   const activeSession = appData.activeSession || []
+
+  const sections = [
+    { key: 'maison', name: t('home_exercises'), sub: t('bodyweight') },
+    { key: 'salle', name: t('gym_exercises'), sub: t('machines') },
+    { key: 'dehors', name: t('outdoor_exercises'), sub: t('outdoor') },
+  ]
 
   function updateExercise(updated) {
     updateData('activeSession', activeSession.map(e => e.id === updated.id ? updated : e))
@@ -129,12 +131,12 @@ export default function Workout() {
         </div>
 
         <div style={{ marginBottom: 8 }}>
-          <h1 className="text-xl bold">Workout</h1>
+          <h1 className="text-xl bold">{t('workout')}</h1>
         </div>
 
         <div className="card card-animated" style={{ '--delay': '0ms', marginBottom: 16 }}>
           <div className="flex justify-between items-center">
-            <span className="text-sm text-muted">Séances cette semaine</span>
+            <span className="text-sm text-muted">{t('sessions_week')}</span>
             <span className="text-lg bold text-accent">{appData.weeklyWorkouts}/{appData.weeklyGoal}</span>
           </div>
           <div className="progress-bar" style={{ height: 4, marginTop: 10 }}>
@@ -144,17 +146,17 @@ export default function Workout() {
 
         {activeSession.length > 0 && (
           <>
-            <div className="section-label">SÉANCE EN COURS</div>
+            <div className="section-label">{t('active_session')}</div>
             {activeSession.map(ex => (
-              <ExerciseCard key={ex.id} exercise={ex} onUpdate={updateExercise} onRemove={() => removeExercise(ex.id)} />
+              <ExerciseCard key={ex.id} exercise={ex} onUpdate={updateExercise} onRemove={() => removeExercise(ex.id)} addSetLabel={t('add_set')} />
             ))}
             <button className="btn-accent" onClick={finishSession} style={{ marginTop: 8, marginBottom: 16 }}>
-              TERMINER LA SÉANCE
+              {t('finish_workout')}
             </button>
           </>
         )}
 
-        <div className="section-label">BIBLIOTHÈQUE</div>
+        <div className="section-label">{t('library')}</div>
         {sections.map((s, i) => (
           <div key={s.key} className="card card-animated" style={{ '--delay': `${i*80}ms`, cursor: 'pointer', marginBottom: 8 }} onClick={() => navigate(`/workout/${s.key}`)}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>

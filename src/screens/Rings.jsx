@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import BottomNav from '../components/BottomNav'
 import { useAuth } from '../context/AuthContext'
 import { useApp } from '../context/AppContext'
+import { useLanguage } from '../context/LanguageContext'
 
 function RingProgress({ current, target, color, size = 80 }) {
   const radius = (size - 10) / 2
@@ -62,12 +63,13 @@ export default function Rings() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { appData } = useApp()
+  const { t } = useLanguage()
   const [celebration, setCelebration] = useState(null)
   const [dismissed, setDismissed] = useState({})
 
   const rings = [
     { id: 'calories', label: 'Calories', current: appData.calories, target: appData.calorieGoal, unit: 'kcal', color: '#E00000' },
-    { id: 'sessions', label: 'Séances', current: appData.weeklyWorkouts, target: appData.weeklyGoal, unit: '/sem', color: '#1FD66B' },
+    { id: 'sessions', label: t('workouts_done'), current: appData.weeklyWorkouts, target: appData.weeklyGoal, unit: '/sem', color: '#1FD66B' },
     { id: 'hydration', label: 'Hydratation', current: appData.water, target: appData.waterGoal, unit: 'ml', color: '#2EA8FF' },
     { id: 'run', label: 'Course', current: appData.kmRun, target: 40, unit: 'km', color: '#F5A623' },
   ]
@@ -88,8 +90,8 @@ export default function Rings() {
 
   useEffect(() => {
     if (celebration) {
-      const t = setTimeout(dismissCelebration, 4000)
-      return () => clearTimeout(t)
+      const timer = setTimeout(dismissCelebration, 4000)
+      return () => clearTimeout(timer)
     }
   }, [celebration])
 
@@ -102,7 +104,7 @@ export default function Rings() {
               <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
             </svg>
           </button>
-          <h1 className="text-xl bold">Mes Objectifs</h1>
+          <h1 className="text-xl bold">{t('my_goals')}</h1>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -147,12 +149,12 @@ export default function Rings() {
             <RingProgress current={celebration.target} target={celebration.target} color={celebration.color} size={120} />
           </div>
           <div style={{ fontSize: 11, color: 'var(--accent)', letterSpacing: 4, textTransform: 'uppercase', fontWeight: 700 }}>
-            OBJECTIF ATTEINT
+            {t('goal_reached')}
           </div>
           <div className="text-xl bold">{celebration.label}</div>
-          <div className="text-base text-secondary" style={{ marginTop: 8 }}>Bien joué, {user?.name}.</div>
+          <div className="text-base text-secondary" style={{ marginTop: 8 }}>{t('well_done')}, {user?.name}.</div>
           <button className="btn-accent" onClick={dismissCelebration} style={{ marginTop: 8, maxWidth: 200 }}>
-            CONTINUER
+            {t('continue_btn')}
           </button>
           <style>{`
             @keyframes ringPulse {

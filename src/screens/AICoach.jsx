@@ -3,7 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import BottomNav from '../components/BottomNav'
 import { useAuth } from '../context/AuthContext'
 import { useApp } from '../context/AppContext'
+import { useLanguage } from '../context/LanguageContext'
 
+const LANG_NAMES = { fr: 'français', en: 'English', es: 'español' }
 
 function TypingIndicator() {
   return (
@@ -29,6 +31,7 @@ export default function AICoach() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { appData } = useApp()
+  const { lang, t } = useLanguage()
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
@@ -45,7 +48,12 @@ export default function AICoach() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, loading])
 
-  const quickPrompts = ['Analyse ma semaine', 'Programme pour demain', 'Mes points faibles', 'Nutrition du jour']
+  const quickPrompts = [
+    t('analyze_week'),
+    t('program_tomorrow'),
+    t('weak_points'),
+    t('nutrition_today'),
+  ]
 
   async function sendMessage(text) {
     if (!text.trim() || loading) return
@@ -83,7 +91,8 @@ RÈGLES ABSOLUES :
 — Tu appelles l'utilisateur par son prénom : ${user?.name}.
 — Si la question ne concerne pas la santé ou le sport, tu recentres sur ses objectifs.
 — Tu remarques les détails : si son sommeil est mauvais tu le mentionnes. Si ses calories sont basses tu interroges.
-— Ton style : coach de salle parisien premium. Pas un robot, pas un médecin.`,
+— Ton style : coach de salle parisien premium. Pas un robot, pas un médecin.
+LANGUE : Réponds TOUJOURS en ${LANG_NAMES[lang]}. Pas d'exception.`,
           messages: history,
         }),
       })
@@ -108,8 +117,6 @@ RÈGLES ABSOLUES :
     return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
   }
 
-  const inputAreaHeight = 130
-
   return (
     <div className="app-wrapper" style={{ position: 'relative', height: '100vh', overflow: 'hidden' }}>
       {/* Header */}
@@ -127,8 +134,8 @@ RÈGLES ABSOLUES :
           </svg>
         </button>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, lineHeight: '28px' }}>AI Coach</h1>
-          <span style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Powered by ON AIR</span>
+          <h1 style={{ fontSize: 22, fontWeight: 700, lineHeight: '28px' }}>{t('ai_coach_title')}</h1>
+          <span style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{t('powered_by')}</span>
         </div>
       </div>
 
@@ -209,7 +216,7 @@ RÈGLES ABSOLUES :
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && sendMessage(input)}
-            placeholder="Pose une question à ton coach..."
+            placeholder={t('chat_placeholder')}
             style={{ flex: 1, borderRadius: 10 }}
           />
           <button onClick={() => sendMessage(input)} style={{
