@@ -1,33 +1,5 @@
 import { useLanguage } from '../context/LanguageContext';
-import { useExerciseImage } from '../hooks/useExerciseImage';
 import '../styles/ExerciseModal.css';
-
-const WGER_IDS = {
-  m1: 10,
-  m2: 111,
-  m3: 75,
-  m4: 168,
-  m5: 99,
-  m6: 37,
-  m7: 85,
-  m8: 291,
-  s1: 192,
-  s2: 6,
-  s3: 227,
-  s4: 31,
-  s5: 69,
-  s6: 91,
-  s7: 121,
-  s8: 313,
-  d1: 272,
-  d2: 31,
-  d3: 105,
-  d4: 247,
-  d5: 85,
-  d6: 111,
-  d7: 272,
-  d8: 31,
-};
 
 const EXERCISE_DATA = {
   m1: {
@@ -255,30 +227,6 @@ const MUSCLE_SVG = {
   ),
 };
 
-const ExerciseImage = ({ exerciseId }) => {
-  const wgerId = WGER_IDS[exerciseId];
-  const { imageUrl, loading } = useExerciseImage(wgerId);
-
-  if (loading) return (
-    <div className="modal-image-placeholder">
-      <div className="modal-image-spinner" />
-    </div>
-  );
-
-  if (!imageUrl) return (
-    <div className="modal-image-placeholder">
-      <span className="modal-image-fallback">Aucune image disponible</span>
-    </div>
-  );
-
-  return (
-    <img
-      src={imageUrl}
-      alt="Exercise"
-      className="modal-image"
-    />
-  );
-};
 
 export const ExerciseModal = ({ exercise, onClose, onAdd }) => {
   const { t } = useLanguage();
@@ -291,7 +239,9 @@ export const ExerciseModal = ({ exercise, onClose, onAdd }) => {
       <div className="exercise-modal">
         <div className="modal-handle" />
 
-        <ExerciseImage exerciseId={exercise.id} />
+        <div className="modal-header-band">
+          <span className="modal-category-label">{exercise.category}</span>
+        </div>
 
         <div className="modal-content">
           <h2 className="modal-title">{exercise.name}</h2>
