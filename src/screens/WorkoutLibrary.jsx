@@ -110,7 +110,6 @@ export default function WorkoutLibrary({ section }) {
             style={{ '--delay': `${i * 60}ms`, display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8, padding: '14px 16px', cursor: 'pointer' }}
             onClick={() => setSelectedExercise(ex)}
           >
-            <div style={{ width: 60, height: 60, background: 'var(--surface-2)', borderRadius: 12, flexShrink: 0 }} />
             <div style={{ flex: 1 }}>
               <div className="text-base bold">{ex.name}</div>
               <div className="text-sm text-muted">{ex.muscles}</div>
