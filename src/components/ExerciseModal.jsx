@@ -239,10 +239,6 @@ export const ExerciseModal = ({ exercise, onClose, onAdd }) => {
       <div className="exercise-modal">
         <div className="modal-handle" />
 
-        <div className="modal-header-band">
-          <span className="modal-category-label">{exercise.category}</span>
-        </div>
-
         <div className="modal-content">
           <h2 className="modal-title">{exercise.name}</h2>
 
