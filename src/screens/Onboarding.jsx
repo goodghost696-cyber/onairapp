@@ -76,7 +76,7 @@ const STEPS = [
 
 export default function Onboarding() {
   const navigate = useNavigate()
-  const { updateUserProfile } = useAuth()
+  const { updateUserProfile, login } = useAuth()
   const [currentStep, setCurrentStep] = useState(0)
   const [answers, setAnswers] = useState({})
 
@@ -105,7 +105,10 @@ export default function Onboarding() {
 
   function handleComplete() {
     const profile = {
+      id: Date.now(),
       name: answers.name,
+      email: `${answers.name.toLowerCase()}@onair.fr`,
+      role: 'member',
       goal: answers.goal,
       level: answers.level,
       weight: answers.body?.weight,
@@ -115,6 +118,7 @@ export default function Onboarding() {
     }
     localStorage.setItem('onair_onboarded', 'true')
     localStorage.setItem('onair_profile', JSON.stringify(profile))
+    localStorage.setItem('onair_user', JSON.stringify(profile))
     if (updateUserProfile) updateUserProfile(profile)
     navigate('/dashboard')
   }
