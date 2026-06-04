@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import BottomNav from '../components/BottomNav'
+import RunContent from '../components/RunContent'
 import { useApp } from '../context/AppContext'
 import { useAuth } from '../context/AuthContext'
 import { useLanguage } from '../context/LanguageContext'
@@ -12,6 +13,7 @@ export default function Workout() {
   const { user } = useAuth()
   const { t, lang } = useLanguage()
   const sessionHistory = appData.sessionHistory || []
+  const [activeTab, setActiveTab] = useState('workout')
 
   const [program, setProgram] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -100,6 +102,14 @@ Donne exactement 4-5 exercices adaptés à l'objectif.`
           </div>
         </div>
 
+        <div className="workout-tabs">
+          <button className={`workout-tab${activeTab === 'workout' ? ' active' : ''}`} onClick={() => setActiveTab('workout')}>MUSCULATION</button>
+          <button className={`workout-tab${activeTab === 'run' ? ' active' : ''}`} onClick={() => setActiveTab('run')}>COURSE</button>
+        </div>
+
+        {activeTab === 'run' && <RunContent />}
+
+        {activeTab === 'workout' && <>
         <div className="workout-cta-row">
           <button className="today-session-btn" onClick={handleStartSession}>
             MA SÉANCE DU JOUR
@@ -179,6 +189,7 @@ Donne exactement 4-5 exercices adaptés à l'objectif.`
             ))}
           </div>
         )}
+        </>}
       </div>
       <BottomNav />
     </div>

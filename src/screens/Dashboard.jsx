@@ -78,30 +78,48 @@ export default function Dashboard() {
           ))}
         </div>
 
-        <div
-          className="card-animated"
-          style={{ '--delay': '200ms', cursor: 'pointer', marginBottom: 8 }}
-          onClick={() => navigate('/rings')}
-        >
-          <div className="flex justify-between items-center" style={{ padding: '12px 0' }}>
-            <span className="text-sm text-secondary">{t('my_goals')}</span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{
-                background: 'var(--accent)', color: '#fff',
-                fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 50,
-              }}>
-                {[
-                  { current: appData.calories, target: appData.calorieGoal },
-                  { current: appData.weeklyWorkouts, target: appData.weeklyGoal },
-                  { current: appData.water, target: appData.waterGoal },
-                  { current: appData.kmRun, target: 40 },
-                ].filter(r => r.current >= r.target).length}/4
-              </span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--accent)">
-                <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/>
-              </svg>
-            </div>
+        <div className="card card-animated" style={{ '--delay': '200ms', marginBottom: 8 }}>
+          <div className="flex justify-between items-center" style={{ marginBottom: 8 }}>
+            <span className="text-xs text-muted">{t('water')}</span>
+            <span className="text-xs text-accent">{appData.water}ml / {appData.waterGoal}ml</span>
           </div>
+          <div className="progress-bar" style={{ height: 6, borderRadius: 4 }}>
+            <div className="progress-fill" style={{ width: `${Math.min(appData.water/appData.waterGoal*100,100)}%`, background: '#4FC3F7', borderRadius: 4 }} />
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10 }}>
+            {[250, 500, 750, 1000, 1250, 1500, 1750, 2000].map(ml => (
+              <div key={ml} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+                <div style={{ width: 20, height: 28, borderRadius: 4, background: appData.water >= ml ? '#4FC3F7' : 'var(--surface-2)', transition: 'background 200ms ease' }} />
+                <span style={{ fontSize: 8, color: 'var(--text-muted)' }}>{ml >= 1000 ? `${ml/1000}L` : ''}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="section-label">{t('my_goals')}</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 8, marginBottom: 8 }}>
+          {[
+            { label: 'Calories', current: appData.calories, target: appData.calorieGoal, color: 'var(--accent)' },
+            { label: 'Séances', current: appData.weeklyWorkouts, target: appData.weeklyGoal, color: '#A78BFA' },
+            { label: 'Eau', current: appData.water, target: appData.waterGoal, color: '#4FC3F7' },
+            { label: 'Course', current: appData.kmRun * 10, target: 40 * 10, color: 'var(--success)' },
+          ].map(ring => {
+            const pct = Math.min(ring.current / ring.target, 1)
+            const r = 22, stroke = 4
+            const circ = 2 * Math.PI * r
+            return (
+              <div key={ring.label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '12px 4px', background: 'var(--surface)', borderRadius: 12 }}>
+                <svg width="52" height="52" viewBox="0 0 52 52">
+                  <circle cx="26" cy="26" r={r} fill="none" stroke="var(--surface-2)" strokeWidth={stroke} />
+                  <circle cx="26" cy="26" r={r} fill="none" stroke={ring.color} strokeWidth={stroke}
+                    strokeDasharray={circ} strokeDashoffset={circ * (1 - pct)}
+                    strokeLinecap="round" transform="rotate(-90 26 26)"
+                    style={{ transition: 'stroke-dashoffset 800ms ease' }} />
+                </svg>
+                <span style={{ fontSize: 10, color: 'var(--text-muted)', textAlign: 'center' }}>{ring.label}</span>
+              </div>
+            )
+          })}
         </div>
 
         <div className="section-label">{t('weekly_sessions')}</div>
@@ -120,7 +138,7 @@ export default function Dashboard() {
           {[
             { label: t('nutrition'), path: '/nutrition' },
             { label: t('workout'), path: '/workout' },
-            { label: t('run'), path: '/run' },
+            { label: 'Course', path: '/workout' },
             { label: 'Bilan', path: '/weekly' },
           ].map(s => (
             <button key={s.path} className="shortcut-btn" onClick={() => navigate(s.path)}>

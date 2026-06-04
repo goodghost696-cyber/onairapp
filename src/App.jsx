@@ -1,4 +1,5 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
+import { useEffect } from 'react'
 import { useAuth } from './context/AuthContext'
 import Landing from './screens/Landing'
 import Login from './screens/Login'
@@ -23,6 +24,7 @@ import Conversation from './screens/Conversation'
 import CoachMessages from './screens/CoachMessages'
 import Settings from './screens/Settings'
 import CoachSettings from './screens/CoachSettings'
+import Onboarding from './screens/Onboarding'
 
 function ProtectedRoute({ children, requiredRole }) {
   const { user } = useAuth()
@@ -33,10 +35,24 @@ function ProtectedRoute({ children, requiredRole }) {
   return children
 }
 
+function OnboardingGuard() {
+  const { user } = useAuth()
+  const navigate = useNavigate()
+  useEffect(() => {
+    if (!localStorage.getItem('onair_onboarded') && !user) {
+      navigate('/onboarding')
+    }
+  }, [user, navigate])
+  return null
+}
+
 export default function App() {
   const { user } = useAuth()
   return (
+    <>
+      <OnboardingGuard />
     <Routes>
+      <Route path="/onboarding" element={<Onboarding />} />
       <Route path="/" element={<Landing />} />
       <Route path="/login" element={user ? <Navigate to={user.role === 'coach' ? '/coach' : '/dashboard'} replace /> : <Login />} />
       <Route path="/dashboard" element={<ProtectedRoute requiredRole="member"><Dashboard /></ProtectedRoute>} />
@@ -65,5 +81,6 @@ export default function App() {
       <Route path="/coach/settings" element={<ProtectedRoute requiredRole="coach"><CoachSettings /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </>
   )
 }

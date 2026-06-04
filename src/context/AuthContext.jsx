@@ -48,8 +48,16 @@ export function AuthProvider({ children }) {
     return { success: true, user: newUser }
   }
 
+  function updateUserProfile(profile) {
+    setUser(prev => {
+      const updated = { ...prev, ...profile }
+      localStorage.setItem('onair_user', JSON.stringify(updated))
+      return updated
+    })
+  }
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, register }}>
+    <AuthContext.Provider value={{ user, login, logout, register, updateUserProfile }}>
       {children}
     </AuthContext.Provider>
   )

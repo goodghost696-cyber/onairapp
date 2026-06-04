@@ -1,3 +1,32 @@
+.workout-tabs {
+  display: flex;
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 20px;
+  gap: 4px;
+}
+
+.workout-tab {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  cursor: pointer;
+  transition: all 150ms ease;
+  font-family: inherit;
+}
+
+.workout-tab.active {
+  background: var(--bg);
+  color: var(--text-primary);
+}
+
 .workout-cta-row {
   display: grid;
   grid-template-columns: 1fr 1fr;

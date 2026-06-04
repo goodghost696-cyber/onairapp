@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { FOOD_DATABASE } from '../context/AppContext'
@@ -26,6 +26,8 @@ export default function Nutrition() {
   const [grams, setGrams] = useState(100)
   const [mealType, setMealType] = useState('Déjeuner')
   const [toast, setToast] = useState('')
+
+  useEffect(() => { window.scrollTo(0, 0) }, [])
 
   const MEAL_TYPES = [t('breakfast'), t('lunch'), t('dinner'), t('snack')]
 
@@ -79,23 +81,33 @@ export default function Nutrition() {
         </div>
 
         <div className="card" style={{ marginBottom: 16 }}>
-          <div className="flex justify-between items-center" style={{ marginBottom: 10 }}>
-            <div><span className="text-2xl bold">{appData.calories}</span><span className="text-sm text-muted"> / {appData.calorieGoal} kcal</span></div>
-            <span className="text-sm text-muted">{appData.calorieGoal - appData.calories} {t('to_goal')}</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 4 }}>
+            <div>
+              <span style={{ fontSize: 36, fontWeight: 800, fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>{appData.calories}</span>
+              <span className="text-sm text-muted" style={{ marginLeft: 6 }}>kcal</span>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <div className="text-xs text-muted">Restant</div>
+              <div className="text-base bold" style={{ color: 'var(--success)' }}>{appData.calorieGoal - appData.calories}</div>
+            </div>
           </div>
-          <div className="progress-bar" style={{ height: 5 }}>
-            <div className="progress-fill" style={{ width: `${Math.min(appData.calories/appData.calorieGoal*100,100)}%` }} />
+          <div style={{ position: 'relative', height: 8, background: 'var(--surface-2)', borderRadius: 4, marginBottom: 16, overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${Math.min(appData.calories/appData.calorieGoal*100,100)}%`, background: 'var(--accent)', borderRadius: 4, transition: 'width 500ms ease-out' }} />
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-around', marginTop: 14 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {[
-              { label: 'Protéines', val: appData.protein, goal: appData.proteinGoal },
-              { label: 'Glucides', val: appData.carbs, goal: appData.carbsGoal },
-              { label: 'Lipides', val: appData.fat, goal: appData.fatGoal },
+              { label: 'Protéines', val: appData.protein, goal: appData.proteinGoal, color: '#4FC3F7', delay: '0ms' },
+              { label: 'Glucides',  val: appData.carbs,   goal: appData.carbsGoal,   color: '#FFA726', delay: '80ms' },
+              { label: 'Lipides',   val: appData.fat,     goal: appData.fatGoal,     color: '#A78BFA', delay: '160ms' },
             ].map(m => (
-              <div key={m.label} style={{ textAlign: 'center' }}>
-                <div className="text-sm bold">{m.val}g</div>
-                <div className="text-xs text-muted">{m.label}</div>
-                <div className="text-xs text-muted">{m.goal}g</div>
+              <div key={m.label}>
+                <div className="flex justify-between items-center" style={{ marginBottom: 4 }}>
+                  <span className="text-xs text-muted">{m.label}</span>
+                  <span className="text-xs bold">{m.val}g <span className="text-muted">/ {m.goal}g</span></span>
+                </div>
+                <div style={{ height: 4, background: 'var(--surface-2)', borderRadius: 2, overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: `${Math.min(m.val/m.goal*100,100)}%`, background: m.color, borderRadius: 2, transition: `width 500ms ease-out ${m.delay}` }} />
+                </div>
               </div>
             ))}
           </div>

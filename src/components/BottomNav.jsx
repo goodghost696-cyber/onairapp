@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import '../styles/nav.css'
 
@@ -34,20 +35,10 @@ const tabs = [
     )
   },
   {
-    path: '/run',
+    path: '/weekly',
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="13" cy="4" r="2"/>
-        <path d="M7 21l3-8 3 4 3-6 3 4"/>
-        <path d="M3 11h5l2-3h5"/>
-      </svg>
-    )
-  },
-  {
-    path: '/messages',
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
       </svg>
     )
   },
@@ -65,17 +56,59 @@ const tabs = [
 export default function BottomNav() {
   const navigate = useNavigate()
   const location = useLocation()
+  const [showMenu, setShowMenu] = useState(false)
+
   return (
-    <nav className="bottom-nav">
-      {tabs.map(tab => {
-        const active = location.pathname === tab.path || (tab.path === '/workout' && location.pathname.startsWith('/workout'))
-        return (
-          <div key={tab.path} className={`nav-btn${active ? ' active' : ''}`}
-            onClick={() => { navigator.vibrate && navigator.vibrate(6); navigate(tab.path) }}>
-            {tab.icon}
-          </div>
-        )
-      })}
-    </nav>
+    <>
+      {showMenu && (
+        <div onClick={() => setShowMenu(false)} style={{ position: 'fixed', inset: 0, zIndex: 98 }} />
+      )}
+      {showMenu && (
+        <div style={{ position: 'fixed', bottom: 88, right: 16, zIndex: 99, display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end' }}>
+          {[
+            { label: 'Coach IA', path: '/ai-coach' },
+            { label: 'Mon Coach', path: '/messages' },
+          ].map((item, i) => (
+            <button key={item.path} onClick={() => { setShowMenu(false); navigate(item.path) }} style={{
+              background: 'var(--surface)', border: '0.5px solid var(--border)',
+              color: 'var(--text-primary)', padding: '10px 16px', borderRadius: 50,
+              fontSize: 12, fontWeight: 700, letterSpacing: 0.5, cursor: 'pointer',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
+              transform: showMenu ? 'translateY(0) scale(1)' : 'translateY(10px) scale(0.9)',
+              transition: `transform 200ms cubic-bezier(0.34,1.56,0.64,1) ${i * 40}ms, opacity 200ms ease ${i * 40}ms`,
+              opacity: showMenu ? 1 : 0,
+            }}>{item.label}</button>
+          ))}
+        </div>
+      )}
+      <button onClick={() => setShowMenu(m => !m)} style={{
+        position: 'fixed', bottom: 88, right: 16, zIndex: 100,
+        width: 44, height: 44, borderRadius: '50%',
+        background: showMenu ? 'var(--surface-2)' : 'var(--accent)',
+        border: showMenu ? '0.5px solid var(--border)' : 'none',
+        cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        boxShadow: showMenu ? 'none' : '0 4px 16px rgba(224,0,0,0.35)',
+        transition: 'all 200ms ease',
+      }}>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={showMenu ? 'var(--text-primary)' : '#000'} strokeWidth="2.5" strokeLinecap="round" style={{ transform: showMenu ? 'rotate(45deg)' : 'none', transition: 'transform 200ms ease' }}>
+          {showMenu ? (
+            <><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>
+          ) : (
+            <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+          )}
+        </svg>
+      </button>
+      <nav className="bottom-nav">
+        {tabs.map(tab => {
+          const active = location.pathname === tab.path || (tab.path === '/workout' && location.pathname.startsWith('/workout'))
+          return (
+            <div key={tab.path} className={`nav-btn${active ? ' active' : ''}`}
+              onClick={() => { navigator.vibrate && navigator.vibrate(6); navigate(tab.path) }}>
+              {tab.icon}
+            </div>
+          )
+        })}
+      </nav>
+    </>
   )
 }
