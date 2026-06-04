@@ -62,7 +62,11 @@ const defaultData = {
     { day: 'D', calories: 0, steps: 0, workout: false },
   ],
   activeSession: [],
-  sessionHistory: [],
+  sessionHistory: [
+    { id: 1, date: 'Mar 3 juin', type: 'PUSH DAY', exercises: ['Bench Press', 'Incline Press', 'Cable Fly'], duration: '52 min', totalSets: 12 },
+    { id: 2, date: 'Lun 2 juin', type: 'PULL DAY', exercises: ['Deadlift', 'Pull-up', 'Cable Row'], duration: '48 min', totalSets: 10 },
+    { id: 3, date: 'Sam 1 juin', type: 'LEG DAY', exercises: ['Back Squat', 'Romanian Deadlift', 'Fentes'], duration: '55 min', totalSets: 14 },
+  ],
   runSessions: [
     { date: 'Aujourd\'hui', km: 5.2, time: '27:30', pace: '5:17/km', calories: 420 },
     { date: 'Mardi', km: 8.0, time: '42:15', pace: '5:17/km', calories: 640 },
@@ -88,7 +92,20 @@ export function AppProvider({ children }) {
     setAppData(prev => ({ ...prev, [key]: value }))
   }
 
-  return <AppContext.Provider value={{ appData, updateData }}>{children}</AppContext.Provider>
+  function addExercisesToSession(exercises) {
+    const formatted = exercises.map(ex => ({
+      id: `ai_${Date.now()}_${Math.random()}`,
+      name: ex.name,
+      sets: Array(ex.sets).fill(null).map(() => ({ reps: '', kg: ex.kg || '', done: false })),
+      suggested: { reps: ex.reps, kg: ex.kg, rest: ex.rest }
+    }))
+    setAppData(prev => ({
+      ...prev,
+      activeSession: [...(prev.activeSession || []), ...formatted]
+    }))
+  }
+
+  return <AppContext.Provider value={{ appData, updateData, addExercisesToSession }}>{children}</AppContext.Provider>
 }
 
 export function useApp() {

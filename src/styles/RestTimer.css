@@ -1,0 +1,66 @@
+.rest-timer {
+  position: fixed;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 32px);
+  max-width: 358px;
+  background: rgba(18,18,18,0.96);
+  backdrop-filter: blur(20px);
+  border: 0.5px solid var(--border);
+  border-radius: 16px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 90;
+  animation: slideUp 250ms cubic-bezier(0.34,1.56,0.64,1);
+}
+
+.rest-timer-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.rest-timer-label {
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.rest-timer-seconds {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.rest-timer-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.rest-timer-skip {
+  padding: 8px 14px;
+  background: var(--surface-2);
+  border: 0.5px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  cursor: pointer;
+}
+
+.rest-timer-adjust {
+  padding: 8px 14px;
+  background: rgba(224,0,0,0.1);
+  border: 0.5px solid var(--accent);
+  border-radius: 8px;
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}

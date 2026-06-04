@@ -14,6 +14,7 @@ import Scan from './screens/Scan'
 import CoachDashboard from './screens/CoachDashboard'
 import MemberDetail from './screens/MemberDetail'
 import WorkoutLibrary from './screens/WorkoutLibrary'
+import WorkoutSession from './screens/WorkoutSession'
 import Rings from './screens/Rings'
 import ClientsList from './screens/ClientsList'
 import Messages from './screens/Messages'
@@ -47,6 +48,7 @@ export default function App() {
       <Route path="/ai-coach" element={<ProtectedRoute requiredRole="member"><AICoach /></ProtectedRoute>} />
       <Route path="/scan" element={<ProtectedRoute requiredRole="member"><Scan /></ProtectedRoute>} />
       <Route path="/rings" element={<ProtectedRoute requiredRole="member"><Rings /></ProtectedRoute>} />
+      <Route path="/workout/session" element={<ProtectedRoute requiredRole="member"><WorkoutSession /></ProtectedRoute>} />
       <Route path="/workout/maison" element={<ProtectedRoute requiredRole="member"><WorkoutLibrary section="maison" /></ProtectedRoute>} />
       <Route path="/workout/salle" element={<ProtectedRoute requiredRole="member"><WorkoutLibrary section="salle" /></ProtectedRoute>} />
       <Route path="/workout/dehors" element={<ProtectedRoute requiredRole="member"><WorkoutLibrary section="dehors" /></ProtectedRoute>} />

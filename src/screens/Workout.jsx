@@ -1,92 +1,104 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import BottomNav from '../components/BottomNav'
 import { useApp } from '../context/AppContext'
+import { useAuth } from '../context/AuthContext'
 import { useLanguage } from '../context/LanguageContext'
+import '../styles/Workout.css'
 
-function SetRow({ set, index, onUpdate, onCheck }) {
-  const [checked, setChecked] = useState(false)
-  return (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: 8,
-      padding: '8px 0',
-      background: checked ? 'rgba(31,214,107,0.06)' : 'transparent',
-      borderRadius: 8, transition: 'background 200ms ease',
-    }}>
-      <span style={{ fontSize: 11, color: 'var(--text-muted)', width: 24, textAlign: 'center' }}>{index + 1}</span>
-      <input
-        type="number" min={1} max={99} placeholder="12"
-        value={set.reps}
-        onChange={e => onUpdate(index, 'reps', e.target.value)}
-        style={{ width: 56, padding: '8px 4px', background: 'var(--surface-2)', border: '0.5px solid var(--border)', borderRadius: 8, color: 'var(--text-primary)', fontSize: 15, fontFamily: 'monospace', textAlign: 'center' }}
-      />
-      <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>×</span>
-      <input
-        type="number" min={0} max={999} step={0.5} placeholder="80"
-        value={set.kg}
-        onChange={e => onUpdate(index, 'kg', e.target.value)}
-        style={{ width: 56, padding: '8px 4px', background: 'var(--surface-2)', border: '0.5px solid var(--border)', borderRadius: 8, color: 'var(--text-primary)', fontSize: 15, fontFamily: 'monospace', textAlign: 'center' }}
-      />
-      <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>kg</span>
-      <button onClick={() => {
-        setChecked(true)
-        navigator.vibrate && navigator.vibrate(8)
-        onCheck(index)
-      }} style={{
-        marginLeft: 'auto', width: 32, height: 32, borderRadius: '50%',
-        background: checked ? 'rgba(31,214,107,0.2)' : 'var(--surface-2)',
-        border: `1px solid ${checked ? 'var(--success)' : 'var(--border)'}`,
-        cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        transition: 'all 150ms ease',
-      }}>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={checked ? 'var(--success)' : 'var(--text-muted)'} strokeWidth="2.5" strokeLinecap="round">
-          <polyline points="20 6 9 17 4 12"/>
-        </svg>
-      </button>
-    </div>
-  )
+const AIProgramCard = () => {
+  const { user } = useAuth()
+  const { lang } = useLanguage()
+  const { addExercisesToSession } = useApp()
+  const navigate = useNavigate()
+  const [program, setProgram] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchProgram = async () => {
+      try {
+        const response = await fetch('/api/claude', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: 'claude-haiku-4-5-20251001',
+            max_tokens: 800,
+            messages: [{
+              role: 'user',
+              content: `Tu es coach sportif expert. Génère un programme d'entraînement pour aujourd'hui.
+
+Utilisateur: ${user?.name}
+Objectif: ${user?.goal || 'Prise de masse'}
+Dernières séances: Push Day (lundi), Pull Day (mercredi), Leg Day (vendredi)
+Jour: ${new Date().toLocaleDateString('fr-FR', { weekday: 'long' })}
+
+Génère un programme adapté. Réponds UNIQUEMENT en JSON valide:
+{
+  "session_type": "PUSH DAY",
+  "tagline": "Court message motivant max 8 mots",
+  "exercises": [
+    {
+      "name": "Bench Press",
+      "sets": 4,
+      "reps": "8-10",
+      "kg": 80,
+      "rest": 90,
+      "category": "salle"
+    }
+  ]
 }
 
-function ExerciseCard({ exercise, onUpdate, onRemove, addSetLabel }) {
-  const [expanded, setExpanded] = useState(true)
+Donne exactement 4-5 exercices. Adapte selon l'objectif. Réponds en ${lang === 'fr' ? 'français' : lang === 'en' ? 'anglais' : 'espagnol'}.`
+            }]
+          })
+        })
+        const data = await response.json()
+        const raw = data.content?.[0]?.text || ''
+        const clean = raw.replace(/```json|```/g, '').trim()
+        const parsed = JSON.parse(clean)
+        setProgram(parsed)
+      } catch {
+        setProgram(null)
+      }
+      setLoading(false)
+    }
+    fetchProgram()
+  }, [])
 
-  function addSet() {
-    onUpdate({ ...exercise, sets: [...exercise.sets, { reps: '', kg: '' }] })
-  }
-  function updateSet(i, field, val) {
-    const sets = exercise.sets.map((s, idx) => idx === i ? { ...s, [field]: val } : s)
-    onUpdate({ ...exercise, sets })
+  if (loading) return (
+    <div className="ai-program-card loading">
+      <div className="ai-program-spinner" />
+      <p className="ai-program-loading-text">Ton programme se prépare...</p>
+    </div>
+  )
+
+  if (!program) return null
+
+  const handleAddAll = () => {
+    addExercisesToSession(program.exercises)
+    navigate('/workout/session')
   }
 
   return (
-    <div className="card" style={{ marginBottom: 8 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span className="text-base bold">{exercise.name}</span>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={onRemove} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round">
-              <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/>
-            </svg>
-          </button>
-          <button onClick={() => setExpanded(e => !e)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" style={{ transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 200ms' }}>
-              <polyline points="6 9 12 15 18 9"/>
-            </svg>
-          </button>
+    <div className="ai-program-card">
+      <div className="ai-program-header">
+        <div>
+          <p className="ai-program-type">{program.session_type}</p>
+          <p className="ai-program-tagline">{program.tagline}</p>
         </div>
+        <span className="ai-program-badge">IA</span>
       </div>
-      {expanded && (
-        <div style={{ marginTop: 8, borderTop: '0.5px solid var(--border)', paddingTop: 8 }}>
-          {exercise.sets.map((set, i) => (
-            <SetRow key={i} set={set} index={i} onUpdate={updateSet} onCheck={() => {}} />
-          ))}
-          <button onClick={addSet} style={{
-            background: 'none', border: '0.5px dashed var(--border)',
-            color: 'var(--text-muted)', fontSize: 11, letterSpacing: 1, textTransform: 'uppercase',
-            padding: '8px 16px', borderRadius: 8, cursor: 'pointer', width: '100%', marginTop: 8,
-          }}>{addSetLabel}</button>
-        </div>
-      )}
+      <div className="ai-program-exercises">
+        {program.exercises.map((ex, i) => (
+          <div key={i} className="ai-program-ex-row">
+            <span className="ai-program-ex-name">{ex.name}</span>
+            <span className="ai-program-ex-detail">{ex.sets}×{ex.reps} · {ex.kg}kg</span>
+          </div>
+        ))}
+      </div>
+      <button className="ai-program-start-btn" onClick={handleAddAll}>
+        COMMENCER CETTE SÉANCE →
+      </button>
     </div>
   )
 }
@@ -95,7 +107,7 @@ export default function Workout() {
   const navigate = useNavigate()
   const { appData, updateData } = useApp()
   const { t } = useLanguage()
-  const activeSession = appData.activeSession || []
+  const sessionHistory = appData.sessionHistory || []
 
   const sections = [
     { key: 'maison', name: t('home_exercises'), sub: t('bodyweight') },
@@ -103,17 +115,9 @@ export default function Workout() {
     { key: 'dehors', name: t('outdoor_exercises'), sub: t('outdoor') },
   ]
 
-  function updateExercise(updated) {
-    updateData('activeSession', activeSession.map(e => e.id === updated.id ? updated : e))
-  }
-  function removeExercise(id) {
-    updateData('activeSession', activeSession.filter(e => e.id !== id))
-  }
-  function finishSession() {
-    updateData('sessionHistory', [...(appData.sessionHistory || []), { date: new Date().toISOString(), exercises: activeSession }])
+  function handleNewSession() {
     updateData('activeSession', [])
-    updateData('weeklyWorkouts', appData.weeklyWorkouts + 1)
-    navigate('/weekly')
+    navigate('/workout/session')
   }
 
   const sectionIcons = {
@@ -144,17 +148,14 @@ export default function Workout() {
           </div>
         </div>
 
-        {activeSession.length > 0 && (
-          <>
-            <div className="section-label">{t('active_session')}</div>
-            {activeSession.map(ex => (
-              <ExerciseCard key={ex.id} exercise={ex} onUpdate={updateExercise} onRemove={() => removeExercise(ex.id)} addSetLabel={t('add_set')} />
-            ))}
-            <button className="btn-accent" onClick={finishSession} style={{ marginTop: 8, marginBottom: 16 }}>
-              {t('finish_workout')}
-            </button>
-          </>
-        )}
+        <AIProgramCard />
+
+        <button className="new-session-btn" onClick={handleNewSession}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          NOUVELLE SÉANCE
+        </button>
 
         <div className="section-label">{t('library')}</div>
         {sections.map((s, i) => (
@@ -171,6 +172,29 @@ export default function Workout() {
             </div>
           </div>
         ))}
+
+        {sessionHistory.length > 0 && (
+          <div className="history-section">
+            <p className="section-label">DERNIÈRES SÉANCES</p>
+            {sessionHistory.map(session => (
+              <div className="history-card" key={session.id}>
+                <div className="history-card-left">
+                  <p className="history-date">{session.date}</p>
+                  <p className="history-type">{session.type}</p>
+                </div>
+                <div className="history-exercises">
+                  {session.exercises.map((ex, i) => (
+                    <span key={i} className="history-ex-badge">{ex}</span>
+                  ))}
+                </div>
+                <div className="history-stats">
+                  <span>{session.duration}</span>
+                  <span>{session.totalSets} séries</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
       <BottomNav />
     </div>
