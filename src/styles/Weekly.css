@@ -1,0 +1,143 @@
+.section-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+  margin-bottom: 14px;
+}
+
+.progress-section {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 0.5px solid var(--border);
+}
+
+.progress-photos-row {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 4px;
+}
+
+.progress-photos-row::-webkit-scrollbar {
+  display: none;
+}
+
+.progress-photo-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.progress-photo-placeholder {
+  width: 72px;
+  height: 96px;
+  background: var(--surface);
+  border: 0.5px dashed var(--border);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 150ms ease;
+}
+
+.progress-photo-placeholder:active {
+  border-color: var(--accent);
+}
+
+.progress-photo-plus {
+  font-size: 24px;
+  color: var(--text-muted);
+  font-weight: 300;
+  line-height: 1;
+}
+
+.progress-photo-label {
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.lifts-section {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 0.5px solid var(--border);
+  padding-bottom: 40px;
+}
+
+.lift-card {
+  background: var(--surface);
+  border: 0.5px solid var(--border);
+  border-radius: 16px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+}
+
+.lift-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.lift-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.lift-latest {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.lift-trend {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.lift-value {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.lift-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  height: 70px;
+}
+
+.lift-bar-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  justify-content: flex-end;
+}
+
+.lift-bar {
+  width: 100%;
+  border-radius: 4px 4px 0 0;
+  transition: height 400ms ease-out;
+}
+
+.lift-bar-val {
+  font-size: 10px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.lift-bar-date {
+  font-size: 9px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
