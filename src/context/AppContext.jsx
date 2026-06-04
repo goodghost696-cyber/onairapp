@@ -63,9 +63,33 @@ const defaultData = {
   ],
   activeSession: [],
   sessionHistory: [
-    { id: 1, date: 'Mar 3 juin', type: 'PUSH DAY', exercises: ['Bench Press', 'Incline Press', 'Cable Fly'], duration: '52 min', totalSets: 12 },
-    { id: 2, date: 'Lun 2 juin', type: 'PULL DAY', exercises: ['Deadlift', 'Pull-up', 'Cable Row'], duration: '48 min', totalSets: 10 },
-    { id: 3, date: 'Sam 1 juin', type: 'LEG DAY', exercises: ['Back Squat', 'Romanian Deadlift', 'Fentes'], duration: '55 min', totalSets: 14 },
+    {
+      id: 1, date: 'Mar 3 juin', type: 'PUSH DAY',
+      exercises: ['Bench Press', 'Incline Press', 'Cable Fly'], duration: '52 min', totalSets: 12,
+      exerciseDetails: [
+        { name: 'Bench Press', sets: [{ reps: 10, kg: 80 }, { reps: 8, kg: 85 }, { reps: 8, kg: 85 }, { reps: 6, kg: 90 }] },
+        { name: 'Incline Dumbbell Press', sets: [{ reps: 12, kg: 28 }, { reps: 10, kg: 30 }, { reps: 10, kg: 30 }] },
+        { name: 'Cable Fly', sets: [{ reps: 15, kg: 20 }, { reps: 15, kg: 20 }, { reps: 12, kg: 22 }] },
+      ]
+    },
+    {
+      id: 2, date: 'Lun 2 juin', type: 'PULL DAY',
+      exercises: ['Deadlift', 'Pull-up', 'Cable Row'], duration: '48 min', totalSets: 10,
+      exerciseDetails: [
+        { name: 'Deadlift', sets: [{ reps: 5, kg: 120 }, { reps: 5, kg: 130 }, { reps: 3, kg: 140 }] },
+        { name: 'Pull-up', sets: [{ reps: 10, kg: 0 }, { reps: 8, kg: 0 }, { reps: 8, kg: 0 }] },
+        { name: 'Cable Row', sets: [{ reps: 12, kg: 60 }, { reps: 10, kg: 65 }, { reps: 10, kg: 65 }] },
+      ]
+    },
+    {
+      id: 3, date: 'Sam 1 juin', type: 'LEG DAY',
+      exercises: ['Back Squat', 'Romanian Deadlift', 'Fentes'], duration: '55 min', totalSets: 14,
+      exerciseDetails: [
+        { name: 'Back Squat', sets: [{ reps: 8, kg: 100 }, { reps: 6, kg: 110 }, { reps: 6, kg: 110 }, { reps: 5, kg: 120 }] },
+        { name: 'Romanian Deadlift', sets: [{ reps: 10, kg: 80 }, { reps: 10, kg: 80 }, { reps: 8, kg: 85 }] },
+        { name: 'Fentes', sets: [{ reps: 12, kg: 40 }, { reps: 12, kg: 40 }, { reps: 10, kg: 45 }, { reps: 10, kg: 45 }] },
+      ]
+    },
   ],
   runSessions: [
     { date: 'Aujourd\'hui', km: 5.2, time: '27:30', pace: '5:17/km', calories: 420 },
@@ -92,6 +116,10 @@ export function AppProvider({ children }) {
     setAppData(prev => ({ ...prev, [key]: value }))
   }
 
+  function clearActiveSession() {
+    setAppData(prev => ({ ...prev, activeSession: [] }))
+  }
+
   function addExercisesToSession(exercises) {
     const formatted = exercises.map(ex => ({
       id: `ai_${Date.now()}_${Math.random()}`,
@@ -105,7 +133,7 @@ export function AppProvider({ children }) {
     }))
   }
 
-  return <AppContext.Provider value={{ appData, updateData, addExercisesToSession }}>{children}</AppContext.Provider>
+  return <AppContext.Provider value={{ appData, updateData, addExercisesToSession, clearActiveSession }}>{children}</AppContext.Provider>
 }
 
 export function useApp() {

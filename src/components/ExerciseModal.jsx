@@ -148,84 +148,6 @@ const EXERCISE_DATA = {
   },
 };
 
-const MUSCLE_SVG = {
-  chest: (
-    <svg viewBox="0 0 80 120" width="80" height="120" fill="none">
-      <ellipse cx="40" cy="60" rx="18" ry="28" fill="var(--surface-2)" stroke="var(--border)" strokeWidth="1"/>
-      <ellipse cx="30" cy="52" rx="10" ry="8" fill="var(--accent)" opacity="0.8"/>
-      <ellipse cx="50" cy="52" rx="10" ry="8" fill="var(--accent)" opacity="0.8"/>
-      <circle cx="40" cy="25" r="8" fill="var(--surface-2)" stroke="var(--border)" strokeWidth="1"/>
-      <line x1="40" y1="33" x2="40" y2="42" stroke="var(--border)" strokeWidth="1.5"/>
-      <line x1="25" y1="80" x2="25" y2="110" stroke="var(--border)" strokeWidth="1.5"/>
-      <line x1="55" y1="80" x2="55" y2="110" stroke="var(--border)" strokeWidth="1.5"/>
-    </svg>
-  ),
-  back: (
-    <svg viewBox="0 0 80 120" width="80" height="120" fill="none">
-      <ellipse cx="40" cy="60" rx="18" ry="28" fill="var(--surface-2)" stroke="var(--border)" strokeWidth="1"/>
-      <rect x="28" y="44" width="24" height="20" rx="4" fill="var(--accent)" opacity="0.8"/>
-      <circle cx="40" cy="25" r="8" fill="var(--surface-2)" stroke="var(--border)" strokeWidth="1"/>
-      <line x1="40" y1="33" x2="40" y2="42" stroke="var(--border)" strokeWidth="1.5"/>
-      <line x1="25" y1="80" x2="25" y2="110" stroke="var(--border)" strokeWidth="1.5"/>
-      <line x1="55" y1="80" x2="55" y2="110" stroke="var(--border)" strokeWidth="1.5"/>
-    </svg>
-  ),
-  legs: (
-    <svg viewBox="0 0 80 120" width="80" height="120" fill="none">
-      <ellipse cx="40" cy="45" rx="18" ry="22" fill="var(--surface-2)" stroke="var(--border)" strokeWidth="1"/>
-      <circle cx="40" cy="18" r="8" fill="var(--surface-2)" stroke="var(--border)" strokeWidth="1"/>
-      <line x1="40" y1="26" x2="40" y2="35" stroke="var(--border)" strokeWidth="1.5"/>
-      <rect x="24" y="68" width="13" height="35" rx="6" fill="var(--accent)" opacity="0.8"/>
-      <rect x="43" y="68" width="13" height="35" rx="6" fill="var(--accent)" opacity="0.8"/>
-    </svg>
-  ),
-  core: (
-    <svg viewBox="0 0 80 120" width="80" height="120" fill="none">
-      <ellipse cx="40" cy="55" rx="18" ry="28" fill="var(--surface-2)" stroke="var(--border)" strokeWidth="1"/>
-      <circle cx="40" cy="18" r="8" fill="var(--surface-2)" stroke="var(--border)" strokeWidth="1"/>
-      <line x1="40" y1="26" x2="40" y2="38" stroke="var(--border)" strokeWidth="1.5"/>
-      <rect x="32" y="48" width="16" height="22" rx="3" fill="var(--accent)" opacity="0.8"/>
-      <line x1="40" y1="48" x2="40" y2="70" stroke="var(--surface-2)" strokeWidth="1.5"/>
-      <line x1="32" y1="56" x2="48" y2="56" stroke="var(--surface-2)" strokeWidth="1.5"/>
-      <line x1="32" y1="63" x2="48" y2="63" stroke="var(--surface-2)" strokeWidth="1.5"/>
-      <line x1="25" y1="83" x2="25" y2="110" stroke="var(--border)" strokeWidth="1.5"/>
-      <line x1="55" y1="83" x2="55" y2="110" stroke="var(--border)" strokeWidth="1.5"/>
-    </svg>
-  ),
-  shoulders: (
-    <svg viewBox="0 0 80 120" width="80" height="120" fill="none">
-      <ellipse cx="40" cy="55" rx="18" ry="26" fill="var(--surface-2)" stroke="var(--border)" strokeWidth="1"/>
-      <circle cx="40" cy="18" r="8" fill="var(--surface-2)" stroke="var(--border)" strokeWidth="1"/>
-      <line x1="40" y1="26" x2="40" y2="38" stroke="var(--border)" strokeWidth="1.5"/>
-      <circle cx="22" cy="42" r="7" fill="var(--accent)" opacity="0.8"/>
-      <circle cx="58" cy="42" r="7" fill="var(--accent)" opacity="0.8"/>
-      <line x1="25" y1="83" x2="25" y2="110" stroke="var(--border)" strokeWidth="1.5"/>
-      <line x1="55" y1="83" x2="55" y2="110" stroke="var(--border)" strokeWidth="1.5"/>
-    </svg>
-  ),
-  arms: (
-    <svg viewBox="0 0 80 120" width="80" height="120" fill="none">
-      <ellipse cx="40" cy="55" rx="18" ry="26" fill="var(--surface-2)" stroke="var(--border)" strokeWidth="1"/>
-      <circle cx="40" cy="18" r="8" fill="var(--surface-2)" stroke="var(--border)" strokeWidth="1"/>
-      <line x1="40" y1="26" x2="40" y2="38" stroke="var(--border)" strokeWidth="1.5"/>
-      <rect x="15" y="50" width="8" height="22" rx="4" fill="var(--accent)" opacity="0.8"/>
-      <rect x="57" y="50" width="8" height="22" rx="4" fill="var(--accent)" opacity="0.8"/>
-      <line x1="25" y1="83" x2="25" y2="110" stroke="var(--border)" strokeWidth="1.5"/>
-      <line x1="55" y1="83" x2="55" y2="110" stroke="var(--border)" strokeWidth="1.5"/>
-    </svg>
-  ),
-  fullbody: (
-    <svg viewBox="0 0 80 120" width="80" height="120" fill="none">
-      <ellipse cx="40" cy="50" rx="18" ry="24" fill="var(--accent)" opacity="0.6"/>
-      <circle cx="40" cy="18" r="8" fill="var(--surface-2)" stroke="var(--accent)" strokeWidth="1.5"/>
-      <line x1="40" y1="26" x2="40" y2="36" stroke="var(--accent)" strokeWidth="1.5"/>
-      <rect x="15" y="46" width="8" height="20" rx="4" fill="var(--accent)" opacity="0.7"/>
-      <rect x="57" y="46" width="8" height="20" rx="4" fill="var(--accent)" opacity="0.7"/>
-      <rect x="25" y="74" width="13" height="32" rx="6" fill="var(--accent)" opacity="0.7"/>
-      <rect x="42" y="74" width="13" height="32" rx="6" fill="var(--accent)" opacity="0.7"/>
-    </svg>
-  ),
-};
 
 
 export const ExerciseModal = ({ exercise, onClose, onAdd }) => {
@@ -242,25 +164,9 @@ export const ExerciseModal = ({ exercise, onClose, onAdd }) => {
         <div className="modal-content">
           <h2 className="modal-title">{exercise.name}</h2>
 
-          <div className="modal-muscles-row">
-            <div className="modal-svg-body">
-              {MUSCLE_SVG[data.muscle_group]}
-            </div>
-            <div className="modal-muscles-info">
-              <p className="modal-label">MUSCLES PRINCIPAUX</p>
-              <div className="modal-badges">
-                {data.muscles_primary.map(m => (
-                  <span key={m} className="muscle-badge primary">{m}</span>
-                ))}
-              </div>
-              <p className="modal-label" style={{ marginTop: 10 }}>SECONDAIRES</p>
-              <div className="modal-badges">
-                {data.muscles_secondary.map(m => (
-                  <span key={m} className="muscle-badge secondary">{m}</span>
-                ))}
-              </div>
-            </div>
-          </div>
+          <p className="modal-muscles-text">
+            MUSCLES · {[...data.muscles_primary, ...data.muscles_secondary].join(' · ')}
+          </p>
 
           <div className="modal-steps">
             {data.steps.map((step, i) => (

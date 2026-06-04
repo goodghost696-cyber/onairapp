@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import BottomNav from '../components/BottomNav'
 import { useApp } from '../context/AppContext'
@@ -6,108 +6,16 @@ import { useAuth } from '../context/AuthContext'
 import { useLanguage } from '../context/LanguageContext'
 import '../styles/Workout.css'
 
-const AIProgramCard = () => {
-  const { user } = useAuth()
-  const { lang } = useLanguage()
-  const { addExercisesToSession } = useApp()
-  const navigate = useNavigate()
-  const [program, setProgram] = useState(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    const fetchProgram = async () => {
-      try {
-        const response = await fetch('/api/claude', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            model: 'claude-haiku-4-5-20251001',
-            max_tokens: 800,
-            messages: [{
-              role: 'user',
-              content: `Tu es coach sportif expert. Génère un programme d'entraînement pour aujourd'hui.
-
-Utilisateur: ${user?.name}
-Objectif: ${user?.goal || 'Prise de masse'}
-Dernières séances: Push Day (lundi), Pull Day (mercredi), Leg Day (vendredi)
-Jour: ${new Date().toLocaleDateString('fr-FR', { weekday: 'long' })}
-
-Génère un programme adapté. Réponds UNIQUEMENT en JSON valide:
-{
-  "session_type": "PUSH DAY",
-  "tagline": "Court message motivant max 8 mots",
-  "exercises": [
-    {
-      "name": "Bench Press",
-      "sets": 4,
-      "reps": "8-10",
-      "kg": 80,
-      "rest": 90,
-      "category": "salle"
-    }
-  ]
-}
-
-Donne exactement 4-5 exercices. Adapte selon l'objectif. Réponds en ${lang === 'fr' ? 'français' : lang === 'en' ? 'anglais' : 'espagnol'}.`
-            }]
-          })
-        })
-        const data = await response.json()
-        const raw = data.content?.[0]?.text || ''
-        const clean = raw.replace(/```json|```/g, '').trim()
-        const parsed = JSON.parse(clean)
-        setProgram(parsed)
-      } catch {
-        setProgram(null)
-      }
-      setLoading(false)
-    }
-    fetchProgram()
-  }, [])
-
-  if (loading) return (
-    <div className="ai-program-card loading">
-      <div className="ai-program-spinner" />
-      <p className="ai-program-loading-text">Ton programme se prépare...</p>
-    </div>
-  )
-
-  if (!program) return null
-
-  const handleAddAll = () => {
-    addExercisesToSession(program.exercises)
-    navigate('/workout/session')
-  }
-
-  return (
-    <div className="ai-program-card">
-      <div className="ai-program-header">
-        <div>
-          <p className="ai-program-type">{program.session_type}</p>
-          <p className="ai-program-tagline">{program.tagline}</p>
-        </div>
-        <span className="ai-program-badge">IA</span>
-      </div>
-      <div className="ai-program-exercises">
-        {program.exercises.map((ex, i) => (
-          <div key={i} className="ai-program-ex-row">
-            <span className="ai-program-ex-name">{ex.name}</span>
-            <span className="ai-program-ex-detail">{ex.sets}×{ex.reps} · {ex.kg}kg</span>
-          </div>
-        ))}
-      </div>
-      <button className="ai-program-start-btn" onClick={handleAddAll}>
-        COMMENCER CETTE SÉANCE →
-      </button>
-    </div>
-  )
-}
-
 export default function Workout() {
   const navigate = useNavigate()
-  const { appData, updateData } = useApp()
-  const { t } = useLanguage()
+  const { appData, updateData, addExercisesToSession, clearActiveSession } = useApp()
+  const { user } = useAuth()
+  const { t, lang } = useLanguage()
   const sessionHistory = appData.sessionHistory || []
+
+  const [program, setProgram] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [generated, setGenerated] = useState(false)
 
   const sections = [
     { key: 'maison', name: t('home_exercises'), sub: t('bodyweight') },
@@ -115,8 +23,52 @@ export default function Workout() {
     { key: 'dehors', name: t('outdoor_exercises'), sub: t('outdoor') },
   ]
 
-  function handleNewSession() {
-    updateData('activeSession', [])
+  function handleStartSession() {
+    clearActiveSession()
+    navigate('/workout/session')
+  }
+
+  const generateProgram = async () => {
+    setLoading(true)
+    try {
+      const response = await fetch('/api/claude', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 800,
+          messages: [{
+            role: 'user',
+            content: `Tu es coach sportif expert. Génère un programme d'entraînement pour aujourd'hui.
+Utilisateur: ${user?.name}
+Objectif: ${user?.goal || 'Prise de masse'}
+Dernières séances: Push Day (lundi), Pull Day (mercredi), Leg Day (vendredi)
+Jour: ${new Date().toLocaleDateString('fr-FR', { weekday: 'long' })}
+Réponds UNIQUEMENT en JSON valide:
+{
+  "session_type": "PUSH DAY",
+  "tagline": "Court message motivant max 8 mots",
+  "exercises": [
+    { "name": "Bench Press", "sets": 4, "reps": "8-10", "kg": 80, "rest": 90 }
+  ]
+}
+Donne exactement 4-5 exercices adaptés à l'objectif.`
+          }]
+        })
+      })
+      const data = await response.json()
+      const raw = data.content?.[0]?.text || ''
+      const clean = raw.replace(/```json|```/g, '').trim()
+      setProgram(JSON.parse(clean))
+      setGenerated(true)
+    } catch {
+      setProgram(null)
+    }
+    setLoading(false)
+  }
+
+  const handleAddAll = () => {
+    if (program) addExercisesToSession(program.exercises)
     navigate('/workout/session')
   }
 
@@ -148,14 +100,41 @@ export default function Workout() {
           </div>
         </div>
 
-        <AIProgramCard />
+        <div className="workout-cta-row">
+          <button className="today-session-btn" onClick={handleStartSession}>
+            MA SÉANCE DU JOUR
+          </button>
+          <button className="generate-program-btn" onClick={generateProgram} disabled={loading}>
+            {loading ? (
+              <><div className="btn-spinner" /> Génération...</>
+            ) : (
+              '✦ PROGRAMME IA'
+            )}
+          </button>
+        </div>
 
-        <button className="new-session-btn" onClick={handleNewSession}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-          </svg>
-          NOUVELLE SÉANCE
-        </button>
+        {generated && program && (
+          <div className="ai-program-card">
+            <div className="ai-program-header">
+              <div>
+                <p className="ai-program-type">{program.session_type}</p>
+                <p className="ai-program-tagline">{program.tagline}</p>
+              </div>
+              <span className="ai-program-badge">IA</span>
+            </div>
+            <div className="ai-program-exercises">
+              {program.exercises.map((ex, i) => (
+                <div key={i} className="ai-program-ex-row">
+                  <span className="ai-program-ex-name">{ex.name}</span>
+                  <span className="ai-program-ex-detail">{ex.sets}×{ex.reps} · {ex.kg}kg</span>
+                </div>
+              ))}
+            </div>
+            <button className="ai-program-start-btn" onClick={handleAddAll}>
+              COMMENCER CETTE SÉANCE →
+            </button>
+          </div>
+        )}
 
         <div className="section-label">{t('library')}</div>
         {sections.map((s, i) => (
@@ -177,7 +156,12 @@ export default function Workout() {
           <div className="history-section">
             <p className="section-label">DERNIÈRES SÉANCES</p>
             {sessionHistory.map(session => (
-              <div className="history-card" key={session.id}>
+              <div
+                className="history-card"
+                key={session.id}
+                onClick={() => navigate(`/workout/history/${session.id}`)}
+                style={{ cursor: 'pointer' }}
+              >
                 <div className="history-card-left">
                   <p className="history-date">{session.date}</p>
                   <p className="history-type">{session.type}</p>

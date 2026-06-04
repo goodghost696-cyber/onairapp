@@ -51,54 +51,14 @@
   margin-bottom: 16px;
 }
 
-.modal-muscles-row {
-  display: flex;
-  gap: 16px;
-  align-items: flex-start;
-  margin-bottom: 16px;
-  padding-bottom: 16px;
-  border-bottom: 0.5px solid var(--border);
-}
-
-.modal-svg-body {
-  flex-shrink: 0;
-}
-
-.modal-muscles-info {
-  flex: 1;
-}
-
-.modal-label {
-  font-size: 10px;
+.modal-muscles-text {
+  font-size: 11px;
   letter-spacing: 1.5px;
   text-transform: uppercase;
   color: var(--text-muted);
-  margin-bottom: 6px;
-}
-
-.modal-badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.muscle-badge {
-  font-size: 11px;
-  padding: 4px 10px;
-  border-radius: 100px;
-  font-weight: 500;
-}
-
-.muscle-badge.primary {
-  background: rgba(224,0,0,0.12);
-  color: var(--accent);
-  border: 0.5px solid var(--accent);
-}
-
-.muscle-badge.secondary {
-  background: var(--surface-2);
-  color: var(--text-secondary);
-  border: 0.5px solid var(--border);
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 0.5px solid var(--border);
 }
 
 .modal-steps {
