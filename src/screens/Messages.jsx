@@ -1,5 +1,4 @@
 import { useNavigate } from 'react-router-dom'
-import BottomNav from '../components/BottomNav'
 
 export default function Messages() {
   const navigate = useNavigate()
@@ -23,7 +22,7 @@ export default function Messages() {
           </div>
         </div>
       </div>
-      <BottomNav />
+
     </div>
   )
 }

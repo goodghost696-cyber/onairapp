@@ -141,3 +141,36 @@
   color: var(--text-muted);
   text-transform: uppercase;
 }
+
+.lift-curve-card {
+  background: var(--surface);
+  border: 0.5px solid var(--border);
+  border-radius: 16px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+.lift-curve-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.lift-curve-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.lift-curve-trend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.lift-curve-latest {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}

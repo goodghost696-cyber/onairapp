@@ -1,5 +1,4 @@
 import { useNavigate } from 'react-router-dom'
-import BottomNav from '../components/BottomNav'
 import { useApp } from '../context/AppContext'
 import { useLanguage } from '../context/LanguageContext'
 import '../styles/Weekly.css'
@@ -21,6 +20,57 @@ const liftProgress = [
   { name: 'Deadlift',    unit: 'kg',   sessions: [120, 130, 130, 140], dates: ['1 juin', '2 juin', '3 juin', '4 juin'] },
   { name: 'Pull-up',     unit: 'reps', sessions: [8, 9, 10, 10],       dates: ['1 juin', '2 juin', '3 juin', '4 juin'] },
 ]
+
+function LiftCurve({ lift }) {
+  const max = Math.max(...lift.sessions)
+  const min = Math.min(...lift.sessions)
+  const w = 300, h = 80
+  const padding = { top: 10, right: 16, bottom: 24, left: 32 }
+  const chartW = w - padding.left - padding.right
+  const chartH = h - padding.top - padding.bottom
+  const n = lift.sessions.length
+  const getX = i => padding.left + (i / (n - 1)) * chartW
+  const getY = v => max === min ? padding.top + chartH / 2 : padding.top + chartH - ((v - min) / (max - min)) * chartH
+  const points = lift.sessions.map((v, i) => `${getX(i)},${getY(v)}`).join(' ')
+  const latest = lift.sessions[n - 1]
+  const prev = lift.sessions[n - 2]
+
+  return (
+    <div className="lift-curve-card">
+      <div className="lift-curve-header">
+        <p className="lift-curve-name">{lift.name}</p>
+        <div className="lift-curve-trend">
+          {latest > prev
+            ? <span style={{ color: 'var(--success)' }}>↑ {latest - prev} {lift.unit}</span>
+            : <span style={{ color: 'var(--text-muted)' }}>→ stable</span>
+          }
+          <span className="lift-curve-latest">{latest} {lift.unit}</span>
+        </div>
+      </div>
+      <svg width="100%" viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none">
+        {[0, 0.5, 1].map((t, i) => (
+          <line key={i} x1={padding.left} y1={padding.top + t * chartH} x2={w - padding.right} y2={padding.top + t * chartH} stroke="var(--border)" strokeWidth="0.5" />
+        ))}
+        <defs>
+          <linearGradient id={`grad-${lift.name.replace(/\s/g,'-')}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="var(--accent)" stopOpacity="0.15"/>
+            <stop offset="100%" stopColor="var(--accent)" stopOpacity="0"/>
+          </linearGradient>
+        </defs>
+        <polygon points={`${padding.left},${padding.top + chartH} ${points} ${w - padding.right},${padding.top + chartH}`} fill={`url(#grad-${lift.name.replace(/\s/g,'-')})`} />
+        <polyline points={points} fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        {lift.sessions.map((v, i) => (
+          <circle key={i} cx={getX(i)} cy={getY(v)} r="3" fill={i === n - 1 ? 'var(--accent)' : 'var(--bg)'} stroke="var(--accent)" strokeWidth="1.5" />
+        ))}
+        {lift.dates.map((d, i) => (
+          <text key={i} x={getX(i)} y={h - 4} textAnchor="middle" fontSize="8" fill="var(--text-muted)">{d.split(' ')[0]}</text>
+        ))}
+        <text x={padding.left - 4} y={padding.top + 4} textAnchor="end" fontSize="8" fill="var(--text-muted)">{max}</text>
+        <text x={padding.left - 4} y={padding.top + chartH} textAnchor="end" fontSize="8" fill="var(--text-muted)">{min}</text>
+      </svg>
+    </div>
+  )
+}
 
 function calBarColor(cal, goal) {
   if (cal === 0) return 'var(--surface-2)'
@@ -93,42 +143,10 @@ export default function Weekly() {
         <div className="lifts-section">
           <p className="section-label">MES CHARGES</p>
           <p className="section-sub">Évolution sur les 4 dernières séances</p>
-          {liftProgress.map((lift, i) => {
-            const max = Math.max(...lift.sessions)
-            const min = Math.min(...lift.sessions)
-            const latest = lift.sessions[lift.sessions.length - 1]
-            const previous = lift.sessions[lift.sessions.length - 2]
-            const trend = latest > previous ? '↑' : latest < previous ? '↓' : '→'
-            const trendColor = latest > previous ? 'var(--success)' : latest < previous ? 'var(--danger)' : 'var(--text-muted)'
-
-            return (
-              <div key={i} className="lift-card">
-                <div className="lift-card-header">
-                  <p className="lift-name">{lift.name}</p>
-                  <div className="lift-latest">
-                    <span className="lift-trend" style={{ color: trendColor }}>{trend}</span>
-                    <span className="lift-value">{latest} {lift.unit}</span>
-                  </div>
-                </div>
-                <div className="lift-bars">
-                  {lift.sessions.map((val, j) => {
-                    const height = max === min ? 50 : Math.round(20 + ((val - min) / (max - min)) * 40)
-                    const isLatest = j === lift.sessions.length - 1
-                    return (
-                      <div key={j} className="lift-bar-col">
-                        <div className="lift-bar" style={{ height: `${height}px`, background: isLatest ? 'var(--accent)' : 'var(--surface-2)' }} />
-                        <span className="lift-bar-val">{val}</span>
-                        <span className="lift-bar-date">{lift.dates[j].split(' ')[0]}</span>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            )
-          })}
+          {liftProgress.map((lift, i) => <LiftCurve key={i} lift={lift} />)}
         </div>
       </div>
-      <BottomNav />
+
     </div>
   )
 }

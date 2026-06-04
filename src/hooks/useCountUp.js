@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 
 const easeOutExpo = t => t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
 
-export const useCountUp = (target, duration = 900) => {
+export const useCountUp = (target, duration = 1200) => {
   const [value, setValue] = useState(0);
   useEffect(() => {
     let start = null;

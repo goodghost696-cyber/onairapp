@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import BottomNav from '../components/BottomNav'
 import { useApp } from '../context/AppContext'
 
 export default function Hydration() {
@@ -47,7 +46,7 @@ export default function Hydration() {
           ))}
         </div>
       </div>
-      <BottomNav />
+
     </div>
   )
 }

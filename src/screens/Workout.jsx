@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import BottomNav from '../components/BottomNav'
 import RunContent from '../components/RunContent'
 import { useApp } from '../context/AppContext'
 import { useAuth } from '../context/AuthContext'
@@ -191,7 +190,7 @@ Donne exactement 4-5 exercices adaptés à l'objectif.`
         )}
         </>}
       </div>
-      <BottomNav />
+
     </div>
   )
 }

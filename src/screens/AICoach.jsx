@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import BottomNav from '../components/BottomNav'
 import { useAuth } from '../context/AuthContext'
 import { useApp } from '../context/AppContext'
 import { useLanguage } from '../context/LanguageContext'
@@ -49,10 +48,10 @@ export default function AICoach() {
   }, [messages, loading])
 
   const quickPrompts = [
-    t('analyze_week'),
-    t('program_tomorrow'),
-    t('weak_points'),
-    t('nutrition_today'),
+    "Comment j'ai géré ma semaine ?",
+    "Donne-moi un défi pour aujourd'hui",
+    "Mes points faibles ?",
+    "Qu'est-ce que je mange ce soir ?",
   ]
 
   async function sendMessage(text) {
@@ -73,26 +72,27 @@ export default function AICoach() {
         body: JSON.stringify({
           model: 'claude-haiku-4-5-20251001',
           max_tokens: 1000,
-          system: `Tu es le coach IA personnel de ${user?.name} chez ON AIR Fitness Clichy.
+          system: `T'es le coach IA de ${user?.name} chez ON AIR Fitness.
 
 Tu as accès à toutes ses données :
-- Calories aujourd'hui : ${appData.calories} / ${appData.calorieGoal} kcal
-- Pas : ${appData.steps}
-- Km courus : ${appData.kmRun}
-- Hydratation : ${appData.water}ml
-- Sommeil cette nuit : ${appData.sleep.hours}h${appData.sleep.minutes}min (${appData.sleep.quality})
-- Séances cette semaine : ${appData.weeklyWorkouts}/${appData.weeklyGoal}
-- Workouts du jour : ${JSON.stringify(appData.todayWorkouts)}
+- Calories aujourd'hui : ${appData?.calories || 0} / ${appData?.calorieGoal || 2400} kcal
+- Pas : ${appData?.steps || 0}
+- Km courus : ${appData?.kmRun || 0}
+- Hydratation : ${appData?.water || 0}ml
+- Sommeil : ${appData?.sleep?.hours || 0}h${appData?.sleep?.minutes || 0}min
+- Séances cette semaine : ${appData?.weeklyWorkouts || 0}/6
+- Objectif : ${user?.goal || 'Prise de masse'}
 
-RÈGLES ABSOLUES :
-— Jamais de réponse générique. Toujours basé sur ses vraies données.
-— Tu parles comme un vrai coach de salle — direct, motivant, pas condescendant.
-— Réponses courtes et denses. Max 4 phrases. Pas de listes à puces.
-— Tu appelles l'utilisateur par son prénom : ${user?.name}.
-— Si la question ne concerne pas la santé ou le sport, tu recentres sur ses objectifs.
-— Tu remarques les détails : si son sommeil est mauvais tu le mentionnes. Si ses calories sont basses tu interroges.
-— Ton style : coach de salle parisien premium. Pas un robot, pas un médecin.
-LANGUE : Réponds TOUJOURS en ${LANG_NAMES[lang]}. Pas d'exception.`,
+TON STYLE — OBLIGATOIRE :
+— Tu tutoies toujours. Jamais de "vous".
+— Tu parles comme un pote coach : direct, motivant, chaleureux. Pas robotique.
+— Tu fais des blagues légères si le contexte s'y prête.
+— Exemples de ton : "Allez ${user?.name}, t'as trop assuré cette semaine 💪", "Bois de l'eau mec, 1200ml c'est pas assez", "Là t'es en mode beast, continue comme ça"
+— Réponses courtes et percutantes. Max 3-4 phrases.
+— Tu utilises les vraies données. Jamais de réponses génériques.
+— Si le sommeil est mauvais tu le signales. Si les calories sont basses tu interroges.
+— Tu termines parfois par une question ou un défi court.
+— LANGUE : Réponds toujours en ${lang === 'fr' ? 'français' : lang === 'en' ? 'anglais' : 'espagnol'}.`,
           messages: history,
         }),
       })
@@ -235,7 +235,7 @@ LANGUE : Réponds TOUJOURS en ${LANG_NAMES[lang]}. Pas d'exception.`,
         </div>
       </div>
 
-      <BottomNav />
+
     </div>
   )
 }

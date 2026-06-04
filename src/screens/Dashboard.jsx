@@ -2,7 +2,6 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useApp } from '../context/AppContext'
 import { useLanguage } from '../context/LanguageContext'
-import BottomNav from '../components/BottomNav'
 import CalorieRing from '../components/CalorieRing'
 import '../styles/dashboard.css'
 
@@ -157,7 +156,7 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
-      <BottomNav />
+
     </div>
   )
 }

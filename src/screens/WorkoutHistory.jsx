@@ -1,6 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import BottomNav from '../components/BottomNav';
 import '../styles/WorkoutHistory.css';
 
 export default function WorkoutHistory() {
@@ -14,7 +13,7 @@ export default function WorkoutHistory() {
       <div className="screen" style={{ paddingBottom: 110 }}>
         <p style={{ color: 'var(--text-muted)', padding: '40px 0', textAlign: 'center' }}>Séance introuvable</p>
       </div>
-      <BottomNav />
+
     </div>
   );
 
@@ -61,7 +60,7 @@ export default function WorkoutHistory() {
           </div>
         ))}
       </div>
-      <BottomNav />
+
     </div>
   );
 }

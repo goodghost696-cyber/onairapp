@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { FOOD_DATABASE } from '../context/AppContext'
 import { useLanguage } from '../context/LanguageContext'
-import BottomNav from '../components/BottomNav'
 import NutriscoreBadge from '../components/NutriscoreBadge'
 
 function calcNutrition(food, grams) {
@@ -221,7 +220,7 @@ export default function Nutrition() {
         )}
       </div>
 
-      <BottomNav />
+
     </div>
   )
 }

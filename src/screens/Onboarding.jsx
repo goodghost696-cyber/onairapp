@@ -107,7 +107,7 @@ export default function Onboarding() {
     const profile = {
       id: Date.now(),
       name: answers.name,
-      email: `${answers.name.toLowerCase()}@onair.fr`,
+      email: `${answers.name.toLowerCase().replace(/\s/g,'')}@onair.fr`,
       role: 'member',
       goal: answers.goal,
       level: answers.level,

@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import BottomNav from '../components/BottomNav'
 import CoachNav from '../components/CoachNav'
 import { MOCK_MEMBERS } from './CoachDashboard'
 

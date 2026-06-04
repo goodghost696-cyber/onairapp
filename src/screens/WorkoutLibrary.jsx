@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import BottomNav from '../components/BottomNav'
 import { useApp } from '../context/AppContext'
 import { useLanguage } from '../context/LanguageContext'
 import { ExerciseModal } from '../components/ExerciseModal'
@@ -60,7 +59,6 @@ export default function WorkoutLibrary({ section }) {
     updateData('activeSession', [...(appData.activeSession || []), newEx])
     setAdded(prev => ({ ...prev, [ex.id]: true }))
     setToast(true)
-    setTimeout(() => navigate('/workout'), 800)
     setTimeout(() => setAdded(prev => ({ ...prev, [ex.id]: false })), 1500)
     setTimeout(() => setToast(false), 2000)
   }
@@ -78,7 +76,7 @@ export default function WorkoutLibrary({ section }) {
         transition: 'top 300ms cubic-bezier(0.34,1.56,0.64,1)',
         whiteSpace: 'nowrap',
       }}>
-        {t('added_to_session')}
+        Ajouté à ta séance
       </div>
 
       <div className="screen" style={{ paddingBottom: 110 }}>
@@ -139,7 +137,7 @@ export default function WorkoutLibrary({ section }) {
         />
       )}
 
-      <BottomNav />
+
     </div>
   )
 }

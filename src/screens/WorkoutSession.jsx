@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import BottomNav from '../components/BottomNav'
 import { RestTimer } from '../components/RestTimer'
 import { useApp } from '../context/AppContext'
 import { useLanguage } from '../context/LanguageContext'
@@ -176,7 +175,7 @@ export default function WorkoutSession() {
       </div>
 
       {showRestTimer && <RestTimer onDismiss={() => setShowRestTimer(false)} />}
-      <BottomNav />
+
     </div>
   )
 }

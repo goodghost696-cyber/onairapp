@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useApp } from '../context/AppContext'
 import { useLanguage } from '../context/LanguageContext'
-import BottomNav from '../components/BottomNav'
 
 function Toggle({ on, onToggle }) {
   return (
@@ -100,7 +99,7 @@ export default function Settings() {
           {t('logout')}
         </button>
       </div>
-      <BottomNav />
+
     </div>
   )
 }

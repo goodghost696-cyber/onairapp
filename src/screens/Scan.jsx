@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { useLanguage } from '../context/LanguageContext'
 import NutriscoreBadge from '../components/NutriscoreBadge'
-import BottomNav from '../components/BottomNav'
 
 const LANG_NAMES = { fr: 'français', en: 'English', es: 'español' }
 
@@ -382,7 +381,7 @@ export default function Scan() {
           </button>
         )}
       </div>
-      <BottomNav />
+
     </div>
   )
 }

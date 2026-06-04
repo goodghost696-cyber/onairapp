@@ -2,18 +2,18 @@ import { useState, useEffect } from 'react'
 import { useLanguage } from '../context/LanguageContext'
 
 const paceData = [
-  { km: '1', pace: 5.75 },
-  { km: '2', pace: 5.50 },
-  { km: '3', pace: 5.20 },
-  { km: '4', pace: 5.33 },
-  { km: '5', pace: 5.13 },
-  { km: '6', pace: 5.25 },
-  { km: '7', pace: 5.08 },
+  { km: '1', pace: '5:45' },
+  { km: '2', pace: '5:30' },
+  { km: '3', pace: '5:12' },
+  { km: '4', pace: '5:20' },
+  { km: '5', pace: '5:08' },
+  { km: '6', pace: '5:15' },
+  { km: '7', pace: '5:05' },
 ]
-const maxPace = Math.max(...paceData.map(p => p.pace))
-
-const elevationBars = [20, 28, 35, 42, 38, 30, 25, 32, 40, 35, 28, 22]
-const maxElev = Math.max(...elevationBars)
+function paceToSec(p) { const [m, s] = p.split(':').map(Number); return m * 60 + s }
+const maxPaceSec = Math.max(...paceData.map(p => paceToSec(p.pace)))
+const bestPaceSec = Math.min(...paceData.map(p => paceToSec(p.pace)))
+const bestPaceDisplay = `${Math.floor(bestPaceSec / 60)}:${String(bestPaceSec % 60).padStart(2, '0')}/km`
 
 const CIRCUIT_PATH = "M 40,180 L 40,60 L 120,60 L 120,30 L 260,30 L 260,80 L 300,80 L 300,180 L 220,180 L 220,140 L 100,140 L 100,180 Z"
 
@@ -46,31 +46,18 @@ export default function RunContent() {
   const displayTime = running || seconds > 0 ? formatTime(seconds) : '27:18'
   const displayPace = running || seconds > 0 ? pace : '5:12'
 
-  const metrics1 = [
-    { label: t('distance'), val: `${displayDist} km` },
-    { label: t('pace'),     val: `${displayPace} /km` },
-    { label: t('duration'), val: displayTime },
-  ]
-  const metrics2 = [
-    { label: t('elevation'),       val: '48 m' },
-    { label: t('heart_rate'),      val: '142 bpm' },
-    { label: t('calories_burned'), val: '487' },
+  const metrics = [
+    { label: t('pace'),       val: `${displayPace} /km` },
+    { label: t('duration'),   val: displayTime },
+    { label: t('heart_rate'), val: '142 bpm' },
   ]
 
   return (
     <>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 8 }}>
-        {metrics1.map(m => (
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 16 }}>
+        {metrics.map(m => (
           <div key={m.label} className="card" style={{ textAlign: 'center', padding: '14px 6px' }}>
             <div style={{ fontSize: 16, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>{m.val}</div>
-            <div className="text-xs text-muted" style={{ marginTop: 4 }}>{m.label}</div>
-          </div>
-        ))}
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 16 }}>
-        {metrics2.map(m => (
-          <div key={m.label} className="card" style={{ textAlign: 'center', padding: '14px 6px' }}>
-            <div style={{ fontSize: 14, fontWeight: 700 }}>{m.val}</div>
             <div className="text-xs text-muted" style={{ marginTop: 4 }}>{m.label}</div>
           </div>
         ))}
@@ -79,19 +66,19 @@ export default function RunContent() {
       <div className="card" style={{ marginBottom: 16 }}>
         <div className="flex justify-between items-center" style={{ marginBottom: 8 }}>
           <span className="text-xs text-muted">{t('pace_per_km')}</span>
-          <span className="text-xs text-accent">{t('best_pace')} : 5:05/km</span>
+          <span className="text-xs text-accent">Meilleure allure : {bestPaceDisplay}</span>
         </div>
         <div style={{ display: 'flex', gap: 6, alignItems: 'flex-end', height: 48 }}>
           {paceData.map((p, i) => (
             <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
-              <div style={{ width: '100%', height: `${(p.pace/maxPace)*42}px`, background: i === 2 ? 'var(--accent)' : 'var(--surface-2)', borderRadius: '3px 3px 0 0' }} />
+              <div style={{ width: '100%', height: `${(paceToSec(p.pace)/maxPaceSec)*42}px`, background: i === 6 ? 'var(--accent)' : 'var(--surface-2)', borderRadius: '3px 3px 0 0' }} />
               <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>{p.km}</span>
             </div>
           ))}
         </div>
       </div>
 
-      <div style={{ background: 'var(--surface)', borderRadius: 16, border: '0.5px solid var(--border)', padding: 12, marginBottom: 16 }}>
+      <div style={{ height: 160, background: 'transparent', borderRadius: 16, border: '0.5px solid var(--border)', overflow: 'hidden', marginBottom: 16, position: 'relative' }}>
         <svg width="100%" viewBox="0 0 340 220" style={{ display: 'block' }}>
           <defs>
             <linearGradient id="routeGradRun" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -119,19 +106,6 @@ export default function RunContent() {
             </animateMotion>
           </circle>
         </svg>
-      </div>
-
-      <div className="card" style={{ marginBottom: 16 }}>
-        <div className="flex justify-between items-center" style={{ marginBottom: 10 }}>
-          <span className="text-xs text-muted">{t('elevation')}</span>
-          <span className="text-xs text-accent">48m</span>
-        </div>
-        <div style={{ display: 'flex', gap: 3, alignItems: 'flex-end', height: 44 }}>
-          {elevationBars.map((h, i) => {
-            const pct = h / maxElev
-            return <div key={i} style={{ flex: 1, height: `${h}px`, background: `rgb(${Math.round(31+214*pct)},${Math.round(214-51*pct)},${Math.round(107-72*pct)})`, borderRadius: '2px 2px 0 0', opacity: 0.85 }} />
-          })}
-        </div>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, marginBottom: 16 }}>

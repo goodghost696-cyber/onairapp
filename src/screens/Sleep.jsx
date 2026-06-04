@@ -1,5 +1,4 @@
 import { useNavigate } from 'react-router-dom'
-import BottomNav from '../components/BottomNav'
 import { useApp } from '../context/AppContext'
 
 export default function Sleep() {
@@ -43,7 +42,7 @@ export default function Sleep() {
           </div>
         </div>
       </div>
-      <BottomNav />
+
     </div>
   )
 }
