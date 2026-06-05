@@ -1,4 +1,5 @@
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useState, useEffect } from 'react'
+import { save, load, clearDay } from '../utils/storage'
 
 export const FOOD_DATABASE = [
   { id:'f1',  name:'Blanc de poulet',     per100g: { kcal:110, proteins:23,  carbs:0,   fats:2   }},
@@ -23,106 +24,138 @@ export const FOOD_DATABASE = [
   { id:'f20', name:"Huile d'olive",       per100g: { kcal:884, proteins:0,   carbs:0,   fats:100 }},
 ]
 
-const defaultData = {
-  calories: 1847,
-  calorieGoal: 2400,
-  protein: 142,
-  proteinGoal: 180,
-  carbs: 198,
-  carbsGoal: 240,
-  fat: 62,
-  fatGoal: 80,
-  steps: 8247,
-  stepsGoal: 10000,
-  kmRun: 5.2,
-  water: 0,
-  waterGoal: 2500,
-  sleep: { hours: 7, minutes: 23, quality: 'Bonne' },
-  weeklyWorkouts: 4,
-  weeklyGoal: 6,
-  todayWorkouts: [
-    { name: 'Squat', sets: 4, reps: 8, weight: 100 },
-    { name: 'Développé couché', sets: 3, reps: 10, weight: 80 },
-    { name: 'Rowing barre', sets: 4, reps: 8, weight: 70 },
-  ],
-  meals: [
-    { id: 1, name: 'Flocons d\'avoine + banane', calories: 380, protein: 12, carbs: 68, fat: 6, nutriscore: 'A', time: '07:30' },
-    { id: 2, name: 'Poulet grillé + riz', calories: 520, protein: 45, carbs: 58, fat: 8, nutriscore: 'B', time: '12:30' },
-    { id: 3, name: 'Yaourt grec + fruits rouges', calories: 210, protein: 18, carbs: 22, fat: 4, nutriscore: 'A', time: '16:00' },
-    { id: 4, name: 'Saumon + légumes', calories: 480, protein: 42, carbs: 28, fat: 22, nutriscore: 'A', time: '19:30' },
-    { id: 5, name: 'Whey protéine', calories: 257, protein: 25, carbs: 22, fat: 2, nutriscore: 'C', time: '14:00' },
-  ],
-  weeklyData: [
-    { day: 'L', calories: 2100, steps: 9200, workout: true },
-    { day: 'M', calories: 1950, steps: 7800, workout: false },
-    { day: 'M', calories: 2300, steps: 11000, workout: true },
-    { day: 'J', calories: 1847, steps: 8247, workout: true },
-    { day: 'V', calories: 0, steps: 0, workout: false },
-    { day: 'S', calories: 0, steps: 0, workout: false },
-    { day: 'D', calories: 0, steps: 0, workout: false },
-  ],
-  activeSession: { exercises: [], startTime: null },
-  sessionHistory: [
-    {
-      id: 1, date: 'Mar 3 juin', type: 'PUSH DAY',
-      exercises: ['Bench Press', 'Incline Press', 'Cable Fly'], duration: '52 min', totalSets: 12,
-      exerciseDetails: [
-        { name: 'Bench Press', sets: [{ reps: 10, kg: 80 }, { reps: 8, kg: 85 }, { reps: 8, kg: 85 }, { reps: 6, kg: 90 }] },
-        { name: 'Incline Dumbbell Press', sets: [{ reps: 12, kg: 28 }, { reps: 10, kg: 30 }, { reps: 10, kg: 30 }] },
-        { name: 'Cable Fly', sets: [{ reps: 15, kg: 20 }, { reps: 15, kg: 20 }, { reps: 12, kg: 22 }] },
-      ]
-    },
-    {
-      id: 2, date: 'Lun 2 juin', type: 'PULL DAY',
-      exercises: ['Deadlift', 'Pull-up', 'Cable Row'], duration: '48 min', totalSets: 10,
-      exerciseDetails: [
-        { name: 'Deadlift', sets: [{ reps: 5, kg: 120 }, { reps: 5, kg: 130 }, { reps: 3, kg: 140 }] },
-        { name: 'Pull-up', sets: [{ reps: 10, kg: 0 }, { reps: 8, kg: 0 }, { reps: 8, kg: 0 }] },
-        { name: 'Cable Row', sets: [{ reps: 12, kg: 60 }, { reps: 10, kg: 65 }, { reps: 10, kg: 65 }] },
-      ]
-    },
-    {
-      id: 3, date: 'Sam 1 juin', type: 'LEG DAY',
-      exercises: ['Back Squat', 'Romanian Deadlift', 'Fentes'], duration: '55 min', totalSets: 14,
-      exerciseDetails: [
-        { name: 'Back Squat', sets: [{ reps: 8, kg: 100 }, { reps: 6, kg: 110 }, { reps: 6, kg: 110 }, { reps: 5, kg: 120 }] },
-        { name: 'Romanian Deadlift', sets: [{ reps: 10, kg: 80 }, { reps: 10, kg: 80 }, { reps: 8, kg: 85 }] },
-        { name: 'Fentes', sets: [{ reps: 12, kg: 40 }, { reps: 12, kg: 40 }, { reps: 10, kg: 45 }, { reps: 10, kg: 45 }] },
-      ]
-    },
-  ],
-  runSessions: [
-    { date: 'Aujourd\'hui', km: 5.2, time: '27:30', pace: '5:17/km', calories: 420 },
-    { date: 'Mardi', km: 8.0, time: '42:15', pace: '5:17/km', calories: 640 },
-    { date: 'Dimanche', km: 12.5, time: '1:05:30', pace: '5:14/km', calories: 980 },
-  ],
-  sleepData: [
-    { day: 'L', hours: 7.5 },
-    { day: 'M', hours: 6.2 },
-    { day: 'M', hours: 8.0 },
-    { day: 'J', hours: 7.4 },
-    { day: 'V', hours: 0 },
-    { day: 'S', hours: 0 },
-    { day: 'D', hours: 0 },
-  ],
+const DEFAULT_SESSION_HISTORY = [
+  {
+    id: 1, date: 'Mar 3 juin', type: 'PUSH DAY',
+    exercises: ['Bench Press', 'Incline Press', 'Cable Fly'], duration: '52 min', totalSets: 12,
+    exerciseDetails: [
+      { name: 'Bench Press', sets: [{ reps: 10, kg: 80 }, { reps: 8, kg: 85 }, { reps: 8, kg: 85 }, { reps: 6, kg: 90 }] },
+      { name: 'Incline Dumbbell Press', sets: [{ reps: 12, kg: 28 }, { reps: 10, kg: 30 }, { reps: 10, kg: 30 }] },
+      { name: 'Cable Fly', sets: [{ reps: 15, kg: 20 }, { reps: 15, kg: 20 }, { reps: 12, kg: 22 }] },
+    ]
+  },
+  {
+    id: 2, date: 'Lun 2 juin', type: 'PULL DAY',
+    exercises: ['Deadlift', 'Pull-up', 'Cable Row'], duration: '48 min', totalSets: 10,
+    exerciseDetails: [
+      { name: 'Deadlift', sets: [{ reps: 5, kg: 120 }, { reps: 5, kg: 130 }, { reps: 3, kg: 140 }] },
+      { name: 'Pull-up', sets: [{ reps: 10, kg: 0 }, { reps: 8, kg: 0 }, { reps: 8, kg: 0 }] },
+      { name: 'Cable Row', sets: [{ reps: 12, kg: 60 }, { reps: 10, kg: 65 }, { reps: 10, kg: 65 }] },
+    ]
+  },
+  {
+    id: 3, date: 'Sam 1 juin', type: 'LEG DAY',
+    exercises: ['Back Squat', 'Romanian Deadlift', 'Fentes'], duration: '55 min', totalSets: 14,
+    exerciseDetails: [
+      { name: 'Back Squat', sets: [{ reps: 8, kg: 100 }, { reps: 6, kg: 110 }, { reps: 6, kg: 110 }, { reps: 5, kg: 120 }] },
+      { name: 'Romanian Deadlift', sets: [{ reps: 10, kg: 80 }, { reps: 10, kg: 80 }, { reps: 8, kg: 85 }] },
+      { name: 'Fentes', sets: [{ reps: 12, kg: 40 }, { reps: 12, kg: 40 }, { reps: 10, kg: 45 }, { reps: 10, kg: 45 }] },
+    ]
+  },
+]
+
+function getPersonalisedGoals() {
+  try {
+    const user = JSON.parse(localStorage.getItem('onair_user') || '{}')
+    return {
+      calorieGoal: parseInt(localStorage.getItem('onair_calorieGoal')) || user.calorieGoal || 2400,
+      proteinGoal: user.proteinGoal || 180,
+      carbsGoal: user.carbGoal || 240,
+      fatGoal: user.fatGoal || 80,
+    }
+  } catch { return { calorieGoal: 2400, proteinGoal: 180, carbsGoal: 240, fatGoal: 80 } }
 }
 
 const AppContext = createContext(null)
 
 export function AppProvider({ children }) {
-  const [appData, setAppData] = useState(defaultData)
+  const [appData, setAppData] = useState(() => {
+    const goals = getPersonalisedGoals()
+    return {
+      calories: load('calories', 0),
+      calorieGoal: goals.calorieGoal,
+      protein: load('protein', 0),
+      proteinGoal: goals.proteinGoal,
+      carbs: load('carbs', 0),
+      carbsGoal: goals.carbsGoal,
+      fat: load('fat', 0),
+      fatGoal: goals.fatGoal,
+      steps: load('steps', 0),
+      stepsGoal: 10000,
+      kmRun: load('kmRun', 0),
+      water: load('water', 0),
+      waterGoal: 2500,
+      sleep: load('sleep', { hours: 7, minutes: 23, quality: 'Bonne' }),
+      weeklyWorkouts: load('weeklyWorkouts', 4),
+      weeklyGoal: 6,
+      meals: load('meals', [
+        { id: 1, name: "Flocons d'avoine + banane", calories: 380, protein: 12, carbs: 68, fat: 6, nutriscore: 'A', time: '07:30' },
+        { id: 2, name: 'Poulet grillé + riz', calories: 520, protein: 45, carbs: 58, fat: 8, nutriscore: 'B', time: '12:30' },
+        { id: 3, name: 'Yaourt grec + fruits rouges', calories: 210, protein: 18, carbs: 22, fat: 4, nutriscore: 'A', time: '16:00' },
+        { id: 4, name: 'Saumon + légumes', calories: 480, protein: 42, carbs: 28, fat: 22, nutriscore: 'A', time: '19:30' },
+        { id: 5, name: 'Whey protéine', calories: 257, protein: 25, carbs: 22, fat: 2, nutriscore: 'C', time: '14:00' },
+      ]),
+      weeklyData: [
+        { day: 'L', calories: 2100, steps: 9200, workout: true },
+        { day: 'M', calories: 1950, steps: 7800, workout: false },
+        { day: 'M', calories: 2300, steps: 11000, workout: true },
+        { day: 'J', calories: 1847, steps: 8247, workout: true },
+        { day: 'V', calories: 0, steps: 0, workout: false },
+        { day: 'S', calories: 0, steps: 0, workout: false },
+        { day: 'D', calories: 0, steps: 0, workout: false },
+      ],
+      activeSession: { exercises: [], startTime: null, startTimestamp: null },
+      sessionHistory: load('sessionHistory', DEFAULT_SESSION_HISTORY),
+      runSessions: [
+        { date: "Aujourd'hui", km: 5.2, time: '27:30', pace: '5:17/km', calories: 420 },
+        { date: 'Mardi', km: 8.0, time: '42:15', pace: '5:17/km', calories: 640 },
+        { date: 'Dimanche', km: 12.5, time: '1:05:30', pace: '5:14/km', calories: 980 },
+      ],
+      sleepData: [
+        { day: 'L', hours: 7.5 },
+        { day: 'M', hours: 6.2 },
+        { day: 'M', hours: 8.0 },
+        { day: 'J', hours: 7.4 },
+        { day: 'V', hours: 0 },
+        { day: 'S', hours: 0 },
+        { day: 'D', hours: 0 },
+      ],
+    }
+  })
+
+  // Day reset — resets only daily metrics
+  useEffect(() => {
+    if (clearDay()) {
+      setAppData(prev => ({ ...prev, calories: 0, water: 0, steps: 0, protein: 0, carbs: 0, fat: 0, meals: [] }))
+      save('calories', 0); save('water', 0); save('steps', 0)
+      save('protein', 0); save('carbs', 0); save('fat', 0); save('meals', [])
+    }
+  }, [])
+
+  // Persist on change
+  useEffect(() => { save('calories', appData.calories) }, [appData.calories])
+  useEffect(() => { save('water', appData.water) }, [appData.water])
+  useEffect(() => { save('steps', appData.steps) }, [appData.steps])
+  useEffect(() => { save('protein', appData.protein) }, [appData.protein])
+  useEffect(() => { save('carbs', appData.carbs) }, [appData.carbs])
+  useEffect(() => { save('fat', appData.fat) }, [appData.fat])
+  useEffect(() => { save('meals', appData.meals) }, [appData.meals])
+  useEffect(() => { save('sessionHistory', appData.sessionHistory) }, [appData.sessionHistory])
+  useEffect(() => { save('weeklyWorkouts', appData.weeklyWorkouts) }, [appData.weeklyWorkouts])
+  useEffect(() => { save('sleep', appData.sleep) }, [appData.sleep])
+  useEffect(() => { save('kmRun', appData.kmRun) }, [appData.kmRun])
 
   function updateData(key, value) {
     setAppData(prev => ({ ...prev, [key]: value }))
   }
 
   function clearActiveSession() {
-    setAppData(prev => ({ ...prev, activeSession: { exercises: [], startTime: null } }))
+    setAppData(prev => ({ ...prev, activeSession: { exercises: [], startTime: null, startTimestamp: null } }))
   }
 
   function addExerciseToSession(exercise) {
     setAppData(prev => {
-      const current = prev.activeSession || { exercises: [], startTime: null }
+      const current = prev.activeSession || { exercises: [], startTime: null, startTimestamp: null }
       const exists = current.exercises.find(e => e.id === exercise.id)
       if (exists) return prev
       return {
@@ -133,6 +166,7 @@ export function AppProvider({ children }) {
             sets: [{ reps: '', kg: '', done: false }],
           }],
           startTime: current.startTime || new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+          startTimestamp: current.startTimestamp || Date.now(),
         }
       }
     })
@@ -147,12 +181,13 @@ export function AppProvider({ children }) {
       suggested: { reps: ex.reps, kg: ex.kg, rest: ex.rest }
     }))
     setAppData(prev => {
-      const current = prev.activeSession || { exercises: [], startTime: null }
+      const current = prev.activeSession || { exercises: [], startTime: null, startTimestamp: null }
       return {
         ...prev,
         activeSession: {
           exercises: [...current.exercises, ...formatted],
           startTime: current.startTime || new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+          startTimestamp: current.startTimestamp || Date.now(),
         }
       }
     })
@@ -189,7 +224,24 @@ export function AppProvider({ children }) {
     })
   }
 
-  return <AppContext.Provider value={{ appData, updateData, addExerciseToSession, addExercisesToSession, addSetToExercise, toggleSetDone, updateSet, clearActiveSession }}>{children}</AppContext.Provider>
+  function addSessionToHistory(session) {
+    setAppData(prev => ({
+      ...prev,
+      sessionHistory: [session, ...prev.sessionHistory.slice(0, 9)],
+      weeklyWorkouts: (prev.weeklyWorkouts || 0) + 1,
+    }))
+  }
+
+  return (
+    <AppContext.Provider value={{
+      appData, updateData,
+      addExerciseToSession, addExercisesToSession,
+      addSetToExercise, toggleSetDone, updateSet,
+      clearActiveSession, addSessionToHistory,
+    }}>
+      {children}
+    </AppContext.Provider>
+  )
 }
 
 export function useApp() {

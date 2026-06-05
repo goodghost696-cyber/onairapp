@@ -6,25 +6,26 @@ import '../styles/WorkoutSession.css'
 
 export default function WorkoutSession() {
   const navigate = useNavigate()
-  const { appData, updateData, addSetToExercise, toggleSetDone, updateSet, clearActiveSession } = useApp()
+  const { appData, addSetToExercise, toggleSetDone, updateSet, clearActiveSession, addSessionToHistory } = useApp()
   const [showRestTimer, setShowRestTimer] = useState(false)
   const activeSession = appData.activeSession || { exercises: [], startTime: null }
 
   function finishSession() {
     const exercises = activeSession.exercises
-    updateData('sessionHistory', [
-      {
-        id: Date.now(),
-        date: new Date().toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'long' }),
-        type: 'SÉANCE',
-        exercises: exercises.map(e => e.name),
-        duration: '—',
-        totalSets: exercises.reduce((acc, e) => acc + e.sets.length, 0),
-        exerciseDetails: exercises.map(e => ({ name: e.name, sets: e.sets })),
-      },
-      ...(appData.sessionHistory || [])
-    ])
-    updateData('weeklyWorkouts', (appData.weeklyWorkouts || 0) + 1)
+    const durationMs = activeSession.startTimestamp ? Date.now() - activeSession.startTimestamp : 0
+    const durationMin = Math.max(1, Math.floor(durationMs / 60000))
+    addSessionToHistory({
+      id: Date.now(),
+      date: new Date().toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }),
+      type: activeSession.type || 'SÉANCE',
+      exercises: exercises.map(e => e.name),
+      duration: `${durationMin} min`,
+      totalSets: exercises.reduce((acc, ex) => acc + ex.sets.filter(s => s.done).length, 0),
+      exerciseDetails: exercises.map(ex => ({
+        name: ex.name,
+        sets: ex.sets.filter(s => s.done).map(s => ({ reps: parseInt(s.reps) || 0, kg: parseFloat(s.kg) || 0 }))
+      }))
+    })
     clearActiveSession()
     navigate('/weekly')
   }

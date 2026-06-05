@@ -72,7 +72,6 @@ export default function App() {
           <Route path="/workout/salle" element={<WorkoutLibrary section="salle" />} />
           <Route path="/workout/dehors" element={<WorkoutLibrary section="dehors" />} />
           <Route path="/hydration" element={<Hydration />} />
-          <Route path="/sleep" element={<Sleep />} />
           <Route path="/weekly" element={<Weekly />} />
           <Route path="/scan" element={<Scan />} />
           <Route path="/ai-coach" element={<AICoach />} />

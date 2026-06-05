@@ -30,9 +30,24 @@ export default function Settings() {
   const { lang, setLanguage, t } = useLanguage()
   const { theme, toggleTheme } = useTheme()
   const [notifs, setNotifs] = useState({ hydration: true, session: true, weekly: true })
+  const [showHealthSync, setShowHealthSync] = useState(false)
+  const [healthData, setHealthData] = useState({ steps: '', sleep_hours: '', sleep_minutes: '' })
+  const [syncToast, setSyncToast] = useState(false)
 
   const [profile, setProfile] = useState({ name: user?.name || '', email: user?.email || '', weight: '78', height: '180' })
   const [goals, setGoals] = useState({ calories: String(appData.calorieGoal), protein: String(appData.proteinGoal), water: String(appData.waterGoal), steps: String(appData.stepsGoal) })
+
+  function handleHealthSync() {
+    const steps = parseInt(healthData.steps)
+    const sleepH = parseInt(healthData.sleep_hours)
+    const sleepM = parseInt(healthData.sleep_minutes)
+    if (steps > 0) updateData('steps', steps)
+    if (sleepH > 0 || sleepM > 0) updateData('sleep', { hours: sleepH || 0, minutes: sleepM || 0, quality: 'Bonne' })
+    setShowHealthSync(false)
+    setHealthData({ steps: '', sleep_hours: '', sleep_minutes: '' })
+    setSyncToast(true)
+    setTimeout(() => setSyncToast(false), 2000)
+  }
 
   function saveGoals() {
     updateData('calorieGoal', parseInt(goals.calories) || appData.calorieGoal)
@@ -43,6 +58,14 @@ export default function Settings() {
 
   return (
     <div className="app-wrapper">
+      {/* Sync Toast */}
+      <div style={{
+        position: 'fixed', top: syncToast ? 16 : -60, left: '50%', transform: 'translateX(-50%)',
+        background: 'var(--success)', color: '#000', padding: '10px 20px', borderRadius: 50,
+        fontSize: 12, fontWeight: 700, letterSpacing: 1, zIndex: 300, whiteSpace: 'nowrap',
+        transition: 'top 300ms cubic-bezier(0.34,1.56,0.64,1)',
+      }}>Données synchronisées ✓</div>
+
       <div className="screen" style={{ paddingBottom: 110 }}>
         <div className="screen-header" style={{ padding: '20px 0 12px' }}>
           <h1 className="text-xl bold">{t('settings_title')}</h1>
@@ -106,6 +129,54 @@ export default function Settings() {
             </button>
           ))}
         </div>
+
+        <div className="section-label">SANTÉ & CAPTEURS</div>
+        <div className="card">
+          <div className="flex justify-between items-center" style={{ padding: '14px 0', cursor: 'pointer' }} onClick={() => setShowHealthSync(true)}>
+            <div>
+              <p className="text-sm text-secondary">Synchroniser mes données</p>
+              <p className="text-xs text-muted">Pas, sommeil · Intégration Apple Health sur app native</p>
+            </div>
+            <span style={{ color: 'var(--text-muted)', fontSize: 18 }}>→</span>
+          </div>
+        </div>
+
+        {showHealthSync && (
+          <>
+            <div onClick={() => setShowHealthSync(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 199 }} />
+            <div style={{
+              position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)',
+              width: '100%', maxWidth: 390, background: 'var(--surface)',
+              borderRadius: '20px 20px 0 0', borderTop: '0.5px solid var(--border)',
+              padding: '24px 20px 48px', zIndex: 200,
+            }}>
+              <div style={{ width: 36, height: 4, background: 'var(--border)', borderRadius: 2, margin: '0 auto 20px' }} />
+              <h2 className="text-lg bold" style={{ marginBottom: 8 }}>Synchroniser mes données</h2>
+              <p className="text-sm text-muted" style={{ marginBottom: 20 }}>Intégration Apple Health disponible sur l'app native iOS.</p>
+              <div style={{ marginBottom: 16 }}>
+                <label className="text-xs text-muted" style={{ display: 'block', marginBottom: 8 }}>PAS AUJOURD'HUI</label>
+                <input type="number" placeholder="8 000"
+                  value={healthData.steps}
+                  onChange={e => setHealthData(p => ({ ...p, steps: e.target.value }))} />
+              </div>
+              <div style={{ marginBottom: 24 }}>
+                <label className="text-xs text-muted" style={{ display: 'block', marginBottom: 8 }}>SOMMEIL CETTE NUIT</label>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <input type="number" placeholder="7" value={healthData.sleep_hours}
+                    onChange={e => setHealthData(p => ({ ...p, sleep_hours: e.target.value }))}
+                    style={{ flex: 1 }} />
+                  <span className="text-sm text-muted">h</span>
+                  <input type="number" placeholder="30" value={healthData.sleep_minutes}
+                    onChange={e => setHealthData(p => ({ ...p, sleep_minutes: e.target.value }))}
+                    style={{ flex: 1 }} />
+                  <span className="text-sm text-muted">min</span>
+                </div>
+              </div>
+              <button className="btn-accent" onClick={handleHealthSync} style={{ marginBottom: 10 }}>SYNCHRONISER</button>
+              <button className="btn-ghost" onClick={() => setShowHealthSync(false)}>Annuler</button>
+            </div>
+          </>
+        )}
 
         <div className="section-label">{t('account_section')}</div>
         <button onClick={() => { logout(); navigate('/') }} style={{ width: '100%', padding: 16, background: 'transparent', border: '1px solid var(--danger)', color: 'var(--danger)', fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', borderRadius: 12, cursor: 'pointer', marginBottom: 16 }}>

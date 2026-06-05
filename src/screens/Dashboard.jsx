@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useApp } from '../context/AppContext'
@@ -18,6 +19,27 @@ export default function Dashboard() {
   const { user, logout } = useAuth()
   const { appData } = useApp()
   const { t } = useLanguage()
+  const [quote, setQuote] = useState(null)
+
+  useEffect(() => {
+    const today = new Date().toDateString()
+    const cached = localStorage.getItem('onair_quote')
+    const cachedDate = localStorage.getItem('onair_quote_date')
+    if (cached && cachedDate === today) {
+      try { setQuote(JSON.parse(cached)) } catch {}
+      return
+    }
+    fetch('/api/quote')
+      .then(r => r.json())
+      .then(data => {
+        if (data.quote) {
+          localStorage.setItem('onair_quote', JSON.stringify(data))
+          localStorage.setItem('onair_quote_date', today)
+          setQuote(data)
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   function handleLogout() {
     logout()
@@ -37,10 +59,17 @@ export default function Dashboard() {
           </button>
         </div>
 
-        <div style={{ marginBottom: 24 }}>
+        <div style={{ marginBottom: 16 }}>
           <h1 className="text-xl bold">{greeting}, {user?.name}.</h1>
           <p className="text-sm text-secondary">{t('see_progress')}</p>
         </div>
+
+        {quote && (
+          <div style={{ padding: '12px 0', borderBottom: '0.5px solid var(--border)', marginBottom: 16 }}>
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)', fontStyle: 'italic', lineHeight: 1.5 }}>"{quote.quote}"</p>
+            <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, textAlign: 'right', letterSpacing: '1px' }}>— {quote.author}</p>
+          </div>
+        )}
 
         <div className="dash-ring-row card-animated" style={{ '--delay': '50ms' }}>
           <CalorieRing current={appData.calories} goal={appData.calorieGoal} />

@@ -103,7 +103,26 @@ export default function Onboarding() {
     }
   }
 
+  function calculateTargets(p) {
+    const weight = parseFloat(p.body?.weight) || 75
+    const height = parseFloat(p.body?.height) || 175
+    const bmr = (10 * weight) + (6.25 * height) - (5 * 25) + 5
+    const activityMultiplier = { '2-3': 1.375, '4-5': 1.55, '6-7': 1.725 }[p.frequency] || 1.55
+    const tdee = Math.round(bmr * activityMultiplier)
+    const calorieGoal = {
+      'Perte de poids': Math.round(tdee * 0.8),
+      'Prise de masse': Math.round(tdee * 1.1),
+      'Nutrition': tdee,
+      'Performance': Math.round(tdee * 1.05),
+    }[p.goal] || tdee
+    const proteinGoal = Math.round(weight * 2)
+    const carbGoal = Math.round((calorieGoal * 0.45) / 4)
+    const fatGoal = Math.round((calorieGoal * 0.25) / 9)
+    return { calorieGoal, proteinGoal, carbGoal, fatGoal, tdee }
+  }
+
   function handleComplete() {
+    const targets = calculateTargets(answers)
     const profile = {
       id: Date.now(),
       name: answers.name,
@@ -115,11 +134,14 @@ export default function Onboarding() {
       height: answers.body?.height,
       frequency: answers.frequency,
       equipment: answers.equipment,
+      ...targets,
     }
     localStorage.setItem('onair_onboarded', 'true')
     localStorage.setItem('onair_profile', JSON.stringify(profile))
     localStorage.setItem('onair_user', JSON.stringify(profile))
+    localStorage.setItem('onair_calorieGoal', profile.calorieGoal)
     if (updateUserProfile) updateUserProfile(profile)
+    login(profile)
     navigate('/dashboard')
   }
 

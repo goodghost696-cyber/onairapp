@@ -22,6 +22,30 @@ export default function RunContent() {
   const [running, setRunning] = useState(false)
   const [seconds, setSeconds] = useState(0)
   const [distance, setDistance] = useState(0)
+  const [weather, setWeather] = useState(null)
+
+  useEffect(() => {
+    navigator.geolocation?.getCurrentPosition(async (pos) => {
+      try {
+        const res = await fetch(
+          `https://api.open-meteo.com/v1/forecast?latitude=${pos.coords.latitude}&longitude=${pos.coords.longitude}&current_weather=true`
+        )
+        const data = await res.json()
+        const code = data.current_weather?.weathercode
+        const temp = Math.round(data.current_weather?.temperature)
+        const windspeed = Math.round(data.current_weather?.windspeed)
+        const getCondition = (c) => {
+          if (c === 0) return { label: 'Ciel dégagé', emoji: '☀️', good: true }
+          if (c <= 3)  return { label: 'Partiellement nuageux', emoji: '⛅', good: true }
+          if (c <= 48) return { label: 'Brumeux', emoji: '🌫️', good: true }
+          if (c <= 67) return { label: 'Pluie', emoji: '🌧️', good: false }
+          if (c <= 77) return { label: 'Neige', emoji: '❄️', good: false }
+          return { label: 'Orageux', emoji: '⛈️', good: false }
+        }
+        setWeather({ temp, windspeed, ...getCondition(code) })
+      } catch {}
+    }, () => {})
+  }, [])
 
   useEffect(() => {
     if (!running) return
@@ -54,6 +78,23 @@ export default function RunContent() {
 
   return (
     <>
+      {weather && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px',
+          borderRadius: 16, marginBottom: 16,
+          background: weather.good ? 'rgba(31,214,107,0.08)' : 'rgba(232,114,106,0.08)',
+          border: `0.5px solid ${weather.good ? 'rgba(31,214,107,0.3)' : 'rgba(232,114,106,0.3)'}`,
+        }}>
+          <span style={{ fontSize: 24 }}>{weather.emoji}</span>
+          <div style={{ flex: 1 }}>
+            <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>{weather.temp}°C · {weather.label}</p>
+            <p style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 2 }}>
+              {weather.good ? '✓ Bonnes conditions pour courir' : '⚠ Conditions difficiles'}
+            </p>
+          </div>
+          <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>{weather.windspeed} km/h</p>
+        </div>
+      )}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 16 }}>
         {metrics.map(m => (
           <div key={m.label} className="card" style={{ textAlign: 'center', padding: '14px 6px' }}>

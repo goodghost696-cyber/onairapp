@@ -3,37 +3,38 @@ import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { useLanguage } from '../context/LanguageContext'
 import { ExerciseModal } from '../components/ExerciseModal'
+import { useExercises } from '../hooks/useExercises'
 
-const EXERCISES = {
+const LOCAL_EXERCISES = {
   maison: [
-    { name: 'Push-up', muscles: 'Pectoraux · Triceps · Épaules', id: 'm1' },
-    { name: 'Squat Bodyweight', muscles: 'Quadriceps · Fessiers', id: 'm2' },
-    { name: 'Planche', muscles: 'Core · Abdos · Épaules', id: 'm3' },
-    { name: 'Burpee', muscles: 'Full body · Cardio', id: 'm4' },
-    { name: 'Fentes', muscles: 'Quadriceps · Fessiers · Ischio', id: 'm5' },
-    { name: 'Dips Chaise', muscles: 'Triceps · Épaules', id: 'm6' },
-    { name: 'Mountain Climber', muscles: 'Core · Cardio', id: 'm7' },
-    { name: 'Glute Bridge', muscles: 'Fessiers · Ischio · Core', id: 'm8' },
+    { id: 'm1', name: 'Push-up',          muscles: 'Pectoraux · Triceps · Épaules' },
+    { id: 'm2', name: 'Squat Bodyweight', muscles: 'Quadriceps · Fessiers' },
+    { id: 'm3', name: 'Planche',           muscles: 'Core · Abdos · Épaules' },
+    { id: 'm4', name: 'Burpee',            muscles: 'Full body · Cardio' },
+    { id: 'm5', name: 'Fentes',            muscles: 'Quadriceps · Fessiers · Ischio' },
+    { id: 'm6', name: 'Dips Chaise',       muscles: 'Triceps · Épaules' },
+    { id: 'm7', name: 'Mountain Climber', muscles: 'Core · Cardio' },
+    { id: 'm8', name: 'Glute Bridge',     muscles: 'Fessiers · Ischio · Core' },
   ],
   salle: [
-    { name: 'Bench Press', muscles: 'Pectoraux · Triceps · Épaules', id: 's1' },
-    { name: 'Back Squat', muscles: 'Quadriceps · Fessiers · Ischio', id: 's2' },
-    { name: 'Deadlift', muscles: 'Ischio · Dos · Fessiers', id: 's3' },
-    { name: 'Pull-up', muscles: 'Dos · Biceps · Core', id: 's4' },
-    { name: 'Overhead Press', muscles: 'Épaules · Triceps', id: 's5' },
-    { name: 'Romanian Deadlift', muscles: 'Ischio · Fessiers · Dos', id: 's6' },
-    { name: 'Incline Dumbbell Press', muscles: 'Pectoraux haut · Triceps', id: 's7' },
-    { name: 'Cable Row', muscles: 'Dos · Biceps · Core', id: 's8' },
+    { id: 's1', name: 'Bench Press',              muscles: 'Pectoraux · Triceps · Épaules' },
+    { id: 's2', name: 'Back Squat',               muscles: 'Quadriceps · Fessiers · Ischio' },
+    { id: 's3', name: 'Deadlift',                 muscles: 'Ischio · Dos · Fessiers' },
+    { id: 's4', name: 'Pull-up',                  muscles: 'Dos · Biceps · Core' },
+    { id: 's5', name: 'Overhead Press',           muscles: 'Épaules · Triceps' },
+    { id: 's6', name: 'Romanian Deadlift',        muscles: 'Ischio · Fessiers · Dos' },
+    { id: 's7', name: 'Incline Dumbbell Press',   muscles: 'Pectoraux haut · Triceps' },
+    { id: 's8', name: 'Cable Row',                muscles: 'Dos · Biceps · Core' },
   ],
   dehors: [
-    { name: 'Sprint 100m', muscles: 'Full body · Cardio intense', id: 'd1' },
-    { name: 'Traction Barre', muscles: 'Dos · Biceps · Core', id: 'd2' },
-    { name: 'Box Jump', muscles: 'Quadriceps · Fessiers · Explosivité', id: 'd3' },
-    { name: 'Jump Rope', muscles: 'Cardio · Mollets · Coordination', id: 'd4' },
-    { name: 'Bear Crawl', muscles: 'Full body · Core · Épaules', id: 'd5' },
-    { name: 'Pistol Squat', muscles: 'Quadriceps · Équilibre', id: 'd6' },
-    { name: 'Hill Sprint', muscles: 'Cardio · Fessiers · Ischio', id: 'd7' },
-    { name: 'Muscle-up', muscles: 'Dos · Pectoraux · Triceps', id: 'd8' },
+    { id: 'd1', name: 'Sprint 100m',   muscles: 'Full body · Cardio intense' },
+    { id: 'd2', name: 'Traction Barre', muscles: 'Dos · Biceps · Core' },
+    { id: 'd3', name: 'Box Jump',      muscles: 'Quadriceps · Fessiers · Explosivité' },
+    { id: 'd4', name: 'Jump Rope',     muscles: 'Cardio · Mollets · Coordination' },
+    { id: 'd5', name: 'Bear Crawl',    muscles: 'Full body · Core · Épaules' },
+    { id: 'd6', name: 'Pistol Squat',  muscles: 'Quadriceps · Équilibre' },
+    { id: 'd7', name: 'Hill Sprint',   muscles: 'Cardio · Fessiers · Ischio' },
+    { id: 'd8', name: 'Muscle-up',     muscles: 'Dos · Pectoraux · Triceps' },
   ],
 }
 
@@ -48,10 +49,16 @@ export default function WorkoutLibrary({ section }) {
   const [toast, setToast] = useState(false)
   const [selectedExercise, setSelectedExercise] = useState(null)
 
-  const exercises = EXERCISES[section] || []
-  const filtered = exercises.filter(e =>
+  const { exercises: apiExercises, loading, error } = useExercises(section)
+
+  // Use API exercises when available, fall back to local
+  const baseList = (!loading && !error && apiExercises.length > 0)
+    ? apiExercises
+    : LOCAL_EXERCISES[section] || []
+
+  const filtered = baseList.filter(e =>
     e.name.toLowerCase().includes(search.toLowerCase()) ||
-    e.muscles.toLowerCase().includes(search.toLowerCase())
+    (e.muscles || '').toLowerCase().includes(search.toLowerCase())
   )
 
   function addExercise(ex) {
@@ -87,7 +94,12 @@ export default function WorkoutLibrary({ section }) {
             </svg>
           </button>
           <h1 className="text-xl bold">{SECTION_NAMES[section]}</h1>
+          {loading && <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 'auto' }}>Chargement...</span>}
         </div>
+
+        {error && (
+          <p style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 8 }}>{error}</p>
+        )}
 
         <div style={{ position: 'relative', marginBottom: 16 }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--text-muted)" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
@@ -101,16 +113,20 @@ export default function WorkoutLibrary({ section }) {
           />
         </div>
 
+        <p style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 12, letterSpacing: '0.05em' }}>
+          {filtered.length} exercice{filtered.length !== 1 ? 's' : ''}
+        </p>
+
         {filtered.map((ex, i) => (
           <div
             key={ex.id}
             className="card card-animated"
-            style={{ '--delay': `${i * 60}ms`, display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8, padding: '14px 16px', cursor: 'pointer' }}
+            style={{ '--delay': `${i * 40}ms`, display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8, padding: '14px 16px', cursor: 'pointer' }}
             onClick={() => setSelectedExercise(ex)}
           >
             <div style={{ flex: 1 }}>
               <div className="text-base bold">{ex.name}</div>
-              <div className="text-sm text-muted">{ex.muscles}</div>
+              <div className="text-sm text-muted">{ex.muscles || ex.type}</div>
             </div>
             <button
               onClick={(e) => { e.stopPropagation(); addExercise(ex) }}
@@ -136,8 +152,6 @@ export default function WorkoutLibrary({ section }) {
           onAdd={addExercise}
         />
       )}
-
-
     </div>
   )
 }

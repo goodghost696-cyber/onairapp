@@ -20,7 +20,9 @@ export default function Nutrition() {
   const { t } = useLanguage()
   const [sheetOpen, setSheetOpen] = useState(false)
   const [step, setStep] = useState(1)
-  const [search, setSearch] = useState('')
+  const [foodSearch, setFoodSearch] = useState('')
+  const [foodResults, setFoodResults] = useState([])
+  const [searching, setSearching] = useState(false)
   const [selectedFood, setSelectedFood] = useState(null)
   const [grams, setGrams] = useState(100)
   const [mealType, setMealType] = useState('Déjeuner')
@@ -30,11 +32,60 @@ export default function Nutrition() {
 
   const MEAL_TYPES = [t('breakfast'), t('lunch'), t('dinner'), t('snack')]
 
-  const filtered = FOOD_DATABASE.filter(f => f.name.toLowerCase().includes(search.toLowerCase()))
+  // Live search via Open Food Facts
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      if (foodSearch.length < 2) {
+        // Show local database when no query
+        setFoodResults(FOOD_DATABASE.map(f => ({ ...f, brand: '' })))
+        return
+      }
+      setSearching(true)
+      try {
+        const res = await fetch(
+          `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(foodSearch)}&search_simple=1&action=process&json=1&page_size=12&fields=product_name,brands,nutriments,nutrition_grades,code`
+        )
+        const data = await res.json()
+        const results = (data.products || [])
+          .filter(p => p.product_name && p.nutriments?.['energy-kcal_100g'])
+          .map(p => ({
+            id: p.code || String(Math.random()),
+            name: p.product_name,
+            brand: p.brands || '',
+            per100g: {
+              kcal: Math.round(p.nutriments?.['energy-kcal_100g'] || 0),
+              proteins: Math.round((p.nutriments?.proteins_100g || 0) * 10) / 10,
+              carbs: Math.round((p.nutriments?.carbohydrates_100g || 0) * 10) / 10,
+              fats: Math.round((p.nutriments?.fat_100g || 0) * 10) / 10,
+            },
+            nutriscore: p.nutrition_grades?.toUpperCase() || '?',
+          }))
+        setFoodResults(results.length > 0 ? results : FOOD_DATABASE.filter(f =>
+          f.name.toLowerCase().includes(foodSearch.toLowerCase())
+        ).map(f => ({ ...f, brand: '' })))
+      } catch {
+        setFoodResults(FOOD_DATABASE.filter(f =>
+          f.name.toLowerCase().includes(foodSearch.toLowerCase())
+        ).map(f => ({ ...f, brand: '' })))
+      }
+      setSearching(false)
+    }, 400)
+    return () => clearTimeout(timer)
+  }, [foodSearch])
+
+  // Init with local database
+  useEffect(() => {
+    setFoodResults(FOOD_DATABASE.map(f => ({ ...f, brand: '' })))
+  }, [])
+
   const preview = selectedFood ? calcNutrition(selectedFood, grams) : null
 
-  function openSheet() { setSheetOpen(true); setStep(1); setSearch(''); setSelectedFood(null); setGrams(100) }
+  function openSheet() {
+    setSheetOpen(true); setStep(1); setFoodSearch(''); setSelectedFood(null); setGrams(100)
+  }
+
   function selectFood(f) { setSelectedFood(f); setStep(2) }
+
   function addFood() {
     if (!selectedFood || !preview) return
     const newMeal = {
@@ -44,7 +95,7 @@ export default function Nutrition() {
       protein: preview.proteins,
       carbs: preview.carbs,
       fat: preview.fats,
-      nutriscore: 'B',
+      nutriscore: selectedFood.nutriscore || 'B',
       time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
     }
     updateData('meals', [...appData.meals, newMeal])
@@ -164,15 +215,30 @@ export default function Nutrition() {
         {step === 1 ? (
           <>
             <h2 className="text-lg bold" style={{ marginBottom: 16 }}>{t('add_food_title')}</h2>
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder={t('search_food')} style={{ marginBottom: 12 }} autoFocus />
+            <input
+              value={foodSearch}
+              onChange={e => setFoodSearch(e.target.value)}
+              placeholder="Rechercher un aliment..."
+              style={{ marginBottom: 8 }}
+              autoFocus
+            />
+            {searching && (
+              <p style={{ fontSize: 12, color: 'var(--text-muted)', padding: '8px 0', marginBottom: 4 }}>Recherche en cours...</p>
+            )}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {filtered.map(f => (
+              {foodResults.map(f => (
                 <div key={f.id} onClick={() => selectFood(f)} style={{
                   display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                   padding: '12px 0', borderBottom: '0.5px solid var(--border)', cursor: 'pointer',
                 }}>
-                  <span className="text-base">{f.name}</span>
-                  <span className="text-xs text-muted">{f.per100g.kcal} kcal/100g</span>
+                  <div>
+                    <div className="text-base">{f.name}</div>
+                    {f.brand && <div className="text-xs text-muted">{f.brand}</div>}
+                  </div>
+                  <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: 12 }}>
+                    <div className="text-sm bold">{f.per100g.kcal} kcal</div>
+                    <div className="text-xs text-muted">/ 100g</div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -219,8 +285,6 @@ export default function Nutrition() {
           </>
         )}
       </div>
-
-
     </div>
   )
 }
