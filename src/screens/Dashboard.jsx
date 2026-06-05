@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useApp } from '../context/AppContext'
 import { useLanguage } from '../context/LanguageContext'
+import { save } from '../utils/storage'
 import CalorieRing from '../components/CalorieRing'
 import '../styles/dashboard.css'
 
@@ -14,12 +15,62 @@ function LogoutIcon() {
   )
 }
 
+function ActivityCard({ label, value, unit, target, onSave }) {
+  const [editing, setEditing] = useState(false)
+  const [inputVal, setInputVal] = useState('')
+
+  const handleSave = () => {
+    const num = parseFloat(inputVal)
+    if (!isNaN(num) && num >= 0) onSave(num)
+    setEditing(false)
+    setInputVal('')
+    navigator.vibrate && navigator.vibrate(8)
+  }
+
+  return (
+    <div className="activity-card" onClick={() => !editing && setEditing(true)}>
+      <p className="activity-card-label">{label}</p>
+      {editing ? (
+        <div className="activity-card-input-wrap" onClick={e => e.stopPropagation()}>
+          <input
+            className="activity-card-input"
+            type="number"
+            placeholder={String(value)}
+            value={inputVal}
+            onChange={e => setInputVal(e.target.value)}
+            autoFocus
+            onKeyDown={e => e.key === 'Enter' && handleSave()}
+          />
+          <button className="activity-card-save" onClick={handleSave}>✓</button>
+        </div>
+      ) : (
+        <>
+          <p className="activity-card-value">
+            {value}<span className="activity-card-unit"> {unit}</span>
+          </p>
+          {target && (
+            <p className="activity-card-target">/ {target} {unit}</p>
+          )}
+        </>
+      )}
+      {!editing && <p className="activity-card-tap">Tap pour modifier</p>}
+    </div>
+  )
+}
+
 export default function Dashboard() {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
-  const { appData } = useApp()
+  const { appData, updateData } = useApp()
   const { t } = useLanguage()
   const [quote, setQuote] = useState(null)
+
+  const goalCategory = {
+    'Perte de poids': 'health',
+    'Prise de masse': 'fitness',
+    'Performance': 'success',
+    'Nutrition': 'health',
+  }[user?.goal] || 'fitness'
 
   useEffect(() => {
     const today = new Date().toDateString()
@@ -29,7 +80,7 @@ export default function Dashboard() {
       try { setQuote(JSON.parse(cached)) } catch {}
       return
     }
-    fetch('/api/quote')
+    fetch(`/api/quote?category=${goalCategory}`)
       .then(r => r.json())
       .then(data => {
         if (data.quote) {
@@ -38,7 +89,7 @@ export default function Dashboard() {
           setQuote(data)
         }
       })
-      .catch(() => {})
+      .catch(() => setQuote({ quote: 'Chaque séance compte.', author: 'ON AIR' }))
   }, [])
 
   function handleLogout() {
@@ -59,11 +110,13 @@ export default function Dashboard() {
           </button>
         </div>
 
-        <div style={{ marginBottom: 16 }}>
+        {/* Greeting */}
+        <div style={{ marginBottom: 12 }}>
           <h1 className="text-xl bold">{greeting}, {user?.name}.</h1>
           <p className="text-sm text-secondary">{t('see_progress')}</p>
         </div>
 
+        {/* Daily quote */}
         {quote && (
           <div style={{ padding: '12px 0', borderBottom: '0.5px solid var(--border)', marginBottom: 16 }}>
             <p style={{ fontSize: 13, color: 'var(--text-secondary)', fontStyle: 'italic', lineHeight: 1.5 }}>"{quote.quote}"</p>
@@ -71,6 +124,7 @@ export default function Dashboard() {
           </div>
         )}
 
+        {/* Calorie ring + macros */}
         <div className="dash-ring-row card-animated" style={{ '--delay': '50ms' }}>
           <CalorieRing current={appData.calories} goal={appData.calorieGoal} />
           <div className="dash-macros">
@@ -90,42 +144,8 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="section-label">{t('activity')}</div>
-        <div className="dash-metrics-grid">
-          {[
-            { label: t('steps'), val: appData.steps.toLocaleString(), sub: `/${appData.stepsGoal.toLocaleString()}` },
-            { label: 'Course', val: `${appData.kmRun}km`, sub: "aujourd'hui" },
-            { label: t('water'), val: `${appData.water}ml`, sub: `/${appData.waterGoal}ml` },
-            { label: 'Sommeil', val: `${appData.sleep.hours}h${appData.sleep.minutes}`, sub: appData.sleep.quality },
-          ].map((m, idx) => (
-            <div key={m.label} className="metric-card card card-animated" style={{ '--delay': `${100 + idx * 60}ms` }}>
-              <span className="text-xs text-muted">{m.label}</span>
-              <span className="text-lg bold" style={{ display: 'block', marginTop: 4 }}>{m.val}</span>
-              <span className="text-xs text-muted">{m.sub}</span>
-            </div>
-          ))}
-        </div>
-
-        <div className="card card-animated" style={{ '--delay': '200ms', marginBottom: 8 }}>
-          <div className="flex justify-between items-center" style={{ marginBottom: 8 }}>
-            <span className="text-xs text-muted">{t('water')}</span>
-            <span className="text-xs text-accent">{appData.water}ml / {appData.waterGoal}ml</span>
-          </div>
-          <div className="progress-bar" style={{ height: 6, borderRadius: 4 }}>
-            <div className="progress-fill" style={{ width: `${Math.min(appData.water/appData.waterGoal*100,100)}%`, background: '#4FC3F7', borderRadius: 4 }} />
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10 }}>
-            {[250, 500, 750, 1000, 1250, 1500, 1750, 2000].map(ml => (
-              <div key={ml} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
-                <div style={{ width: 20, height: 28, borderRadius: 4, background: appData.water >= ml ? '#4FC3F7' : 'var(--surface-2)', transition: 'background 200ms ease' }} />
-                <span style={{ fontSize: 8, color: 'var(--text-muted)' }}>{ml >= 1000 ? `${ml/1000}L` : ''}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="section-label">{t('my_goals')}</div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 8, marginBottom: 8 }}>
+        {/* Mini rings row */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 8, marginBottom: 20 }}>
           {[
             { label: 'Calories', current: appData.calories, target: appData.calorieGoal, color: 'var(--accent)' },
             { label: 'Séances', current: appData.weeklyWorkouts, target: appData.weeklyGoal, color: '#A78BFA' },
@@ -150,6 +170,46 @@ export default function Dashboard() {
           })}
         </div>
 
+        {/* Tappable activity cards */}
+        <div className="section-label">{t('activity')}</div>
+        <div className="activity-grid">
+          <ActivityCard
+            label="PAS"
+            value={appData.steps.toLocaleString()}
+            unit="pas"
+            target="10 000"
+            onSave={val => { updateData('steps', val); save('steps', val) }}
+          />
+          <ActivityCard
+            label="COURSE"
+            value={appData.kmRun}
+            unit="km"
+            target={null}
+            onSave={val => { updateData('kmRun', val); save('kmRun', val) }}
+          />
+          <ActivityCard
+            label="EAU"
+            value={appData.water}
+            unit="ml"
+            target={appData.waterGoal}
+            onSave={val => { updateData('water', val); save('water', val) }}
+          />
+          <ActivityCard
+            label="SOMMEIL"
+            value={appData.sleep?.hours || 0}
+            unit="h"
+            target={8}
+            onSave={val => {
+              const h = Math.floor(val)
+              const quality = val >= 7 ? 'GOOD' : val >= 5 ? 'FAIR' : 'POOR'
+              const s = { hours: h, minutes: 0, quality }
+              updateData('sleep', s)
+              save('sleep', s)
+            }}
+          />
+        </div>
+
+        {/* Weekly sessions */}
         <div className="section-label">{t('weekly_sessions')}</div>
         <div className="card card-animated" style={{ '--delay': '380ms' }}>
           <div className="flex justify-between items-center" style={{ marginBottom: 12 }}>
@@ -160,32 +220,7 @@ export default function Dashboard() {
             <div className="progress-fill macro-fill" style={{ '--w': `${appData.weeklyWorkouts/appData.weeklyGoal*100}%`, '--delay': '450ms' }} />
           </div>
         </div>
-
-        <div className="section-label">{t('shortcuts')}</div>
-        <div className="dash-shortcuts">
-          {[
-            { label: t('nutrition'), path: '/nutrition' },
-            { label: t('workout'), path: '/workout' },
-            { label: 'Course', path: '/workout' },
-            { label: 'Bilan', path: '/weekly' },
-          ].map(s => (
-            <button key={s.path} className="shortcut-btn" onClick={() => navigate(s.path)}>
-              <span className="text-xs">{s.label}</span>
-            </button>
-          ))}
-        </div>
-
-        <div className="card" style={{ cursor: 'pointer', background: 'linear-gradient(135deg, rgba(224,0,0,0.15), rgba(224,0,0,0.05))', border: '0.5px solid rgba(224,0,0,0.3)', marginTop: 8 }} onClick={() => navigate('/ai-coach')}>
-          <div className="flex justify-between items-center">
-            <div>
-              <div className="text-base bold">{t('ai_coach_card')}</div>
-              <div className="text-sm text-muted">{t('ai_coach_sub')}</div>
-            </div>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
-          </div>
-        </div>
       </div>
-
     </div>
   )
 }

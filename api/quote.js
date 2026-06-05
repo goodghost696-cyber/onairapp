@@ -1,11 +1,14 @@
 export default async function handler(req, res) {
   const apiKey = process.env.NINJA_API_KEY;
+  const category = req.query.category || 'fitness';
+
   try {
-    const response = await fetch('https://api.api-ninjas.com/v1/quotes?category=fitness', {
-      headers: { 'X-Api-Key': apiKey }
-    });
+    const response = await fetch(
+      `https://api.api-ninjas.com/v1/quotes?category=${category}`,
+      { headers: { 'X-Api-Key': apiKey } }
+    );
     const data = await response.json();
-    return res.status(200).json(data[0] || { quote: 'Train hard, stay focused.', author: 'ON AIR' });
+    return res.status(200).json(data[0] || { quote: 'Chaque séance compte.', author: 'ON AIR' });
   } catch {
     return res.status(200).json({ quote: 'Chaque séance compte.', author: 'ON AIR' });
   }
