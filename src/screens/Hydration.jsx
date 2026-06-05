@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 
 export default function Hydration() {
   const navigate = useNavigate()
   const { appData, updateData } = useApp()
+  useEffect(() => { window.scrollTo(0, 0) }, [])
   const pct = Math.min(appData.water / appData.waterGoal * 100, 100)
   const [filledKey, setFilledKey] = useState(null)
 

@@ -35,7 +35,7 @@ const defaultData = {
   steps: 8247,
   stepsGoal: 10000,
   kmRun: 5.2,
-  water: 1800,
+  water: 0,
   waterGoal: 2500,
   sleep: { hours: 7, minutes: 23, quality: 'Bonne' },
   weeklyWorkouts: 4,
@@ -61,7 +61,7 @@ const defaultData = {
     { day: 'S', calories: 0, steps: 0, workout: false },
     { day: 'D', calories: 0, steps: 0, workout: false },
   ],
-  activeSession: [],
+  activeSession: { exercises: [], startTime: null },
   sessionHistory: [
     {
       id: 1, date: 'Mar 3 juin', type: 'PUSH DAY',
@@ -117,23 +117,79 @@ export function AppProvider({ children }) {
   }
 
   function clearActiveSession() {
-    setAppData(prev => ({ ...prev, activeSession: [] }))
+    setAppData(prev => ({ ...prev, activeSession: { exercises: [], startTime: null } }))
+  }
+
+  function addExerciseToSession(exercise) {
+    setAppData(prev => {
+      const current = prev.activeSession || { exercises: [], startTime: null }
+      const exists = current.exercises.find(e => e.id === exercise.id)
+      if (exists) return prev
+      return {
+        ...prev,
+        activeSession: {
+          exercises: [...current.exercises, {
+            ...exercise,
+            sets: [{ reps: '', kg: '', done: false }],
+          }],
+          startTime: current.startTime || new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+        }
+      }
+    })
   }
 
   function addExercisesToSession(exercises) {
     const formatted = exercises.map(ex => ({
       id: `ai_${Date.now()}_${Math.random()}`,
       name: ex.name,
+      muscles: '',
       sets: Array(ex.sets).fill(null).map(() => ({ reps: '', kg: ex.kg || '', done: false })),
       suggested: { reps: ex.reps, kg: ex.kg, rest: ex.rest }
     }))
-    setAppData(prev => ({
-      ...prev,
-      activeSession: [...(prev.activeSession || []), ...formatted]
-    }))
+    setAppData(prev => {
+      const current = prev.activeSession || { exercises: [], startTime: null }
+      return {
+        ...prev,
+        activeSession: {
+          exercises: [...current.exercises, ...formatted],
+          startTime: current.startTime || new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+        }
+      }
+    })
   }
 
-  return <AppContext.Provider value={{ appData, updateData, addExercisesToSession, clearActiveSession }}>{children}</AppContext.Provider>
+  function addSetToExercise(exIdx) {
+    setAppData(prev => {
+      const exercises = [...(prev.activeSession?.exercises || [])]
+      exercises[exIdx] = {
+        ...exercises[exIdx],
+        sets: [...exercises[exIdx].sets, { reps: '', kg: '', done: false }],
+      }
+      return { ...prev, activeSession: { ...prev.activeSession, exercises } }
+    })
+  }
+
+  function toggleSetDone(exIdx, setIdx) {
+    setAppData(prev => {
+      const exercises = [...(prev.activeSession?.exercises || [])]
+      const sets = [...exercises[exIdx].sets]
+      sets[setIdx] = { ...sets[setIdx], done: !sets[setIdx].done }
+      exercises[exIdx] = { ...exercises[exIdx], sets }
+      return { ...prev, activeSession: { ...prev.activeSession, exercises } }
+    })
+  }
+
+  function updateSet(exIdx, setIdx, field, value) {
+    setAppData(prev => {
+      const exercises = [...(prev.activeSession?.exercises || [])]
+      const sets = [...exercises[exIdx].sets]
+      sets[setIdx] = { ...sets[setIdx], [field]: value }
+      exercises[exIdx] = { ...exercises[exIdx], sets }
+      return { ...prev, activeSession: { ...prev.activeSession, exercises } }
+    })
+  }
+
+  return <AppContext.Provider value={{ appData, updateData, addExerciseToSession, addExercisesToSession, addSetToExercise, toggleSetDone, updateSet, clearActiveSession }}>{children}</AppContext.Provider>
 }
 
 export function useApp() {

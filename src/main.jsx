@@ -5,6 +5,7 @@ import App from './App'
 import { AuthProvider } from './context/AuthContext'
 import { AppProvider } from './context/AppContext'
 import { LanguageProvider } from './context/LanguageContext'
+import { ThemeProvider } from './context/ThemeContext'
 import './styles/global.css'
 import './styles/animations.css'
 
@@ -17,13 +18,15 @@ if ('serviceWorker' in navigator) {
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
-      <AuthProvider>
-        <LanguageProvider>
-          <AppProvider>
-            <App />
-          </AppProvider>
-        </LanguageProvider>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <LanguageProvider>
+            <AppProvider>
+              <App />
+            </AppProvider>
+          </LanguageProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </BrowserRouter>
   </React.StrictMode>
 )

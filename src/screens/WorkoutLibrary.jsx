@@ -41,7 +41,7 @@ const SECTION_NAMES = { maison: 'Maison', salle: 'Salle', dehors: 'Dehors' }
 
 export default function WorkoutLibrary({ section }) {
   const navigate = useNavigate()
-  const { appData, updateData } = useApp()
+  const { addExerciseToSession } = useApp()
   const { t } = useLanguage()
   const [search, setSearch] = useState('')
   const [added, setAdded] = useState({})
@@ -55,12 +55,12 @@ export default function WorkoutLibrary({ section }) {
   )
 
   function addExercise(ex) {
-    const newEx = { name: ex.name, id: ex.id, sets: [{ reps: '', kg: '' }] }
-    updateData('activeSession', [...(appData.activeSession || []), newEx])
+    addExerciseToSession(ex)
     setAdded(prev => ({ ...prev, [ex.id]: true }))
     setToast(true)
     setTimeout(() => setAdded(prev => ({ ...prev, [ex.id]: false })), 1500)
     setTimeout(() => setToast(false), 2000)
+    setTimeout(() => navigate('/workout'), 800)
   }
 
   return (

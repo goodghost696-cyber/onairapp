@@ -12,6 +12,7 @@ export default function Workout() {
   const { user } = useAuth()
   const { t, lang } = useLanguage()
   const sessionHistory = appData.sessionHistory || []
+  const activeSession = appData.activeSession || { exercises: [], startTime: null }
   const [activeTab, setActiveTab] = useState('workout')
 
   const [program, setProgram] = useState(null)
@@ -109,6 +110,27 @@ Donne exactement 4-5 exercices adaptés à l'objectif.`
         {activeTab === 'run' && <RunContent />}
 
         {activeTab === 'workout' && <>
+
+        {activeSession.exercises.length > 0 && (
+          <div className="active-session-banner" onClick={() => navigate('/workout/session')}>
+            <div className="active-session-left">
+              <div className="active-session-dot" />
+              <div>
+                <p className="active-session-label">SÉANCE EN COURS</p>
+                <p className="active-session-count">
+                  {activeSession.exercises.length} exercice{activeSession.exercises.length > 1 ? 's' : ''} · Démarrée à {activeSession.startTime}
+                </p>
+              </div>
+            </div>
+            <div className="active-session-badges">
+              {activeSession.exercises.slice(0, 3).map((ex, i) => (
+                <span key={i} className="active-session-ex-badge">{ex.name.split(' ')[0]}</span>
+              ))}
+            </div>
+            <span className="active-session-arrow">→</span>
+          </div>
+        )}
+
         <div className="workout-cta-row">
           <button className="today-session-btn" onClick={handleStartSession}>
             MA SÉANCE DU JOUR

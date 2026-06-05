@@ -47,13 +47,47 @@ body {
   --text-muted: #444444;
   --accent: #E00000;
   --accent-hover: #FF1A1A;
+  --accent-secondary: #C4956A;
   --success: #1FD66B;
   --warning: #F5A623;
   --danger: #FF3B3B;
+  --shadow: rgba(0,0,0,0.4);
   --radius: 16px;
   --radius-card: 16px;
   --radius-pill: 100px;
   --radius-btn: 12px;
+}
+
+:root[data-theme="dark"] {
+  --bg: #0D0D0D;
+  --surface: #1A1A1A;
+  --surface-2: #222222;
+  --border: #2A2A2A;
+  --text-primary: #FFFFFF;
+  --text-secondary: #888888;
+  --text-muted: #444444;
+  --accent: #E8726A;
+  --accent-secondary: #C4956A;
+  --success: #1FD66B;
+  --warning: #F5A623;
+  --danger: #E8726A;
+  --shadow: rgba(0,0,0,0.4);
+}
+
+:root[data-theme="light"] {
+  --bg: #F8F7F5;
+  --surface: #FFFFFF;
+  --surface-2: #F0EEEb;
+  --border: #E5E2DE;
+  --text-primary: #1A1A1A;
+  --text-secondary: #666666;
+  --text-muted: #AAAAAA;
+  --accent: #E8726A;
+  --accent-secondary: #C4956A;
+  --success: #1A9E55;
+  --warning: #D4870A;
+  --danger: #E8726A;
+  --shadow: rgba(0,0,0,0.08);
 }
 
 
@@ -127,10 +161,24 @@ button {
 
 .card {
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: none;
+  box-shadow: 0 1px 3px var(--shadow);
   padding: 16px;
   margin-bottom: 12px;
   border-radius: var(--radius-card);
+}
+
+.ai-program-badge {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 9px;
+  letter-spacing: 2px;
+  padding: 0;
+}
+
+.screen-wrapper {
+  padding: 20px 20px 120px;
 }
 
 .section-label {

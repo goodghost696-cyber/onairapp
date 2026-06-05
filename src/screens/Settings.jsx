@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useApp } from '../context/AppContext'
 import { useLanguage } from '../context/LanguageContext'
+import { useTheme } from '../context/ThemeContext'
 
 function Toggle({ on, onToggle }) {
   return (
@@ -27,6 +28,7 @@ export default function Settings() {
   const { user, logout } = useAuth()
   const { appData, updateData } = useApp()
   const { lang, setLanguage, t } = useLanguage()
+  const { theme, toggleTheme } = useTheme()
   const [notifs, setNotifs] = useState({ hydration: true, session: true, weekly: true })
 
   const [profile, setProfile] = useState({ name: user?.name || '', email: user?.email || '', weight: '78', height: '180' })
@@ -75,6 +77,17 @@ export default function Settings() {
               <Toggle on={notifs[n.key]} onToggle={() => setNotifs(p => ({...p, [n.key]: !p[n.key]}))} />
             </div>
           ))}
+        </div>
+
+        <div className="section-label">Apparence</div>
+        <div className="card">
+          <div className="flex justify-between items-center" style={{ padding: '14px 0' }}>
+            <div>
+              <p className="text-sm text-secondary">Thème</p>
+              <p className="text-xs text-muted">{theme === 'dark' ? 'Mode sombre' : 'Mode clair'}</p>
+            </div>
+            <Toggle on={theme === 'light'} onToggle={toggleTheme} />
+          </div>
         </div>
 
         <div className="section-label">{t('language_section')}</div>

@@ -12,7 +12,8 @@ const weekData = [
   { day: 'S', calories: 0,    goal: 2400 },
   { day: 'D', calories: 1847, goal: 2400 },
 ]
-const maxCal = Math.max(...weekData.map(d => d.calories), 1)
+const maxCalories = Math.max(...weekData.map(d => d.calories), 1)
+const BAR_MAX_HEIGHT = 60
 
 const liftProgress = [
   { name: 'Bench Press', unit: 'kg',   sessions: [75, 80, 80, 85],    dates: ['1 juin', '2 juin', '3 juin', '4 juin'] },
@@ -100,13 +101,16 @@ export default function Weekly() {
           <span style={{ color: 'var(--text-muted)' }}>{t('goal')} : 2 400 kcal</span>
         </div>
         <div className="card" style={{ marginBottom: 16 }}>
-          <div style={{ display: 'flex', gap: 6, alignItems: 'flex-end', height: 64 }}>
-            {weekData.map((d, i) => (
-              <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                <div style={{ width: '100%', height: `${d.calories > 0 ? Math.max((d.calories/maxCal)*56, 6) : 4}px`, background: calBarColor(d.calories, d.goal), borderRadius: '3px 3px 0 0', transition: 'height 600ms ease' }} />
-                <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>{d.day}</span>
-              </div>
-            ))}
+          <div style={{ display: 'flex', gap: 6, alignItems: 'flex-end', height: 80 }}>
+            {weekData.map((d, i) => {
+              const barH = d.calories > 0 ? Math.max(4, Math.round((d.calories / maxCalories) * BAR_MAX_HEIGHT)) : 4
+              return (
+                <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, justifyContent: 'flex-end', height: '100%' }}>
+                  <div style={{ width: '100%', height: `${barH}px`, background: calBarColor(d.calories, d.goal), borderRadius: '3px 3px 0 0', transition: 'height 600ms ease' }} />
+                  <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>{d.day}</span>
+                </div>
+              )
+            })}
           </div>
         </div>
 
