@@ -211,7 +211,8 @@ export default function Onboarding() {
                 <label className="onboarding-field-label">{field.label}</label>
                 <div className="onboarding-field-wrap">
                   <input
-                    type="number"
+                    type="text"
+                    inputMode="decimal"
                     placeholder={field.placeholder}
                     value={answers[step.key]?.[field.key] || ''}
                     onChange={e => setAnswer(step.key, { ...answers[step.key], [field.key]: e.target.value })}
