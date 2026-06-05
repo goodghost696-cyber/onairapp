@@ -15,55 +15,14 @@ function LogoutIcon() {
   )
 }
 
-function ActivityCard({ label, value, unit, target, onSave }) {
-  const [editing, setEditing] = useState(false)
-  const [inputVal, setInputVal] = useState('')
-
-  const handleSave = () => {
-    const num = parseFloat(inputVal)
-    if (!isNaN(num) && num >= 0) onSave(num)
-    setEditing(false)
-    setInputVal('')
-    navigator.vibrate && navigator.vibrate(8)
-  }
-
-  return (
-    <div className="activity-card" onClick={() => !editing && setEditing(true)}>
-      <p className="activity-card-label">{label}</p>
-      {editing ? (
-        <div className="activity-card-input-wrap" onClick={e => e.stopPropagation()}>
-          <input
-            className="activity-card-input"
-            type="number"
-            placeholder={String(value)}
-            value={inputVal}
-            onChange={e => setInputVal(e.target.value)}
-            autoFocus
-            onKeyDown={e => e.key === 'Enter' && handleSave()}
-          />
-          <button className="activity-card-save" onClick={handleSave}>✓</button>
-        </div>
-      ) : (
-        <>
-          <p className="activity-card-value">
-            {value}<span className="activity-card-unit"> {unit}</span>
-          </p>
-          {target && (
-            <p className="activity-card-target">/ {target} {unit}</p>
-          )}
-        </>
-      )}
-      {!editing && <p className="activity-card-tap">Tap pour modifier</p>}
-    </div>
-  )
-}
-
 export default function Dashboard() {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
   const { appData, updateData } = useApp()
   const { t } = useLanguage()
   const [quote, setQuote] = useState(null)
+  const [editingCard, setEditingCard] = useState(null)
+  const [inputVal, setInputVal] = useState('')
 
   const goalCategory = {
     'Perte de poids': 'health',
@@ -99,6 +58,34 @@ export default function Dashboard() {
 
   const hour = new Date().getHours()
   const greeting = hour < 12 ? t('greeting_morning') : hour < 18 ? t('greeting_afternoon') : t('greeting_evening')
+
+  const CARDS = [
+    { key: 'steps', label: 'PAS', value: appData.steps, unit: 'pas', target: 10000 },
+    { key: 'kmRun', label: 'COURSE', value: appData.kmRun, unit: 'km', target: null },
+    { key: 'water', label: 'EAU', value: appData.water, unit: 'ml', target: 2500 },
+    { key: 'sleep', label: 'SOMMEIL', value: appData.sleep?.hours || 0, unit: 'h', target: 8 },
+  ]
+
+  const handleSave = () => {
+    const num = parseFloat(inputVal)
+    if (isNaN(num) || num < 0) { setEditingCard(null); return }
+    if (editingCard === 'steps') { updateData('steps', num); save('steps', num) }
+    if (editingCard === 'kmRun') { updateData('kmRun', num); save('kmRun', num) }
+    if (editingCard === 'water') { updateData('water', num); save('water', num) }
+    if (editingCard === 'sleep') {
+      const s = { hours: Math.floor(num), minutes: 0, quality: num >= 7 ? 'GOOD' : num >= 5 ? 'FAIR' : 'POOR' }
+      updateData('sleep', s); save('sleep', s)
+    }
+    navigator.vibrate && navigator.vibrate(8)
+    setEditingCard(null)
+    setInputVal('')
+  }
+
+  const miniRings = [
+    { label: 'Séances', current: appData.weeklyWorkouts, target: 6, color: '#E8726A' },
+    { label: 'Eau', current: appData.water, target: 2500, color: '#2EA8FF' },
+    { label: 'Course', current: appData.kmRun, target: 40, color: '#C4956A' },
+  ]
 
   return (
     <div className="app-wrapper">
@@ -144,14 +131,9 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Mini rings row */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 8, marginBottom: 20 }}>
-          {[
-            { label: 'Calories', current: appData.calories, target: appData.calorieGoal, color: 'var(--accent)' },
-            { label: 'Séances', current: appData.weeklyWorkouts, target: appData.weeklyGoal, color: '#A78BFA' },
-            { label: 'Eau', current: appData.water, target: appData.waterGoal, color: '#4FC3F7' },
-            { label: 'Course', current: appData.kmRun * 10, target: 40 * 10, color: 'var(--success)' },
-          ].map(ring => {
+        {/* Mini rings — 3 rings: Séances / Eau / Course */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 20 }}>
+          {miniRings.map(ring => {
             const pct = Math.min(ring.current / ring.target, 1)
             const r = 22, stroke = 4
             const circ = 2 * Math.PI * r
@@ -170,57 +152,79 @@ export default function Dashboard() {
           })}
         </div>
 
-        {/* Tappable activity cards */}
+        {/* Activity cards */}
         <div className="section-label">{t('activity')}</div>
         <div className="activity-grid">
-          <ActivityCard
-            label="PAS"
-            value={appData.steps.toLocaleString()}
-            unit="pas"
-            target="10 000"
-            onSave={val => { updateData('steps', val); save('steps', val) }}
-          />
-          <ActivityCard
-            label="COURSE"
-            value={appData.kmRun}
-            unit="km"
-            target={null}
-            onSave={val => { updateData('kmRun', val); save('kmRun', val) }}
-          />
-          <ActivityCard
-            label="EAU"
-            value={appData.water}
-            unit="ml"
-            target={appData.waterGoal}
-            onSave={val => { updateData('water', val); save('water', val) }}
-          />
-          <ActivityCard
-            label="SOMMEIL"
-            value={appData.sleep?.hours || 0}
-            unit="h"
-            target={8}
-            onSave={val => {
-              const h = Math.floor(val)
-              const quality = val >= 7 ? 'GOOD' : val >= 5 ? 'FAIR' : 'POOR'
-              const s = { hours: h, minutes: 0, quality }
-              updateData('sleep', s)
-              save('sleep', s)
-            }}
-          />
-        </div>
+          {CARDS.map(card => (
+            <div
+              key={card.key}
+              className="activity-card-compact"
+              onClick={() => { setEditingCard(card.key); setInputVal('') }}
+            >
+              <p className="activity-card-label">{card.label}</p>
+              <p className="activity-card-value">
+                {card.key === 'steps' ? appData.steps.toLocaleString('fr-FR') : card.value}
+                <span className="activity-card-unit"> {card.unit}</span>
+              </p>
+              {card.target && (
+                <div className="activity-card-bar-wrap">
+                  <div
+                    className="activity-card-bar-fill"
+                    style={{ width: `${Math.min((card.value / card.target) * 100, 100)}%` }}
+                  />
+                </div>
+              )}
+            </div>
+          ))}
 
-        {/* Weekly sessions */}
-        <div className="section-label">{t('weekly_sessions')}</div>
-        <div className="card card-animated" style={{ '--delay': '380ms' }}>
-          <div className="flex justify-between items-center" style={{ marginBottom: 12 }}>
-            <span className="text-lg bold">{appData.weeklyWorkouts}/{appData.weeklyGoal}</span>
-            <span className="text-xs text-muted">{t('workouts_done')}</span>
-          </div>
-          <div className="progress-bar" style={{ height: 6 }}>
-            <div className="progress-fill macro-fill" style={{ '--w': `${appData.weeklyWorkouts/appData.weeklyGoal*100}%`, '--delay': '450ms' }} />
+          {/* Calories — read-only, full width */}
+          <div className="activity-card-compact calories-readonly">
+            <p className="activity-card-label">CALORIES</p>
+            <p className="activity-card-value">
+              {appData.calories}<span className="activity-card-unit"> kcal</span>
+            </p>
+            <div className="activity-card-bar-wrap">
+              <div
+                className="activity-card-bar-fill"
+                style={{
+                  width: `${Math.min((appData.calories / appData.calorieGoal) * 100, 100)}%`,
+                  background: appData.calories >= appData.calorieGoal ? 'var(--success)' : 'var(--accent)',
+                }}
+              />
+            </div>
+            <p className="calories-goal-label">/ {appData.calorieGoal} kcal objectif</p>
           </div>
         </div>
       </div>
+
+      {/* Bottom sheet for editing */}
+      {editingCard && (
+        <>
+          <div className="sheet-overlay" onClick={() => setEditingCard(null)} />
+          <div className="activity-edit-sheet">
+            <div className="modal-handle" />
+            <p className="sheet-title">{CARDS.find(c => c.key === editingCard)?.label}</p>
+            <p className="sheet-subtitle">
+              {editingCard === 'steps' && "Nombre de pas aujourd'hui"}
+              {editingCard === 'kmRun' && "Km courus aujourd'hui"}
+              {editingCard === 'water' && "Eau bue aujourd'hui (ml)"}
+              {editingCard === 'sleep' && "Heures de sommeil cette nuit"}
+            </p>
+            <input
+              className="sheet-input"
+              type="text"
+              inputMode="decimal"
+              placeholder={String(CARDS.find(c => c.key === editingCard)?.value || '0')}
+              value={inputVal}
+              onChange={e => setInputVal(e.target.value)}
+              autoFocus
+              onKeyDown={e => e.key === 'Enter' && handleSave()}
+            />
+            <button className="sheet-save-btn" onClick={handleSave}>ENREGISTRER</button>
+            <button className="sheet-cancel-btn" onClick={() => setEditingCard(null)}>Annuler</button>
+          </div>
+        </>
+      )}
     </div>
   )
 }

@@ -57,25 +57,20 @@
 .activity-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: 8px;
   margin-bottom: 20px;
 }
 
-.activity-card {
+.activity-card-compact {
   background: var(--surface);
-  border-radius: 16px;
-  padding: 16px;
+  border-radius: 14px;
+  padding: 14px;
   cursor: pointer;
-  min-height: 90px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  transition: background 150ms ease;
+  transition: transform 100ms ease;
 }
 
-.activity-card:active {
-  background: var(--surface-2);
-  transform: scale(0.98);
+.activity-card-compact:active {
+  transform: scale(0.97);
 }
 
 .activity-card-label {
@@ -83,70 +78,129 @@
   letter-spacing: 2px;
   text-transform: uppercase;
   color: var(--text-muted);
-  margin: 0;
+  margin: 0 0 6px;
 }
 
 .activity-card-value {
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 700;
   color: var(--text-primary);
   font-variant-numeric: tabular-nums;
-  margin: 8px 0 0;
+  margin: 0;
 }
 
 .activity-card-unit {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--text-secondary);
   font-weight: 400;
 }
 
-.activity-card-target {
-  font-size: 11px;
-  color: var(--text-muted);
-  margin: 2px 0 0;
+.activity-card-bar-wrap {
+  height: 3px;
+  background: var(--surface-2);
+  border-radius: 2px;
+  margin-top: 8px;
+  overflow: hidden;
 }
 
-.activity-card-tap {
-  font-size: 9px;
+.activity-card-bar-fill {
+  height: 3px;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width 400ms ease-out;
+}
+
+.calories-readonly {
+  grid-column: 1 / -1;
+  cursor: default;
+}
+
+.calories-goal-label {
+  font-size: 10px;
   color: var(--text-muted);
-  letter-spacing: 1px;
-  text-transform: uppercase;
   margin: 4px 0 0;
 }
 
-.activity-card-input-wrap {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  margin-top: 8px;
+.activity-edit-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 390px;
+  background: var(--surface);
+  border-radius: 20px 20px 0 0;
+  border-top: 0.5px solid var(--border);
+  padding: 12px 24px 48px;
+  z-index: 201;
+  animation: slideUp 280ms cubic-bezier(0.34,1.56,0.64,1);
 }
 
-.activity-card-input {
-  flex: 1;
-  background: var(--surface-2) !important;
-  border: 0.5px solid var(--accent) !important;
-  border-radius: 8px !important;
+.sheet-title {
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  text-align: center;
+  margin: 0 0 4px;
+}
+
+.sheet-subtitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-align: center;
+  margin: 0 0 24px;
+}
+
+.sheet-input {
+  width: 100%;
+  background: var(--surface-2);
+  border: 0.5px solid var(--border);
+  border-radius: 12px;
   color: var(--text-primary);
-  font-size: 20px;
+  font-size: 32px;
   font-weight: 700;
   text-align: center;
-  padding: 6px 8px !important;
+  padding: 16px;
   font-variant-numeric: tabular-nums;
-  width: auto;
+  margin-bottom: 16px;
 }
 
-.activity-card-save {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
+.sheet-input:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+.sheet-save-btn {
+  width: 100%;
+  padding: 16px;
   background: var(--accent);
-  border: none;
   color: #fff;
-  font-size: 14px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  border: none;
+  border-radius: 12px;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+  margin-bottom: 10px;
+  font-family: inherit;
+}
+
+.sheet-cancel-btn {
+  width: 100%;
+  padding: 12px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.sheet-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 200;
 }
 
