@@ -36,7 +36,8 @@ export default function Login() {
     const result = register(firstName, se, sp)
     if (result.success) {
       setSignupSuccess(true)
-      setTimeout(() => navigate('/dashboard'), 800)
+      localStorage.setItem('onair_just_registered', 'true')
+      setTimeout(() => navigate('/onboarding'), 800)
     }
   }
 
