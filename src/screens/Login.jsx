@@ -36,7 +36,8 @@ export default function Login() {
     const result = register(firstName, se, sp)
     if (result.success) {
       setSignupSuccess(true)
-      setTimeout(() => navigate('/dashboard'), 800)
+      localStorage.setItem('onair_just_registered', 'true')
+      setTimeout(() => navigate('/onboarding'), 800)
     }
   }
 
@@ -49,16 +50,13 @@ export default function Login() {
           <button style={{ position: 'absolute', top: 20, left: 16, background: 'none', border: 'none', cursor: 'pointer' }} onClick={() => navigate('/')}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" strokeWidth="1.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
           </button>
-          <div style={{ position: 'relative', textAlign: 'center' }}>
-            <div style={{
-              fontSize: 48, fontWeight: 900, letterSpacing: 8,
-              color: 'var(--text-primary)', textTransform: 'uppercase',
-              animation: 'focusIn 700ms cubic-bezier(0.25,0.46,0.45,0.94) forwards',
-            }}>ON AIR</div>
-            <div style={{ height: 2, background: 'var(--accent)', animation: 'slideUnderline 300ms ease-out 700ms both' }} />
-          </div>
-          <div style={{ fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.2em', textTransform: 'uppercase', marginTop: 10, animation: 'fadeInDelay 400ms ease-out 800ms both' }}>
-            FITNESS · CLICHY
+          <img
+            src="/icon-onair.png"
+            alt="ON AIR"
+            style={{ width: 72, height: 72, mixBlendMode: 'screen', marginBottom: 12 }}
+          />
+          <div style={{ fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.2em', textTransform: 'uppercase', animation: 'fadeInDelay 400ms ease-out 200ms both' }}>
+            ORIGINAL FITNESS · CLICHY
           </div>
         </div>
 
@@ -98,23 +96,13 @@ export default function Login() {
         )}
 
         <style>{`
-          @media (prefers-reduced-motion: no-preference) {
-            @keyframes focusIn {
-              from { font-size: 80px; filter: blur(12px); opacity: 0.3; letter-spacing: 16px; }
-              to   { font-size: 48px; filter: blur(0);    opacity: 1;   letter-spacing: 8px; }
-            }
-            @keyframes slideUnderline {
-              from { width: 0%; }
-              to   { width: 100%; }
-            }
-            @keyframes fadeInDelay {
-              from { opacity: 0; }
-              to   { opacity: 1; }
-            }
+          @keyframes fadeInDelay {
+            from { opacity: 0; }
+            to   { opacity: 1; }
           }
         `}</style>
 
-        {tab === 'login' && (
+{tab === 'login' && (
           <div style={{ marginTop: 32 }}>
             <p className="text-sm text-muted">Comptes de test :</p>
             <p className="text-sm text-secondary" style={{ marginTop: 6 }}>Coach: coach@onair.fr / coach123</p>

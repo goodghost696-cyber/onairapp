@@ -137,6 +137,7 @@ export default function Onboarding() {
       ...targets,
     }
     localStorage.setItem('onair_onboarded', 'true')
+    localStorage.removeItem('onair_just_registered')
     localStorage.setItem('onair_profile', JSON.stringify(profile))
     localStorage.setItem('onair_user', JSON.stringify(profile))
     localStorage.setItem('onair_calorieGoal', profile.calorieGoal)
