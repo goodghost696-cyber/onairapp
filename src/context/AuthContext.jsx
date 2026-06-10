@@ -1,22 +1,45 @@
 import { createContext, useContext, useState, useEffect } from 'react'
+import { supabase } from '../lib/supabase'
 
 const AuthContext = createContext(null)
 
-const MOCK_USERS = [
-  { id: 1, email: 'coach@onair.fr',  password: 'coach123',  role: 'coach',  name: 'Thomas' },
-  { id: 2, email: 'membre@onair.fr', password: 'membre123', role: 'member', name: 'Léo'    },
-  { id: 3, email: 'sarah@onair.fr',  password: 'sarah123',  role: 'member', name: 'Sarah'  },
-  { id: 4, email: 'marcus@onair.fr', password: 'marcus123', role: 'member', name: 'Marcus' },
-]
+// Derive a user shape from a Supabase session
+function sessionToUser(session) {
+  if (!session?.user) return null
+  const meta = session.user.user_metadata || {}
+  return {
+    id: session.user.id,
+    email: session.user.email,
+    name: meta.name || meta.first_name || session.user.email.split('@')[0],
+    role: meta.role || 'member',
+    goal: meta.goal || null,
+    calorieGoal: meta.calorieGoal || null,
+    proteinGoal: meta.proteinGoal || null,
+    carbGoal: meta.carbGoal || null,
+    fatGoal: meta.fatGoal || null,
+  }
+}
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => {
-    try {
-      const saved = localStorage.getItem('onair_user')
-      return saved ? JSON.parse(saved) : null
-    } catch { return null }
-  })
+  const [user, setUser] = useState(null)
+  const [loading, setLoading] = useState(true)
 
+  useEffect(() => {
+    // Restore session on mount
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(sessionToUser(session))
+      setLoading(false)
+    })
+
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(sessionToUser(session))
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
+
+  // Also keep onair_user in localStorage for AppContext / onboarding compatibility
   useEffect(() => {
     if (user) {
       localStorage.setItem('onair_user', JSON.stringify(user))
@@ -25,39 +48,78 @@ export function AuthProvider({ children }) {
     }
   }, [user])
 
-  function login(email, password) {
-    const found = MOCK_USERS.find(u => u.email === email && u.password === password)
-    if (found) {
-      const userData = { id: found.id, email: found.email, role: found.role, name: found.name }
-      setUser(userData)
-      localStorage.setItem('onair_user', JSON.stringify(userData))
-      return { success: true, role: found.role }
-    }
-    return { success: false }
+  async function login(email, password) {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) return { success: false, error: error.message }
+    const u = sessionToUser(data.session)
+    return { success: true, user: u, role: u.role }
   }
 
-  function logout() {
-    setUser(null)
-    localStorage.removeItem('onair_user')
-  }
-
-  function register(firstName, email, password) {
-    const newUser = { id: Date.now(), email, name: firstName, role: 'member' }
-    setUser(newUser)
-    localStorage.setItem('onair_user', JSON.stringify(newUser))
-    return { success: true, user: newUser }
-  }
-
-  function updateUserProfile(profile) {
-    setUser(prev => {
-      const updated = { ...prev, ...profile }
-      localStorage.setItem('onair_user', JSON.stringify(updated))
-      return updated
+  async function register(firstName, email, password, extraMeta = {}) {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { name: firstName, role: 'member', ...extraMeta },
+      },
     })
+    if (error) return { success: false, error: error.message }
+
+    // Insert profile row
+    if (data.user) {
+      await supabase.from('profiles').upsert({
+        user_id: data.user.id,
+        prenom: firstName,
+        email,
+      })
+    }
+
+    const u = sessionToUser(data.session) || { id: data.user?.id, email, name: firstName, role: 'member' }
+    return { success: true, user: u }
+  }
+
+  async function logout() {
+    await supabase.auth.signOut()
+    // Clear all onair localStorage keys
+    Object.keys(localStorage).filter(k => k.startsWith('onair_')).forEach(k => localStorage.removeItem(k))
+  }
+
+  async function updateUserProfile(profile) {
+    // Update Supabase user metadata
+    const { data } = await supabase.auth.updateUser({ data: profile })
+    const updated = sessionToUser(data?.user ? { user: data.user } : null)
+    if (updated) {
+      setUser(prev => ({ ...prev, ...profile, ...updated }))
+    } else {
+      setUser(prev => ({ ...prev, ...profile }))
+    }
+
+    // Also upsert profiles table
+    const userId = user?.id
+    if (userId) {
+      await supabase.from('profiles').upsert({
+        user_id: userId,
+        prenom: profile.name || profile.prenom,
+        email: profile.email,
+        poids: profile.weight ? parseFloat(profile.weight) : null,
+        taille: profile.height ? parseFloat(profile.height) : null,
+      })
+      if (profile.calorieGoal) {
+        await supabase.from('objectifs').upsert({
+          user_id: userId,
+          calories_jour: profile.calorieGoal,
+          proteines: profile.proteinGoal,
+          glucides: profile.carbGoal,
+          lipides: profile.fatGoal,
+          eau_ml: 2500,
+          pas_jour: 10000,
+        })
+      }
+    }
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, register, updateUserProfile }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, register, updateUserProfile }}>
       {children}
     </AuthContext.Provider>
   )

@@ -12,31 +12,39 @@ export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [loggingIn, setLoggingIn] = useState(false)
 
   const [signupData, setSignupData] = useState({ firstName: '', email: '', password: '', confirm: '', code: '' })
   const [signupError, setSignupError] = useState('')
   const [signupSuccess, setSignupSuccess] = useState(false)
+  const [signingUp, setSigningUp] = useState(false)
 
-  function handleLogin() {
+  async function handleLogin() {
     setError('')
-    const result = login(email, password)
+    setLoggingIn(true)
+    const result = await login(email, password)
+    setLoggingIn(false)
     if (result.success) {
-      navigate(result.user.role === 'coach' ? '/coach' : '/dashboard')
+      navigate(result.role === 'coach' ? '/coach' : '/dashboard')
     } else {
-      setError(t('wrong_credentials'))
+      setError(result.error || t('wrong_credentials'))
     }
   }
 
-  function handleSignup() {
+  async function handleSignup() {
     setSignupError('')
     const { firstName, email: se, password: sp, confirm, code } = signupData
     if (!firstName || !se || !sp || !confirm || !code) { setSignupError('Tous les champs sont requis'); return }
     if (sp !== confirm) { setSignupError(t('passwords_no_match')); return }
     if (code !== 'ONAIR2026') { setSignupError(t('invalid_code')); return }
-    const result = register(firstName, se, sp)
+    setSigningUp(true)
+    const result = await register(firstName, se, sp)
+    setSigningUp(false)
     if (result.success) {
       setSignupSuccess(true)
       setTimeout(() => navigate('/dashboard'), 800)
+    } else {
+      setSignupError(result.error || "Erreur lors de l'inscription")
     }
   }
 
@@ -82,7 +90,9 @@ export default function Login() {
             <input type="email" placeholder={t('email_placeholder')} value={email} onChange={e => setEmail(e.target.value)} />
             <input type="password" placeholder={t('password_placeholder')} value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleLogin()} />
             {error && <span style={{ fontSize: 11, color: 'var(--danger)', letterSpacing: '0.05em' }}>{error}</span>}
-            <button className="btn-accent" onClick={handleLogin} style={{ marginTop: 4 }}>{t('connect_btn')}</button>
+            <button className="btn-accent" onClick={handleLogin} disabled={loggingIn} style={{ marginTop: 4, opacity: loggingIn ? 0.7 : 1 }}>
+              {loggingIn ? '...' : t('connect_btn')}
+            </button>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -93,7 +103,9 @@ export default function Login() {
             <input type="text" placeholder={t('access_code')} value={signupData.code} onChange={e => setSignupData(d => ({ ...d, code: e.target.value }))} />
             {signupError && <span style={{ fontSize: 11, color: 'var(--danger)' }}>{signupError}</span>}
             {signupSuccess && <span style={{ fontSize: 11, color: 'var(--success)' }}>{t('welcome_toast')} {signupData.firstName} 👋 {t('account_created')}</span>}
-            <button className="btn-accent" onClick={handleSignup} style={{ marginTop: 4 }}>{t('signup_btn')}</button>
+            <button className="btn-accent" onClick={handleSignup} disabled={signingUp} style={{ marginTop: 4, opacity: signingUp ? 0.7 : 1 }}>
+              {signingUp ? '...' : t('signup_btn')}
+            </button>
           </div>
         )}
 
@@ -114,14 +126,6 @@ export default function Login() {
           }
         `}</style>
 
-        {tab === 'login' && (
-          <div style={{ marginTop: 32 }}>
-            <p className="text-sm text-muted">Comptes de test :</p>
-            <p className="text-sm text-secondary" style={{ marginTop: 6 }}>Coach: coach@onair.fr / coach123</p>
-            <p className="text-sm text-secondary">Membre: membre@onair.fr / membre123</p>
-            <p className="text-sm text-secondary">Code inscription: ONAIR2026</p>
-          </div>
-        )}
       </div>
     </div>
   )
