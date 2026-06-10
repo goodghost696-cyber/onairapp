@@ -1,48 +1,50 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import '../styles/landing.css'
 
 export default function Landing() {
   const navigate = useNavigate()
-  const [visible, setVisible] = useState(false)
 
   useEffect(() => {
-    setTimeout(() => setVisible(true), 50)
-  }, [])
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const delay = reduced ? 1500 : 2800
+    const timer = setTimeout(() => navigate('/login', { replace: true }), delay)
+    return () => clearTimeout(timer)
+  }, [navigate])
 
   return (
-    <div className="app-wrapper">
-      <div className="landing">
-        <div className="landing-topbar">
-          <span className="text-xs text-muted">ON AIR FITNESS</span>
-          <span className="text-xs text-muted">Clichy</span>
-        </div>
+    <div style={{
+      width: '100%',
+      minHeight: '100vh',
+      background: '#0D0D0D',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+    }}>
+      <img
+        src="/logo-onair.png"
+        alt="ON AIR"
+        style={{
+          width: 280,
+          maxWidth: '80vw',
+          mixBlendMode: 'screen',
+          animation: 'logoFadeIn 900ms cubic-bezier(0.25,0.46,0.45,0.94) forwards',
+        }}
+      />
 
-        <div className="landing-hero">
-          <div className="landing-bg-text">ON AIR</div>
-          <div className={`landing-content ${visible ? 'visible' : ''}`}>
-            <span className="text-xs text-muted" style={{ marginBottom: 8, display: 'block' }}>REPOUSSE</span>
-            <div className="text-xl bold text-primary" style={{ marginBottom: 4 }}>Tes limites.</div>
-            <div className="text-xl bold text-accent" style={{ marginBottom: 20 }}>Chaque jour.</div>
-            <p className="text-base text-secondary" style={{ maxWidth: 300 }}>
-              Suis ta nutrition, tes séances, ta progression. Ton coach dans ta poche.
-            </p>
-          </div>
-        </div>
-
-        <div className={`landing-ctas ${visible ? 'visible' : ''}`}>
-          <button className="btn-accent" onClick={() => navigate('/login')}>
-            REJOINDRE LA SALLE
-          </button>
-          <button className="btn-ghost" style={{ marginTop: 12 }} onClick={() => navigate('/login')}>
-            ACCÈS COACH
-          </button>
-        </div>
-
-        <div className="landing-footer">
-          <span className="text-xs text-muted">ON AIR FITNESS · Clichy · 75 rue Henri Barbusse</span>
-        </div>
-      </div>
+      <style>{`
+        @media (prefers-reduced-motion: no-preference) {
+          @keyframes logoFadeIn {
+            from { opacity: 0; transform: scale(0.92); }
+            to   { opacity: 1; transform: scale(1); }
+          }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          @keyframes logoFadeIn {
+            from { opacity: 1; transform: scale(1); }
+            to   { opacity: 1; transform: scale(1); }
+          }
+        }
+      `}</style>
     </div>
   )
 }
