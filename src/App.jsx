@@ -1,5 +1,4 @@
-import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
-import { useEffect } from 'react'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './context/AuthContext'
 import Landing from './screens/Landing'
 import Login from './screens/Login'
@@ -36,29 +35,14 @@ function ProtectedRoute({ children, requiredRole }) {
   return children
 }
 
-function OnboardingGuard() {
-  const navigate = useNavigate()
-  const location = useLocation()
-  useEffect(() => {
-    const hasOnboarded = localStorage.getItem('onair_onboarded')
-    const savedUser = localStorage.getItem('onair_user')
-    if (!hasOnboarded && !savedUser &&
-        location.pathname !== '/onboarding' &&
-        location.pathname !== '/login') {
-      navigate('/onboarding')
-    }
-  }, [])
-  return null
-}
-
 export default function App() {
   const { user, loading } = useAuth()
   if (loading) return null
   return (
-    <>
-      <OnboardingGuard />
-      <Routes>
-        <Route path="/onboarding" element={<Onboarding />} />
+    <Routes>
+        <Route path="/onboarding" element={
+          localStorage.getItem('onair_just_registered') ? <Onboarding /> : <Navigate to="/login" replace />
+        } />
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={user ? <Navigate to={user.role === 'coach' ? '/coach' : '/dashboard'} replace /> : <Login />} />
 
@@ -93,6 +77,5 @@ export default function App() {
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </>
   )
 }

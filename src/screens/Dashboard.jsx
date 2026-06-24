@@ -1,230 +1,302 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useApp } from '../context/AppContext'
-import { useLanguage } from '../context/LanguageContext'
-import { save } from '../utils/storage'
 import CalorieRing from '../components/CalorieRing'
-import '../styles/dashboard.css'
 
-function LogoutIcon() {
+const QUOTES = [
+  'Reste constant.',
+  'Un jour à la fois.',
+  "L'effort paie.",
+  "Pas d'excuses.",
+  'Continue.',
+]
+
+const TOTAL = 5
+
+function Block({ active, children }) {
+  const [animKey, setAnimKey] = useState(0)
+  useEffect(() => {
+    if (active) setAnimKey(k => k + 1)
+  }, [active])
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--text-muted)">
-      <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
-    </svg>
+    <div style={{ height: '100vh' }}>
+      <div key={animKey} style={{ height: '100%', animation: 'blockEnter 300ms ease-out forwards' }}>
+        {children}
+      </div>
+    </div>
   )
 }
 
 export default function Dashboard() {
   const navigate = useNavigate()
-  const { user, logout } = useAuth()
-  const { appData, updateData } = useApp()
-  const { t } = useLanguage()
-  const [quote, setQuote] = useState(null)
-  const [editingCard, setEditingCard] = useState(null)
-  const [inputVal, setInputVal] = useState('')
+  const { user } = useAuth()
+  const { appData } = useApp()
 
-  const goalCategory = {
-    'Perte de poids': 'health',
-    'Prise de masse': 'fitness',
-    'Performance': 'success',
-    'Nutrition': 'health',
-  }[user?.goal] || 'fitness'
-
-  useEffect(() => {
-    const today = new Date().toDateString()
-    const cached = localStorage.getItem('onair_quote')
-    const cachedDate = localStorage.getItem('onair_quote_date')
-    if (cached && cachedDate === today) {
-      try { setQuote(JSON.parse(cached)) } catch {}
-      return
-    }
-    fetch(`/api/quote?category=${goalCategory}`)
-      .then(r => r.json())
-      .then(data => {
-        if (data.quote) {
-          localStorage.setItem('onair_quote', JSON.stringify(data))
-          localStorage.setItem('onair_quote_date', today)
-          setQuote(data)
-        }
-      })
-      .catch(() => setQuote({ quote: 'Chaque séance compte.', author: 'ON AIR' }))
-  }, [])
-
-  function handleLogout() {
-    logout()
-    navigate('/')
-  }
+  const [block, setBlock] = useState(0)
+  const [auto, setAuto] = useState(true)
+  const touchY = useRef(null)
 
   const hour = new Date().getHours()
-  const greeting = hour < 12 ? t('greeting_morning') : hour < 18 ? t('greeting_afternoon') : t('greeting_evening')
+  const greeting = hour < 12 ? 'Bonjour' : hour < 18 ? 'Bon après-midi' : 'Bonsoir'
+  const quote = QUOTES[new Date().getDay() % QUOTES.length]
 
-  const CARDS = [
-    { key: 'steps', label: 'PAS', value: appData.steps, unit: 'pas', target: 10000 },
-    { key: 'kmRun', label: 'COURSE', value: appData.kmRun, unit: 'km', target: null },
-    { key: 'water', label: 'EAU', value: appData.water, unit: 'ml', target: 2500 },
-    { key: 'sleep', label: 'SOMMEIL', value: appData.sleep?.hours || 0, unit: 'h', target: 8 },
-  ]
+  useEffect(() => {
+    if (!auto || block >= TOTAL - 1) { setAuto(false); return }
+    const t = setTimeout(() => setBlock(b => b + 1), 2500)
+    return () => clearTimeout(t)
+  }, [block, auto])
 
-  const handleSave = () => {
-    const num = parseFloat(inputVal)
-    if (isNaN(num) || num < 0) { setEditingCard(null); return }
-    if (editingCard === 'steps') { updateData('steps', num); save('steps', num) }
-    if (editingCard === 'kmRun') { updateData('kmRun', num); save('kmRun', num) }
-    if (editingCard === 'water') { updateData('water', num); save('water', num) }
-    if (editingCard === 'sleep') {
-      const s = { hours: Math.floor(num), minutes: 0, quality: num >= 7 ? 'GOOD' : num >= 5 ? 'FAIR' : 'POOR' }
-      updateData('sleep', s); save('sleep', s)
-    }
-    navigator.vibrate && navigator.vibrate(8)
-    setEditingCard(null)
-    setInputVal('')
+  function stopAuto() { setAuto(false) }
+
+  function goTo(i) { stopAuto(); setBlock(i) }
+
+  function onTouchStart(e) {
+    touchY.current = e.touches[0].clientY
+    stopAuto()
   }
 
-  const miniRings = [
-    { label: 'Séances', current: appData.weeklyWorkouts, target: 6, color: '#E8726A' },
-    { label: 'Eau', current: appData.water, target: 2500, color: '#2EA8FF' },
-    { label: 'Course', current: appData.kmRun, target: 40, color: '#C4956A' },
+  function onTouchEnd(e) {
+    if (touchY.current === null) return
+    const diff = touchY.current - e.changedTouches[0].clientY
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) setBlock(b => Math.min(b + 1, TOTAL - 1))
+      else setBlock(b => Math.max(b - 1, 0))
+    }
+    touchY.current = null
+  }
+
+  const macros = [
+    { label: 'Protéines', val: appData.protein, goal: appData.proteinGoal, unit: 'g' },
+    { label: 'Glucides',  val: appData.carbs,   goal: appData.carbsGoal,   unit: 'g' },
+    { label: 'Lipides',   val: appData.fat,      goal: appData.fatGoal,     unit: 'g' },
+  ]
+
+  const metrics = [
+    { label: 'Eau',     value: appData.water,             unit: 'ml',  target: 2500,  path: '/hydration' },
+    { label: 'Pas',     value: appData.steps,             unit: 'pas', target: 10000, path: '/rings' },
+    { label: 'Sommeil', value: appData.sleep?.hours || 0, unit: 'h',   target: 8,     path: '/rings' },
   ]
 
   return (
-    <div className="app-wrapper">
-      <div className="screen dashboard-screen" style={{ paddingBottom: 110 }}>
-        <div className="screen-header dash-header">
-          <span className="text-xs text-accent bold">ON AIR</span>
-          <button style={{ background: 'none', border: 'none', padding: 4, cursor: 'pointer' }} onClick={handleLogout}>
-            <LogoutIcon />
-          </button>
-        </div>
+    <div
+      style={{ width: '100%', height: '100vh', overflow: 'hidden', position: 'relative', background: 'var(--bg)' }}
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+      onClick={stopAuto}
+    >
+      {/* Scroll track */}
+      <div style={{
+        height: `${TOTAL * 100}vh`,
+        transform: `translateY(-${block * 100}vh)`,
+        transition: 'transform 400ms ease-out',
+      }}>
 
-        {/* Greeting */}
-        <div style={{ marginBottom: 12 }}>
-          <h1 className="text-xl bold">{greeting}, {user?.name}.</h1>
-          <p className="text-sm text-secondary">{t('see_progress')}</p>
-        </div>
-
-        {/* Daily quote */}
-        {quote && (
-          <div style={{ padding: '12px 0', borderBottom: '0.5px solid var(--border)', marginBottom: 16 }}>
-            <p style={{ fontSize: 13, color: 'var(--text-secondary)', fontStyle: 'italic', lineHeight: 1.5 }}>"{quote.quote}"</p>
-            <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, textAlign: 'right', letterSpacing: '1px' }}>— {quote.author}</p>
+        {/* Block 1 — Salutation */}
+        <Block active={block === 0}>
+          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', padding: '0 24px 80px' }}>
+            <p style={{ fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 24 }}>
+              ON AIR FITNESS
+            </p>
+            <h1 style={{ fontSize: 34, fontWeight: 900, color: 'var(--text-primary)', lineHeight: 1.2, marginBottom: 10 }}>
+              {greeting},<br />{user?.name}.
+            </h1>
+            <p style={{ fontSize: 16, color: 'var(--text-secondary)', marginBottom: 48 }}>
+              Voyons où tu en es.
+            </p>
+            <p style={{ fontSize: 18, fontStyle: 'italic', color: 'var(--text-muted)', lineHeight: 1.6 }}>
+              "{quote}"
+            </p>
           </div>
-        )}
+        </Block>
 
-        {/* Calorie ring + macros */}
-        <div className="dash-ring-row card-animated" style={{ '--delay': '50ms' }}>
-          <CalorieRing current={appData.calories} goal={appData.calorieGoal} />
-          <div className="dash-macros">
-            {[
-              { label: 'Protéines', val: appData.protein, goal: appData.proteinGoal, unit: 'g' },
-              { label: 'Glucides', val: appData.carbs, goal: appData.carbsGoal, unit: 'g' },
-              { label: 'Lipides', val: appData.fat, goal: appData.fatGoal, unit: 'g' },
-            ].map((m, idx) => (
-              <div key={m.label} className="macro-item">
-                <span className="text-xs text-muted">{m.label}</span>
-                <span className="text-sm bold">{m.val}<span className="text-muted">/{m.goal}{m.unit}</span></span>
-                <div className="progress-bar">
-                  <div className="progress-fill macro-fill" style={{ '--w': `${Math.min(m.val/m.goal*100,100)}%`, '--delay': `${idx * 100}ms` }} />
+        {/* Block 2 — Calories + macros */}
+        <Block active={block === 1}>
+          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100%', padding: '0 24px 80px', gap: 36 }}>
+            <p style={{ alignSelf: 'flex-start', fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.2em', textTransform: 'uppercase' }}>
+              Nutrition
+            </p>
+            <CalorieRing current={appData.calories} goal={appData.calorieGoal} />
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16, width: '100%' }}>
+              {macros.map(m => (
+                <div key={m.label} style={{ textAlign: 'center' }}>
+                  <p style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>
+                    {m.label}
+                  </p>
+                  <p style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)' }}>
+                    {m.val}
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 400 }}>/{m.goal}{m.unit}</span>
+                  </p>
+                  <div style={{ height: 3, background: 'var(--surface-2)', borderRadius: 2, marginTop: 8, overflow: 'hidden' }}>
+                    <div style={{
+                      height: '100%',
+                      width: `${Math.min((m.val / m.goal) * 100, 100)}%`,
+                      background: 'var(--accent)',
+                      borderRadius: 2,
+                      transition: 'width 600ms ease',
+                    }} />
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
+        </Block>
 
-        {/* Mini rings — 3 rings: Séances / Eau / Course */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 20 }}>
-          {miniRings.map(ring => {
-            const pct = Math.min(ring.current / ring.target, 1)
-            const r = 22, stroke = 4
-            const circ = 2 * Math.PI * r
-            return (
-              <div key={ring.label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '12px 4px', background: 'var(--surface)', borderRadius: 12 }}>
-                <svg width="52" height="52" viewBox="0 0 52 52">
-                  <circle cx="26" cy="26" r={r} fill="none" stroke="var(--surface-2)" strokeWidth={stroke} />
-                  <circle cx="26" cy="26" r={r} fill="none" stroke={ring.color} strokeWidth={stroke}
-                    strokeDasharray={circ} strokeDashoffset={circ * (1 - pct)}
-                    strokeLinecap="round" transform="rotate(-90 26 26)"
-                    style={{ transition: 'stroke-dashoffset 800ms ease' }} />
-                </svg>
-                <span style={{ fontSize: 10, color: 'var(--text-muted)', textAlign: 'center' }}>{ring.label}</span>
-              </div>
-            )
-          })}
-        </div>
-
-        {/* Activity cards */}
-        <div className="section-label">{t('activity')}</div>
-        <div className="activity-grid">
-          {CARDS.map(card => (
+        {/* Block 3 — Séance du jour */}
+        <Block active={block === 2}>
+          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', padding: '0 24px 80px' }}>
+            <p style={{ fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 24 }}>
+              Programme
+            </p>
             <div
-              key={card.key}
-              className="activity-card-compact"
-              onClick={() => { setEditingCard(card.key); setInputVal('') }}
+              onClick={e => { e.stopPropagation(); navigate('/workout') }}
+              style={{
+                background: 'var(--surface)',
+                borderRadius: 16,
+                padding: '28px 22px',
+                borderLeft: '3px solid var(--accent)',
+                cursor: 'pointer',
+              }}
             >
-              <p className="activity-card-label">{card.label}</p>
-              <p className="activity-card-value">
-                {card.key === 'steps' ? appData.steps.toLocaleString('fr-FR') : card.value}
-                <span className="activity-card-unit"> {card.unit}</span>
+              <p style={{ fontSize: 11, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: 10 }}>
+                Séance du jour
               </p>
-              {card.target && (
-                <div className="activity-card-bar-wrap">
-                  <div
-                    className="activity-card-bar-fill"
-                    style={{ width: `${Math.min((card.value / card.target) * 100, 100)}%` }}
-                  />
-                </div>
+              {appData.todayWorkout ? (
+                <>
+                  <p style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 6 }}>
+                    {appData.todayWorkout.name}
+                  </p>
+                  <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 24 }}>
+                    {appData.todayWorkout.exerciseCount || '–'} exercices · {appData.todayWorkout.duration || '–'} min
+                  </p>
+                  <button
+                    className="btn-accent"
+                    style={{ width: '100%' }}
+                    onClick={e => { e.stopPropagation(); navigate('/workout') }}
+                  >
+                    COMMENCER
+                  </button>
+                </>
+              ) : (
+                <>
+                  <p style={{ fontSize: 20, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 8 }}>
+                    Repos actif aujourd'hui.
+                  </p>
+                  <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+                    Récupération active recommandée.
+                  </p>
+                </>
               )}
             </div>
-          ))}
-
-          {/* Calories — read-only, full width */}
-          <div className="activity-card-compact calories-readonly">
-            <p className="activity-card-label">CALORIES</p>
-            <p className="activity-card-value">
-              {appData.calories}<span className="activity-card-unit"> kcal</span>
-            </p>
-            <div className="activity-card-bar-wrap">
-              <div
-                className="activity-card-bar-fill"
-                style={{
-                  width: `${Math.min((appData.calories / appData.calorieGoal) * 100, 100)}%`,
-                  background: appData.calories >= appData.calorieGoal ? 'var(--success)' : 'var(--accent)',
-                }}
-              />
-            </div>
-            <p className="calories-goal-label">/ {appData.calorieGoal} kcal objectif</p>
           </div>
-        </div>
+        </Block>
+
+        {/* Block 4 — Métriques rapides */}
+        <Block active={block === 3}>
+          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', padding: '0 24px 80px' }}>
+            <p style={{ fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 24 }}>
+              Aujourd'hui
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+              {metrics.map(m => {
+                const pct = Math.min((m.value / m.target) * 100, 100)
+                return (
+                  <div
+                    key={m.label}
+                    onClick={e => { e.stopPropagation(); navigate(m.path) }}
+                    style={{ background: 'var(--surface)', borderRadius: 14, padding: '18px 12px', cursor: 'pointer' }}
+                  >
+                    <p style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10 }}>
+                      {m.label}
+                    </p>
+                    <p style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 2 }}>
+                      {m.value}
+                    </p>
+                    <p style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 12 }}>
+                      {m.unit}
+                    </p>
+                    <div style={{ height: 3, background: 'var(--surface-2)', borderRadius: 2, overflow: 'hidden' }}>
+                      <div style={{
+                        height: '100%',
+                        width: `${pct}%`,
+                        background: 'var(--accent)',
+                        borderRadius: 2,
+                        transition: 'width 600ms ease',
+                      }} />
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </Block>
+
+        {/* Block 5 — Activité */}
+        <Block active={block === 4}>
+          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', padding: '0 24px 80px' }}>
+            <p style={{ fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 24 }}>
+              Activité
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div
+                onClick={e => { e.stopPropagation(); navigate('/workout') }}
+                style={{ background: 'var(--surface)', borderRadius: 14, padding: '28px 18px', cursor: 'pointer' }}
+              >
+                <p style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 14 }}>
+                  Séances
+                </p>
+                <p style={{ fontSize: 40, fontWeight: 900, color: 'var(--text-primary)', lineHeight: 1 }}>
+                  {appData.weeklyWorkouts || 0}
+                </p>
+                <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 6 }}>cette semaine</p>
+              </div>
+              <div
+                onClick={e => { e.stopPropagation(); navigate('/run') }}
+                style={{ background: 'var(--surface)', borderRadius: 14, padding: '28px 18px', cursor: 'pointer' }}
+              >
+                <p style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 14 }}>
+                  Course
+                </p>
+                <p style={{ fontSize: 40, fontWeight: 900, color: 'var(--text-primary)', lineHeight: 1 }}>
+                  {appData.kmRun || 0}
+                </p>
+                <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 6 }}>km courus</p>
+              </div>
+            </div>
+          </div>
+        </Block>
+
       </div>
 
-      {/* Bottom sheet for editing */}
-      {editingCard && (
-        <>
-          <div className="sheet-overlay" onClick={() => setEditingCard(null)} />
-          <div className="activity-edit-sheet">
-            <div className="modal-handle" />
-            <p className="sheet-title">{CARDS.find(c => c.key === editingCard)?.label}</p>
-            <p className="sheet-subtitle">
-              {editingCard === 'steps' && "Nombre de pas aujourd'hui"}
-              {editingCard === 'kmRun' && "Km courus aujourd'hui"}
-              {editingCard === 'water' && "Eau bue aujourd'hui (ml)"}
-              {editingCard === 'sleep' && "Heures de sommeil cette nuit"}
-            </p>
-            <input
-              className="sheet-input"
-              type="text"
-              inputMode="decimal"
-              placeholder={String(CARDS.find(c => c.key === editingCard)?.value || '0')}
-              value={inputVal}
-              onChange={e => setInputVal(e.target.value)}
-              autoFocus
-              onKeyDown={e => e.key === 'Enter' && handleSave()}
-            />
-            <button className="sheet-save-btn" onClick={handleSave}>ENREGISTRER</button>
-            <button className="sheet-cancel-btn" onClick={() => setEditingCard(null)}>Annuler</button>
-          </div>
-        </>
-      )}
+      {/* Dot indicators */}
+      <div style={{
+        position: 'absolute', right: 14, top: '50%',
+        transform: 'translateY(-50%)',
+        display: 'flex', flexDirection: 'column', gap: 6, zIndex: 10,
+        paddingBottom: 40,
+      }}>
+        {Array.from({ length: TOTAL }).map((_, i) => (
+          <button
+            key={i}
+            onClick={e => { e.stopPropagation(); goTo(i) }}
+            style={{
+              width: 5,
+              height: i === block ? 16 : 5,
+              borderRadius: 3,
+              background: i === block ? 'var(--accent)' : 'var(--surface-2)',
+              border: 'none', cursor: 'pointer', padding: 0,
+              transition: 'height 200ms ease, background 200ms ease',
+            }}
+          />
+        ))}
+      </div>
+
+      <style>{`
+        @keyframes blockEnter {
+          from { opacity: 0; transform: translateY(20px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </div>
   )
 }
