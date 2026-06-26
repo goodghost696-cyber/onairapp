@@ -25,9 +25,16 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    // Safety timeout — if Supabase doesn't respond (missing env vars), unblock the app
+    const timeout = setTimeout(() => setLoading(false), 3000)
+
     // Restore session on mount
     supabase.auth.getSession().then(({ data: { session } }) => {
+      clearTimeout(timeout)
       setUser(sessionToUser(session))
+      setLoading(false)
+    }).catch(() => {
+      clearTimeout(timeout)
       setLoading(false)
     })
 
