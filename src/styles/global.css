@@ -132,14 +132,18 @@ body {
 }
 
 input {
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
   color: var(--text-primary);
-  padding: 14px 16px;
+  padding: 16px 18px;
   font-size: 15px;
   width: 100%;
   outline: none;
-  border-radius: 10px;
+  border-radius: 14px;
+  font-family: inherit;
+  transition: border-color 150ms ease;
 }
 input::placeholder { color: var(--text-muted); }
 input:focus { border-color: var(--accent); }

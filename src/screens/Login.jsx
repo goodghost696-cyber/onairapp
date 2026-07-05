@@ -49,34 +49,47 @@ export default function Login() {
     }
   }
 
+  const inputStyle = {
+    background: 'var(--glass)',
+    backdropFilter: 'blur(20px)',
+    WebkitBackdropFilter: 'blur(20px)',
+    border: '1px solid var(--glass-border)',
+    color: 'var(--text-primary)',
+    padding: '16px 18px',
+    fontSize: 15,
+    width: '100%',
+    outline: 'none',
+    borderRadius: 14,
+    fontFamily: 'inherit',
+  }
+
   return (
     <div className="app-wrapper">
-      <div className="screen" style={{ paddingTop: 0, paddingBottom: 40, display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      <div style={{ padding: '0 28px 48px', display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
 
         {/* Logo area */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 80, paddingBottom: 48 }}>
-          <button style={{ position: 'absolute', top: 20, left: 16, background: 'none', border: 'none', cursor: 'pointer' }} onClick={() => navigate('/')}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" strokeWidth="1.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
-          </button>
           <img
             src="/icon-onair.png"
             alt="ON AIR"
-            style={{ width: 72, height: 72, mixBlendMode: 'screen', marginBottom: 12 }}
+            style={{ width: 72, height: 72, mixBlendMode: 'screen', marginBottom: 14 }}
           />
-          <div style={{ fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.2em', textTransform: 'uppercase', animation: 'fadeInDelay 400ms ease-out 200ms both' }}>
+          <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--text-secondary)', animation: 'fadeInDelay 400ms ease-out 200ms both' }}>
             ORIGINAL FITNESS · CLICHY
-          </div>
+          </p>
         </div>
 
         {/* Tabs */}
-        <div style={{ display: 'flex', borderBottom: '0.5px solid var(--border)', marginBottom: 28 }}>
+        <div style={{ display: 'flex', background: 'var(--glass)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid var(--glass-border)', borderRadius: 14, padding: 4, marginBottom: 28, gap: 4 }}>
           {['login', 'signup'].map(tabKey => (
             <button key={tabKey} onClick={() => { setTab(tabKey); setError(''); setSignupError('') }} style={{
-              flex: 1, background: 'none', border: 'none', cursor: 'pointer',
-              fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase',
-              color: tab === tabKey ? 'var(--accent)' : 'var(--text-muted)',
-              borderBottom: tab === tabKey ? '2px solid var(--accent)' : '2px solid transparent',
-              padding: '12px 0', marginBottom: -1,
+              flex: 1, border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+              fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase',
+              color: tab === tabKey ? '#fff' : 'var(--text-muted)',
+              background: tab === tabKey ? 'var(--accent)' : 'transparent',
+              borderRadius: 10, padding: '10px 0',
+              transition: 'all 150ms ease',
+              boxShadow: tab === tabKey ? '0 4px 16px rgba(191,6,3,0.4)' : 'none',
             }}>
               {tabKey === 'login' ? t('login_tab') : t('signup_tab')}
             </button>
@@ -85,8 +98,8 @@ export default function Login() {
 
         {tab === 'login' ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <input type="email" placeholder={t('email_placeholder')} value={email} onChange={e => setEmail(e.target.value)} />
-            <input type="password" placeholder={t('password_placeholder')} value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleLogin()} />
+            <input style={inputStyle} type="email" placeholder={t('email_placeholder')} value={email} onChange={e => setEmail(e.target.value)} />
+            <input style={inputStyle} type="password" placeholder={t('password_placeholder')} value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleLogin()} />
             {error && <span style={{ fontSize: 11, color: 'var(--danger)', letterSpacing: '0.05em' }}>{error}</span>}
             <button className="btn-accent" onClick={handleLogin} disabled={loggingIn} style={{ marginTop: 4, opacity: loggingIn ? 0.7 : 1 }}>
               {loggingIn ? '...' : t('connect_btn')}
@@ -94,11 +107,11 @@ export default function Login() {
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <input type="text" placeholder={t('first_name_placeholder')} value={signupData.firstName} onChange={e => setSignupData(d => ({ ...d, firstName: e.target.value }))} />
-            <input type="email" placeholder={t('email_placeholder')} value={signupData.email} onChange={e => setSignupData(d => ({ ...d, email: e.target.value }))} />
-            <input type="password" placeholder={t('password_placeholder')} value={signupData.password} onChange={e => setSignupData(d => ({ ...d, password: e.target.value }))} />
-            <input type="password" placeholder={t('confirm_password')} value={signupData.confirm} onChange={e => setSignupData(d => ({ ...d, confirm: e.target.value }))} />
-            <input type="text" placeholder={t('access_code')} value={signupData.code} onChange={e => setSignupData(d => ({ ...d, code: e.target.value }))} />
+            <input style={inputStyle} type="text" placeholder={t('first_name_placeholder')} value={signupData.firstName} onChange={e => setSignupData(d => ({ ...d, firstName: e.target.value }))} />
+            <input style={inputStyle} type="email" placeholder={t('email_placeholder')} value={signupData.email} onChange={e => setSignupData(d => ({ ...d, email: e.target.value }))} />
+            <input style={inputStyle} type="password" placeholder={t('password_placeholder')} value={signupData.password} onChange={e => setSignupData(d => ({ ...d, password: e.target.value }))} />
+            <input style={inputStyle} type="password" placeholder={t('confirm_password')} value={signupData.confirm} onChange={e => setSignupData(d => ({ ...d, confirm: e.target.value }))} />
+            <input style={inputStyle} type="text" placeholder={t('access_code')} value={signupData.code} onChange={e => setSignupData(d => ({ ...d, code: e.target.value }))} />
             {signupError && <span style={{ fontSize: 11, color: 'var(--danger)' }}>{signupError}</span>}
             {signupSuccess && <span style={{ fontSize: 11, color: 'var(--success)' }}>{t('welcome_toast')} {signupData.firstName} 👋 {t('account_created')}</span>}
             <button className="btn-accent" onClick={handleSignup} disabled={signingUp} style={{ marginTop: 4, opacity: signingUp ? 0.7 : 1 }}>
@@ -108,10 +121,9 @@ export default function Login() {
         )}
 
         <style>{`
-          @keyframes fadeInDelay {
-            from { opacity: 0; }
-            to   { opacity: 1; }
-          }
+          @keyframes fadeInDelay { from { opacity:0; } to { opacity:1; } }
+          input::placeholder { color: rgba(255,255,255,0.28); }
+          input:focus { border-color: var(--accent) !important; outline: none; }
         `}</style>
 
       </div>
