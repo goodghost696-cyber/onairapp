@@ -67,8 +67,9 @@ export default function Settings() {
       }}>Données synchronisées ✓</div>
 
       <div className="screen" style={{ paddingBottom: 110 }}>
-        <div className="screen-header" style={{ padding: '20px 0 12px' }}>
-          <h1 className="text-xl bold">{t('settings_title')}</h1>
+        <div className="screen-header" style={{ paddingTop: 56, paddingBottom: 20 }}>
+          <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 7 }}>SETTINGS</p>
+          <h1 style={{ fontSize: 28, fontWeight: 800, lineHeight: 1.15, color: 'var(--text-primary)' }}>{t('settings_title')}</h1>
         </div>
 
         <div className="section-label">{t('profile_section')}</div>
@@ -146,8 +147,9 @@ export default function Settings() {
             <div onClick={() => setShowHealthSync(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 199 }} />
             <div style={{
               position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)',
-              width: '100%', maxWidth: 390, background: 'var(--surface)',
-              borderRadius: '20px 20px 0 0', borderTop: '0.5px solid var(--border)',
+              width: '100%', maxWidth: 390, background: 'var(--surface-solid)',
+              backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)',
+              borderRadius: '20px 20px 0 0', borderTop: '1px solid var(--glass-border)',
               padding: '24px 20px 48px', zIndex: 200,
             }}>
               <div style={{ width: 36, height: 4, background: 'var(--border)', borderRadius: 2, margin: '0 auto 20px' }} />

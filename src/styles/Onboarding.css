@@ -48,8 +48,10 @@
 }
 
 .onboarding-text-input {
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
   color: var(--text-primary);
   padding: 18px 20px;
   font-size: 20px;
@@ -72,8 +74,10 @@
 .onboarding-option {
   width: 100%;
   padding: 16px 20px;
-  background: var(--surface);
-  border: 0.5px solid var(--border);
+  background: var(--glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
   border-radius: 16px;
   display: flex;
   align-items: center;
@@ -87,7 +91,7 @@
 
 .onboarding-option.selected {
   border-color: var(--accent);
-  background: rgba(224,0,0,0.06);
+  background: rgba(191,6,3,0.1);
 }
 
 .onboarding-option-left {
@@ -153,8 +157,10 @@
 }
 
 .onboarding-number-input {
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
   color: var(--text-primary);
   padding: 18px 44px 18px 20px;
   font-size: 22px;
@@ -197,6 +203,7 @@
   opacity: 1;
   transition: opacity 150ms ease;
   font-family: inherit;
+  box-shadow: 0 8px 32px rgba(191,6,3,0.45);
 }
 
 .onboarding-next-btn:disabled {

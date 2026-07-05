@@ -132,7 +132,7 @@ export default function RunContent() {
           {Array.from({length:17}).map((_,i) => <line key={`v${i}`} x1={i*20} y1={0} x2={i*20} y2={180} stroke="rgba(255,255,255,0.03)" strokeWidth={1}/>)}
           {Array.from({length:9}).map((_,i) => <line key={`h${i}`} x1={0} y1={i*20} x2={330} y2={i*20} stroke="rgba(255,255,255,0.03)" strokeWidth={1}/>)}
           <path id="circuit-path-rc" d={CIRCUIT_PATH} style={{ display: 'none' }} />
-          <path d={CIRCUIT_PATH} fill="rgba(224,0,0,0.04)" stroke="rgba(0,0,0,0.4)" strokeWidth={5} />
+          <path d={CIRCUIT_PATH} fill="rgba(191,6,3,0.04)" stroke="rgba(0,0,0,0.4)" strokeWidth={5} />
           <path d={CIRCUIT_PATH} fill="none" stroke="url(#routeGradRun)" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
           <circle cx="60" cy="140" r="6" fill="var(--success)" />
           <circle cx="60" cy="140" r="3" fill="white" />
@@ -141,7 +141,7 @@ export default function RunContent() {
               <mpath href="#circuit-path-rc"/>
             </animateMotion>
           </circle>
-          <circle r="10" fill="rgba(224,0,0,0.2)">
+          <circle r="10" fill="rgba(191,6,3,0.2)">
             <animateMotion dur="6s" repeatCount="indefinite" rotate="auto">
               <mpath href="#circuit-path-rc"/>
             </animateMotion>

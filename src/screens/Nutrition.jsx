@@ -119,15 +119,17 @@ export default function Nutrition() {
       }}>{toast}</div>
 
       <div className="screen" style={{ paddingBottom: 110 }}>
-        <div className="screen-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 0 8px' }}>
-          <span className="text-xs text-accent bold">NUTRITION</span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <span className="text-sm text-muted">{new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'short' })}</span>
-            <button onClick={() => navigate('/scan')} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, color: 'var(--accent)' }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h.01M18 14h.01M14 18h.01M18 18h.01M14 14v4h4v-4z" strokeLinejoin="round"/></svg>
-              <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase' }}>{t('scan')}</span>
-            </button>
+        <div className="screen-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingTop: 56, paddingBottom: 20 }}>
+          <div>
+            <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 7 }}>NUTRITION</p>
+            <span className="text-sm text-secondary" style={{ textTransform: 'capitalize' }}>{new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'short' })}</span>
           </div>
+          <button
+            onClick={() => navigate('/scan')}
+            style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--glass)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '1px solid var(--glass-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: 'var(--glass-shadow)', cursor: 'pointer', color: 'var(--accent)' }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h.01M18 14h.01M14 18h.01M18 18h.01M14 14v4h4v-4z" strokeLinejoin="round"/></svg>
+          </button>
         </div>
 
         <div className="card" style={{ marginBottom: 16 }}>
@@ -191,9 +193,9 @@ export default function Nutrition() {
         width: 52, height: 52, borderRadius: '50%',
         background: 'var(--accent)', border: 'none', cursor: 'pointer',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        boxShadow: '0 4px 20px rgba(224,0,0,0.4)',
+        boxShadow: '0 4px 20px rgba(191,6,3,0.4)',
       }}>
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2.5" strokeLinecap="round">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round">
           <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
         </svg>
       </button>
@@ -206,8 +208,9 @@ export default function Nutrition() {
         position: 'fixed', bottom: 0, left: '50%',
         transform: `translateX(-50%) translateY(${sheetOpen ? '0' : '100%'})`,
         width: '100%', maxWidth: 390,
-        background: 'var(--surface)', borderRadius: '20px 20px 0 0',
-        borderTop: '0.5px solid var(--border)',
+        background: 'var(--surface-solid)', backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)',
+        borderRadius: '20px 20px 0 0',
+        borderTop: '1px solid var(--glass-border)',
         padding: '24px 20px 40px',
         transition: 'transform 320ms cubic-bezier(0.34,1.56,0.64,1)',
         zIndex: 200, maxHeight: '80vh', overflowY: 'auto',
@@ -275,7 +278,7 @@ export default function Nutrition() {
                 <button key={mt} onClick={() => setMealType(mt)} style={{
                   background: mealType === mt ? 'var(--accent)' : 'var(--surface-2)',
                   border: '0.5px solid var(--border)',
-                  color: mealType === mt ? '#000' : 'var(--text-secondary)',
+                  color: mealType === mt ? '#fff' : 'var(--text-secondary)',
                   fontSize: 11, fontWeight: 700, padding: '8px 14px', borderRadius: 50,
                   whiteSpace: 'nowrap', flexShrink: 0, cursor: 'pointer',
                 }}>{mt}</button>

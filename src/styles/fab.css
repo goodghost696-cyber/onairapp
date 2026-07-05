@@ -19,7 +19,7 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 4px 16px rgba(224,0,0,0.35);
+  box-shadow: 0 4px 16px rgba(191,6,3,0.35);
   transition: transform 200ms cubic-bezier(0.34,1.56,0.64,1);
 }
 .fab-btn.open {

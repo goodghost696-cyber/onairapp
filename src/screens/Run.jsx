@@ -120,7 +120,7 @@ export default function Run() {
 
             <path id="circuit-path-run" d={CIRCUIT_PATH} style={{ display: 'none' }} />
 
-            <path d={CIRCUIT_PATH} fill="rgba(224,0,0,0.04)" stroke="rgba(0,0,0,0.4)" strokeWidth={5} />
+            <path d={CIRCUIT_PATH} fill="rgba(191,6,3,0.04)" stroke="rgba(0,0,0,0.4)" strokeWidth={5} />
             <path d={CIRCUIT_PATH} fill="none" stroke="url(#routeGrad2)" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
 
             <circle cx="40" cy="180" r="6" fill="var(--success)" />
@@ -131,7 +131,7 @@ export default function Run() {
                 <mpath href="#circuit-path-run"/>
               </animateMotion>
             </circle>
-            <circle r="10" fill="rgba(224,0,0,0.2)">
+            <circle r="10" fill="rgba(191,6,3,0.2)">
               <animateMotion dur="6s" repeatCount="indefinite" rotate="auto">
                 <mpath href="#circuit-path-run"/>
               </animateMotion>

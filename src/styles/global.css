@@ -473,5 +473,5 @@ button {
 .lang-btn.active {
   border-color: var(--accent);
   color: var(--accent);
-  background: rgba(224,0,0,0.08);
+  background: rgba(191,6,3,0.08);
 }
