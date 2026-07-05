@@ -1,60 +1,46 @@
 import { useCountUp } from '../hooks/useCountUp'
 
-export default function CalorieRing({ current, goal, size = 140 }) {
+export default function CalorieRing({ current, goal, size = 180 }) {
   const animated = useCountUp(current)
-  const radius = (size - 16) / 2
+  const radius = 70
   const circumference = 2 * Math.PI * radius
   const pct = Math.min(current / goal, 1)
   const offset = circumference - pct * circumference
 
-  // Generate 48 tick marks
-  const ticks = Array.from({ length: 48 }, (_, i) => {
-    const angle = (i / 48) * 360
-    const rad = (angle - 90) * Math.PI / 180
-    const isMajor = i % 12 === 0
-    const tickLen = isMajor ? 7 : 4
-    const outer = size / 2
-    const inner = outer - tickLen
-    return {
-      x1: outer + Math.cos(rad) * outer,
-      y1: outer + Math.sin(rad) * outer,
-      x2: outer + Math.cos(rad) * inner,
-      y2: outer + Math.sin(rad) * inner,
-    }
-  })
-
   return (
     <div style={{ position: 'relative', width: size, height: size }}>
-      <svg width={size} height={size}>
-        {/* Tick marks */}
-        {ticks.map((t, i) => (
-          <line key={i} x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2}
-            stroke="rgba(255,255,255,0.2)" strokeWidth={i % 12 === 0 ? 1.5 : 1} />
-        ))}
-        {/* Background arc */}
-        <circle cx={size/2} cy={size/2} r={radius} fill="none"
-          stroke="var(--border)" strokeWidth={5}
-          style={{ transform: 'rotate(-90deg)', transformOrigin: `${size/2}px ${size/2}px` }} />
+      <svg width={size} height={size} viewBox="0 0 180 180">
+        <defs>
+          <filter id="rglow" x="-60%" y="-60%" width="220%" height="220%">
+            <feGaussianBlur stdDeviation="4" result="blur"/>
+            <feMerge>
+              <feMergeNode in="blur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+        </defs>
+        {/* Track */}
+        <circle cx="90" cy="90" r={radius} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="2.5"/>
         {/* Progress arc */}
-        <circle cx={size/2} cy={size/2} r={radius} fill="none"
-          stroke="var(--accent)" strokeWidth={5}
+        <circle
+          cx="90" cy="90" r={radius}
+          fill="none"
+          stroke="var(--accent)"
+          strokeWidth="2.5"
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={offset}
-          style={{
-            transform: 'rotate(-90deg)',
-            transformOrigin: `${size/2}px ${size/2}px`,
-            transition: 'stroke-dashoffset 1000ms cubic-bezier(0.25,0.46,0.45,0.94)',
-            filter: 'drop-shadow(0 0 10px rgba(224,0,0,0.6))',
-          }}
+          transform="rotate(-90 90 90)"
+          filter="url(#rglow)"
+          style={{ transition: 'stroke-dashoffset 1000ms cubic-bezier(0.25,0.46,0.45,0.94)' }}
         />
       </svg>
       <div style={{
         position: 'absolute', inset: 0,
-        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2,
       }}>
-        <span style={{ fontSize: 28, fontWeight: 700, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{animated.toLocaleString()}</span>
-        <span style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>kcal</span>
+        <span style={{ fontSize: 44, fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-2.5px', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{animated.toLocaleString()}</span>
+        <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.14em', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>KCAL</span>
       </div>
     </div>
   )

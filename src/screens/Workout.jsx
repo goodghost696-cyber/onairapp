@@ -82,22 +82,20 @@ Donne exactement 4-5 exercices adaptés à l'objectif.`
 
   return (
     <div className="app-wrapper">
-      <div className="screen" style={{ paddingBottom: 110 }}>
-        <div className="screen-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 0 8px' }}>
-          <span className="text-xs text-accent bold">WORKOUT</span>
-          <span className="text-sm text-muted">{new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'short' })}</span>
+      <div className="screen" style={{ paddingBottom: 110, padding: '0 24px 110px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 56, paddingBottom: 8 }}>
+          <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--accent)' }}>WORKOUT</p>
+          <span style={{ fontSize: 12, color: 'var(--text-secondary)', textTransform: 'capitalize' }}>{new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'short' })}</span>
         </div>
 
-        <div style={{ marginBottom: 8 }}>
-          <h1 className="text-xl bold">{t('workout')}</h1>
-        </div>
+        <h1 style={{ fontSize: 30, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 24 }}>{t('workout')}</h1>
 
-        <div className="card card-animated" style={{ '--delay': '0ms', marginBottom: 16 }}>
+        <div className="card card-animated" style={{ '--delay': '0ms', marginBottom: 14 }}>
           <div className="flex justify-between items-center">
             <span className="text-sm text-muted">{t('sessions_week')}</span>
-            <span className="text-lg bold text-accent">{appData.weeklyWorkouts}/{appData.weeklyGoal}</span>
+            <span style={{ fontSize: 22, fontWeight: 800, color: 'var(--accent)' }}>{appData.weeklyWorkouts}<span style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 400 }}>/{appData.weeklyGoal}</span></span>
           </div>
-          <div className="progress-bar" style={{ height: 4, marginTop: 10 }}>
+          <div className="progress-bar" style={{ marginTop: 10 }}>
             <div className="progress-fill" style={{ width: `${appData.weeklyWorkouts/appData.weeklyGoal*100}%` }} />
           </div>
         </div>

@@ -89,74 +89,65 @@ export default function Dashboard() {
     setInputVal('')
   }
 
-  const miniRings = [
-    { label: 'Séances', current: appData.weeklyWorkouts, target: 6, color: '#E8726A' },
-    { label: 'Eau', current: appData.water, target: 2500, color: '#2EA8FF' },
-    { label: 'Course', current: appData.kmRun, target: 40, color: '#C4956A' },
-  ]
+  const calsRemaining = Math.max(0, (appData.calorieGoal || 2400) - appData.calories)
 
   return (
     <div className="app-wrapper">
-      <div className="screen dashboard-screen" style={{ paddingBottom: 110 }}>
-        <div className="screen-header dash-header">
-          <span className="text-xs text-accent bold">ON AIR</span>
-          <button style={{ background: 'none', border: 'none', padding: 4, cursor: 'pointer' }} onClick={handleLogout}>
+      <div className="screen dashboard-screen" style={{ paddingBottom: 110, padding: '0 24px 110px' }}>
+        {/* Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingTop: 56, paddingBottom: 28 }}>
+          <div>
+            <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 7 }}>ON AIR</p>
+            <h1 style={{ fontSize: 28, fontWeight: 800, lineHeight: 1.15, color: 'var(--text-primary)' }}>{greeting}, {user?.name}.</h1>
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4, textTransform: 'capitalize' }}>
+              {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+            </p>
+          </div>
+          <button
+            onClick={handleLogout}
+            style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--glass)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '1px solid var(--glass-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 54, boxShadow: 'var(--glass-shadow)', cursor: 'pointer' }}
+          >
             <LogoutIcon />
           </button>
-        </div>
-
-        {/* Greeting */}
-        <div style={{ marginBottom: 12 }}>
-          <h1 className="text-xl bold">{greeting}, {user?.name}.</h1>
-          <p className="text-sm text-secondary">{t('see_progress')}</p>
         </div>
 
         {/* Rotating quote */}
         <RotatingQuote />
 
-        {/* Calorie ring + macros */}
-        <div className="dash-ring-row card-animated" style={{ '--delay': '50ms' }}>
-          <CalorieRing current={appData.calories} goal={appData.calorieGoal} />
-          <div className="dash-macros">
+        {/* Calorie ring */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 36 }}>
+          <CalorieRing current={appData.calories} goal={appData.calorieGoal} size={180} />
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 12 }}>
+            Restant · <span style={{ color: 'var(--accent)', fontWeight: 700 }}>{calsRemaining} kcal</span>
+          </p>
+        </div>
+
+        {/* Macros */}
+        <div style={{ marginBottom: 32 }}>
+          <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: 18 }}>Macros</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {[
               { label: 'Protéines', val: appData.protein, goal: appData.proteinGoal, unit: 'g' },
               { label: 'Glucides', val: appData.carbs, goal: appData.carbsGoal, unit: 'g' },
               { label: 'Lipides', val: appData.fat, goal: appData.fatGoal, unit: 'g' },
-            ].map((m, idx) => (
-              <div key={m.label} className="macro-item">
-                <span className="text-xs text-muted">{m.label}</span>
-                <span className="text-sm bold">{m.val}<span className="text-muted">/{m.goal}{m.unit}</span></span>
-                <div className="progress-bar">
-                  <div className="progress-fill macro-fill" style={{ '--w': `${Math.min(m.val/m.goal*100,100)}%`, '--delay': `${idx * 100}ms` }} />
+            ].map(m => (
+              <div key={m.label}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 7 }}>
+                  <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)' }}>{m.label}</span>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>
+                    {m.val}<span style={{ fontSize: 12, fontWeight: 400, color: 'var(--text-secondary)' }}>/{m.goal}{m.unit}</span>
+                  </span>
+                </div>
+                <div style={{ height: 2, background: 'rgba(255,255,255,0.1)', borderRadius: 2, overflow: 'hidden' }}>
+                  <div style={{ width: `${Math.min((m.val / m.goal) * 100, 100)}%`, height: '100%', background: 'var(--accent)', borderRadius: 2, transition: 'width 600ms ease' }} />
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Mini rings — 3 rings: Séances / Eau / Course */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 20 }}>
-          {miniRings.map(ring => {
-            const pct = Math.min(ring.current / ring.target, 1)
-            const r = 22, stroke = 4
-            const circ = 2 * Math.PI * r
-            return (
-              <div key={ring.label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '12px 4px', background: 'var(--surface)', borderRadius: 12 }}>
-                <svg width="52" height="52" viewBox="0 0 52 52">
-                  <circle cx="26" cy="26" r={r} fill="none" stroke="var(--surface-2)" strokeWidth={stroke} />
-                  <circle cx="26" cy="26" r={r} fill="none" stroke={ring.color} strokeWidth={stroke}
-                    strokeDasharray={circ} strokeDashoffset={circ * (1 - pct)}
-                    strokeLinecap="round" transform="rotate(-90 26 26)"
-                    style={{ transition: 'stroke-dashoffset 800ms ease' }} />
-                </svg>
-                <span style={{ fontSize: 10, color: 'var(--text-muted)', textAlign: 'center' }}>{ring.label}</span>
-              </div>
-            )
-          })}
-        </div>
-
         {/* Activity cards */}
-        <div className="section-label">{t('activity')}</div>
+        <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: 18 }}>{t('activity')}</p>
         <div className="activity-grid">
           {CARDS.map(card => (
             <div
@@ -179,23 +170,19 @@ export default function Dashboard() {
               )}
             </div>
           ))}
+        </div>
 
-          {/* Calories — read-only, full width */}
-          <div className="activity-card-compact calories-readonly">
-            <p className="activity-card-label">CALORIES</p>
-            <p className="activity-card-value">
-              {appData.calories}<span className="activity-card-unit"> kcal</span>
-            </p>
-            <div className="activity-card-bar-wrap">
-              <div
-                className="activity-card-bar-fill"
-                style={{
-                  width: `${Math.min((appData.calories / appData.calorieGoal) * 100, 100)}%`,
-                  background: appData.calories >= appData.calorieGoal ? 'var(--success)' : 'var(--accent)',
-                }}
-              />
-            </div>
-            <p className="calories-goal-label">/ {appData.calorieGoal} kcal objectif</p>
+        {/* Weekly sessions glass card */}
+        <div style={{ background: 'var(--glass)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)', border: '1px solid var(--glass-border)', borderRadius: 16, padding: 20, marginBottom: 40, boxShadow: 'var(--glass-shadow)', position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: 0, left: 12, right: 12, height: 1, background: 'linear-gradient(90deg,transparent,rgba(191,6,3,0.5),transparent)' }} />
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+            <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)' }}>Séances cette semaine</span>
+            <span style={{ fontSize: 22, fontWeight: 800, color: 'var(--accent)', letterSpacing: '-0.5px' }}>
+              {appData.weeklyWorkouts}<span style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 400 }}>/{appData.weeklyGoal}</span>
+            </span>
+          </div>
+          <div style={{ height: 2, background: 'rgba(255,255,255,0.1)', borderRadius: 2, overflow: 'hidden' }}>
+            <div style={{ width: `${Math.min((appData.weeklyWorkouts / appData.weeklyGoal) * 100, 100)}%`, height: '100%', background: 'var(--accent)', borderRadius: 2, transition: 'width 600ms ease' }} />
           </div>
         </div>
       </div>
