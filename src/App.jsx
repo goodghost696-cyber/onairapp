@@ -41,7 +41,7 @@ export default function App() {
   return (
     <Routes>
         <Route path="/onboarding" element={
-          localStorage.getItem('onair_just_registered') ? <Onboarding /> : <Navigate to="/login" replace />
+          user && localStorage.getItem('onair_just_registered') ? <Onboarding /> : <Navigate to="/login" replace />
         } />
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={user ? <Navigate to={user.role === 'coach' ? '/coach' : '/dashboard'} replace /> : <Login />} />
