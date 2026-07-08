@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import CoachNav from '../components/CoachNav'
-import { MOCK_MEMBERS } from './CoachDashboard'
+import { supabase } from '../lib/supabase'
 
 const STATUS_COLORS = { 'ON TRACK': 'var(--success)', 'AT RISK': 'var(--warning)', 'INACTIVE': 'var(--danger)' }
 const GOAL_COLORS = {
@@ -18,10 +18,29 @@ export default function ClientsList() {
   const navigate = useNavigate()
   const [filter, setFilter] = useState('TOUS')
   const [search, setSearch] = useState('')
+  const [members, setMembers] = useState([])
+  const [loading, setLoading] = useState(true)
 
-  const filtered = MOCK_MEMBERS.filter(m => {
+  useEffect(() => {
+    let cancelled = false
+    async function fetchMembers() {
+      setLoading(true)
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('role', 'member')
+      if (!cancelled) {
+        if (!error && data) setMembers(data)
+        setLoading(false)
+      }
+    }
+    fetchMembers()
+    return () => { cancelled = true }
+  }, [])
+
+  const filtered = members.filter(m => {
     const matchFilter = filter === 'TOUS' || m.status === filter
-    const matchSearch = m.name.toLowerCase().includes(search.toLowerCase())
+    const matchSearch = (m.prenom || '').toLowerCase().includes(search.toLowerCase())
     return matchFilter && matchSearch
   })
 
@@ -34,7 +53,7 @@ export default function ClientsList() {
           </button>
           <div>
             <h1 className="text-xl bold">Mes Clients</h1>
-            <span className="text-xs text-muted">15 membres</span>
+            <span className="text-xs text-muted">{loading ? '...' : `${members.length} membres`}</span>
           </div>
         </div>
 
@@ -57,20 +76,22 @@ export default function ClientsList() {
           ))}
         </div>
 
-        {filtered.map((m, i) => (
+        {loading && <p className="text-sm text-muted">Chargement des clients...</p>}
+
+        {!loading && filtered.map((m, i) => (
           <div key={m.id} className="card card-animated" style={{ '--delay': `${i*40}ms`, cursor: 'pointer', marginBottom: 8 }} onClick={() => navigate(`/coach/member/${m.id}`)}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--surface-2)', border: `1.5px solid ${STATUS_COLORS[m.status]}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 16, color: STATUS_COLORS[m.status], flexShrink: 0 }}>
-                {m.name[0]}
+              <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--surface-2)', border: `1.5px solid ${STATUS_COLORS[m.status] || 'var(--border)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 16, color: STATUS_COLORS[m.status] || 'var(--text-muted)', flexShrink: 0 }}>
+                {m.prenom?.[0] || '?'}
               </div>
               <div style={{ flex: 1 }}>
                 <div className="flex justify-between items-center" style={{ marginBottom: 2 }}>
-                  <span className="text-base bold">{m.name}</span>
-                  <span style={{ fontSize: 9, border: `1px solid ${GOAL_COLORS[m.goal]}`, color: GOAL_COLORS[m.goal], padding: '2px 6px', borderRadius: 4, letterSpacing: 0.5, textTransform: 'uppercase', fontWeight: 700 }}>{m.goal}</span>
+                  <span className="text-base bold">{m.prenom}</span>
+                  <span style={{ fontSize: 9, border: `1px solid ${GOAL_COLORS[m.goal] || 'var(--border)'}`, color: GOAL_COLORS[m.goal] || 'var(--text-muted)', padding: '2px 6px', borderRadius: 4, letterSpacing: 0.5, textTransform: 'uppercase', fontWeight: 700 }}>{m.goal || '-'}</span>
                 </div>
-                <div className="text-xs text-muted">Vu {m.lastSeen.toLowerCase()} · {m.sessions} séances</div>
+                <div className="text-xs text-muted">Vu {(m.lastSeen || '-').toLowerCase()} · {m.sessions ?? '-'} séances</div>
                 <div className="progress-bar" style={{ marginTop: 6 }}>
-                  <div className="progress-fill" style={{ width: `${Math.min(m.sessions/8*100,100)}%` }} />
+                  <div className="progress-fill" style={{ width: `${Math.min((m.sessions || 0)/8*100,100)}%` }} />
                 </div>
               </div>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>

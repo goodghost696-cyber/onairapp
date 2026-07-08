@@ -1,5 +1,7 @@
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { supabase } from '../lib/supabase'
 import CoachNav from '../components/CoachNav'
 
 export const MOCK_MEMBERS = [
@@ -25,7 +27,27 @@ const STATUS_COLORS = { 'ON TRACK': 'var(--success)', 'AT RISK': 'var(--warning)
 export default function CoachDashboard() {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
-  const alerts = MOCK_MEMBERS.filter(m => m.status !== 'ON TRACK')
+  const [members, setMembers] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let cancelled = false
+    async function fetchMembers() {
+      setLoading(true)
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('role', 'member')
+      if (!cancelled) {
+        if (!error && data) setMembers(data)
+        setLoading(false)
+      }
+    }
+    fetchMembers()
+    return () => { cancelled = true }
+  }, [])
+
+  const alerts = members.filter(m => m.status && m.status !== 'ON TRACK')
 
   return (
     <div className="app-wrapper">
@@ -44,7 +66,7 @@ export default function CoachDashboard() {
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 6, marginBottom: 16 }}>
           {[
-            { label: 'Clients', val: 15 },
+            { label: 'Clients', val: loading ? '-' : members.length },
             { label: 'Séances', val: 47 },
             { label: 'Alertes', val: alerts.length, danger: true },
             { label: 'Progression', val: '+12%' },
@@ -66,11 +88,11 @@ export default function CoachDashboard() {
             {alerts.map(m => (
               <div key={m.id} className="card" style={{ borderLeft: '2px solid var(--danger)', marginBottom: 8, cursor: 'pointer' }} onClick={() => navigate(`/coach/member/${m.id}`)}>
                 <div className="flex justify-between items-center">
-                  <span className="text-base bold">{m.name}</span>
+                  <span className="text-base bold">{m.prenom}</span>
                   <span className="text-xs text-accent">VOIR →</span>
                 </div>
                 <div className="text-sm text-secondary" style={{ marginTop: 4 }}>
-                  {m.status === 'INACTIVE' ? `Absent ${m.lastSeen.toLowerCase()} · Calories en chute` : `Sommeil perturbé · Fatigue détectée`}
+                  {m.status === 'INACTIVE' ? `Absent ${(m.lastSeen || '').toLowerCase()} · Calories en chute` : `Sommeil perturbé · Fatigue détectée`}
                 </div>
               </div>
             ))}
@@ -78,18 +100,19 @@ export default function CoachDashboard() {
         )}
 
         <div className="section-label">ACTIFS AUJOURD'HUI</div>
-        {MOCK_MEMBERS.filter(m => m.lastSeen === 'Aujourd\'hui').map(m => (
+        {loading && <p className="text-sm text-muted">Chargement des clients...</p>}
+        {!loading && members.filter(m => m.lastSeen === 'Aujourd\'hui').map(m => (
           <div key={m.id} className="card" style={{ cursor: 'pointer', marginBottom: 8 }} onClick={() => navigate(`/coach/member/${m.id}`)}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--surface-2)', border: `1.5px solid ${STATUS_COLORS[m.status]}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: STATUS_COLORS[m.status], flexShrink: 0 }}>
-                {m.name[0]}
+              <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--surface-2)', border: `1.5px solid ${STATUS_COLORS[m.status] || 'var(--border)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: STATUS_COLORS[m.status] || 'var(--text-muted)', flexShrink: 0 }}>
+                {m.prenom?.[0] || '?'}
               </div>
               <div style={{ flex: 1 }}>
                 <div className="flex justify-between items-center">
-                  <span className="text-base bold">{m.name}</span>
-                  <span style={{ fontSize: 10, color: STATUS_COLORS[m.status], border: `1px solid ${STATUS_COLORS[m.status]}`, padding: '2px 6px', borderRadius: 4, letterSpacing: 0.5 }}>{m.status}</span>
+                  <span className="text-base bold">{m.prenom}</span>
+                  <span style={{ fontSize: 10, color: STATUS_COLORS[m.status] || 'var(--text-muted)', border: `1px solid ${STATUS_COLORS[m.status] || 'var(--border)'}`, padding: '2px 6px', borderRadius: 4, letterSpacing: 0.5 }}>{m.status || '-'}</span>
                 </div>
-                <div className="text-xs text-muted" style={{ marginTop: 2 }}>{m.goal} · {m.sessions} séances</div>
+                <div className="text-xs text-muted" style={{ marginTop: 2 }}>{m.goal || '-'} · {m.sessions ?? '-'} séances</div>
               </div>
             </div>
           </div>
