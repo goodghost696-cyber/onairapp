@@ -28,11 +28,32 @@ export function AuthProvider({ children }) {
     // Safety timeout — if Supabase doesn't respond (missing env vars), unblock the app
     const timeout = setTimeout(() => setLoading(false), 3000)
 
+    // Resolve the user from a session, replacing the metadata-derived role
+    // with the real role from the profiles table (manually created accounts
+    // don't have user_metadata.role set).
+    async function applySession(session) {
+      const u = sessionToUser(session)
+      if (u) {
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('user_id', u.id)
+            .single()
+          if (!error && data?.role) {
+            u.role = data.role
+          }
+        } catch {
+          // keep fallback role already set on u (metadata role, then 'member')
+        }
+      }
+      setUser(u)
+    }
+
     // Restore session on mount
     supabase.auth.getSession().then(({ data: { session } }) => {
       clearTimeout(timeout)
-      setUser(sessionToUser(session))
-      setLoading(false)
+      applySession(session).finally(() => setLoading(false))
     }).catch(() => {
       clearTimeout(timeout)
       setLoading(false)
@@ -40,7 +61,7 @@ export function AuthProvider({ children }) {
 
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(sessionToUser(session))
+      applySession(session)
     })
 
     return () => subscription.unsubscribe()
