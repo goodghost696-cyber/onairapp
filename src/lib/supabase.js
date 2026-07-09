@@ -4,7 +4,10 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('[Supabase] Missing env vars — VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY must be set.')
+  console.error('[Supabase] Missing env vars at client init', {
+    VITE_SUPABASE_URL: supabaseUrl ? 'set' : 'undefined',
+    VITE_SUPABASE_ANON_KEY: supabaseAnonKey ? 'set' : 'undefined',
+  })
 }
 
 export const supabase = createClient(
