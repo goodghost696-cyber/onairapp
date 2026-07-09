@@ -1,42 +1,60 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useGymConfig } from '../hooks/useGymConfig'
+import '../styles/landing.css'
 
 export default function Landing() {
   const navigate = useNavigate()
-  const reducedMotion = typeof window !== 'undefined'
-    && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  const gym = useGymConfig()
+  const [visible, setVisible] = useState(false)
 
   useEffect(() => {
-    const delay = reducedMotion ? 1500 : 2800
-    const timer = setTimeout(() => navigate('/login'), delay)
-    return () => clearTimeout(timer)
+    const t = setTimeout(() => setVisible(true), 60)
+    return () => clearTimeout(t)
   }, [])
 
   return (
-    <div style={{
-      position: 'fixed', inset: 0, background: '#0D0D0D',
-      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-    }}>
-      <img
-        src="/logo-onair.png"
-        alt="ON AIR"
-        style={{
-          width: '280px',
-          maxWidth: '80vw',
-          mixBlendMode: 'screen',
-          animation: reducedMotion ? 'none' : 'logoFadeIn 900ms cubic-bezier(0.25,0.46,0.45,0.94) forwards',
-          opacity: reducedMotion ? 1 : 0,
-        }}
-      />
+    <div className="landing">
+      <div className="landing-topbar">
+        <span className="landing-brand">{gym.name}</span>
+        {gym.city && <span className="landing-city">{gym.city}</span>}
+      </div>
 
-      <style>{`
-        @media (prefers-reduced-motion: no-preference) {
-          @keyframes logoFadeIn {
-            from { opacity: 0; transform: scale(0.92); }
-            to   { opacity: 1; transform: scale(1); }
-          }
-        }
-      `}</style>
+      <div className="landing-hero">
+        <span className="landing-bg-text" aria-hidden="true">ON AIR</span>
+
+        <div className={`landing-content${visible ? ' visible' : ''}`}>
+          <span className="landing-kicker">REPOUSSE</span>
+          <h1 className="landing-title">
+            Tes limites.<br />
+            <span className="landing-title-accent">Chaque jour.</span>
+          </h1>
+          <p className="landing-subtitle">
+            Suis ta nutrition, tes séances, ta progression. Ton coach dans ta poche.
+          </p>
+        </div>
+      </div>
+
+      <div className={`landing-ctas${visible ? ' visible' : ''}`}>
+        <button
+          className="landing-btn landing-btn-primary"
+          onClick={() => navigate('/login', { state: { tab: 'signup' } })}
+        >
+          Rejoindre la salle
+        </button>
+        <button
+          className="landing-btn landing-btn-secondary"
+          onClick={() => navigate('/login', { state: { tab: 'login' } })}
+        >
+          Accès coach
+        </button>
+      </div>
+
+      {gym.address && (
+        <div className="landing-footer">
+          {gym.name} · {gym.address}
+        </div>
+      )}
     </div>
   )
 }

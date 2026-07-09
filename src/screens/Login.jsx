@@ -1,13 +1,14 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useLanguage } from '../context/LanguageContext'
 
 export default function Login() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { login, register } = useAuth()
   const { t } = useLanguage()
-  const [tab, setTab] = useState('login')
+  const [tab, setTab] = useState(location.state?.tab === 'signup' ? 'signup' : 'login')
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
