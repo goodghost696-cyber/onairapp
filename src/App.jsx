@@ -30,7 +30,8 @@ import MemberLayout from './layouts/MemberLayout'
 function ProtectedRoute({ children, requiredRole }) {
   const { user } = useAuth()
   if (!user) return <Navigate to="/login" replace />
-  if (requiredRole && user.role !== requiredRole) {
+  // 'admin' bypasses the member/coach split so a single account can demo both spaces
+  if (requiredRole && user.role !== requiredRole && user.role !== 'admin') {
     return <Navigate to={user.role === 'coach' ? '/coach' : '/dashboard'} replace />
   }
   return children
