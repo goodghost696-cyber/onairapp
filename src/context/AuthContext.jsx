@@ -107,7 +107,7 @@ export function AuthProvider({ children }) {
         user_id: data.user.id,
         prenom: firstName,
         email,
-      })
+      }, { onConflict: 'user_id' })
       if (profileError) {
         console.error('[Auth] register: profiles upsert failed', profileError)
       } else {
@@ -151,7 +151,7 @@ export function AuthProvider({ children }) {
         email: profile.email,
         poids: profile.weight ? parseFloat(profile.weight) : null,
         taille: profile.height ? parseFloat(profile.height) : null,
-      })
+      }, { onConflict: 'user_id' })
       if (profileError) {
         console.error('[Auth] updateUserProfile: profiles upsert failed', profileError)
       }
@@ -164,7 +164,7 @@ export function AuthProvider({ children }) {
           lipides: profile.fatGoal,
           eau_ml: 2500,
           pas_jour: 10000,
-        })
+        }, { onConflict: 'user_id' })
         if (objectifsError) {
           console.error('[Auth] updateUserProfile: objectifs upsert failed', objectifsError)
         }
