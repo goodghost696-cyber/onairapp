@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './context/AuthContext'
 import Landing from './screens/Landing'
 import Login from './screens/Login'
+import ResetPassword from './screens/ResetPassword'
 import Dashboard from './screens/Dashboard'
 import Nutrition from './screens/Nutrition'
 import Workout from './screens/Workout'
@@ -45,6 +46,7 @@ export default function App() {
         } />
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={user ? <Navigate to={user.role === 'coach' ? '/coach' : '/dashboard'} replace /> : <Login />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         {/* Member routes wrapped in MemberLayout (BottomNav + FAB) */}
         <Route element={<ProtectedRoute requiredRole="member"><MemberLayout /></ProtectedRoute>}>

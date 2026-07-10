@@ -122,6 +122,20 @@ export function AuthProvider({ children }) {
     return { success: true, user: u }
   }
 
+  async function sendPasswordResetEmail(email) {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    })
+    if (error) return { success: false, error: error.message }
+    return { success: true }
+  }
+
+  async function updatePassword(newPassword) {
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    if (error) return { success: false, error: error.message }
+    return { success: true }
+  }
+
   async function logout() {
     await supabase.auth.signOut()
     // Clear all onair localStorage keys
@@ -175,7 +189,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, register, updateUserProfile }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, register, updateUserProfile, sendPasswordResetEmail, updatePassword }}>
       {children}
     </AuthContext.Provider>
   )

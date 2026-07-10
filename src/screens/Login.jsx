@@ -6,7 +6,7 @@ import { useLanguage } from '../context/LanguageContext'
 export default function Login() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { login, register } = useAuth()
+  const { login, register, sendPasswordResetEmail } = useAuth()
   const { t } = useLanguage()
   const [tab, setTab] = useState(location.state?.tab === 'signup' ? 'signup' : 'login')
 
@@ -20,6 +20,12 @@ export default function Login() {
   const [signupSuccess, setSignupSuccess] = useState(false)
   const [signingUp, setSigningUp] = useState(false)
 
+  const [forgotMode, setForgotMode] = useState(false)
+  const [forgotEmail, setForgotEmail] = useState('')
+  const [forgotError, setForgotError] = useState('')
+  const [forgotSent, setForgotSent] = useState(false)
+  const [sendingReset, setSendingReset] = useState(false)
+
   async function handleLogin() {
     setError('')
     setLoggingIn(true)
@@ -29,6 +35,19 @@ export default function Login() {
       navigate(result.role === 'coach' ? '/coach' : '/dashboard')
     } else {
       setError(result.error || t('wrong_credentials'))
+    }
+  }
+
+  async function handleSendReset() {
+    setForgotError('')
+    if (!forgotEmail) { setForgotError('Email requis'); return }
+    setSendingReset(true)
+    const result = await sendPasswordResetEmail(forgotEmail)
+    setSendingReset(false)
+    if (result.success) {
+      setForgotSent(true)
+    } else {
+      setForgotError(result.error || "Erreur lors de l'envoi")
     }
   }
 
@@ -83,7 +102,7 @@ export default function Login() {
         {/* Tabs */}
         <div style={{ display: 'flex', background: 'var(--glass)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid var(--glass-border)', borderRadius: 14, padding: 4, marginBottom: 28, gap: 4 }}>
           {['login', 'signup'].map(tabKey => (
-            <button key={tabKey} onClick={() => { setTab(tabKey); setError(''); setSignupError('') }} style={{
+            <button key={tabKey} onClick={() => { setTab(tabKey); setError(''); setSignupError(''); setForgotMode(false) }} style={{
               flex: 1, border: 'none', cursor: 'pointer', fontFamily: 'inherit',
               fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase',
               color: tab === tabKey ? '#fff' : 'var(--text-muted)',
@@ -98,14 +117,43 @@ export default function Login() {
         </div>
 
         {tab === 'login' ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <input style={inputStyle} type="email" placeholder={t('email_placeholder')} value={email} onChange={e => setEmail(e.target.value)} />
-            <input style={inputStyle} type="password" placeholder={t('password_placeholder')} value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleLogin()} />
-            {error && <span style={{ fontSize: 11, color: 'var(--danger)', letterSpacing: '0.05em' }}>{error}</span>}
-            <button className="btn-accent" onClick={handleLogin} disabled={loggingIn} style={{ marginTop: 4, opacity: loggingIn ? 0.7 : 1 }}>
-              {loggingIn ? '...' : t('connect_btn')}
-            </button>
-          </div>
+          forgotMode ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '0 0 4px' }}>{t('reset_password_subtitle')}</p>
+              {!forgotSent ? (
+                <>
+                  <input style={inputStyle} type="email" placeholder={t('email_placeholder')} value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSendReset()} />
+                  {forgotError && <span style={{ fontSize: 11, color: 'var(--danger)', letterSpacing: '0.05em' }}>{forgotError}</span>}
+                  <button className="btn-accent" onClick={handleSendReset} disabled={sendingReset} style={{ marginTop: 4, opacity: sendingReset ? 0.7 : 1 }}>
+                    {sendingReset ? '...' : t('send_reset_link_btn')}
+                  </button>
+                </>
+              ) : (
+                <span style={{ fontSize: 12, color: 'var(--success)' }}>{t('reset_email_sent')}</span>
+              )}
+              <button
+                onClick={() => { setForgotMode(false); setForgotSent(false); setForgotError(''); setForgotEmail('') }}
+                style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: 12, cursor: 'pointer', textAlign: 'center', marginTop: 4, fontFamily: 'inherit' }}
+              >
+                {t('back_to_login_btn')}
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <input style={inputStyle} type="email" placeholder={t('email_placeholder')} value={email} onChange={e => setEmail(e.target.value)} />
+              <input style={inputStyle} type="password" placeholder={t('password_placeholder')} value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleLogin()} />
+              {error && <span style={{ fontSize: 11, color: 'var(--danger)', letterSpacing: '0.05em' }}>{error}</span>}
+              <button
+                onClick={() => { setForgotMode(true); setError('') }}
+                style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: 12, cursor: 'pointer', alignSelf: 'flex-end', fontFamily: 'inherit', padding: 0 }}
+              >
+                {t('forgot_password_link')}
+              </button>
+              <button className="btn-accent" onClick={handleLogin} disabled={loggingIn} style={{ marginTop: 4, opacity: loggingIn ? 0.7 : 1 }}>
+                {loggingIn ? '...' : t('connect_btn')}
+              </button>
+            </div>
+          )
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <input style={inputStyle} type="text" placeholder={t('first_name_placeholder')} value={signupData.firstName} onChange={e => setSignupData(d => ({ ...d, firstName: e.target.value }))} />
