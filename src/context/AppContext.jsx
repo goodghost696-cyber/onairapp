@@ -1,5 +1,25 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import { save, load, clearDay } from '../utils/storage'
+import { supabase } from '../lib/supabase'
+import { useAuth } from './AuthContext'
+
+function todayStr() {
+  return new Date().toISOString().slice(0, 10)
+}
+
+function mealFromRow(r) {
+  return {
+    id: r.id,
+    name: r.nom,
+    calories: r.calories || 0,
+    protein: Number(r.proteines) || 0,
+    carbs: Number(r.glucides) || 0,
+    fat: Number(r.lipides) || 0,
+    nutriscore: r.nutriscore || 'B',
+    mealType: r.type_repas || null,
+    time: new Date(r.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+  }
+}
 
 export const FOOD_DATABASE = [
   { id:'f1',  name:'Blanc de poulet',     per100g: { kcal:110, proteins:23,  carbs:0,   fats:2   }},
@@ -69,6 +89,7 @@ function getPersonalisedGoals() {
 const AppContext = createContext(null)
 
 export function AppProvider({ children }) {
+  const { user } = useAuth()
   const [appData, setAppData] = useState(() => {
     const goals = getPersonalisedGoals()
     return {
@@ -131,6 +152,50 @@ export function AppProvider({ children }) {
       save('protein', 0); save('carbs', 0); save('fat', 0); save('meals', [])
     }
   }, [])
+
+  // Load today's real meals + calorie/macro goals from Supabase once a user is known.
+  // This is the source of truth once available — it overrides the localStorage seed above.
+  useEffect(() => {
+    if (!user?.id) return
+    const today = todayStr()
+
+    supabase
+      .from('repas')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('date', today)
+      .order('created_at', { ascending: true })
+      .then(({ data, error }) => {
+        if (error) {
+          console.error('[App] fetch repas failed', error)
+          return
+        }
+        const meals = (data || []).map(mealFromRow)
+        const totals = meals.reduce((acc, m) => ({
+          calories: acc.calories + m.calories,
+          protein: acc.protein + m.protein,
+          carbs: acc.carbs + m.carbs,
+          fat: acc.fat + m.fat,
+        }), { calories: 0, protein: 0, carbs: 0, fat: 0 })
+        setAppData(prev => ({ ...prev, meals, ...totals }))
+      })
+
+    supabase
+      .from('objectifs')
+      .select('calories_jour, proteines, glucides, lipides')
+      .eq('user_id', user.id)
+      .single()
+      .then(({ data, error }) => {
+        if (error || !data) return
+        setAppData(prev => ({
+          ...prev,
+          calorieGoal: data.calories_jour ?? prev.calorieGoal,
+          proteinGoal: data.proteines ?? prev.proteinGoal,
+          carbsGoal: data.glucides ?? prev.carbsGoal,
+          fatGoal: data.lipides ?? prev.fatGoal,
+        }))
+      })
+  }, [user?.id])
 
   // Persist on change
   useEffect(() => { save('calories', appData.calories) }, [appData.calories])
@@ -232,12 +297,54 @@ export function AppProvider({ children }) {
     }))
   }
 
+  // Persists a meal to `repas` and reflects it (+ its totals) in local state.
+  // Falls back to a local-only add if the write fails, so the UI never blocks
+  // on network — the console error is there for us to catch during testing.
+  async function addMeal({ name, calories, protein, carbs, fat, nutriscore, mealType }) {
+    let meal = {
+      id: Date.now(),
+      name, calories, protein, carbs, fat,
+      nutriscore: nutriscore || 'B',
+      mealType: mealType || null,
+      time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+    }
+
+    if (user?.id) {
+      const { data, error } = await supabase.from('repas').insert({
+        user_id: user.id,
+        nom: name,
+        calories,
+        proteines: protein,
+        glucides: carbs,
+        lipides: fat,
+        nutriscore: nutriscore || null,
+        type_repas: mealType || null,
+      }).select().single()
+
+      if (error) {
+        console.error('[App] addMeal: insert into repas failed', error)
+      } else if (data) {
+        meal = mealFromRow(data)
+      }
+    }
+
+    setAppData(prev => ({
+      ...prev,
+      meals: [...prev.meals, meal],
+      calories: prev.calories + meal.calories,
+      protein: prev.protein + meal.protein,
+      carbs: prev.carbs + meal.carbs,
+      fat: prev.fat + meal.fat,
+    }))
+  }
+
   return (
     <AppContext.Provider value={{
       appData, updateData,
       addExerciseToSession, addExercisesToSession,
       addSetToExercise, toggleSetDone, updateSet,
       clearActiveSession, addSessionToHistory,
+      addMeal,
     }}>
       {children}
     </AppContext.Provider>
