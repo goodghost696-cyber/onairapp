@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { FOOD_DATABASE } from '../context/AppContext'
+import { useAuth } from '../context/AuthContext'
 import { useLanguage } from '../context/LanguageContext'
+import { authHeader } from '../lib/supabase'
 import NutriscoreBadge from '../components/NutriscoreBadge'
 
 function calcNutrition(food, grams) {
@@ -17,6 +19,7 @@ function calcNutrition(food, grams) {
 export default function Nutrition() {
   const navigate = useNavigate()
   const { appData, addMeal } = useApp()
+  const { user } = useAuth()
   const { t } = useLanguage()
   const [sheetOpen, setSheetOpen] = useState(false)
   const [step, setStep] = useState(1)
@@ -27,6 +30,11 @@ export default function Nutrition() {
   const [grams, setGrams] = useState(100)
   const [mealType, setMealType] = useState('Déjeuner')
   const [toast, setToast] = useState('')
+
+  const [recipeSheetOpen, setRecipeSheetOpen] = useState(false)
+  const [recipeLoading, setRecipeLoading] = useState(false)
+  const [recipe, setRecipe] = useState(null)
+  const [recipeError, setRecipeError] = useState('')
 
   useEffect(() => { window.scrollTo(0, 0) }, [])
 
@@ -85,6 +93,77 @@ export default function Nutrition() {
   }
 
   function selectFood(f) { setSelectedFood(f); setStep(2) }
+
+  async function generateRecipe() {
+    setRecipeSheetOpen(true)
+    setRecipeLoading(true)
+    setRecipeError('')
+    setRecipe(null)
+
+    const remainingKcal = Math.max(0, Math.round(appData.calorieGoal - appData.calories))
+    const remainingProtein = Math.max(0, Math.round(appData.proteinGoal - appData.protein))
+    const remainingCarbs = Math.max(0, Math.round(appData.carbsGoal - appData.carbs))
+    const remainingFat = Math.max(0, Math.round(appData.fatGoal - appData.fat))
+
+    const prompt = `Tu es un nutritionniste expert. Propose UNE recette de repas adaptée à ces besoins nutritionnels restants pour aujourd'hui :
+- Calories restantes : ${remainingKcal} kcal
+- Protéines restantes : ${remainingProtein}g
+- Glucides restants : ${remainingCarbs}g
+- Lipides restants : ${remainingFat}g
+- Objectif de la personne : ${user?.goal || 'forme générale'}
+
+La recette doit se rapprocher au mieux de ces valeurs sans les dépasser significativement. Donne une recette réaliste, simple à préparer, avec des ingrédients courants.
+Reply ONLY in valid JSON, no text before or after:
+{
+  "recipe_name": "...",
+  "ingredients": ["...", "..."],
+  "instructions": "...",
+  "kcal": 0,
+  "proteins": 0,
+  "carbs": 0,
+  "fats": 0
+}
+Réponds en français.`
+
+    try {
+      const res = await fetch('/api/claude', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
+        body: JSON.stringify({
+          model: 'claude-fable-5',
+          max_tokens: 700,
+          messages: [{ role: 'user', content: prompt }],
+        }),
+      })
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error || `HTTP ${res.status}`)
+      }
+      const data = await res.json()
+      const raw = data.content?.[0]?.text || ''
+      const clean = raw.replace(/```json|```/g, '').trim()
+      setRecipe(JSON.parse(clean))
+    } catch (err) {
+      setRecipeError(`Erreur : ${err.message}`)
+    }
+    setRecipeLoading(false)
+  }
+
+  async function addRecipeAsMeal() {
+    if (!recipe) return
+    await addMeal({
+      name: recipe.recipe_name,
+      calories: recipe.kcal,
+      protein: recipe.proteins,
+      carbs: recipe.carbs,
+      fat: recipe.fats,
+      nutriscore: 'B',
+      mealType,
+    })
+    setRecipeSheetOpen(false)
+    setToast('Recette ajoutée à ton journal')
+    setTimeout(() => setToast(''), 2000)
+  }
 
   async function addFood() {
     if (!selectedFood || !preview) return
@@ -158,6 +237,22 @@ export default function Nutrition() {
             ))}
           </div>
         </div>
+
+        <button
+          onClick={generateRecipe}
+          className="card"
+          style={{
+            display: 'flex', alignItems: 'center', gap: 12, width: '100%',
+            marginBottom: 16, cursor: 'pointer', border: '1px solid var(--accent)',
+            background: 'rgba(191,6,3,0.08)', textAlign: 'left',
+          }}
+        >
+          <span style={{ fontSize: 22 }}>💡</span>
+          <div>
+            <div className="text-sm bold">Idée recette</div>
+            <div className="text-xs text-muted">Suggestion IA basée sur ce qu'il te reste aujourd'hui</div>
+          </div>
+        </button>
 
         <div className="section-label">{t('today_meals')}</div>
         {appData.meals.map(meal => (
@@ -279,6 +374,76 @@ export default function Nutrition() {
               ))}
             </div>
             <button className="btn-accent" onClick={addFood}>{t('add')}</button>
+          </>
+        )}
+      </div>
+
+      {/* Recipe overlay + sheet */}
+      {recipeSheetOpen && <div onClick={() => setRecipeSheetOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 199 }} />}
+      <div style={{
+        position: 'fixed', bottom: 0, left: '50%',
+        transform: `translateX(-50%) translateY(${recipeSheetOpen ? '0' : '100%'})`,
+        width: '100%', maxWidth: 390,
+        background: 'var(--surface-solid)', backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)',
+        borderRadius: '20px 20px 0 0',
+        borderTop: '1px solid var(--glass-border)',
+        padding: '24px 20px 40px',
+        transition: 'transform 320ms cubic-bezier(0.34,1.56,0.64,1)',
+        zIndex: 200, maxHeight: '80vh', overflowY: 'auto',
+      }}>
+        <h2 className="text-lg bold" style={{ marginBottom: 16 }}>💡 Idée recette</h2>
+
+        {recipeLoading && (
+          <p style={{ fontSize: 13, color: 'var(--text-muted)', padding: '20px 0', textAlign: 'center' }}>Génération en cours...</p>
+        )}
+
+        {recipeError && (
+          <div style={{ padding: 16, background: 'rgba(255,59,59,0.1)', border: '0.5px solid var(--danger)', borderRadius: 12, marginBottom: 16 }}>
+            <p style={{ color: 'var(--danger)', fontSize: 13, margin: 0 }}>{recipeError}</p>
+          </div>
+        )}
+
+        {recipe && !recipeLoading && (
+          <>
+            <h3 className="text-base bold" style={{ marginBottom: 12 }}>{recipe.recipe_name}</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 8, marginBottom: 16, padding: '14px', background: 'var(--surface-2)', borderRadius: 12 }}>
+              {[
+                { label: 'kcal', val: recipe.kcal },
+                { label: 'P', val: `${recipe.proteins}g` },
+                { label: 'G', val: `${recipe.carbs}g` },
+                { label: 'L', val: `${recipe.fats}g` },
+              ].map(m => (
+                <div key={m.label} style={{ textAlign: 'center' }}>
+                  <div className="text-base bold">{m.val}</div>
+                  <div className="text-xs text-muted">{m.label}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <div className="text-xs text-muted" style={{ marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Ingrédients</div>
+              <ul style={{ margin: 0, paddingLeft: 18 }}>
+                {(recipe.ingredients || []).map((ing, i) => (
+                  <li key={i} className="text-sm" style={{ marginBottom: 4 }}>{ing}</li>
+                ))}
+              </ul>
+            </div>
+            <div style={{ marginBottom: 20 }}>
+              <div className="text-xs text-muted" style={{ marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Préparation</div>
+              <p className="text-sm" style={{ margin: 0, lineHeight: 1.5 }}>{recipe.instructions}</p>
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 16, overflowX: 'auto' }}>
+              {MEAL_TYPES.map(mt => (
+                <button key={mt} onClick={() => setMealType(mt)} style={{
+                  background: mealType === mt ? 'var(--accent)' : 'var(--surface-2)',
+                  border: '0.5px solid var(--border)',
+                  color: mealType === mt ? '#fff' : 'var(--text-secondary)',
+                  fontSize: 11, fontWeight: 700, padding: '8px 14px', borderRadius: 50,
+                  whiteSpace: 'nowrap', flexShrink: 0, cursor: 'pointer',
+                }}>{mt}</button>
+              ))}
+            </div>
+            <button className="btn-accent" onClick={addRecipeAsMeal} style={{ marginBottom: 8 }}>Ajouter ce repas</button>
+            <button className="scan-retry-btn" onClick={generateRecipe}>Une autre idée</button>
           </>
         )}
       </div>
