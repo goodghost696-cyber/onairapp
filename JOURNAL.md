@@ -8,6 +8,22 @@ Entrées les plus récentes en haut.
 
 ---
 
+## 2026-07-10 — Session 5 : étape 1 de la roadmap — repas persistés en base
+
+**✅ Étape 1 terminée** (voir roadmap dans l'entrée Session 4 ci-dessous) : les repas sont maintenant réellement persistés dans la table `repas`.
+
+- Migration `add_repas_nutriscore_and_type` : ajout des colonnes `nutriscore` et `type_repas` (absentes du schéma original, nécessaires pour l'UI existante).
+- `AppContext.jsx` : au login, fetch des repas du jour (`repas` où `date = aujourd'hui`) + des objectifs réels (`objectifs`) pour remplacer les données de démo en dur. Nouvelle fonction `addMeal()` qui écrit dans `repas` (fallback local si erreur réseau, logué en console) et met à jour les totaux locaux.
+- `Nutrition.jsx` (recherche manuelle) et `Scan.jsx` (scan photo/code-barre) utilisent maintenant tous les deux `addMeal()` au lieu d'écrire uniquement en local — les deux chemins d'ajout de repas persistent correctement.
+- Testé en base avec un insert authentifié simulé avant de commit (ligne de test supprimée après vérification). Build validé.
+- Commit `1dd4913`.
+
+**Reste à tester par l'utilisateur** : ajouter un vrai repas dans l'app (recherche manuelle ET scan photo) et vérifier qu'il apparaît toujours après un refresh/nouvelle connexion (preuve que ça vient bien de la base, pas juste du localStorage).
+
+**Prochaine étape (2/6)** : eau + pas + sommeil + course → table `activite_jour` (`Hydration.jsx`, `Sleep.jsx`, `Run.jsx`, `Rings.jsx`).
+
+---
+
 ## 2026-07-10 — Session 4 : fix connexion coach + roadmap persistance complète
 
 ### Bug corrigé : connexion coach/admin atterrissait toujours sur le dashboard membre
