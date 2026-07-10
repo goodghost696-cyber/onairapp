@@ -34,6 +34,41 @@ function BarcodeIcon() {
   )
 }
 
+// Look up real per-100g nutrition for a food name via Open Food Facts.
+// Returns null if no usable match is found (caller falls back to the AI estimate).
+async function lookupOFF(name) {
+  try {
+    const res = await fetch(
+      `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(name)}&search_simple=1&action=process&json=1&page_size=1&fields=product_name,nutriments`
+    )
+    const data = await res.json()
+    const p = data.products?.[0]
+    const kcal = p?.nutriments?.['energy-kcal_100g']
+    if (!p || !kcal) return null
+    return {
+      kcal100: Math.round(kcal),
+      prot100: Math.round((p.nutriments.proteins_100g || 0) * 10) / 10,
+      carb100: Math.round((p.nutriments.carbohydrates_100g || 0) * 10) / 10,
+      fat100: Math.round((p.nutriments.fat_100g || 0) * 10) / 10,
+    }
+  } catch {
+    return null
+  }
+}
+
+// Items carry per-100g values + an editable gram amount, so adjusting the
+// portion recomputes calories/macros live without another network call.
+function computeTotal(items) {
+  return items.reduce((acc, it) => {
+    const factor = (it.grams || 0) / 100
+    acc.kcal += it.kcal100 * factor
+    acc.proteins += it.prot100 * factor
+    acc.carbs += it.carb100 * factor
+    acc.fats += it.fat100 * factor
+    return acc
+  }, { kcal: 0, proteins: 0, carbs: 0, fats: 0 })
+}
+
 const resizeImage = (file, maxWidth = 800) => {
   return new Promise((resolve) => {
     const img = new Image()
@@ -91,7 +126,7 @@ export default function Scan() {
            If no barcode visible, still try to identify the product from packaging.
            Réponds en ${langName}. Les noms des aliments doivent être en ${langName}.`
         : `Analyse this food image and identify every visible food item.
-           Estimate quantities in grams and calculate macronutrients.
+           Estimate the portion size in grams for each item.
            Reply ONLY in valid JSON, no text before or after:
            {
              "meal_name": "Assiette de poulet riz",
@@ -99,19 +134,16 @@ export default function Scan() {
                {
                  "name": "Blanc de poulet",
                  "grams": 150,
-                 "kcal": 165,
-                 "proteins": 31,
-                 "carbs": 0,
-                 "fats": 4
+                 "kcal_100g": 110,
+                 "proteins_100g": 21,
+                 "carbs_100g": 0,
+                 "fats_100g": 3
                }
-             ],
-             "total": {
-               "kcal": 450,
-               "proteins": 38,
-               "carbs": 45,
-               "fats": 12
-             }
+             ]
            }
+           kcal_100g/proteins_100g/carbs_100g/fats_100g are per-100g values for that
+           food (not for the estimated portion) — used only as a fallback if a real
+           database lookup for that food name fails.
            Réponds en ${langName}. Les noms des aliments doivent être en ${langName}.`
 
       const response = await fetch('/api/claude', {
@@ -141,61 +173,47 @@ export default function Scan() {
       const parsed = JSON.parse(clean)
 
       if (mode === 'barcode' && parsed.barcode) {
+        let offProduct = null
         try {
           const offRes = await fetch(
             `https://world.openfoodfacts.org/api/v0/product/${parsed.barcode}.json`
           )
           const offData = await offRes.json()
-          if (offData.status === 1) {
-            const p = offData.product
-            setResult({
-              type: 'barcode',
-              data: {
-                meal_name: p.product_name || parsed.product_name,
-                brand: p.brands || parsed.brand,
-                nutriscore: p.nutrition_grades?.toUpperCase() || '?',
-                items: [{
-                  name: p.product_name || parsed.product_name,
-                  grams: 100,
-                  kcal: Math.round(p.nutriments?.['energy-kcal_100g'] || parsed.kcal_100g || 0),
-                  proteins: Math.round(p.nutriments?.proteins_100g || parsed.proteins_100g || 0),
-                  carbs: Math.round(p.nutriments?.carbohydrates_100g || parsed.carbs_100g || 0),
-                  fats: Math.round(p.nutriments?.fat_100g || parsed.fats_100g || 0),
-                }],
-                total: {
-                  kcal: Math.round(p.nutriments?.['energy-kcal_100g'] || parsed.kcal_100g || 0),
-                  proteins: Math.round(p.nutriments?.proteins_100g || parsed.proteins_100g || 0),
-                  carbs: Math.round(p.nutriments?.carbohydrates_100g || parsed.carbs_100g || 0),
-                  fats: Math.round(p.nutriments?.fat_100g || parsed.fats_100g || 0),
-                }
-              }
-            })
-            setLoading(false)
-            return
-          }
-        } catch { /* fallback to Claude result */ }
+          if (offData.status === 1) offProduct = offData.product
+        } catch { /* fallback to Claude result below */ }
+
+        const verified = !!offProduct?.nutriments?.['energy-kcal_100g']
         setResult({
           type: 'barcode',
           data: {
-            meal_name: parsed.product_name || 'Produit inconnu',
-            brand: parsed.brand || '',
-            nutriscore: '?',
+            meal_name: offProduct?.product_name || parsed.product_name || 'Produit inconnu',
+            brand: offProduct?.brands || parsed.brand || '',
+            nutriscore: offProduct?.nutrition_grades?.toUpperCase() || '?',
             items: [{
-              name: parsed.product_name || 'Produit inconnu',
+              name: offProduct?.product_name || parsed.product_name || 'Produit inconnu',
               grams: 100,
-              kcal: parsed.kcal_100g || 0,
-              proteins: parsed.proteins_100g || 0,
-              carbs: parsed.carbs_100g || 0,
-              fats: parsed.fats_100g || 0,
+              kcal100: Math.round(offProduct?.nutriments?.['energy-kcal_100g'] ?? parsed.kcal_100g ?? 0),
+              prot100: Math.round((offProduct?.nutriments?.proteins_100g ?? parsed.proteins_100g ?? 0) * 10) / 10,
+              carb100: Math.round((offProduct?.nutriments?.carbohydrates_100g ?? parsed.carbs_100g ?? 0) * 10) / 10,
+              fat100: Math.round((offProduct?.nutriments?.fat_100g ?? parsed.fats_100g ?? 0) * 10) / 10,
+              verified,
             }],
-            total: {
-              kcal: parsed.kcal_100g || 0,
-              proteins: parsed.proteins_100g || 0,
-              carbs: parsed.carbs_100g || 0,
-              fats: parsed.fats_100g || 0,
-            }
           }
         })
+      } else if (mode === 'food') {
+        const items = await Promise.all((parsed.items || []).map(async (item) => {
+          const off = await lookupOFF(item.name)
+          return {
+            name: item.name,
+            grams: item.grams || 100,
+            kcal100: off?.kcal100 ?? item.kcal_100g ?? 0,
+            prot100: off?.prot100 ?? item.proteins_100g ?? 0,
+            carb100: off?.carb100 ?? item.carbs_100g ?? 0,
+            fat100: off?.fat100 ?? item.fats_100g ?? 0,
+            verified: !!off,
+          }
+        }))
+        setResult({ type: 'food', data: { meal_name: parsed.meal_name, items } })
       } else {
         setResult({ type: mode, data: parsed })
       }
@@ -205,25 +223,33 @@ export default function Scan() {
     setLoading(false)
   }
 
+  function updateItemGrams(index, grams) {
+    setResult(prev => {
+      const items = [...prev.data.items]
+      items[index] = { ...items[index], grams: Math.max(0, grams) }
+      return { ...prev, data: { ...prev.data, items } }
+    })
+  }
+
   function handleAddToMeal() {
     if (!result) return
-    const t2 = result.data.total
+    const t2 = computeTotal(result.data.items)
     const newMeal = {
       id: Date.now(),
       name: result.data.meal_name,
-      calories: t2.kcal,
-      protein: t2.proteins,
-      carbs: t2.carbs,
-      fat: t2.fats,
+      calories: Math.round(t2.kcal),
+      protein: Math.round(t2.proteins),
+      carbs: Math.round(t2.carbs),
+      fat: Math.round(t2.fats),
       nutriscore: result.data.nutriscore || 'B',
       time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
       mealType: selectedMeal,
     }
     updateData('meals', [...appData.meals, newMeal])
-    updateData('calories', appData.calories + t2.kcal)
-    updateData('protein', (appData.protein || 0) + t2.proteins)
-    updateData('carbs', (appData.carbs || 0) + t2.carbs)
-    updateData('fat', (appData.fat || 0) + t2.fats)
+    updateData('calories', appData.calories + newMeal.calories)
+    updateData('protein', (appData.protein || 0) + newMeal.protein)
+    updateData('carbs', (appData.carbs || 0) + newMeal.carbs)
+    updateData('fat', (appData.fat || 0) + newMeal.fat)
     navigate('/nutrition')
   }
 
@@ -317,7 +343,9 @@ export default function Scan() {
         )}
 
         {/* Result */}
-        {result && (
+        {result && (() => {
+          const total = computeTotal(result.data.items)
+          return (
           <div className="scan-result">
             <p className="scan-result-name">{result.data.meal_name}</p>
             {result.data.brand && (
@@ -330,27 +358,50 @@ export default function Scan() {
             )}
             <div className="scan-macros-row">
               <div className="scan-macro">
-                <span className="scan-macro-val">{result.data.total.kcal}</span>
+                <span className="scan-macro-val">{Math.round(total.kcal)}</span>
                 <span className="scan-macro-label">kcal</span>
               </div>
               <div className="scan-macro">
-                <span className="scan-macro-val">{result.data.total.proteins}g</span>
+                <span className="scan-macro-val">{Math.round(total.proteins)}g</span>
                 <span className="scan-macro-label">Prot.</span>
               </div>
               <div className="scan-macro">
-                <span className="scan-macro-val">{result.data.total.carbs}g</span>
+                <span className="scan-macro-val">{Math.round(total.carbs)}g</span>
                 <span className="scan-macro-label">Gluc.</span>
               </div>
               <div className="scan-macro">
-                <span className="scan-macro-val">{result.data.total.fats}g</span>
+                <span className="scan-macro-val">{Math.round(total.fats)}g</span>
                 <span className="scan-macro-label">Lip.</span>
               </div>
             </div>
             <div className="scan-items-list">
               {result.data.items.map((item, i) => (
-                <div key={i} className="scan-item-row">
-                  <span>{item.name} — {item.grams}g</span>
-                  <span>{item.kcal} kcal</span>
+                <div key={i} className="scan-item-row" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span>
+                      {item.name}
+                      <span
+                        title={item.verified ? 'Valeurs vérifiées (Open Food Facts)' : 'Estimation IA — non vérifiée'}
+                        style={{ marginLeft: 6, fontSize: 11, color: item.verified ? 'var(--success)' : 'var(--text-secondary)' }}
+                      >
+                        {item.verified ? '✓' : '≈'}
+                      </span>
+                    </span>
+                    <span>{Math.round(item.kcal100 * item.grams / 100)} kcal</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <input
+                      type="number"
+                      min="0"
+                      value={item.grams}
+                      onChange={e => updateItemGrams(i, parseInt(e.target.value, 10) || 0)}
+                      style={{
+                        width: 64, background: 'var(--glass)', border: '1px solid var(--glass-border)',
+                        borderRadius: 8, color: 'var(--text-primary)', padding: '4px 8px', fontSize: 13, fontFamily: 'inherit',
+                      }}
+                    />
+                    <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>g</span>
+                  </div>
                 </div>
               ))}
             </div>
@@ -372,7 +423,8 @@ export default function Scan() {
               {t('retry')}
             </button>
           </div>
-        )}
+          )
+        })()}
 
         {/* Retry after error */}
         {error && !result && (
