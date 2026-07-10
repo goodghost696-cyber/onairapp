@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { MOCK_MEMBERS } from './CoachDashboard'
 import CoachNav from '../components/CoachNav'
+import { authHeader } from '../lib/supabase'
 
 const STATUS_COLORS = { 'ON TRACK': 'var(--success)', 'AT RISK': 'var(--warning)', 'INACTIVE': 'var(--danger)' }
 
@@ -38,6 +39,7 @@ export default function MemberDetail() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(await authHeader()),
         },
         body: JSON.stringify({
           model: 'claude-haiku-4-5-20251001',

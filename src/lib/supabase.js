@@ -14,3 +14,10 @@ export const supabase = createClient(
   supabaseUrl || '',
   supabaseAnonKey || ''
 )
+
+// Attaches the current user's Supabase access token so our /api/* proxies
+// (claude, exercises, quote) can verify the caller before spending API budget.
+export async function authHeader() {
+  const { data: { session } } = await supabase.auth.getSession()
+  return session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}
+}

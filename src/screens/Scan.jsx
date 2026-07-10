@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { useLanguage } from '../context/LanguageContext'
 import NutriscoreBadge from '../components/NutriscoreBadge'
+import { authHeader } from '../lib/supabase'
 
 const LANG_NAMES = { fr: 'français', en: 'English', es: 'español' }
 
@@ -148,7 +149,7 @@ export default function Scan() {
 
       const response = await fetch('/api/claude', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
         body: JSON.stringify({
           model: 'claude-haiku-4-5-20251001',
           max_tokens: 1000,

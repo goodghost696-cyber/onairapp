@@ -5,6 +5,7 @@ import { useApp } from '../context/AppContext'
 import { useAuth } from '../context/AuthContext'
 import { useLanguage } from '../context/LanguageContext'
 import '../styles/Workout.css'
+import { authHeader } from '../lib/supabase'
 
 export default function Workout() {
   const navigate = useNavigate()
@@ -35,7 +36,7 @@ export default function Workout() {
     try {
       const response = await fetch('/api/claude', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
         body: JSON.stringify({
           model: 'claude-haiku-4-5-20251001',
           max_tokens: 800,

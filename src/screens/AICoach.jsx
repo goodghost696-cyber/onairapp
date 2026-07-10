@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useApp } from '../context/AppContext'
 import { useLanguage } from '../context/LanguageContext'
+import { authHeader } from '../lib/supabase'
 
 const LANG_NAMES = { fr: 'français', en: 'English', es: 'español' }
 
@@ -68,6 +69,7 @@ export default function AICoach() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(await authHeader()),
         },
         body: JSON.stringify({
           model: 'claude-haiku-4-5-20251001',

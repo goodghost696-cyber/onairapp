@@ -1,4 +1,12 @@
+import { applyCors, requireUser } from './_lib/auth.js';
+
 export default async function handler(req, res) {
+  applyCors(req, res, 'GET');
+  if (req.method === 'OPTIONS') return res.status(200).end();
+
+  const user = await requireUser(req);
+  if (!user) return res.status(200).json({ quote: 'Chaque séance compte.', author: 'ON AIR' });
+
   const apiKey = process.env.NINJA_API_KEY;
   const category = req.query.category || 'fitness';
 

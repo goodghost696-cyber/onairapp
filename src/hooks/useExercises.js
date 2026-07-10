@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { authHeader } from '../lib/supabase';
 
 const CACHE_KEY = 'onair_exercises_cache';
 const CACHE_TTL = 24 * 60 * 60 * 1000; // 24h
@@ -59,11 +60,12 @@ export const useExercises = (category) => {
       try {
         const params = CATEGORY_PARAMS[category] || [];
         const allExercises = [];
+        const headers = await authHeader();
 
         for (const param of params) {
           for (let offset = 0; offset < 3; offset++) {
             const query = new URLSearchParams({ ...param, offset: offset * 5 });
-            const res = await fetch(`/api/exercises?${query}`);
+            const res = await fetch(`/api/exercises?${query}`, { headers });
             if (!res.ok) throw new Error('API unavailable');
             const data = await res.json();
             if (data.error) throw new Error(data.error);

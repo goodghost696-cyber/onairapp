@@ -56,8 +56,24 @@ export default function Login() {
     const { firstName, email: se, password: sp, confirm, code } = signupData
     if (!firstName || !se || !sp || !confirm || !code) { setSignupError('Tous les champs sont requis'); return }
     if (sp !== confirm) { setSignupError(t('passwords_no_match')); return }
-    if (code !== 'ONAIR2026') { setSignupError(t('invalid_code')); return }
     setSigningUp(true)
+    try {
+      const codeRes = await fetch('/api/validate-invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
+      })
+      const { valid } = await codeRes.json()
+      if (!valid) {
+        setSigningUp(false)
+        setSignupError(t('invalid_code'))
+        return
+      }
+    } catch {
+      setSigningUp(false)
+      setSignupError("Erreur lors de la vérification du code")
+      return
+    }
     const result = await register(firstName, se, sp)
     setSigningUp(false)
     if (result.success) {

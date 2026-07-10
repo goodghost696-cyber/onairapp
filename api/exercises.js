@@ -1,6 +1,11 @@
+import { applyCors, requireUser } from './_lib/auth.js';
+
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  applyCors(req, res, 'GET');
   if (req.method === 'OPTIONS') return res.status(200).end();
+
+  const user = await requireUser(req);
+  if (!user) return res.status(401).json({ error: 'Unauthorized' });
 
   const { muscle, type, difficulty, offset = 0 } = req.query;
   const apiKey = process.env.NINJA_API_KEY;

@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import CoachNav from '../components/CoachNav'
+import { authHeader } from '../lib/supabase'
 
 function Toggle({ on, onToggle }) {
   return (
@@ -15,6 +16,19 @@ export default function CoachSettings() {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
   const [notifs, setNotifs] = useState({ alerts: true, messages: true })
+  const [inviteCode, setInviteCode] = useState('...')
+
+  useEffect(() => {
+    let cancelled = false
+    authHeader().then(headers =>
+      fetch('/api/invite-code', { headers }).then(r => r.json())
+    ).then(data => {
+      if (!cancelled) setInviteCode(data.code || '—')
+    }).catch(() => {
+      if (!cancelled) setInviteCode('—')
+    })
+    return () => { cancelled = true }
+  }, [])
 
   return (
     <div className="app-wrapper">
@@ -39,7 +53,7 @@ export default function CoachSettings() {
             <span className="text-sm text-secondary">Salle</span><span className="text-sm">ON AIR Clichy</span>
           </div>
           <div style={{ padding: '14px 0', display: 'flex', justifyContent: 'space-between' }}>
-            <span className="text-sm text-secondary">Code accès</span><span className="text-sm text-accent bold">ONAIR2026</span>
+            <span className="text-sm text-secondary">Code accès</span><span className="text-sm text-accent bold">{inviteCode}</span>
           </div>
         </div>
 
