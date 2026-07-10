@@ -49,3 +49,55 @@ Repris de l'audit technique existant (`ETAT_DES_LIEUX.md`, rédigé le 2026-07-0
 - Projet Supabase : `wdwdigqxqctkverkbxyb` (région eu-west-1).
 - Projet Vercel : `prj_L471Fry411QBM6vxcv9oo4JRSzm8`, équipe `team_wMcBlfAFn8HgOcSNdYEnprfi`, domaine principal `onairapp.vercel.app`.
 - Le projet a un mode de promotion manuelle ("Staged") — y penser si "la dernière version n'apparaît pas" revient.
+
+---
+
+## 2026-07-09 — Session (autre fil de travail)
+
+### Ce qui a été fait
+
+**Écran Landing (redesign)**
+- Remplacé le splash logo auto-redirect par l'écran interactif à 2 CTA ("Rejoindre la salle" / "Accès coach"), conforme au design validé
+- Créé `useGymConfig.js` (nom/ville/adresse du gym dynamiques via env vars, base pour le modèle white-label)
+- `Login.jsx` pré-sélectionne maintenant l'onglet (inscription/connexion) selon le bouton cliqué
+- Déployé et validé visuellement
+
+**Bug critique résolu — Service Worker**
+- `sw.js` utilisait une stratégie cache-first sans versioning : une fois l'app chargée une première fois, un navigateur restait figé sur cette version **indéfiniment**, peu importe les déploiements suivants
+- Corrigé : network-first pour la navigation, cache-first uniquement pour les assets hashés, purge automatique des anciens caches à chaque activation
+- Impact : ce bug touchait potentiellement **tous les utilisateurs déjà passés sur l'app avant aujourd'hui** — sans ce fix, aucun d'eux n'aurait jamais vu un futur déploiement
+
+**Bug critique résolu — Domaine de production jamais promu**
+- `onairapp.vercel.app` servait un build figé depuis **6+ jours**, malgré des dizaines de déploiements "Ready" derrière — le domaine principal n'était jamais ré-aliasé automatiquement (option "Require approval" probablement activée sur le projet Vercel)
+- Résolu via "Promote to Production" manuel
+- **Action encore ouverte de ton côté** : vérifier Project Settings → Git sur Vercel pour désactiver cette exigence d'approbation manuelle, sinon ce problème reviendra à chaque futur push
+
+**Sécurité**
+- RLS `profiles` corrigée : la policy coach était `qual = true` (n'importe qui pouvait lire tous les profils) → restreinte à `role = 'coach'`
+
+**Process**
+- Audit hebdomadaire programmé (calendrier, lundis 10h)
+- Ce journal de bord instauré comme rituel de fin de session
+
+### 🔴 Ce qui reste ouvert — à traiter en priorité
+
+**Bug non résolu : inscriptions qui n'atteignent pas `profiles`**
+- Confirmé en base : le compte `goodghost696@gmail.com` existe dans `auth.users` mais **aucune ligne correspondante dans `profiles`**
+- Schéma, permissions (GRANT), RLS INSERT tous vérifiés corrects — la cause exacte reste non identifiée
+- L'erreur console précise (`[Auth] register: profiles upsert failed`) n'a jamais été récupérée malgré plusieurs tentatives
+- **Sans ce fix, aucune inscription réelle ne fonctionne correctement** — les utilisateurs peuvent se connecter mais leurs données ne persistent pas en base
+
+**Reste à vérifier**
+- Test complet sur iPhone pas encore refait après le fix Service Worker (dernier test confirmé : Chrome desktop uniquement)
+
+### Bilan honnête sur l'avancement
+
+L'app a un **design d'accueil désormais aligné** avec la direction validée, et deux bugs d'infrastructure sérieux (Service Worker, domaine non promu) sont réglés — ce sont des fondations qui auraient bloqué silencieusement *tous* les futurs déploiements si on ne les avait pas trouvés maintenant. C'est un vrai gain, même si la session a été frustrante à cause du temps perdu à diagnostiquer à l'aveugle.
+
+Mais le point dur reste entier : **le pipeline d'inscription ne sauvegarde toujours pas les données en base**. Tant que ça n'est pas réglé, tester le reste du redesign (Dashboard, Nutrition, etc.) avec de vraies données Supabase n'a pas de sens — on teste avec des données par défaut/localStorage, pas la réalité. C'est la priorité de la prochaine session, avant de continuer sur le design des autres écrans.
+
+### Prochaine session — priorités dans l'ordre
+1. Résoudre le bug `profiles` upsert (bloquant pour tout test réaliste)
+2. Vérifier/désactiver "Require approval" sur Vercel
+3. Test complet iPhone post-fix
+4. Reprendre le redesign Dashboard (déjà cadré : questions résolues sur l'icône logout et la carte séances)
