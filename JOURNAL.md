@@ -6,6 +6,9 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo, branche `claude/charming-mendel-dj1GQ`, et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## Idées / à faire — design & UI (liste vivante, pas datée)
+- [ ] **Revoir l'UI de la partie Coach** — demandé le 2026-07-10, une fois l'accès coach confirmé fonctionnel. Pas encore cadré (pas de détails sur ce qui doit changer précisément) — à préciser avec l'utilisateur avant de commencer.
+
 ---
 
 ## 2026-07-10 — Session 5 : étape 1 de la roadmap — repas persistés en base
