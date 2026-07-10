@@ -16,7 +16,22 @@ Entrées les plus récentes en haut.
 
 **Testé et validé en base** : simulation d'un upsert authentifié pour cet utilisateur, plus de récursion, ligne bien créée/mise à jour.
 
-**Reste à faire** : retester une inscription complète de bout en bout dans l'app (signup → onboarding) pour confirmer que le flux réel fonctionne maintenant sans erreur, et vérifier dans la console que les logs `[Auth] register/updateUserProfile: profiles upsert succeeded` apparaissent bien (plus d'erreur).
+**Reste à faire** : ~~retester une inscription complète de bout en bout~~ **FAIT ET VALIDÉ** (voir ci-dessous).
+
+### Validation en conditions réelles
+- Test `coach@onair.fr` (08:41) : `profiles` + `objectifs` correctement remplis après signup + onboarding. ✅
+- Test `arnaudmafuta148@gmail.com` (08:49, compte réel de l'utilisateur) : idem, `profiles` (prénom "Ghost", role member) + `objectifs` (2938 kcal/jour) bien créés. ✅
+- **Le bug `profiles` du 07-09 est officiellement clos.**
+
+### Effet de bord découvert pendant les tests : pas de "mot de passe oublié"
+En testant la connexion au compte `goodghost696@gmail.com` (créé hier), mot de passe oublié → erreur "Invalid login credentials" (normal, sans rapport avec les bugs ci-dessus). Ça a révélé qu'**il n'existait aucune fonctionnalité de réinitialisation de mot de passe** dans l'app. Corrigé dans la foulée :
+- `AuthContext.jsx` : `sendPasswordResetEmail(email)` / `updatePassword(newPassword)`
+- `Login.jsx` : lien "Mot de passe oublié ?" sur l'onglet connexion
+- Nouvel écran + route `/reset-password` : récupère la session de récupération envoyée par Supabase et permet de définir un nouveau mot de passe
+- Traductions FR/EN/ES ajoutées
+- Commit `760be3c` (rebasé en `69c1c7f` après un upload d'icônes PNG fait en parallèle sur GitHub)
+
+**⚠️ Action requise côté utilisateur (aucun outil ne permet de le faire depuis Claude)** : vérifier dans **Supabase Dashboard → Authentication → URL Configuration** que `https://onairapp.vercel.app/reset-password` est bien dans les **Redirect URLs** (et que **Site URL** est réglé sur `https://onairapp.vercel.app`), sinon le lien reçu par email pour réinitialiser le mot de passe sera rejeté. **Pas encore testé de bout en bout** (réception réelle de l'email + clic sur le lien) à la fin de cette session.
 
 ---
 
