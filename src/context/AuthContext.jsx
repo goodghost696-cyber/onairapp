@@ -20,6 +20,29 @@ function sessionToUser(session) {
   }
 }
 
+// Replaces the metadata-derived role on a user object with the real role
+// from the profiles table (manually created / role-promoted accounts don't
+// have user_metadata.role set — e.g. coach/admin accounts set via SQL).
+async function resolveRole(u) {
+  if (!u) return u
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('user_id', u.id)
+      .single()
+    if (error) {
+      console.error('[Auth] resolveRole: profiles role lookup failed', error)
+    } else if (data?.role) {
+      u.role = data.role
+    }
+  } catch (err) {
+    console.error('[Auth] resolveRole: profiles role lookup threw', err)
+    // keep fallback role already set on u (metadata role, then 'member')
+  }
+  return u
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -28,28 +51,8 @@ export function AuthProvider({ children }) {
     // Safety timeout — if Supabase doesn't respond (missing env vars), unblock the app
     const timeout = setTimeout(() => setLoading(false), 3000)
 
-    // Resolve the user from a session, replacing the metadata-derived role
-    // with the real role from the profiles table (manually created accounts
-    // don't have user_metadata.role set).
     async function applySession(session) {
-      const u = sessionToUser(session)
-      if (u) {
-        try {
-          const { data, error } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('user_id', u.id)
-            .single()
-          if (error) {
-            console.error('[Auth] applySession: profiles role lookup failed', error)
-          } else if (data?.role) {
-            u.role = data.role
-          }
-        } catch (err) {
-          console.error('[Auth] applySession: profiles role lookup threw', err)
-          // keep fallback role already set on u (metadata role, then 'member')
-        }
-      }
+      const u = await resolveRole(sessionToUser(session))
       setUser(u)
     }
 
@@ -82,7 +85,7 @@ export function AuthProvider({ children }) {
   async function login(email, password) {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) return { success: false, error: error.message }
-    const u = sessionToUser(data.session)
+    const u = await resolveRole(sessionToUser(data.session))
     return { success: true, user: u, role: u.role }
   }
 

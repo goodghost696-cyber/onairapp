@@ -32,7 +32,7 @@ export default function Login() {
     const result = await login(email, password)
     setLoggingIn(false)
     if (result.success) {
-      navigate(result.role === 'coach' ? '/coach' : '/dashboard')
+      navigate(result.role === 'coach' || result.role === 'admin' ? '/coach' : '/dashboard')
     } else {
       setError(result.error || t('wrong_credentials'))
     }

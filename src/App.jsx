@@ -46,7 +46,7 @@ export default function App() {
           localStorage.getItem('onair_just_registered') && user && user.role === 'member' ? <Onboarding /> : <Navigate to="/login" replace />
         } />
         <Route path="/" element={<Landing />} />
-        <Route path="/login" element={user ? <Navigate to={user.role === 'coach' ? '/coach' : '/dashboard'} replace /> : <Login />} />
+        <Route path="/login" element={user ? <Navigate to={user.role === 'coach' || user.role === 'admin' ? '/coach' : '/dashboard'} replace /> : <Login />} />
         <Route path="/reset-password" element={<ResetPassword />} />
 
         {/* Member routes wrapped in MemberLayout (BottomNav + FAB) */}
