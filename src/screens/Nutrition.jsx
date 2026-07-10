@@ -100,10 +100,12 @@ export default function Nutrition() {
     setRecipeError('')
     setRecipe(null)
 
-    const remainingKcal = Math.max(0, Math.round(appData.calorieGoal - appData.calories))
-    const remainingProtein = Math.max(0, Math.round(appData.proteinGoal - appData.protein))
-    const remainingCarbs = Math.max(0, Math.round(appData.carbsGoal - appData.carbs))
-    const remainingFat = Math.max(0, Math.round(appData.fatGoal - appData.fat))
+    // Bounded to a single-meal-sized range so a bad/unrealistic daily goal
+    // (e.g. leftover test data) can't push the AI into proposing an absurd recipe.
+    const remainingKcal = Math.min(1000, Math.max(300, Math.round(appData.calorieGoal - appData.calories) || 500))
+    const remainingProtein = Math.min(60, Math.max(15, Math.round(appData.proteinGoal - appData.protein) || 25))
+    const remainingCarbs = Math.min(100, Math.max(20, Math.round(appData.carbsGoal - appData.carbs) || 40))
+    const remainingFat = Math.min(40, Math.max(5, Math.round(appData.fatGoal - appData.fat) || 15))
 
     const prompt = `Tu es un nutritionniste expert. Propose UNE recette de repas adaptée à ces besoins nutritionnels restants pour aujourd'hui :
 - Calories restantes : ${remainingKcal} kcal
@@ -131,7 +133,7 @@ Réponds en français.`
         headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
         body: JSON.stringify({
           model: 'claude-fable-5',
-          max_tokens: 700,
+          max_tokens: 1200,
           messages: [{ role: 'user', content: prompt }],
         }),
       })
@@ -142,7 +144,12 @@ Réponds en français.`
       const data = await res.json()
       const raw = data.content?.[0]?.text || ''
       const clean = raw.replace(/```json|```/g, '').trim()
-      setRecipe(JSON.parse(clean))
+      try {
+        setRecipe(JSON.parse(clean))
+      } catch (parseErr) {
+        console.error('[Nutrition] generateRecipe: failed to parse recipe JSON', parseErr, raw)
+        throw new Error('Réponse incomplète, réessaie')
+      }
     } catch (err) {
       setRecipeError(`Erreur : ${err.message}`)
     }
