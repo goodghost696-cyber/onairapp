@@ -32,13 +32,30 @@ L'utilisateur a proposé de mettre en pause le chantier UI coach pour se concent
 - Affiche nom de la recette, ingrédients, préparation, macros — avec bouton "Ajouter ce repas" qui appelle `addMeal()` (donc persiste réellement dans `repas`, comme tout le reste) et "Une autre idée" pour régénérer.
 - Build validé. Commit `a5c8fbc`.
 
-**Reste à tester par l'utilisateur** : cliquer sur "Idée recette" dans l'app, vérifier que la suggestion est cohérente avec les calories restantes, et que "Ajouter ce repas" fonctionne (le repas doit apparaître dans la liste ET survivre à un refresh).
+**Bug trouvé au premier test réel (capture d'écran utilisateur) et corrigé** : `Erreur : JSON Parse error: Unexpected EOF` — la réponse de l'IA était coupée avant la fin car `max_tokens: 700` était trop court pour nom + ingrédients + préparation + macros. Corrigé :
+- `max_tokens` passé à 1200.
+- Les valeurs de calories/macros "restantes" envoyées au prompt sont maintenant bornées à une plage réaliste pour **une** recette (300-1000 kcal, etc.) au lieu d'utiliser directement `calorieGoal - calories`, qui pouvait donner des valeurs aberrantes (voir bug objectifs ci-dessous) et pousser l'IA à générer une réponse trop longue.
+- Message d'erreur plus clair en cas de nouvel échec de parsing (`"Réponse incomplète, réessaie"` au lieu de l'erreur JSON brute), avec le détail loggé en console pour debug.
+- Commit `0035bfb`.
+
+**Bug de données découvert au passage** : le compte `arnaudmafuta148@gmail.com` avait `calorieGoal = 10800` en base (`objectifs`), reliquat des données de test bidon saisies pendant l'onboarding (poids 454kg, taille 545cm). Ça faussait l'affichage "Restant" sur `Nutrition.jsx`. **SQL de correction donné à l'utilisateur, pas encore confirmé exécuté** (connecteur Supabase indisponible en fin de session) :
+```sql
+update public.objectifs
+set calories_jour = 2400, proteines = 180, glucides = 240, lipides = 80
+where user_id = (select id from auth.users where email = 'arnaudmafuta148@gmail.com');
+```
+
+**Reste à tester par l'utilisateur** :
+1. Confirmer que le SQL de correction des objectifs ci-dessus a bien été exécuté (vérifier que "Restant" affiche ~2400 kcal, pas 10800).
+2. Retester "Idée recette" après le fix `max_tokens` — vérifier que la suggestion apparaît sans erreur, est cohérente, et que "Ajouter ce repas" fonctionne (repas visible ET survit à un refresh complet de l'app).
 
 **Prochaines briques possibles côté IA membre** (à cadrer une par une avant de coder, comme convenu) :
 - Programmes d'exercices salle/extérieur/maison (existe déjà partiellement dans `Workout.jsx`, à approfondir/passer sur un modèle plus poussé)
 - Parcours marche/course à pied (n'existe pas encore, `Run.jsx` ne fait que du suivi)
 
 La roadmap de persistance (étapes 2-6, voir Session 4 plus bas) n'a pas avancé cette session — priorité donnée à la demande explicite de l'utilisateur sur les recettes.
+
+**Fin de session** — reprendre au prochain démarrage par : vérifier le point 1 des tests ci-dessus, puis retester "Idée recette", puis cadrer la prochaine brique IA (programmes ou parcours course/marche) avant de coder.
 
 ---
 
