@@ -27,6 +27,31 @@ L'utilisateur a proposé de mettre en pause le chantier UI coach pour se concent
 
 ---
 
+## 2026-07-12 — Session 8 : dashboard de suivi des tokens Anthropic (hors onairapp)
+
+L'utilisateur a demandé un dashboard temps réel de sa consommation de tokens Anthropic — **globale au compte**, pas juste l'usage d'onairapp. Clarifié via questions :
+- Périmètre : consommation Anthropic globale du compte (pas juste onairapp)
+- Emplacement : outil séparé, hors du repo onairapp
+- "Temps réel" = vue qui se rafraîchit automatiquement (pas du streaming littéral)
+- Niveau de détail : totaux jour/semaine/mois
+- Métriques : tokens **et** coût en $
+- Hébergement : nouveau projet Vercel séparé
+
+**Recherche technique (skill `claude-api` + doc officielle à jour)** :
+- L'API qu'il faut est l'**Admin API — Usage & Cost** (`platform.claude.com/docs/en/manage-claude/usage-cost-api`), complètement distincte de la clé API utilisée par l'app.
+- Deux endpoints : `GET /v1/organizations/usage_report/messages` (tokens, buckets `1m`/`1h`/`1d`) et `GET /v1/organizations/cost_report` (coût en $, buckets `1d` uniquement).
+- Auth : header `x-api-key` avec une **Admin API key** (`sk-ant-admin01-...`), créée dans Console → Settings → Organization → API keys, réservée aux membres avec le rôle `admin`.
+- **Point bloquant potentiel** : l'Admin API n'est pas disponible pour les comptes individuels — il faut que le compte Anthropic de l'utilisateur soit configuré en **organisation**. L'utilisateur ne sait pas encore si c'est le cas (réponse "je ne sais pas / compte individuel" à la question de cadrage) → **à vérifier avant de pouvoir déployer le dashboard.**
+- Cette clé Admin ne doit jamais être exposée côté client (elle donne bien plus que la lecture d'usage) → le dashboard a besoin d'un petit backend (fonction serverless Vercel) qui la garde secrète et sert de proxy.
+- Fraîcheur des données : ~5 min après une requête API. Polling recommandé : jusqu'à 1x/minute.
+
+**Reste à faire (bloqué en attente de l'utilisateur)** :
+- [ ] Utilisateur : vérifier dans Console Anthropic (Settings → Organization) si son compte est en mode organisation ; sinon le convertir.
+- [ ] Utilisateur : créer une Admin API key (rôle `admin` requis) une fois l'organisation confirmée.
+- [ ] Claude : construire le nouveau projet (page + fonction serverless proxy vers `usage_report/messages` et `cost_report`, agrégation jour/semaine/mois, auto-refresh), le pousser sur un nouveau repo GitHub, et guider le déploiement Vercel (variable d'env `ANTHROPIC_ADMIN_KEY`).
+
+---
+
 ## 2026-07-11 — Session 7 : correction du mix-up "10800 kcal" (erreur de Claude)
 
 L'utilisateur voyait toujours "Restant : 10800" après le fix du Session 6, et l'a signalé 3 fois en soupçonnant un problème de déploiement ("Staged"). Investigation complète :
