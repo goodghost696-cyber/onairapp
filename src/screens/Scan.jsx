@@ -87,7 +87,7 @@ const resizeImage = (file, maxWidth = 800) => {
 
 export default function Scan() {
   const navigate = useNavigate()
-  const { appData, updateData } = useApp()
+  const { addMeal } = useApp()
   const { lang, t } = useLanguage()
   const [loading, setLoading] = useState(false)
   const [currentMode, setCurrentMode] = useState(null)
@@ -232,25 +232,22 @@ export default function Scan() {
     })
   }
 
-  function handleAddToMeal() {
+  async function handleAddToMeal() {
     if (!result) return
     const t2 = computeTotal(result.data.items)
-    const newMeal = {
-      id: Date.now(),
+    const { success, error: addError } = await addMeal({
       name: result.data.meal_name,
       calories: Math.round(t2.kcal),
       protein: Math.round(t2.proteins),
       carbs: Math.round(t2.carbs),
       fat: Math.round(t2.fats),
       nutriscore: result.data.nutriscore || 'B',
-      time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
       mealType: selectedMeal,
+    })
+    if (!success) {
+      setError(`Erreur : ${addError}`)
+      return
     }
-    updateData('meals', [...appData.meals, newMeal])
-    updateData('calories', appData.calories + newMeal.calories)
-    updateData('protein', (appData.protein || 0) + newMeal.protein)
-    updateData('carbs', (appData.carbs || 0) + newMeal.carbs)
-    updateData('fat', (appData.fat || 0) + newMeal.fat)
     navigate('/nutrition')
   }
 

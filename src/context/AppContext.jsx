@@ -1,5 +1,28 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import { save, load, clearDay } from '../utils/storage'
+import { supabase } from '../lib/supabase'
+import { useAuth } from './AuthContext'
+
+// Local calendar date (not UTC) so "today" lines up with clearDay()'s
+// device-local day boundary instead of drifting near midnight.
+function todayStr() {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+function repasToMeal(row) {
+  return {
+    id: row.id,
+    name: row.nom,
+    calories: row.calories,
+    protein: row.proteines,
+    carbs: row.glucides,
+    fat: row.lipides,
+    nutriscore: row.nutriscore || 'B',
+    mealType: row.type,
+    time: new Date(row.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+  }
+}
 
 export const FOOD_DATABASE = [
   { id:'f1',  name:'Blanc de poulet',     per100g: { kcal:110, proteins:23,  carbs:0,   fats:2   }},
@@ -69,16 +92,18 @@ function getPersonalisedGoals() {
 const AppContext = createContext(null)
 
 export function AppProvider({ children }) {
+  const { user } = useAuth()
+  const [mealsLoaded, setMealsLoaded] = useState(false)
   const [appData, setAppData] = useState(() => {
     const goals = getPersonalisedGoals()
     return {
-      calories: load('calories', 0),
+      calories: 0,
       calorieGoal: goals.calorieGoal,
-      protein: load('protein', 0),
+      protein: 0,
       proteinGoal: goals.proteinGoal,
-      carbs: load('carbs', 0),
+      carbs: 0,
       carbsGoal: goals.carbsGoal,
-      fat: load('fat', 0),
+      fat: 0,
       fatGoal: goals.fatGoal,
       steps: load('steps', 0),
       stepsGoal: 10000,
@@ -88,13 +113,7 @@ export function AppProvider({ children }) {
       sleep: load('sleep', { hours: 7, minutes: 23, quality: 'Bonne' }),
       weeklyWorkouts: load('weeklyWorkouts', 4),
       weeklyGoal: 6,
-      meals: load('meals', [
-        { id: 1, name: "Flocons d'avoine + banane", calories: 380, protein: 12, carbs: 68, fat: 6, nutriscore: 'A', time: '07:30' },
-        { id: 2, name: 'Poulet grillé + riz', calories: 520, protein: 45, carbs: 58, fat: 8, nutriscore: 'B', time: '12:30' },
-        { id: 3, name: 'Yaourt grec + fruits rouges', calories: 210, protein: 18, carbs: 22, fat: 4, nutriscore: 'A', time: '16:00' },
-        { id: 4, name: 'Saumon + légumes', calories: 480, protein: 42, carbs: 28, fat: 22, nutriscore: 'A', time: '19:30' },
-        { id: 5, name: 'Whey protéine', calories: 257, protein: 25, carbs: 22, fat: 2, nutriscore: 'C', time: '14:00' },
-      ]),
+      meals: [],
       weeklyData: [
         { day: 'L', calories: 2100, steps: 9200, workout: true },
         { day: 'M', calories: 1950, steps: 7800, workout: false },
@@ -123,30 +142,96 @@ export function AppProvider({ children }) {
     }
   })
 
-  // Day reset — resets only daily metrics
+  // Day reset — resets only daily metrics still backed by localStorage.
+  // Meals/calories/protein/carbs/fat are no longer reset here: they're derived
+  // from today's `repas` rows in Supabase, so a new day naturally comes up empty.
   useEffect(() => {
     if (clearDay()) {
-      setAppData(prev => ({ ...prev, calories: 0, water: 0, steps: 0, protein: 0, carbs: 0, fat: 0, meals: [] }))
-      save('calories', 0); save('water', 0); save('steps', 0)
-      save('protein', 0); save('carbs', 0); save('fat', 0); save('meals', [])
+      setAppData(prev => ({ ...prev, water: 0, steps: 0 }))
+      save('water', 0); save('steps', 0)
     }
   }, [])
 
   // Persist on change
-  useEffect(() => { save('calories', appData.calories) }, [appData.calories])
   useEffect(() => { save('water', appData.water) }, [appData.water])
   useEffect(() => { save('steps', appData.steps) }, [appData.steps])
-  useEffect(() => { save('protein', appData.protein) }, [appData.protein])
-  useEffect(() => { save('carbs', appData.carbs) }, [appData.carbs])
-  useEffect(() => { save('fat', appData.fat) }, [appData.fat])
-  useEffect(() => { save('meals', appData.meals) }, [appData.meals])
   useEffect(() => { save('sessionHistory', appData.sessionHistory) }, [appData.sessionHistory])
   useEffect(() => { save('weeklyWorkouts', appData.weeklyWorkouts) }, [appData.weeklyWorkouts])
   useEffect(() => { save('sleep', appData.sleep) }, [appData.sleep])
   useEffect(() => { save('kmRun', appData.kmRun) }, [appData.kmRun])
 
+  // Hydrate today's meals from Supabase whenever the authenticated user changes.
+  useEffect(() => {
+    if (!user?.id) {
+      setAppData(prev => ({ ...prev, meals: [], calories: 0, protein: 0, carbs: 0, fat: 0 }))
+      setMealsLoaded(false)
+      return
+    }
+    let cancelled = false
+    supabase
+      .from('repas')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('date', todayStr())
+      .order('created_at', { ascending: true })
+      .then(({ data, error }) => {
+        if (cancelled) return
+        if (error) {
+          console.error('[App] fetch repas failed', error)
+          setMealsLoaded(true)
+          return
+        }
+        const meals = (data || []).map(repasToMeal)
+        setAppData(prev => ({
+          ...prev,
+          meals,
+          calories: meals.reduce((sum, m) => sum + (m.calories || 0), 0),
+          protein: meals.reduce((sum, m) => sum + (m.protein || 0), 0),
+          carbs: meals.reduce((sum, m) => sum + (m.carbs || 0), 0),
+          fat: meals.reduce((sum, m) => sum + (m.fat || 0), 0),
+        }))
+        setMealsLoaded(true)
+      })
+    return () => { cancelled = true }
+  }, [user?.id])
+
   function updateData(key, value) {
     setAppData(prev => ({ ...prev, [key]: value }))
+  }
+
+  // Inserts a meal into `repas` (source of truth) then reflects it locally.
+  // Returns { success, error }.
+  async function addMeal({ name, calories, protein, carbs, fat, nutriscore, mealType }) {
+    if (!user?.id) return { success: false, error: 'not authenticated' }
+    const { data, error } = await supabase
+      .from('repas')
+      .insert({
+        user_id: user.id,
+        date: todayStr(),
+        nom: name,
+        calories: Math.round(calories || 0),
+        proteines: protein || 0,
+        glucides: carbs || 0,
+        lipides: fat || 0,
+        nutriscore: nutriscore || null,
+        type: mealType || null,
+      })
+      .select()
+      .single()
+    if (error) {
+      console.error('[App] addMeal: repas insert failed', error)
+      return { success: false, error: error.message }
+    }
+    const meal = repasToMeal(data)
+    setAppData(prev => ({
+      ...prev,
+      meals: [...prev.meals, meal],
+      calories: prev.calories + (meal.calories || 0),
+      protein: prev.protein + (meal.protein || 0),
+      carbs: prev.carbs + (meal.carbs || 0),
+      fat: prev.fat + (meal.fat || 0),
+    }))
+    return { success: true, meal }
   }
 
   function clearActiveSession() {
@@ -234,7 +319,7 @@ export function AppProvider({ children }) {
 
   return (
     <AppContext.Provider value={{
-      appData, updateData,
+      appData, updateData, addMeal, mealsLoaded,
       addExerciseToSession, addExercisesToSession,
       addSetToExercise, toggleSetDone, updateSet,
       clearActiveSession, addSessionToHistory,

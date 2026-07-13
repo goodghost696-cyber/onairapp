@@ -4,7 +4,32 @@ Journal tenu à la fin de chaque session de travail avec Claude. Sert de context
 
 Entrées les plus récentes en haut.
 
-**Pour reprendre dans une nouvelle session** : ouvre une session sur le repo, branche `claude/charming-mendel-dj1GQ`, et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
+**Pour reprendre dans une nouvelle session** : ouvre une session sur le repo, branche `claude/vibrant-franklin-wb7p67` (contient tout l'historique de `claude/charming-mendel-dj1GQ` + les sessions suivantes), et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
+
+---
+
+## 2026-07-13 — Session 5 : étape 1 de la roadmap persistance — repas/calories → table `repas`
+
+### Fait
+Repas/calories branchés sur Supabase (`Nutrition.jsx`, `Scan.jsx`), plus en `localStorage` uniquement :
+- `AppContext.jsx` : au montage / changement d'utilisateur, hydrate `meals` + `calories`/`protein`/`carbs`/`fat` en lisant les lignes du jour dans `repas` (`date = today`, calculé en local, pas UTC, pour rester cohérent avec le reset de jour existant). Nouvelle fonction `addMeal()` exposée par le contexte : insère la ligne dans `repas` puis met à jour l'état local avec la ligne réellement insérée (id, valeurs) au lieu de générer un id/état optimiste local.
+- `Nutrition.jsx` (`addFood()`) et `Scan.jsx` (`handleAddToMeal()`) appellent maintenant `addMeal()` au lieu d'écrire directement dans `appData` — en cas d'échec d'insertion, un message d'erreur est affiché au lieu d'un ajout silencieux qui aurait désync l'UI de la base.
+- Les 5 repas de démo codés en dur (`AppContext.jsx`) supprimés — un nouveau compte voit désormais une vraie liste vide (`mealsLoaded` + message "Aucun repas enregistré aujourd'hui" tant qu'aucun repas n'a été ajouté), plus de fausses données.
+- Le reset de jour (`clearDay()`) ne touche plus calories/protein/carbs/fat/meals — ils redeviennent naturellement vides le lendemain puisqu'ils sont recalculés depuis les lignes `repas` du jour, sans logique de reset dupliquée.
+- Migration ajoutée à `scripts/supabase_schema.sql` : `repas` n'avait ni colonne `nutriscore` ni `type` (type de repas : petit-déj/déjeuner/dîner/collation), pourtant déjà produites par l'app — ajout de `alter table repas add column if not exists nutriscore text / type text`.
+
+### ⚠️ Action requise avant que ça fonctionne en prod
+Le connecteur Supabase est resté indisponible (connexions/déconnexions répétées) pendant toute la session — **la migration SQL n'a pas pu être appliquée**. À exécuter dans le Supabase SQL Editor **avant ou en même temps que le déploiement de ce commit** (sinon chaque ajout de repas échouera avec une erreur Postgres "column nutriscore does not exist") :
+```sql
+alter table repas add column if not exists nutriscore text;
+alter table repas add column if not exists type text;
+```
+
+### Pas testé en conditions réelles
+`npm run build` passe, revue de code faite (voir ci-dessus), mais **aucun test end-to-end** (login + ajout d'un repas + vérification en base) n'a pu être fait dans cette session : pas d'identifiants Supabase dans l'environnement distant (`.env.example` vide, pas de `.env` réel). À tester manuellement sur le déploiement Vercel après avoir appliqué la migration ci-dessus.
+
+### Prochaine étape (roadmap à 6 étapes, voir sessions du 07-10)
+Étape 2 : eau + pas + sommeil + course → table `activite_jour` (`Hydration.jsx`, `Sleep.jsx`, `Run.jsx`, `Rings.jsx`, une ligne par jour/utilisateur).
 
 ---
 

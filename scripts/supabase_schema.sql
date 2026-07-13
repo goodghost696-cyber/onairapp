@@ -74,6 +74,11 @@ create policy "Users can insert own repas"
 create policy "Users can delete own repas"
   on repas for delete using (auth.uid() = user_id);
 
+-- Added 2026-07-13: nutriscore + meal type (petit-déj/déjeuner/dîner/collation),
+-- both already produced by the app (Nutrition.jsx, Scan.jsx) but not yet persisted.
+alter table repas add column if not exists nutriscore text;
+alter table repas add column if not exists type text;
+
 -- ── seances ───────────────────────────────────────────────
 create table if not exists seances (
   id         uuid primary key default gen_random_uuid(),

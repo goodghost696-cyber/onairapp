@@ -16,7 +16,7 @@ function calcNutrition(food, grams) {
 
 export default function Nutrition() {
   const navigate = useNavigate()
-  const { appData, updateData } = useApp()
+  const { appData, addMeal, mealsLoaded } = useApp()
   const { t } = useLanguage()
   const [sheetOpen, setSheetOpen] = useState(false)
   const [step, setStep] = useState(1)
@@ -86,23 +86,22 @@ export default function Nutrition() {
 
   function selectFood(f) { setSelectedFood(f); setStep(2) }
 
-  function addFood() {
+  async function addFood() {
     if (!selectedFood || !preview) return
-    const newMeal = {
-      id: Date.now(),
+    const { success, error } = await addMeal({
       name: `${selectedFood.name} (${grams}g)`,
       calories: preview.kcal,
       protein: preview.proteins,
       carbs: preview.carbs,
       fat: preview.fats,
       nutriscore: selectedFood.nutriscore || 'B',
-      time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+      mealType,
+    })
+    if (!success) {
+      setToast(`Erreur : ${error}`)
+      setTimeout(() => setToast(''), 3000)
+      return
     }
-    updateData('meals', [...appData.meals, newMeal])
-    updateData('calories', appData.calories + preview.kcal)
-    updateData('protein', appData.protein + preview.proteins)
-    updateData('carbs', appData.carbs + preview.carbs)
-    updateData('fat', appData.fat + preview.fats)
     setSheetOpen(false)
     setToast(`Ajouté au ${mealType}`)
     setTimeout(() => setToast(''), 2000)
@@ -166,6 +165,9 @@ export default function Nutrition() {
         </div>
 
         <div className="section-label">{t('today_meals')}</div>
+        {mealsLoaded && appData.meals.length === 0 && (
+          <p className="text-sm text-muted" style={{ padding: '8px 0' }}>Aucun repas enregistré aujourd'hui.</p>
+        )}
         {appData.meals.map(meal => (
           <div key={meal.id} className="card" style={{ marginBottom: 8 }}>
             <div className="flex justify-between items-center">
