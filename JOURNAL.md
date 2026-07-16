@@ -18,15 +18,13 @@ Repas/calories branchés sur Supabase (`Nutrition.jsx`, `Scan.jsx`), plus en `lo
 - Le reset de jour (`clearDay()`) ne touche plus calories/protein/carbs/fat/meals — ils redeviennent naturellement vides le lendemain puisqu'ils sont recalculés depuis les lignes `repas` du jour, sans logique de reset dupliquée.
 - Migration ajoutée à `scripts/supabase_schema.sql` : `repas` n'avait ni colonne `nutriscore` ni `type` (type de repas : petit-déj/déjeuner/dîner/collation), pourtant déjà produites par l'app — ajout de `alter table repas add column if not exists nutriscore text / type text`.
 
-### ⚠️ Action requise avant que ça fonctionne en prod
-Le connecteur Supabase est resté indisponible (connexions/déconnexions répétées) pendant toute la session — **la migration SQL n'a pas pu être appliquée**. À exécuter dans le Supabase SQL Editor **avant ou en même temps que le déploiement de ce commit** (sinon chaque ajout de repas échouera avec une erreur Postgres "column nutriscore does not exist") :
-```sql
-alter table repas add column if not exists nutriscore text;
-alter table repas add column if not exists type text;
-```
+### ✅ Migration appliquée (a posteriori, juste après la session)
+Le connecteur Supabase est resté indisponible pendant la session elle-même, donc la migration a été donnée à exécuter manuellement — **faite par l'utilisateur dans le SQL Editor** ("Success. No rows returned"), et **vérifiée en base** juste après (`list_tables` via le connecteur, redevenu disponible) : `repas` a bien les colonnes `nutriscore` et `type` (nullable, text), conformes à ce qu'écrit `addMeal()`.
 
-### Pas testé en conditions réelles
-`npm run build` passe, revue de code faite (voir ci-dessus), mais **aucun test end-to-end** (login + ajout d'un repas + vérification en base) n'a pu être fait dans cette session : pas d'identifiants Supabase dans l'environnement distant (`.env.example` vide, pas de `.env` réel). À tester manuellement sur le déploiement Vercel après avoir appliqué la migration ci-dessus.
+Note en passant : `repas` a aussi une colonne `type_repas` (nullable, text) qui n'est référencée nulle part dans le code et n'est pas dans `scripts/supabase_schema.sql` — probablement ajoutée manuellement à un moment non documenté. Sans impact (nullable, jamais lue/écrite), mais à garder en tête si de la confusion apparaît un jour entre `type` et `type_repas`.
+
+### Pas encore testé en conditions réelles (UI)
+`npm run build` passe, revue de code faite, migration confirmée en base — mais **aucun test end-to-end depuis l'UI** (login + ajout d'un repas via Nutrition/Scan + vérification que ça persiste après reload) n'a été fait : pas d'identifiants Supabase dans l'environnement distant (`.env.example` vide, pas de `.env` réel) pour lancer l'app ici. À tester manuellement sur le déploiement Vercel de la PR #4 (https://github.com/goodghost696-cyber/onairapp/pull/4).
 
 ### Prochaine étape (roadmap à 6 étapes, voir sessions du 07-10)
 Étape 2 : eau + pas + sommeil + course → table `activite_jour` (`Hydration.jsx`, `Sleep.jsx`, `Run.jsx`, `Rings.jsx`, une ligne par jour/utilisateur).
