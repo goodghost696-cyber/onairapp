@@ -4,6 +4,7 @@ import { useApp } from '../context/AppContext'
 import { useLanguage } from '../context/LanguageContext'
 import NutriscoreBadge from '../components/NutriscoreBadge'
 import { authHeader } from '../lib/supabase'
+import { BOUNDS, clamp } from '../utils/validation'
 
 const LANG_NAMES = { fr: 'français', en: 'English', es: 'español' }
 
@@ -231,7 +232,8 @@ export default function Scan() {
   function updateItemGrams(index, grams) {
     setResult(prev => {
       const items = [...prev.data.items]
-      items[index] = { ...items[index], grams: Math.max(0, grams) }
+      // 0g is allowed here (lets the user exclude a detected item from the total).
+      items[index] = { ...items[index], grams: clamp(grams, { min: 0, max: BOUNDS.grams.max }, 0) }
       return { ...prev, data: { ...prev.data, items } }
     })
   }

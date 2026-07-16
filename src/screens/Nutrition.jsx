@@ -5,6 +5,7 @@ import { FOOD_DATABASE } from '../context/AppContext'
 import { useAuth } from '../context/AuthContext'
 import { useLanguage } from '../context/LanguageContext'
 import { authHeader } from '../lib/supabase'
+import { BOUNDS, clamp } from '../utils/validation'
 import NutriscoreBadge from '../components/NutriscoreBadge'
 
 function calcNutrition(food, grams) {
@@ -356,7 +357,7 @@ Réponds en français.`
             </div>
             <div style={{ marginBottom: 16 }}>
               <label className="text-xs text-muted" style={{ display: 'block', marginBottom: 8 }}>{t('quantity').toUpperCase()}</label>
-              <input type="number" value={grams} onChange={e => setGrams(Math.max(1, parseInt(e.target.value) || 1))} style={{ fontSize: 24, fontWeight: 700, textAlign: 'center', fontVariantNumeric: 'tabular-nums' }} />
+              <input type="number" value={grams} onChange={e => setGrams(clamp(parseInt(e.target.value), BOUNDS.grams, 1))} style={{ fontSize: 24, fontWeight: 700, textAlign: 'center', fontVariantNumeric: 'tabular-nums' }} />
             </div>
             {preview && (
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 8, marginBottom: 20, padding: '14px', background: 'var(--surface-2)', borderRadius: 12 }}>
