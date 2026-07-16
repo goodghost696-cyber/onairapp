@@ -27,6 +27,18 @@ L'utilisateur a proposé de mettre en pause le chantier UI coach pour se concent
 
 ---
 
+## 2026-07-16 — Session 9 : travail en double découvert + fix perf recherche aliments
+
+### ⚠️ Travail en double avec une autre session (branche `claude/vibrant-franklin-wb7p67`)
+Une session parallèle (sur `claude/vibrant-franklin-wb7p67`, sans visibilité sur les sessions 6-8 ci-dessus) a reproduit l'étape 1 de la roadmap (persistance des repas → table `repas`) **déjà faite ici** (commit `1dd4913`, session non journalisée sur cette branche), en repartant du point commun `fd9f934` sans savoir que `charming-mendel-dj1GQ` avait déjà avancé. Une PR (#4) a été ouverte puis testée en conditions réelles par l'utilisateur (avec un aller-retour sur des variables d'env Preview manquantes sur Vercel, corrigé au passage) — mais en comparant les deux branches, la version de production s'est avérée **plus complète** (elle synchronise en plus les objectifs calories/macros depuis `objectifs`, et une fonctionnalité de suggestion de recette IA a été construite par-dessus). **PR #4 fermée sans merge** pour ne pas régresser la prod — voir la PR pour le détail. Seul point resté valable : le fix de perf ci-dessous, réappliqué directement ici.
+
+**Leçon pour la prochaine fois** : si une session reprend sur une branche autre que `claude/charming-mendel-dj1GQ`, vérifier d'abord si cette branche a un historique propre (`git log --oneline branche vs charming-mendel-dj1GQ`) avant de commencer une étape de la roadmap, pour éviter ce genre de doublon.
+
+### Perf : recherche manuelle d'aliment (Nutrition) et lookup Scan trop lents
+Signalé par l'utilisateur après test réel (recherche "oeuf entier"/"skyr" lente). Cause confirmée par mesure directe : `Nutrition.jsx` (recherche live) et `Scan.jsx` (`lookupOFF`) tapaient tous les deux sur l'ancien endpoint Open Food Facts `cgi/search.pl` (legacy MongoDB, 1 à 2s+ par requête, 503 observés par moments). Basculé les deux sur la nouvelle API `search.openfoodfacts.org` (search-a-licious, Elasticsearch) — mêmes champs disponibles, réponse en quelques ms côté serveur (`took` dans la réponse de test). Changements de forme uniquement : résultats sous `data.hits` (au lieu de `data.products`), `brands` renvoyé en tableau (au lieu d'une string).
+
+---
+
 ## 2026-07-12 — Session 8 : dashboard de suivi des tokens Anthropic (hors onairapp)
 
 L'utilisateur a demandé un dashboard temps réel de sa consommation de tokens Anthropic — **globale au compte**, pas juste l'usage d'onairapp. Clarifié via questions :
