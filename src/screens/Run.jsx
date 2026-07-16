@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import BottomNav from '../components/BottomNav'
+import { useApp } from '../context/AppContext'
 import { useLanguage } from '../context/LanguageContext'
 
 const paceData = [
@@ -20,6 +21,7 @@ const CIRCUIT_PATH = "M 40,180 L 40,60 L 120,60 L 120,30 L 260,30 L 260,80 L 300
 
 export default function Run() {
   const { t } = useLanguage()
+  const { appData, updateData } = useApp()
   const [running, setRunning] = useState(false)
   const [seconds, setSeconds] = useState(0)
   const [distance, setDistance] = useState(0)
@@ -158,7 +160,15 @@ export default function Run() {
 
         {/* Controls */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-          <button onClick={() => { setRunning(r => !r); if (!running) { setSeconds(0); setDistance(0) }; navigator.vibrate && navigator.vibrate([50,30,50]) }} style={{
+          <button onClick={() => {
+            if (running && distance > 0) {
+              // Stopping — add this run's distance to today's real total (persists to activite_jour).
+              updateData('kmRun', Math.round(((appData.kmRun || 0) + distance) * 100) / 100)
+            }
+            setRunning(r => !r)
+            if (!running) { setSeconds(0); setDistance(0) }
+            navigator.vibrate && navigator.vibrate([50,30,50])
+          }} style={{
             width: 64, height: 64, borderRadius: '50%',
             background: running ? 'var(--danger)' : 'var(--success)',
             border: 'none', cursor: 'pointer',

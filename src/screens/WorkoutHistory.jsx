@@ -6,7 +6,7 @@ export default function WorkoutHistory() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { appData } = useApp();
-  const session = (appData.sessionHistory || []).find(s => s.id === parseInt(id));
+  const session = (appData.sessionHistory || []).find(s => String(s.id) === id);
 
   if (!session) return (
     <div className="app-wrapper">

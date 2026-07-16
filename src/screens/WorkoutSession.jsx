@@ -10,16 +10,17 @@ export default function WorkoutSession() {
   const [showRestTimer, setShowRestTimer] = useState(false)
   const activeSession = appData.activeSession || { exercises: [], startTime: null }
 
-  function finishSession() {
+  async function finishSession() {
     const exercises = activeSession.exercises
     const durationMs = activeSession.startTimestamp ? Date.now() - activeSession.startTimestamp : 0
     const durationMin = Math.max(1, Math.floor(durationMs / 60000))
-    addSessionToHistory({
+    await addSessionToHistory({
       id: Date.now(),
       date: new Date().toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }),
       type: activeSession.type || 'SÉANCE',
       exercises: exercises.map(e => e.name),
       duration: `${durationMin} min`,
+      durationMin,
       totalSets: exercises.reduce((acc, ex) => acc + ex.sets.filter(s => s.done).length, 0),
       exerciseDetails: exercises.map(ex => ({
         name: ex.name,
