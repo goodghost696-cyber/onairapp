@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { useApp } from '../context/AppContext'
 import { useLanguage } from '../context/LanguageContext'
 import { save } from '../utils/storage'
+import { BOUNDS, clamp } from '../utils/validation'
 import CalorieRing from '../components/CalorieRing'
 import '../styles/dashboard.css'
 
@@ -75,12 +76,13 @@ export default function Dashboard() {
   ]
 
   const handleSave = () => {
-    const num = parseFloat(inputVal)
-    if (isNaN(num) || num < 0) { setEditingCard(null); return }
-    if (editingCard === 'steps') { updateData('steps', num); save('steps', num) }
-    if (editingCard === 'kmRun') { updateData('kmRun', num); save('kmRun', num) }
-    if (editingCard === 'water') { updateData('water', num); save('water', num) }
+    const raw = parseFloat(inputVal)
+    if (isNaN(raw) || raw < 0) { setEditingCard(null); return }
+    if (editingCard === 'steps') { const num = clamp(raw, BOUNDS.steps); updateData('steps', num); save('steps', num) }
+    if (editingCard === 'kmRun') { const num = clamp(raw, BOUNDS.kmRun); updateData('kmRun', num); save('kmRun', num) }
+    if (editingCard === 'water') { const num = clamp(raw, BOUNDS.water); updateData('water', num); save('water', num) }
     if (editingCard === 'sleep') {
+      const num = clamp(raw, BOUNDS.sleepHours)
       const s = { hours: Math.floor(num), minutes: 0, quality: num >= 7 ? 'GOOD' : num >= 5 ? 'FAIR' : 'POOR' }
       updateData('sleep', s); save('sleep', s)
     }

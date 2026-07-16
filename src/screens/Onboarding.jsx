@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { BOUNDS, inBounds } from '../utils/validation'
 import '../styles/Onboarding.css'
 
 const STEPS = [
@@ -90,8 +91,19 @@ export default function Onboarding() {
     const v = getValue()
     if (!v) return false
     if (step.type === 'text_input') return v.trim().length > 0
-    if (step.type === 'double_input') return v?.weight && v?.height
+    if (step.type === 'double_input') {
+      return inBounds(v?.weight, BOUNDS.weightKg) && inBounds(v?.height, BOUNDS.heightCm)
+    }
     return !!v
+  }
+
+  // Only shown once both fields are filled in, so it doesn't nag mid-typing.
+  function bodyError() {
+    const v = getValue()
+    if (step.type !== 'double_input' || !v?.weight || !v?.height) return null
+    if (!inBounds(v.weight, BOUNDS.weightKg)) return `Poids réaliste entre ${BOUNDS.weightKg.min} et ${BOUNDS.weightKg.max} kg.`
+    if (!inBounds(v.height, BOUNDS.heightCm)) return `Taille réaliste entre ${BOUNDS.heightCm.min} et ${BOUNDS.heightCm.max} cm.`
+    return null
   }
 
   function handleNext() {
@@ -222,6 +234,9 @@ export default function Onboarding() {
                 </div>
               </div>
             ))}
+            {bodyError() && (
+              <p style={{ color: 'var(--danger)', fontSize: 13, marginTop: 12 }}>{bodyError()}</p>
+            )}
           </div>
         )}
 

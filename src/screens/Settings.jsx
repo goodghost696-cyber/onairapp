@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { useApp } from '../context/AppContext'
 import { useLanguage } from '../context/LanguageContext'
 import { useTheme } from '../context/ThemeContext'
+import { BOUNDS, clamp } from '../utils/validation'
 
 function Toggle({ on, onToggle }) {
   return (
@@ -41,8 +42,11 @@ export default function Settings() {
     const steps = parseInt(healthData.steps)
     const sleepH = parseInt(healthData.sleep_hours)
     const sleepM = parseInt(healthData.sleep_minutes)
-    if (steps > 0) updateData('steps', steps)
-    if (sleepH > 0 || sleepM > 0) updateData('sleep', { hours: sleepH || 0, minutes: sleepM || 0, quality: 'Bonne' })
+    if (steps > 0) updateData('steps', clamp(steps, BOUNDS.steps))
+    if (sleepH > 0 || sleepM > 0) {
+      const hours = clamp((sleepH || 0) + (sleepM || 0) / 60, BOUNDS.sleepHours)
+      updateData('sleep', { hours: Math.floor(hours), minutes: Math.round((hours % 1) * 60), quality: 'Bonne' })
+    }
     setShowHealthSync(false)
     setHealthData({ steps: '', sleep_hours: '', sleep_minutes: '' })
     setSyncToast(true)
@@ -50,10 +54,10 @@ export default function Settings() {
   }
 
   function saveGoals() {
-    updateData('calorieGoal', parseInt(goals.calories) || appData.calorieGoal)
-    updateData('proteinGoal', parseInt(goals.protein) || appData.proteinGoal)
-    updateData('waterGoal', parseInt(goals.water) || appData.waterGoal)
-    updateData('stepsGoal', parseInt(goals.steps) || appData.stepsGoal)
+    updateData('calorieGoal', clamp(parseInt(goals.calories), BOUNDS.calorieGoal, appData.calorieGoal))
+    updateData('proteinGoal', clamp(parseInt(goals.protein), BOUNDS.proteinGoal, appData.proteinGoal))
+    updateData('waterGoal', clamp(parseInt(goals.water), BOUNDS.waterGoal, appData.waterGoal))
+    updateData('stepsGoal', clamp(parseInt(goals.steps), BOUNDS.stepsGoal, appData.stepsGoal))
   }
 
   return (

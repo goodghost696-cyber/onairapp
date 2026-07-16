@@ -1,18 +1,11 @@
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
+import { useAuth } from '../context/AuthContext'
 import { useLanguage } from '../context/LanguageContext'
+import { fetchWeeklyStats } from '../utils/weeklyStats'
 import '../styles/Weekly.css'
 
-const weekData = [
-  { day: 'L', calories: 2100, goal: 2400 },
-  { day: 'M', calories: 1950, goal: 2400 },
-  { day: 'M', calories: 2300, goal: 2400 },
-  { day: 'J', calories: 1800, goal: 2400 },
-  { day: 'V', calories: 2400, goal: 2400 },
-  { day: 'S', calories: 0,    goal: 2400 },
-  { day: 'D', calories: 1847, goal: 2400 },
-]
-const maxCalories = Math.max(...weekData.map(d => d.calories), 1)
 const BAR_MAX_HEIGHT = 60
 
 const liftProgress = [
@@ -84,7 +77,24 @@ function calBarColor(cal, goal) {
 export default function Weekly() {
   const navigate = useNavigate()
   const { appData } = useApp()
+  const { user } = useAuth()
   const { t } = useLanguage()
+  const [weeklyData, setWeeklyData] = useState([])
+  const [sleepData, setSleepData] = useState([])
+
+  useEffect(() => {
+    if (!user?.id) return
+    fetchWeeklyStats(user.id).then(({ weeklyData, sleepData }) => {
+      setWeeklyData(weeklyData)
+      setSleepData(sleepData)
+    })
+  }, [user?.id])
+
+  const maxCalories = Math.max(...weeklyData.map(d => d.calories), 1)
+  const loggedSleepDays = sleepData.filter(d => d.hours > 0)
+  const avgSleep = loggedSleepDays.length
+    ? Math.round((loggedSleepDays.reduce((s, d) => s + d.hours, 0) / loggedSleepDays.length) * 10) / 10
+    : 0
 
   return (
     <div className="app-wrapper">
@@ -104,15 +114,15 @@ export default function Weekly() {
 
         <div className="section-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span>{t('daily_calories')}</span>
-          <span style={{ color: 'var(--text-muted)' }}>{t('goal')} : 2 400 kcal</span>
+          <span style={{ color: 'var(--text-muted)' }}>{t('goal')} : {appData.calorieGoal.toLocaleString('fr-FR')} kcal</span>
         </div>
         <div className="card" style={{ marginBottom: 16 }}>
           <div style={{ display: 'flex', gap: 6, alignItems: 'flex-end', height: 80 }}>
-            {weekData.map((d, i) => {
+            {weeklyData.map((d, i) => {
               const barH = d.calories > 0 ? Math.max(4, Math.round((d.calories / maxCalories) * BAR_MAX_HEIGHT)) : 4
               return (
                 <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, justifyContent: 'flex-end', height: '100%' }}>
-                  <div style={{ width: '100%', height: `${barH}px`, background: calBarColor(d.calories, d.goal), borderRadius: '3px 3px 0 0', transition: 'height 600ms ease' }} />
+                  <div style={{ width: '100%', height: `${barH}px`, background: calBarColor(d.calories, appData.calorieGoal), borderRadius: '3px 3px 0 0', transition: 'height 600ms ease' }} />
                   <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>{d.day}</span>
                 </div>
               )
@@ -123,7 +133,7 @@ export default function Weekly() {
         <div className="section-label">{t('summary')}</div>
         {[
           { label: t('workouts_done'), val: `${appData.weeklyWorkouts}/${appData.weeklyGoal}` },
-          { label: t('avg_sleep'), val: `${Math.round(appData.weeklyData.filter(d=>d.calories>0).reduce((s,d)=>s+d.calories,0)/appData.weeklyData.filter(d=>d.calories>0).length)} kcal` },
+          { label: t('avg_sleep'), val: loggedSleepDays.length ? `${avgSleep} h` : '—' },
           { label: t('distance_run'), val: `${appData.kmRun} km` },
           { label: t('steps'), val: appData.steps.toLocaleString() },
         ].map((r, idx) => (

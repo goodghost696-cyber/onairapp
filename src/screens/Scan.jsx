@@ -4,6 +4,7 @@ import { useApp } from '../context/AppContext'
 import { useLanguage } from '../context/LanguageContext'
 import NutriscoreBadge from '../components/NutriscoreBadge'
 import { authHeader } from '../lib/supabase'
+import { BOUNDS, clamp } from '../utils/validation'
 
 const LANG_NAMES = { fr: 'français', en: 'English', es: 'español' }
 
@@ -39,11 +40,15 @@ function BarcodeIcon() {
 // Returns null if no usable match is found (caller falls back to the AI estimate).
 async function lookupOFF(name) {
   try {
+    // Server-side proxy (api/food-search.js) calls the fast search-a-licious
+    // API on our behalf — that endpoint has no CORS support for browsers,
+    // so we can't call it directly from here.
     const res = await fetch(
-      `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(name)}&search_simple=1&action=process&json=1&page_size=1&fields=product_name,nutriments`
+      `/api/food-search?q=${encodeURIComponent(name)}&page_size=1&fields=product_name,nutriments`,
+      { headers: await authHeader() }
     )
     const data = await res.json()
-    const p = data.products?.[0]
+    const p = data.hits?.[0]
     const kcal = p?.nutriments?.['energy-kcal_100g']
     if (!p || !kcal) return null
     return {
@@ -227,7 +232,8 @@ export default function Scan() {
   function updateItemGrams(index, grams) {
     setResult(prev => {
       const items = [...prev.data.items]
-      items[index] = { ...items[index], grams: Math.max(0, grams) }
+      // 0g is allowed here (lets the user exclude a detected item from the total).
+      items[index] = { ...items[index], grams: clamp(grams, { min: 0, max: BOUNDS.grams.max }, 0) }
       return { ...prev, data: { ...prev.data, items } }
     })
   }
