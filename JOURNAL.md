@@ -9,7 +9,7 @@ Entrées les plus récentes en haut.
 ## 2026-07-16 — Session 10 : suppression circuit map factice + nettoyage Run.jsx mort
 - [x] **Circuit map factice retiré de `RunContent.jsx`** (le fichier réellement affiché à l'écran Course) : bloc SVG (tracé de route inventé + point animé) supprimé, ainsi que la constante `CIRCUIT_PATH` devenue inutile.
 - [x] **`Run.jsx` (route `/run`) supprimé** : confirmé code mort (aucun `navigate('/run')`/lien nulle part dans l'app), validé avec l'utilisateur avant suppression. Route retirée d'`App.jsx`.
-- Build validé (`npm run build`). Pas encore testé en conditions réelles par l'utilisateur (écran Course → onglet "COURSE" dans Workout).
+- Build validé (`npm run build`). PR #7 (draft, vers `claude/charming-mendel-dj1GQ`) déployée sur preview Vercel et **validée par l'utilisateur** ("c'est carré") — pas encore mergée.
 - **Reste dans le backlog du 07-16** : "Mes charges" (`Weekly.jsx`) toujours en données fictives, navigation retour incohérente, lenteur suggestions recette IA, question stratégique fusion coach+IA SaaS.
 
 ## ⚠️ Comptes de test — ne pas confondre (erreur commise le 2026-07-11, voir plus bas)
