@@ -67,7 +67,7 @@ export default function WorkoutLibrary({ section }) {
     setToast(true)
     setTimeout(() => setAdded(prev => ({ ...prev, [ex.id]: false })), 1500)
     setTimeout(() => setToast(false), 2000)
-    setTimeout(() => navigate('/workout'), 800)
+    setTimeout(() => navigate('/workout/session'), 800)
   }
 
   return (
