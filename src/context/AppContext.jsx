@@ -347,7 +347,7 @@ export function AppProvider({ children }) {
       id: `ai_${Date.now()}_${Math.random()}`,
       name: ex.name,
       muscles: '',
-      sets: Array(ex.sets).fill(null).map(() => ({ reps: '', kg: ex.kg || '', done: false })),
+      sets: Array(ex.sets).fill(null).map(() => ({ reps: '', kg: ex.kg ?? '', done: false })),
       suggested: { reps: ex.reps, kg: ex.kg, rest: ex.rest }
     }))
     setAppData(prev => {
