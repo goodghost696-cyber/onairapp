@@ -39,11 +39,13 @@ function BarcodeIcon() {
 // Returns null if no usable match is found (caller falls back to the AI estimate).
 async function lookupOFF(name) {
   try {
+    // search-a-licious (Elasticsearch) replaces the legacy cgi/search.pl —
+    // same fields, much faster (that one can take 1-2s+ per query).
     const res = await fetch(
-      `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(name)}&search_simple=1&action=process&json=1&page_size=1&fields=product_name,nutriments`
+      `https://search.openfoodfacts.org/search?q=${encodeURIComponent(name)}&page_size=1&fields=product_name,nutriments`
     )
     const data = await res.json()
-    const p = data.products?.[0]
+    const p = data.hits?.[0]
     const kcal = p?.nutriments?.['energy-kcal_100g']
     if (!p || !kcal) return null
     return {
