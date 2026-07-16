@@ -7,6 +7,16 @@ import { useLanguage } from '../context/LanguageContext'
 import { authHeader } from '../lib/supabase'
 import { BOUNDS, clamp } from '../utils/validation'
 import NutriscoreBadge from '../components/NutriscoreBadge'
+import SwipeableRow from '../components/SwipeableRow'
+
+// Manual food-search entries encode their grams in the name ("Skyr (100g)")
+// — extracted so "Modifier" can rescale calories/macros proportionally.
+// Meals without it (scan results, AI recipes) aren't gram-based, so editing
+// them isn't offered — delete + re-add is still available.
+function extractGrams(name) {
+  const m = name.match(/\((\d+)g\)$/)
+  return m ? parseInt(m[1], 10) : null
+}
 
 function calcNutrition(food, grams) {
   return {
@@ -20,7 +30,8 @@ function calcNutrition(food, grams) {
 export default function Nutrition() {
   const navigate = useNavigate()
   const { appData, addMeal, deleteMeal } = useApp()
-  const [confirmDelete, setConfirmDelete] = useState(null)
+  const [editingMeal, setEditingMeal] = useState(null)
+  const [editGrams, setEditGrams] = useState('')
   const { user } = useAuth()
   const { t } = useLanguage()
   const [sheetOpen, setSheetOpen] = useState(false)
@@ -194,6 +205,40 @@ Réponds en français.`
     setTimeout(() => setToast(''), 2000)
   }
 
+  function openEditMeal(meal) {
+    const grams = extractGrams(meal.name)
+    if (grams == null) {
+      setToast('Repas non modifiable — supprime-le et rajoute-le')
+      setTimeout(() => setToast(''), 2500)
+      return
+    }
+    setEditingMeal(meal)
+    setEditGrams(String(grams))
+  }
+
+  // repas has no update policy — "editing" is delete the old row, then
+  // re-add with calories/macros rescaled proportionally to the new grams.
+  async function saveMealEdit() {
+    const newGrams = clamp(parseInt(editGrams), BOUNDS.grams, 1)
+    const oldGrams = extractGrams(editingMeal.name)
+    const factor = newGrams / oldGrams
+    const baseName = editingMeal.name.replace(/\s*\(\d+g\)$/, '')
+
+    await deleteMeal(editingMeal.id)
+    await addMeal({
+      name: `${baseName} (${newGrams}g)`,
+      calories: Math.round(editingMeal.calories * factor),
+      protein: Math.round(editingMeal.protein * factor * 10) / 10,
+      carbs: Math.round(editingMeal.carbs * factor * 10) / 10,
+      fat: Math.round(editingMeal.fat * factor * 10) / 10,
+      nutriscore: editingMeal.nutriscore,
+      mealType: editingMeal.mealType,
+    })
+    setEditingMeal(null)
+    setToast('Repas modifié')
+    setTimeout(() => setToast(''), 2000)
+  }
+
   return (
     <div className="app-wrapper">
       {/* Toast */}
@@ -268,52 +313,60 @@ Réponds en français.`
         </button>
 
         <div className="section-label">{t('today_meals')}</div>
+        <p className="text-xs text-muted" style={{ marginTop: -4, marginBottom: 10 }}>Glisse un repas vers la gauche pour le modifier ou le supprimer.</p>
         {appData.meals.map(meal => (
-          <div key={meal.id} className="card" style={{ marginBottom: 8 }}>
-            <div className="flex justify-between items-center">
-              <div style={{ flex: 1 }}>
-                <div className="flex items-center gap-8" style={{ marginBottom: 4 }}>
-                  <span className="text-base bold">{meal.name}</span>
-                  <NutriscoreBadge score={meal.nutriscore} />
+          <SwipeableRow
+            key={meal.id}
+            actions={[
+              { label: 'Modifier', color: 'var(--warning)', onClick: () => openEditMeal(meal) },
+              { label: 'Supprimer', color: 'var(--danger)', onClick: () => deleteMeal(meal.id) },
+            ]}
+          >
+            <div className="card" style={{ marginBottom: 0 }}>
+              <div className="flex justify-between items-center">
+                <div style={{ flex: 1 }}>
+                  <div className="flex items-center gap-8" style={{ marginBottom: 4 }}>
+                    <span className="text-base bold">{meal.name}</span>
+                    <NutriscoreBadge score={meal.nutriscore} />
+                  </div>
+                  <span className="text-xs text-muted">{meal.time}</span>
                 </div>
-                <span className="text-xs text-muted">{meal.time}</span>
+                <span className="text-sm bold" style={{ marginLeft: 12 }}>{meal.calories} kcal</span>
               </div>
-              <span className="text-sm bold" style={{ marginLeft: 12 }}>{meal.calories} kcal</span>
-              <button
-                onClick={() => setConfirmDelete(confirmDelete === meal.id ? null : meal.id)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0 4px 12px', color: 'var(--text-muted)', flexShrink: 0 }}
-                aria-label="Supprimer ce repas"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
-                </svg>
-              </button>
-            </div>
-            <div style={{ display: 'flex', gap: 16, marginTop: 6 }}>
-              <span className="text-xs text-muted">P: {meal.protein}g</span>
-              <span className="text-xs text-muted">G: {meal.carbs}g</span>
-              <span className="text-xs text-muted">L: {meal.fat}g</span>
-            </div>
-            {confirmDelete === meal.id && (
-              <div style={{ display: 'flex', gap: 8, marginTop: 10, paddingTop: 10, borderTop: '0.5px solid var(--border)' }}>
-                <span className="text-xs text-muted" style={{ flex: 1, alignSelf: 'center' }}>Supprimer ce repas ? Tu pourras le rajouter corrigé.</span>
-                <button
-                  onClick={() => { deleteMeal(meal.id); setConfirmDelete(null) }}
-                  style={{ background: 'none', border: '1px solid var(--danger)', color: 'var(--danger)', fontSize: 11, fontWeight: 700, padding: '6px 12px', borderRadius: 8, cursor: 'pointer', flexShrink: 0 }}
-                >
-                  SUPPRIMER
-                </button>
-                <button
-                  onClick={() => setConfirmDelete(null)}
-                  style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: 11, fontWeight: 700, padding: '6px 12px', borderRadius: 8, cursor: 'pointer', flexShrink: 0 }}
-                >
-                  ANNULER
-                </button>
+              <div style={{ display: 'flex', gap: 16, marginTop: 6 }}>
+                <span className="text-xs text-muted">P: {meal.protein}g</span>
+                <span className="text-xs text-muted">G: {meal.carbs}g</span>
+                <span className="text-xs text-muted">L: {meal.fat}g</span>
               </div>
-            )}
-          </div>
+            </div>
+          </SwipeableRow>
         ))}
       </div>
+
+      {/* Edit meal (grams) overlay */}
+      {editingMeal && (
+        <>
+          <div onClick={() => setEditingMeal(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 199 }} />
+          <div style={{
+            position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)',
+            width: '100%', maxWidth: 390, background: 'var(--surface-solid)',
+            backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)',
+            borderRadius: '20px 20px 0 0', borderTop: '1px solid var(--glass-border)',
+            padding: '24px 20px 40px', zIndex: 200,
+          }}>
+            <h2 className="text-lg bold" style={{ marginBottom: 16 }}>{editingMeal.name}</h2>
+            <label className="text-xs text-muted" style={{ display: 'block', marginBottom: 8 }}>GRAMMAGE</label>
+            <input
+              type="number"
+              value={editGrams}
+              onChange={e => setEditGrams(e.target.value)}
+              autoFocus
+              style={{ fontSize: 24, fontWeight: 700, textAlign: 'center', fontVariantNumeric: 'tabular-nums', marginBottom: 20 }}
+            />
+            <button className="btn-accent" onClick={saveMealEdit}>ENREGISTRER</button>
+          </div>
+        </>
+      )}
 
       {/* FAB */}
       <button onClick={openSheet} style={{
