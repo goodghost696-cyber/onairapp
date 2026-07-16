@@ -15,8 +15,6 @@ const maxPaceSec = Math.max(...paceData.map(p => paceToSec(p.pace)))
 const bestPaceSec = Math.min(...paceData.map(p => paceToSec(p.pace)))
 const bestPaceDisplay = `${Math.floor(bestPaceSec / 60)}:${String(bestPaceSec % 60).padStart(2, '0')}/km`
 
-const CIRCUIT_PATH = "M 60,140 L 60,60 L 140,60 L 140,40 L 240,40 L 240,80 L 270,80 L 270,140 L 200,140 L 200,110 L 100,110 L 100,140 Z"
-
 export default function RunContent() {
   const { t } = useLanguage()
   const [running, setRunning] = useState(false)
@@ -117,36 +115,6 @@ export default function RunContent() {
             </div>
           ))}
         </div>
-      </div>
-
-      <div style={{ height: 140, background: 'transparent', borderRadius: 16, border: '0.5px solid var(--border)', overflow: 'hidden', marginBottom: 16, position: 'relative' }}>
-        <svg width="100%" viewBox="0 0 330 180" style={{ display: 'block' }}>
-          <defs>
-            <linearGradient id="routeGradRun" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#1FD66B"/>
-              <stop offset="40%" stopColor="#E00000"/>
-              <stop offset="70%" stopColor="#F5A623"/>
-              <stop offset="100%" stopColor="#E00000"/>
-            </linearGradient>
-          </defs>
-          {Array.from({length:17}).map((_,i) => <line key={`v${i}`} x1={i*20} y1={0} x2={i*20} y2={180} stroke="rgba(255,255,255,0.03)" strokeWidth={1}/>)}
-          {Array.from({length:9}).map((_,i) => <line key={`h${i}`} x1={0} y1={i*20} x2={330} y2={i*20} stroke="rgba(255,255,255,0.03)" strokeWidth={1}/>)}
-          <path id="circuit-path-rc" d={CIRCUIT_PATH} style={{ display: 'none' }} />
-          <path d={CIRCUIT_PATH} fill="rgba(191,6,3,0.04)" stroke="rgba(0,0,0,0.4)" strokeWidth={5} />
-          <path d={CIRCUIT_PATH} fill="none" stroke="url(#routeGradRun)" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
-          <circle cx="60" cy="140" r="6" fill="var(--success)" />
-          <circle cx="60" cy="140" r="3" fill="white" />
-          <circle r="6" fill="var(--accent)">
-            <animateMotion dur="6s" repeatCount="indefinite" rotate="auto">
-              <mpath href="#circuit-path-rc"/>
-            </animateMotion>
-          </circle>
-          <circle r="10" fill="rgba(191,6,3,0.2)">
-            <animateMotion dur="6s" repeatCount="indefinite" rotate="auto">
-              <mpath href="#circuit-path-rc"/>
-            </animateMotion>
-          </circle>
-        </svg>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, marginBottom: 16 }}>
