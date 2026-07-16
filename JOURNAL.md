@@ -23,8 +23,13 @@ Le connecteur Supabase est resté indisponible pendant la session elle-même, do
 
 Note en passant : `repas` a aussi une colonne `type_repas` (nullable, text) qui n'est référencée nulle part dans le code et n'est pas dans `scripts/supabase_schema.sql` — probablement ajoutée manuellement à un moment non documenté. Sans impact (nullable, jamais lue/écrite), mais à garder en tête si de la confusion apparaît un jour entre `type` et `type_repas`.
 
-### Pas encore testé en conditions réelles (UI)
-`npm run build` passe, revue de code faite, migration confirmée en base — mais **aucun test end-to-end depuis l'UI** (login + ajout d'un repas via Nutrition/Scan + vérification que ça persiste après reload) n'a été fait : pas d'identifiants Supabase dans l'environnement distant (`.env.example` vide, pas de `.env` réel) pour lancer l'app ici. À tester manuellement sur le déploiement Vercel de la PR #4 (https://github.com/goodghost696-cyber/onairapp/pull/4).
+### ✅ Testé de bout en bout par l'utilisateur — étape 1 validée
+Bug bloquant trouvé en cours de route : la preview Vercel de la PR n'affichait que le dégradé de fond, aucun formulaire — **`VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` n'étaient pas configurées pour l'environnement "Preview"** sur Vercel (seulement pour Production), donc `createClient('', '')` plantait tout le JS au chargement (`supabaseUrl is required.`), avant même que React ne monte — d'où l'écran vide (seul le CSS, chargé indépendamment, s'affichait). Confirmé en récupérant le bundle JS réellement servi (via un lien de partage Vercel qui contourne la Deployment Protection) : l'URL Supabase du projet n'y apparaissait nulle part. Utilisateur a coché "Preview" pour les deux variables sur Vercel ; un commit vide a été poussé pour forcer un rebuild ; re-vérifié dans le nouveau bundle que l'URL réelle y est bien injectée.
+
+Une fois ça corrigé : connexion + ajout d'un repas ("Oeuf entier", "Skyr") → total calories mis à jour (2400 → 2131 restant pour 296 kcal), déconnexion/reconnexion → les repas sont toujours là. **Persistance Supabase confirmée fonctionnelle en conditions réelles.**
+
+### Perf : recherche manuelle d'aliment trop lente → corrigé
+Signalé par l'utilisateur juste après le test ci-dessus. Cause confirmée par mesure directe : `Nutrition.jsx` (recherche live) et `Scan.jsx` (`lookupOFF`, lookup par item scanné) tapaient tous les deux sur l'ancien endpoint Open Food Facts `cgi/search.pl` (legacy, MongoDB, 1 à 2s+ par requête, 503 observés). Basculé les deux sur la nouvelle API `search.openfoodfacts.org` (search-a-licious, Elasticsearch) — mêmes champs, réponse en quelques ms côté serveur (`took` dans la réponse). Seuls changements de forme : résultats sous `data.hits` (au lieu de `data.products`) et `brands` renvoyé en tableau (au lieu d'une string). Commit `e7afd21`.
 
 ### Prochaine étape (roadmap à 6 étapes, voir sessions du 07-10)
 Étape 2 : eau + pas + sommeil + course → table `activite_jour` (`Hydration.jsx`, `Sleep.jsx`, `Run.jsx`, `Rings.jsx`, une ligne par jour/utilisateur).
