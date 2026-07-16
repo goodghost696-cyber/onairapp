@@ -463,13 +463,34 @@ export function AppProvider({ children }) {
     }))
   }
 
+  // Deletes a meal from `repas` (repas has no update policy — correcting a
+  // mistake is delete-then-re-add) and subtracts it from today's totals.
+  async function deleteMeal(mealId) {
+    if (user?.id) {
+      const { error } = await supabase.from('repas').delete().eq('id', mealId).eq('user_id', user.id)
+      if (error) console.error('[App] deleteMeal: delete from repas failed', error)
+    }
+    setAppData(prev => {
+      const meal = prev.meals.find(m => m.id === mealId)
+      if (!meal) return prev
+      return {
+        ...prev,
+        meals: prev.meals.filter(m => m.id !== mealId),
+        calories: Math.max(0, prev.calories - meal.calories),
+        protein: Math.max(0, prev.protein - meal.protein),
+        carbs: Math.max(0, prev.carbs - meal.carbs),
+        fat: Math.max(0, prev.fat - meal.fat),
+      }
+    })
+  }
+
   return (
     <AppContext.Provider value={{
       appData, updateData,
       addExerciseToSession, addExercisesToSession,
       addSetToExercise, toggleSetDone, updateSet,
       clearActiveSession, addSessionToHistory,
-      addMeal,
+      addMeal, deleteMeal,
     }}>
       {children}
     </AppContext.Provider>

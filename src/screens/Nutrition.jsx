@@ -19,7 +19,8 @@ function calcNutrition(food, grams) {
 
 export default function Nutrition() {
   const navigate = useNavigate()
-  const { appData, addMeal } = useApp()
+  const { appData, addMeal, deleteMeal } = useApp()
+  const [confirmDelete, setConfirmDelete] = useState(null)
   const { user } = useAuth()
   const { t } = useLanguage()
   const [sheetOpen, setSheetOpen] = useState(false)
@@ -278,12 +279,38 @@ Réponds en français.`
                 <span className="text-xs text-muted">{meal.time}</span>
               </div>
               <span className="text-sm bold" style={{ marginLeft: 12 }}>{meal.calories} kcal</span>
+              <button
+                onClick={() => setConfirmDelete(confirmDelete === meal.id ? null : meal.id)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0 4px 12px', color: 'var(--text-muted)', flexShrink: 0 }}
+                aria-label="Supprimer ce repas"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                </svg>
+              </button>
             </div>
             <div style={{ display: 'flex', gap: 16, marginTop: 6 }}>
               <span className="text-xs text-muted">P: {meal.protein}g</span>
               <span className="text-xs text-muted">G: {meal.carbs}g</span>
               <span className="text-xs text-muted">L: {meal.fat}g</span>
             </div>
+            {confirmDelete === meal.id && (
+              <div style={{ display: 'flex', gap: 8, marginTop: 10, paddingTop: 10, borderTop: '0.5px solid var(--border)' }}>
+                <span className="text-xs text-muted" style={{ flex: 1, alignSelf: 'center' }}>Supprimer ce repas ? Tu pourras le rajouter corrigé.</span>
+                <button
+                  onClick={() => { deleteMeal(meal.id); setConfirmDelete(null) }}
+                  style={{ background: 'none', border: '1px solid var(--danger)', color: 'var(--danger)', fontSize: 11, fontWeight: 700, padding: '6px 12px', borderRadius: 8, cursor: 'pointer', flexShrink: 0 }}
+                >
+                  SUPPRIMER
+                </button>
+                <button
+                  onClick={() => setConfirmDelete(null)}
+                  style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: 11, fontWeight: 700, padding: '6px 12px', borderRadius: 8, cursor: 'pointer', flexShrink: 0 }}
+                >
+                  ANNULER
+                </button>
+              </div>
+            )}
           </div>
         ))}
       </div>
