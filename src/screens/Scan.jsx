@@ -39,14 +39,15 @@ function BarcodeIcon() {
 // Returns null if no usable match is found (caller falls back to the AI estimate).
 async function lookupOFF(name) {
   try {
-    // Reverted to cgi/search.pl: the newer search-a-licious API
-    // (search.openfoodfacts.org) doesn't send Access-Control-Allow-Origin,
-    // so browsers block the response outright (silent failure, not just slow).
+    // Server-side proxy (api/food-search.js) calls the fast search-a-licious
+    // API on our behalf — that endpoint has no CORS support for browsers,
+    // so we can't call it directly from here.
     const res = await fetch(
-      `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(name)}&search_simple=1&action=process&json=1&page_size=1&fields=product_name,nutriments`
+      `/api/food-search?q=${encodeURIComponent(name)}&page_size=1&fields=product_name,nutriments`,
+      { headers: await authHeader() }
     )
     const data = await res.json()
-    const p = data.products?.[0]
+    const p = data.hits?.[0]
     const kcal = p?.nutriments?.['energy-kcal_100g']
     if (!p || !kcal) return null
     return {

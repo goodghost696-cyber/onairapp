@@ -50,19 +50,20 @@ export default function Nutrition() {
       }
       setSearching(true)
       try {
-        // Reverted to cgi/search.pl: the newer search-a-licious API
-        // (search.openfoodfacts.org) doesn't send Access-Control-Allow-Origin,
-        // so browsers block the response outright (silent failure, not just slow).
+        // Server-side proxy (api/food-search.js) calls the fast search-a-licious
+        // API on our behalf — that endpoint has no CORS support for browsers,
+        // so we can't call it directly from here.
         const res = await fetch(
-          `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(foodSearch)}&search_simple=1&action=process&json=1&page_size=12&fields=product_name,brands,nutriments,nutrition_grades,code`
+          `/api/food-search?q=${encodeURIComponent(foodSearch)}&page_size=12&fields=product_name,brands,nutriments,nutrition_grades,code`,
+          { headers: await authHeader() }
         )
         const data = await res.json()
-        const results = (data.products || [])
+        const results = (data.hits || [])
           .filter(p => p.product_name && p.nutriments?.['energy-kcal_100g'])
           .map(p => ({
             id: p.code || String(Math.random()),
             name: p.product_name,
-            brand: p.brands || '',
+            brand: Array.isArray(p.brands) ? p.brands.join(', ') : (p.brands || ''),
             per100g: {
               kcal: Math.round(p.nutriments?.['energy-kcal_100g'] || 0),
               proteins: Math.round((p.nutriments?.proteins_100g || 0) * 10) / 10,
