@@ -1,10 +1,20 @@
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
+import { useAuth } from '../context/AuthContext'
+import { fetchWeeklyStats } from '../utils/weeklyStats'
 
 export default function Sleep() {
   const navigate = useNavigate()
   const { appData } = useApp()
+  const { user } = useAuth()
+  const [sleepData, setSleepData] = useState([])
   const maxH = 10
+
+  useEffect(() => {
+    if (!user?.id) return
+    fetchWeeklyStats(user.id).then(({ sleepData }) => setSleepData(sleepData))
+  }, [user?.id])
 
   return (
     <div className="app-wrapper">
@@ -27,7 +37,7 @@ export default function Sleep() {
         <div className="section-label">CETTE SEMAINE</div>
         <div className="card card-animated" style={{ '--delay': '150ms' }}>
           <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end', height: 80 }}>
-            {appData.sleepData.map((d, i) => (
+            {sleepData.map((d, i) => (
               <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
                 <div style={{
                   width: '100%',
