@@ -14,9 +14,6 @@ const paceData = [
 ]
 const maxPace = Math.max(...paceData.map(p => p.pace))
 
-const elevationBars = [20, 28, 35, 42, 38, 30, 25, 32, 40, 35, 28, 22]
-const maxElev = Math.max(...elevationBars)
-
 const CIRCUIT_PATH = "M 40,180 L 40,60 L 120,60 L 120,30 L 260,30 L 260,80 L 300,80 L 300,180 L 220,180 L 220,140 L 100,140 L 100,180 Z"
 
 export default function Run() {
@@ -141,21 +138,6 @@ export default function Run() {
 
             <text x="220" y="213" fill="rgba(255,255,255,0.15)" fontSize="9">Clichy · Simulation</text>
           </svg>
-        </div>
-
-        {/* Elevation */}
-        <div className="card" style={{ marginBottom: 16 }}>
-          <div className="flex justify-between items-center" style={{ marginBottom: 10 }}>
-            <span className="text-xs text-muted">{t('elevation')}</span>
-            <span className="text-xs text-accent">48m</span>
-          </div>
-          <div style={{ display: 'flex', gap: 3, alignItems: 'flex-end', height: 44 }}>
-            {elevationBars.map((h, i) => {
-              const pct = h / maxElev
-              const g = Math.round(214 - 51*pct)
-              return <div key={i} style={{ flex: 1, height: `${h}px`, background: `rgb(${Math.round(31+214*pct)},${g},${Math.round(107-72*pct)})`, borderRadius: '2px 2px 0 0', opacity: 0.85 }} />
-            })}
-          </div>
         </div>
 
         {/* Controls */}
