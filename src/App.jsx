@@ -6,7 +6,6 @@ import ResetPassword from './screens/ResetPassword'
 import Dashboard from './screens/Dashboard'
 import Nutrition from './screens/Nutrition'
 import Workout from './screens/Workout'
-import Run from './screens/Run'
 import Hydration from './screens/Hydration'
 import Sleep from './screens/Sleep'
 import Weekly from './screens/Weekly'
@@ -66,7 +65,6 @@ export default function App() {
           <Route path="/rings" element={<Rings />} />
           <Route path="/messages" element={<Messages />} />
           <Route path="/messages/coach" element={<Conversation />} />
-          <Route path="/run" element={<Run />} />
           <Route path="/settings" element={<Settings />} />
         </Route>
 
