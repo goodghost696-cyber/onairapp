@@ -90,7 +90,6 @@ export function AuthProvider({ children }) {
   }
 
   async function register(firstName, email, password, extraMeta = {}) {
-    console.log('[Auth] register: calling supabase.auth.signUp', { email })
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -98,7 +97,6 @@ export function AuthProvider({ children }) {
         data: { name: firstName, role: 'member', ...extraMeta },
       },
     })
-    console.log('[Auth] register: signUp response', { user: data?.user, session: data?.session, error })
     if (error) {
       console.error('[Auth] register: signUp failed', error)
       return { success: false, error: error.message }
@@ -113,15 +111,12 @@ export function AuthProvider({ children }) {
       }, { onConflict: 'user_id' })
       if (profileError) {
         console.error('[Auth] register: profiles upsert failed', profileError)
-      } else {
-        console.log('[Auth] register: profiles upsert succeeded', { user_id: data.user.id })
       }
     } else {
       console.error('[Auth] register: signUp returned no error but data.user is null — no profile row created')
     }
 
     const u = sessionToUser(data.session) || { id: data.user?.id, email, name: firstName, role: 'member' }
-    console.log('[Auth] register: resolved user', u)
     return { success: true, user: u }
   }
 
@@ -146,7 +141,6 @@ export function AuthProvider({ children }) {
   }
 
   async function updateUserProfile(profile) {
-    console.log('[Auth] updateUserProfile: calling supabase.auth.updateUser', profile)
     // Update Supabase user metadata
     const { data, error: updateUserError } = await supabase.auth.updateUser({ data: profile })
     if (updateUserError) {
