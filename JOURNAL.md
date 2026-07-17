@@ -6,6 +6,47 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo, branche `claude/charming-mendel-dj1GQ`, et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-07-17 — Session 11 : audit sécurité complet (demandé explicitement par l'utilisateur)
+
+Audit mené directement sur la vraie base de prod (Supabase MCP — `list_tables`, `get_advisors`, requêtes `pg_policies`/`information_schema` en lecture) + revue de code de tout `api/*` et des points d'auth côté client. Pas un audit "sur le diff" : tout le périmètre actuel de l'app.
+
+### 🔴 CRITIQUE — trouvé en vérifiant l'état réel de la base (pas juste le code)
+**L'élévation de privilèges `profiles.role` closée en Session 3 (2026-07-10) est de nouveau exploitable en prod, là maintenant.** Vérifié par requête directe sur `information_schema.column_privileges` : le rôle Postgres `authenticated` (et même `anon`) a toujours le `GRANT UPDATE` sur la colonne `role` de `public.profiles`, et la policy RLS `"Users can update own profile"` ne restreint que la **ligne** (`auth.uid() = user_id`), pas les colonnes ni les valeurs (pas de `WITH CHECK`). Concrètement : **n'importe quel membre connecté peut s'auto-promouvoir coach ou admin** depuis la console du navigateur (`supabase.from('profiles').update({role:'admin'}).eq('user_id', monId)`), sans dépendre d'aucune UI. Une fois `coach`, la policy `"Coaches can view all profiles"` (via `is_coach()`, qui lit cette même colonne `role`) lui donne un accès en lecture à **tous** les profils (prénom, email, poids, taille, âge) — et l'accès `/coach` côté client suit automatiquement. Le SQL `revoke update (role) on public.profiles from authenticated, anon;` avait été donné et "confirmé exécuté" en Session 3 ; soit il n'a pas pris, soit il a été annulé depuis (peut-être en re-générant des GRANTs par défaut sur la table). Impact aujourd'hui limité à la table `profiles` (les autres tables — `repas`/`seances`/`activite_jour`/`objectifs` — n'ont pas de policy coach-wide, donc pas encore exposées par cette faille), mais c'est déjà une fuite de PII de tous les membres + un accès non autorisé à l'espace coach.
+**Pas corrigé pendant cet audit** — je vous laisse valider avant de retoucher la base de prod (voir sprint ci-dessous).
+
+### 🟠 HAUTE
+- **`/api/claude` sans aucun garde-fou de coût** : tout membre authentifié (n'importe quel compte derrière le code d'invitation) peut poster n'importe quel `model`/`max_tokens`/`messages` — l'endpoint relaie tel quel vers Anthropic avec la clé API du projet. Pas de limite de débit, pas de plafond sur `max_tokens`, pas de liste de modèles autorisés. Un compte (ou un code d'invitation partagé/fuité) suffit pour faire exploser la facture Anthropic.
+- **`/api/validate-invite` sans limite de débit** : endpoint public, non authentifié par nature (avant inscription), qui ne fait qu'une comparaison de chaîne. Rien n'empêche un brute-force scripté du code d'invitation — d'autant plus si `INVITE_CODE` n'a jamais été redéfini dans Vercel et retombe encore sur le fallback `ONAIR2026` déjà exposé publiquement par le passé (à reconfirmer, pas vérifiable depuis le code).
+- **`/api/exercises` et `/api/food-search`** : mêmes endpoints tiers (API Ninjas, Open Food Facts) appelés sans limite de débit par utilisateur — impact financier plus faible que Claude mais même absence de garde-fou.
+
+### 🟡 MOYENNE
+- **Protection "mot de passe compromis" désactivée sur Supabase Auth** (confirmé via les security advisors Supabase) : les nouveaux mots de passe ne sont pas vérifiés contre la base HaveIBeenPwned. Bascule en un clic dans Supabase → Auth → Policies.
+- **Logs de debug avec PII toujours en prod** (`AuthContext.jsx`, fonctions `register()`/`updateUserProfile()`) : `console.log` du profil complet (email, nom, poids, taille, objectifs) à chaque inscription/mise à jour de profil. Pas exploitable à distance, mais c'est la dette de debug de la Session 1 (2026-07-10) jamais nettoyée, comme prévu à l'époque.
+- **`scripts/supabase_schema.sql` du repo obsolète par rapport à la vraie base** : ne contient ni la colonne `role`, ni `is_coach()`/la policy coach, ni les colonnes `nutriscore`/`type_repas`/`type` de `repas`, ni l'état réel des GRANTs. Ce fichier ne peut plus servir de source de vérité ni de script de recréation fiable — tous les correctifs appliqués à la main via l'éditeur SQL Supabase (comme celui de la faille critique ci-dessus) vivent uniquement en prod, nulle part dans git.
+
+### 🔵 FAIBLE / INFO
+- **`public.is_coach()` exécutable en RPC public** (`/rest/v1/rpc/is_coach`) même en anonyme, signalé par les advisors Supabase. Sans risque réel aujourd'hui (pas de paramètre utilisateur cible, renvoie `false` en anonyme puisque `auth.uid()` est nul), mais surface publique inutile — `revoke execute on function public.is_coach() from anon;` par propreté.
+- **Données de santé en `localStorage` en clair** (`onair_profile`, `onair_user`, `onair_calorieGoal` — poids, taille, objectifs). Normal pour une PWA offline-first, bien nettoyé au logout (`AuthContext.logout()` vide déjà toutes les clés `onair_*`), mais reste lisible entre deux sessions sur un appareil partagé si l'utilisateur ne se déconnecte pas explicitement.
+- **Points vérifiés sains** : `npm audit` → 0 vulnérabilité de dépendance ; aucun `dangerouslySetInnerHTML`/`eval`/`innerHTML` dans `src/` ; aucune clé API (`ANTHROPIC_API_KEY`, `NINJA_API_KEY`) ni code d'invitation dans le bundle de prod (vérifié directement dans `dist/assets/*.js` après build) ; CORS des endpoints `api/*` correctement restreint par allowlist (pas de wildcard `*`) ; service worker ne cache que les assets statiques et le HTML de navigation, jamais les réponses `/api/*`.
+
+### Sprint sécurité 1 — urgent (bloque avant tout autre chantier)
+- [ ] Réappliquer et **vérifier cette fois** le revoke sur `profiles.role` : `revoke update (role) on public.profiles from authenticated, anon;` — puis reconfirmer par requête directe (`information_schema.column_privileges`) que ça a bien pris, pas juste "Success" dans l'éditeur SQL.
+- [ ] Ajouter une garde durable pour que ça ne puisse plus se reproduire silencieusement : soit un `WITH CHECK` sur la policy UPDATE de `profiles` qui interdit tout changement de `role` par l'utilisateur lui-même, soit un trigger qui rejette un `UPDATE` touchant `role` si l'appelant n'est pas déjà coach/admin.
+- [ ] Auditer les autres tables (`objectifs`, `repas`, `seances`, `activite_jour`) pour une variante de ce même problème (colonnes sensibles avec GRANT trop large) — pas trouvé cette fois mais pas vérifié colonne par colonne comme sur `profiles`.
+- [ ] Plafonner `/api/claude` : cap serveur sur `max_tokens`, liste blanche de `model` autorisés, rate limiting par utilisateur (ex. Vercel KV/Upstash ou compteur simple par `user.id` avec fenêtre glissante).
+- [ ] Rate limiting sur `/api/validate-invite` (par IP a minima) + confirmer que `INVITE_CODE` est bien configuré dans Vercel (pas le fallback par défaut).
+
+### Sprint sécurité 2 — dette à traiter ensuite
+- [ ] Activer "Leaked Password Protection" dans Supabase Auth.
+- [ ] Nettoyer les `console.log` de PII dans `AuthContext.jsx`.
+- [ ] Régénérer `scripts/supabase_schema.sql` depuis l'état réel de la base (`pg_dump` du schéma ou export Supabase) pour que le repo redevienne une vraie source de vérité, et documenter que tout futur correctif SQL doit être committé dans ce fichier (ou en migrations versionnées) en plus d'être appliqué en prod.
+- [ ] `revoke execute on function public.is_coach() from anon;`
+- [ ] Rate limiting léger sur `/api/exercises` et `/api/food-search`.
+
+*(Note hors-scope sécurité : les advisors Supabase ont aussi remonté des optimisations de performance RLS — `auth.uid()` réévalué ligne par ligne au lieu de `(select auth.uid())`, policies multiples sur `profiles` — sans impact à l'échelle actuelle (quelques lignes), à revisiter si la base grossit.)*
+
+---
+
 ## 2026-07-16 — Session 10 : suppression circuit map factice + nettoyage Run.jsx mort
 - [x] **Circuit map factice retiré de `RunContent.jsx`** (le fichier réellement affiché à l'écran Course) : bloc SVG (tracé de route inventé + point animé) supprimé, ainsi que la constante `CIRCUIT_PATH` devenue inutile.
 - [x] **`Run.jsx` (route `/run`) supprimé** : confirmé code mort (aucun `navigate('/run')`/lien nulle part dans l'app), validé avec l'utilisateur avant suppression. Route retirée d'`App.jsx`.
