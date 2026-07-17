@@ -10,7 +10,11 @@ Entrées les plus récentes en haut.
 - [x] **Circuit map factice retiré de `RunContent.jsx`** (le fichier réellement affiché à l'écran Course) : bloc SVG (tracé de route inventé + point animé) supprimé, ainsi que la constante `CIRCUIT_PATH` devenue inutile.
 - [x] **`Run.jsx` (route `/run`) supprimé** : confirmé code mort (aucun `navigate('/run')`/lien nulle part dans l'app), validé avec l'utilisateur avant suppression. Route retirée d'`App.jsx`.
 - Build validé (`npm run build`). PR #7 (draft, vers `claude/charming-mendel-dj1GQ`) déployée sur preview Vercel et **validée par l'utilisateur** ("c'est carré") — pas encore mergée.
-- **Reste dans le backlog du 07-16** : "Mes charges" (`Weekly.jsx`) toujours en données fictives, navigation retour incohérente, lenteur suggestions recette IA, question stratégique fusion coach+IA SaaS.
+- **Reste dans le backlog du 07-16** : navigation retour incohérente, lenteur suggestions recette IA, question stratégique fusion coach+IA SaaS.
+
+### ✅ "Mes charges" (`Weekly.jsx`) branché sur les vraies séances
+Nouveau `src/utils/liftProgress.js` (`fetchLiftProgress()`) : va chercher les 60 dernières `seances` de l'utilisateur, extrait par exercice la série la plus lourde de chaque séance (`bestSet()` — poids max, ou reps si tout est en poids du corps), et garde les 4 dernières occurrences des 4 exercices les plus pratiqués. Remplace le tableau `liftProgress` codé en dur (Bench Press/Squat/Deadlift/Pull-up fictifs) dans `Weekly.jsx`. Un exercice n'apparaît que s'il a été fait au moins 2 fois (une courbe a besoin d'au moins 2 points ; `LiftCurve` division par `n-1` plantait sinon). État vide ajouté si aucun exercice n'a encore 2 occurrences ("Pas encore assez de séances enregistrées…").
+Build validé. **Pas encore testé en conditions réelles** (nécessite plusieurs vraies séances loguées avec le même nom d'exercice pour voir une courbe).
 
 ## ⚠️ Comptes de test — ne pas confondre (erreur commise le 2026-07-11, voir plus bas)
 - **`goodghost696@gmail.com`** (id `15cdc63c-a54c-462a-bcbe-bd06e83bd437`) — compte de test avec des données d'onboarding **volontairement/accidentellement absurdes** (poids 454kg, taille 545cm) créées très tôt dans les tests. Objectifs corrigés à des valeurs génériques (2400/180/240/80) le 2026-07-11.
