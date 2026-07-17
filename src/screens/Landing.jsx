@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, lazy, Suspense } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useGymConfig } from '../hooks/useGymConfig'
 import '../styles/landing.css'
+
+const ShaderBackground = lazy(() => import('../components/ShaderBackground'))
 
 export default function Landing() {
   const navigate = useNavigate()
@@ -15,6 +17,10 @@ export default function Landing() {
 
   return (
     <div className="landing">
+      <Suspense fallback={null}>
+        <ShaderBackground />
+      </Suspense>
+
       <div className="landing-topbar">
         <span className="landing-brand">{gym.name}</span>
         {gym.city && <span className="landing-city">{gym.city}</span>}
