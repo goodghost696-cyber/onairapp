@@ -1,9 +1,15 @@
-import { useEffect, useState, lazy, Suspense } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useGymConfig } from '../hooks/useGymConfig'
 import '../styles/landing.css'
 
-const ShaderBackground = lazy(() => import('../components/ShaderBackground'))
+function Arrow({ className }) {
+  return (
+    <svg className={className} width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M6 18 L18 6 M18 6 H9 M18 6 V15" stroke="currentColor" strokeWidth="2.5" strokeLinecap="square" strokeLinejoin="miter" />
+    </svg>
+  )
+}
 
 export default function Landing() {
   const navigate = useNavigate()
@@ -17,10 +23,6 @@ export default function Landing() {
 
   return (
     <div className="landing">
-      <Suspense fallback={null}>
-        <ShaderBackground />
-      </Suspense>
-
       <div className="landing-topbar">
         <span className="landing-brand">{gym.name}</span>
         {gym.city && <span className="landing-city">{gym.city}</span>}
@@ -30,7 +32,7 @@ export default function Landing() {
         <span className="landing-bg-text" aria-hidden="true">ON AIR</span>
 
         <div className={`landing-content${visible ? ' visible' : ''}`}>
-          <span className="landing-kicker">REPOUSSE</span>
+          <span className="landing-kicker">// REPOUSSE</span>
           <h1 className="landing-title">
             Tes limites.<br />
             <span className="landing-title-accent">Chaque jour.</span>
@@ -47,12 +49,14 @@ export default function Landing() {
           onClick={() => navigate('/login', { state: { tab: 'signup' } })}
         >
           Rejoindre la salle
+          <Arrow className="landing-btn-arrow" />
         </button>
         <button
           className="landing-btn landing-btn-secondary"
           onClick={() => navigate('/login', { state: { tab: 'login' } })}
         >
           Accès coach
+          <Arrow className="landing-btn-arrow" />
         </button>
       </div>
 
