@@ -1,10 +1,10 @@
 /* Landing screen only — deliberately its own fixed light/bold identity,
    independent of the app's dark/light theme toggle used everywhere else. */
 .landing {
-  --land-bg: #FAF5EE;
-  --land-ink: #14100E;
-  --land-accent: #bf0603;
-  --land-accent-hover: #d90704;
+  --land-bg: #D6FA2E;
+  --land-ink: #0D0D0D;
+  --land-accent: #2A1FE0;
+  --land-accent-hover: #3B2FF0;
 
   position: relative;
   overflow: hidden;

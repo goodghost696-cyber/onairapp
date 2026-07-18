@@ -61,7 +61,9 @@ Audit mené directement sur la vraie base de prod (Supabase MCP — `list_tables
 3. Palette : couleurs ON AIR gardées — fond crème chaud (`#FAF5EE`, nouvelle valeur propre à Landing, pas réutilisation du thème clair existant de l'app qui a une teinte différente), rouge `#bf0603` en accent (joue le rôle du bleu dans la référence), noir quasi pur pour bordures/texte.
 4. Éléments repris de la référence (tous demandés) : bordures noires épaisses + ombre décalée façon sticker sur les boutons, typo bold avec glyphe détourné (kicker en `// REPOUSSE`, style commentaire de code), flèches obliques dans les CTA, soulignement noir épais sous le mot-accent du titre.
 
-Premier jet implémenté (`Landing.jsx`, `landing.css` réécrits) et testé — screenshot envoyé à l'utilisateur, **retour en attente** avant de considérer cette itération terminée.
+Premier jet implémenté (`Landing.jsx`, `landing.css` réécrits) et testé — screenshot envoyé à l'utilisateur.
+
+**Retour utilisateur** : palette crème/rouge jugée "trop plate niveau couleur". Testé une variante avec les **vraies couleurs de la référence** (citron vif `#D6FA2E` en fond, bleu indigo `#2A1FE0` en accent — plus de rouge ON AIR du tout, à la demande explicite de l'utilisateur pour "voir"), structure/typo/bordures inchangées. Screenshot envoyé — **retour en attente** : garder ce mix citron/bleu tel quel, réintroduire le rouge ON AIR quelque part, ou autre ajustement de couleur.
 
 ---
 
