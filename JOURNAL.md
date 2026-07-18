@@ -63,7 +63,9 @@ Audit mené directement sur la vraie base de prod (Supabase MCP — `list_tables
 
 Premier jet implémenté (`Landing.jsx`, `landing.css` réécrits) et testé — screenshot envoyé à l'utilisateur.
 
-**Retour utilisateur** : palette crème/rouge jugée "trop plate niveau couleur". Testé une variante avec les **vraies couleurs de la référence** (citron vif `#D6FA2E` en fond, bleu indigo `#2A1FE0` en accent — plus de rouge ON AIR du tout, à la demande explicite de l'utilisateur pour "voir"), structure/typo/bordures inchangées. Screenshot envoyé — **retour en attente** : garder ce mix citron/bleu tel quel, réintroduire le rouge ON AIR quelque part, ou autre ajustement de couleur.
+**Retour utilisateur 1** : palette crème/rouge jugée "trop plate niveau couleur". Testé une variante avec les **vraies couleurs de la référence** (citron vif `#D6FA2E` en fond, bleu indigo `#2A1FE0` en accent — plus de rouge ON AIR du tout, à la demande explicite de l'utilisateur pour "voir"), structure/typo/bordures inchangées. Screenshot envoyé.
+
+**Retour utilisateur 2** : demande d'améliorer la typo ("trouve mieux"). `Plus Jakarta Sans` (police globale de l'app, utilisée partout) ne rendait pas assez "affiche" pour un titre aussi gros. Ajouté **Anton** (Google Fonts, display condensé très bold — même famille d'énergie que la référence) réservé au titre `landing-title` et au "ON AIR" géant en fond, avec passage en majuscules, taille remontée à 64px, interligne resserré (0.92). Screenshot envoyé — **retour en attente** sur cette nouvelle direction.
 
 ---
 

@@ -34,10 +34,12 @@
 
 .landing-bg-text {
   position: absolute;
-  font-size: 120px;
-  font-weight: 900;
+  font-family: 'Anton', sans-serif;
+  font-size: 140px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
   color: transparent;
-  -webkit-text-stroke: 1.5px rgba(20, 16, 14, 0.14);
+  -webkit-text-stroke: 1.5px rgba(20, 16, 14, 0.16);
   z-index: 0;
   top: 50%;
   left: 50%;
@@ -109,19 +111,21 @@
 }
 
 .landing-title {
-  font-size: 42px;
-  font-weight: 900;
-  line-height: 1.05;
+  font-family: 'Anton', sans-serif;
+  font-weight: 400;
+  font-size: 64px;
+  line-height: 0.92;
   letter-spacing: -0.01em;
+  text-transform: uppercase;
   color: var(--land-ink);
-  margin: 0 0 18px;
+  margin: 0 0 20px;
 }
 
 .landing-title-accent {
   display: inline-block;
   color: var(--land-accent);
-  border-bottom: 6px solid var(--land-ink);
-  padding-bottom: 2px;
+  border-bottom: 7px solid var(--land-ink);
+  padding-bottom: 4px;
 }
 
 .landing-subtitle {
