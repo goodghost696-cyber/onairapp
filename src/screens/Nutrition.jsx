@@ -302,7 +302,7 @@ Réponds en français.`
           style={{
             display: 'flex', alignItems: 'center', gap: 12, width: '100%',
             marginBottom: 16, cursor: 'pointer', border: '1px solid var(--accent)',
-            background: 'rgba(191,6,3,0.08)', textAlign: 'left',
+            background: 'rgba(212,255,0,0.08)', textAlign: 'left',
           }}
         >
           <span style={{ fontSize: 22 }}>💡</span>
@@ -374,9 +374,9 @@ Réponds en français.`
         width: 52, height: 52, borderRadius: '50%',
         background: 'var(--accent)', border: 'none', cursor: 'pointer',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        boxShadow: '0 4px 20px rgba(191,6,3,0.4)',
+        boxShadow: '0 4px 20px rgba(212,255,0,0.4)',
       }}>
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent-ink)" strokeWidth="2.5" strokeLinecap="round">
           <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
         </svg>
       </button>

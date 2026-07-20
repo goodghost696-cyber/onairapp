@@ -205,7 +205,7 @@ export default function Onboarding() {
                   </div>
                   <div className="onboarding-option-check">
                     {selected && (
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--accent-ink)" strokeWidth="3" strokeLinecap="round">
                         <polyline points="20 6 9 17 4 12"/>
                       </svg>
                     )}

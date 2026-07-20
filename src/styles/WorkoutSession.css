@@ -94,7 +94,7 @@
   width: 100%;
   padding: 16px;
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-ink);
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 2px;
@@ -122,7 +122,7 @@
 .empty-session-btn {
   padding: 12px 24px;
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-ink);
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 1.5px;
