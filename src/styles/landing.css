@@ -1,19 +1,11 @@
-/* Landing screen only — deliberately its own fixed light/bold identity,
-   independent of the app's dark/light theme toggle used everywhere else. */
+/* Landing screen — ON AIR Neon identity (dark, lime accent, Space Grotesk) */
 .landing {
-  --land-bg: #D6FA2E;
-  --land-ink: #0D0D0D;
-  --land-accent: #2A1FE0;
-  --land-accent-hover: #3B2FF0;
-
-  position: relative;
-  overflow: hidden;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
   padding: 0 16px;
-  background: var(--land-bg);
-  color: var(--land-ink);
+  background: #0A0A0A;
+  color: #fff;
 }
 
 .landing-topbar {
@@ -25,33 +17,13 @@
 
 .landing-hero {
   flex: 1;
-  position: relative;
   display: flex;
   flex-direction: column;
   justify-content: center;
   padding: 40px 0;
 }
 
-.landing-bg-text {
-  position: absolute;
-  font-family: 'Anton', sans-serif;
-  font-size: 140px;
-  font-weight: 400;
-  letter-spacing: -0.01em;
-  color: transparent;
-  -webkit-text-stroke: 1.5px rgba(20, 16, 14, 0.16);
-  z-index: 0;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  white-space: nowrap;
-  pointer-events: none;
-  user-select: none;
-}
-
 .landing-content {
-  position: relative;
-  z-index: 1;
   opacity: 0;
   transform: translateY(-12px);
   transition: opacity 400ms ease-out, transform 400ms ease-out;
@@ -75,105 +47,84 @@
 .landing-footer {
   text-align: center;
   padding: 16px 0 20px;
-  border-top: 2px solid var(--land-ink);
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--land-ink);
+  color: rgba(255,255,255,0.4);
 }
 
 .landing-brand {
-  font-size: 14px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--land-ink);
+  color: #0047FF;
 }
 
 .landing-city {
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 500;
   letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--land-ink);
-  opacity: 0.55;
+  color: rgba(255,255,255,0.5);
 }
 
 .landing-kicker {
   display: block;
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  font-family: 'SF Mono', 'Menlo', ui-monospace, monospace;
-  color: var(--land-accent);
-  margin-bottom: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #D4FF00;
+  margin-bottom: 14px;
 }
 
 .landing-title {
-  font-family: 'Anton', sans-serif;
-  font-weight: 400;
-  font-size: 64px;
-  line-height: 0.92;
-  letter-spacing: -0.01em;
-  text-transform: uppercase;
-  color: var(--land-ink);
-  margin: 0 0 20px;
+  font-size: 56px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: #fff;
+  margin: 0 0 16px;
 }
 
 .landing-title-accent {
-  display: inline-block;
-  color: var(--land-accent);
-  border-bottom: 7px solid var(--land-ink);
-  padding-bottom: 4px;
+  color: #D4FF00;
 }
 
 .landing-subtitle {
   font-size: 15px;
   line-height: 1.5;
-  font-weight: 600;
-  color: var(--land-ink);
-  opacity: 0.7;
+  font-weight: 500;
+  color: rgba(255,255,255,0.55);
   max-width: 300px;
   margin: 0;
 }
 
 .landing-btn {
   width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 17px;
-  border: 3px solid var(--land-ink);
-  border-radius: 16px;
-  background: #fff;
-  color: var(--land-ink);
-  font-size: 15px;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
+  padding: 18px;
+  border: none;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
   cursor: pointer;
-  box-shadow: 5px 5px 0 var(--land-ink);
-  transition: transform 120ms ease, box-shadow 120ms ease;
+  transition: opacity 150ms ease, transform 150ms ease;
 }
 
 .landing-btn:active {
-  transform: translate(5px, 5px);
-  box-shadow: 0 0 0 var(--land-ink);
-}
-
-.landing-btn-arrow {
-  flex-shrink: 0;
+  transform: scale(0.98);
 }
 
 .landing-btn-primary {
-  background: var(--land-accent);
-  color: #FFFFFF;
-  margin-bottom: 14px;
+  background: #D4FF00;
+  color: #0A0A0A;
+  margin-bottom: 12px;
 }
 
 .landing-btn-secondary {
-  background: #FFFFFF;
-  color: var(--land-ink);
+  background: #1A1A1A;
+  color: #fff;
+  border: 2px solid rgba(255,255,255,0.15);
 }
