@@ -6,6 +6,58 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo, branche `claude/charming-mendel-dj1GQ`, et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-07-20 — Session 12 : import du design "ON AIR Neon" depuis claude.ai/design, début d'application
+
+### Contexte : le chantier Landing "bold/flat" (Session 11 tardive) est abandonné
+Avant cette session, on avait exploré une direction Landing seule "neo-brutalist" (fond clair, bordures noires épaisses, citron+bleu, puis comparatif de polices Anton/Bebas/Archivo Black/Unbounded/Big Shoulders/Space Grotesk/Syne/Oswald). **Tout ça est caduc.** L'utilisateur a fourni un vrai fichier de design complet ("On Air Neon - Interactive Prototype.dc.html") sur claude.ai/design et a demandé de l'implémenter tel quel dans toute l'app, pas juste Landing. Le shader animé (`src/components/ShaderBackground.jsx`) reste dans le repo mais **n'est plus utilisé nulle part** (retiré de `Landing.jsx`) — gardé "en mémoire" comme demandé par l'utilisateur, pas pour ce projet.
+
+### Comment récupérer le design à nouveau si besoin
+Outil `DesignSync` (MCP), méthodes `get_project`/`list_files`/`get_file` :
+- `projectId`: `c5634942-7202-4975-aaac-df3e8747c79d` (projet claude.ai/design "Redesign application sport", owner "Ghost", `type: PROJECT_TYPE_PROJECT` donc pas un design-system — lecture seule pour nous, pas de push prévu)
+- Fichier de référence implémenté : `On Air Neon - Interactive Prototype.dc.html` (prototype interactif complet : Splash, Auth, Onboarding 3 étapes, Home/Dashboard, Workout, Nutrition, Activité/Bilan semaine, Notifications, Settings)
+- Autre fichier présent dans le même projet mais **pas encore regardé** : `On Air - Refonte Couleur.dc.html` — à checker si la direction actuelle ne convient pas.
+- Des captures de référence (uploads WhatsApp) sont aussi dans le projet, pas encore consultées.
+
+### La charte "ON AIR Neon" — palette et specs exactes du prototype
+- Fond : `#0A0A0A` (quasi noir, plus sombre que l'ancien `#1a1012`)
+- Cartes/surfaces : `#1A1A1A`, bordure `rgba(255,255,255,.12)` à `.15`
+- **Accent primaire : citron `#D4FF00`** (remplace le rouge `#bf0603` comme couleur de marque principale) — texte foncé dessus, jamais blanc (voir plus bas)
+- **Accent secondaire : bleu `#0047FF`** — utilisé par endroits précis dans le prototype (ex. carte "MA SÉANCE DU JOUR" en Workout est bleue avec texte blanc, pas citron — le prototype alterne délibérément citron/bleu selon le contexte, ce n'est pas un simple remplacement uniforme rouge→citron partout)
+- Police : **Space Grotesk** (remplace Plus Jakarta Sans), poids 500/700 dans le prototype
+- Boutons : pills pleines (`border-radius:999px`), pas de bordure épaisse ni d'ombre "sticker" (contrairement à l'exploration bold/flat abandonnée)
+- Ring de calories circulaire, barres de macros fines bleues, grille 3 stats (séances/eau/pas) avec la carte du milieu en bleu, nav du bas avec un gros bouton "+" citron surélevé
+
+### ✅ Fait cette session
+- [x] **Tokens globaux** (`global.css`) : `--bg`, `--surface`, `--border`, `--accent` (citron), `--accent-secondary` (bleu), nouveau `--accent-ink` (`#0A0A0A`, texte à utiliser sur fond accent). Police Space Grotesk importée dans `index.html` (remplace Plus Jakarta Sans), `theme-color` et `manifest.json` mis à jour pour matcher le nouveau fond.
+- [x] **Landing reconstruite** pour matcher l'esprit du splash du prototype (fond noir, "ON AIR" avec "AIR" en citron, sous-titre, CTA pills pleines) tout en gardant notre structure réelle à 2 CTA (rejoindre/coach) — le prototype fait un tap-anywhere avant un écran de login séparé, structure différente de notre besoin réel. **Confirmé visuellement par screenshot.**
+- [x] **Audit de contraste texte-sur-accent dans toute l'app** : le rouge tolérait du texte blanc dessus, le citron non. Grepé et corrigé partout où `background: var(--accent)` était accompagné de `color: #fff`/`white` : `fab.css`, `ExerciseModal.css` (x2), `WorkoutSession.css` (x2), `dashboard.css`, `Onboarding.css` (bouton continuer + icône check sélection), `Workout.css` (x3, dont le bouton "séance du jour" repassé en bleu pour matcher le prototype), `Nutrition.jsx` (icône FAB scanner), `Rings.jsx` (ring calories rouge→citron). Tous les `rgba(191,6,3,...)` (ombres/glows liés à l'ancien rouge) remplacés par l'équivalent citron `rgba(212,255,0,...)`.
+- [x] Build (`npm run build`) validé après chaque lot de changements.
+
+### ⚠️ Limitation découverte : impossible de faire des captures d'écran authentifiées dans ce sandbox
+Passé beaucoup de temps à essayer de screenshotter Dashboard/Workout/Nutrition (connecté) via Playwright pour vérifier visuellement, sans succès — **cause identifiée avec certitude, ce n'est pas un bug de l'app** :
+- Le navigateur headless de ce sandbox ne peut pas atteindre Supabase directement (`ERR_CONNECTION_RESET`), même en configurant le proxy de l'environnement (`HTTPS_PROXY`) sur le contexte Playwright.
+- En injectant une session valide directement dans `localStorage` (contournant le besoin de login réseau), l'app restait bloquée sur un écran vide. Diagnostic poussé (log temporaire dans `App.jsx`, retiré après) : `loading` restait bloqué à `true` pour toujours.
+- **Cause précise** : dans `AuthContext.jsx`, le filet de sécurité `setTimeout(() => setLoading(false), 3000)` est annulé (`clearTimeout`) dès que `supabase.auth.getSession()` **résout** (avant même que `resolveRole()` — qui fait le lookup réseau vers `profiles` — ait fini). Dans ce sandbox, ce fetch vers `profiles` reste **en attente indéfiniment** (ni resolve ni reject, donc le `try/catch` dans `resolveRole()` ne se déclenche jamais) à cause du proxy réseau — sur un vrai navigateur/réseau, ce fetch échouerait proprement en quelques secondes et le `catch` s'en sortirait normalement.
+- **Effet de bord potentiellement réel (pas juste un artefact sandbox)** : ce filet de sécurité de 3s ne protège que contre `getSession()` qui ne répond pas — pas contre `resolveRole()` qui traîne après. Sur un réseau mobile très dégradé/instable, un vrai utilisateur pourrait théoriquement rester bloqué sur un écran blanc indéfiniment si ce fetch spécifique reste en attente sans jamais échouer proprement. **Piste d'amélioration pas encore faite** : envelopper `resolveRole()` d'un timeout explicite (`Promise.race` avec un délai) pour garantir que `loading` repasse à `false` même si ce fetch traîne.
+- **Conséquence pratique pour la suite** : ne pas reperdre de temps à essayer de screenshotter l'app connectée dans ce sandbox de la même façon — soit tester sur la vraie preview Vercel (qui elle-même a la protection SSO activée, donc pas accessible en curl direct non plus, à tester à la main par l'utilisateur), soit accepter de vérifier par lecture de code + build uniquement pour les écrans internes.
+
+### Reste à faire — écrans pas encore adaptés à la charte Neon (prochaine session, dans cet ordre suggéré)
+Les tokens globaux sont posés donc ces écrans héritent déjà des bonnes couleurs de base via `var(--accent)` etc., mais **pas encore vérifiés/structurés pour matcher précisément la mise en page du prototype** (ring, grille 3 stats avec carte bleue au milieu, cartes bordées, etc.) :
+- [ ] **Login/Auth** (`Login.jsx`) — le prototype a un pattern précis : tabs pill (fond `#1A1A1A`, tab active citron), inputs `#1A1A1A` bordés, bouton submit pill citron pleine largeur. Pas encore comparé en détail à notre `Login.jsx` actuel.
+- [ ] **Onboarding** (`Onboarding.jsx`) — le prototype a 3 étapes (prénom/poids/objectif calorique) avec barre de progression à 3 segments, très proche de ce qu'on a déjà côté structure — probablement juste des ajustements visuels fins.
+- [ ] **Dashboard** (`Dashboard.jsx`) — carte kcal avec ring circulaire + macros (existe déjà via `CalorieRing`, à comparer précisément aux couleurs/proportions du prototype), grille 3 stats (séances/eau/pas — carte du milieu en bleu dans le prototype), gros bouton CTA citron "Voir mon entraînement du jour".
+- [ ] **Workout** (`Workout.jsx`) — tabs Musculation/Course, carte "MA SÉANCE DU JOUR" (bleue, déjà fait) + "PROGRAMME IA" (fond sombre, texte citron), bibliothèque accordéon (Maison/Salle/Dehors).
+- [ ] **Nutrition** (`Nutrition.jsx`) — carte kcal avec anneau/barres, liste repas du jour, bouton scanner.
+- [ ] **Activité/Bilan** (`Weekly.jsx` ou `Rings.jsx`, à clarifier lequel correspond) — graphique en barres 7 jours (citron/bleu alternés dans le prototype), grille 2x2 stats (pas/course/eau/sommeil).
+- [ ] **Settings** (`Settings.jsx`) — champs profil/objectifs éditables inline dans une carte, bouton enregistrer citron.
+- [ ] **Notifications** — **écran qui n'existe pas encore dans notre app**, le prototype en a un (liste de notifs, une carte citron mise en avant pour la plus récente/importante). À évaluer si on le construit ou si ce n'est pas prioritaire.
+- [ ] **Thème clair** (`:root[data-theme="light"]`) — volontairement pas touché cette session (le prototype Neon n'a pas de variante claire), reste sur l'ancienne palette rouge. À trancher : est-ce que le mode clair doit aussi passer au citron, ou rester différent/désactivé ?
+
+### État git
+Tout commité et poussé sur `claude/journal-review-iltjv9` (PR #8 — **le titre "Mes charges real lift progression" est maintenant très en décalage avec le contenu réel de la PR**, qui contient aussi tout le sprint sécurité 1+2 et maintenant le début du redesign Neon ; à renommer ou à découper en plusieurs PR si l'utilisateur préfère, pas fait spontanément). Working tree clean à la fin de cette session.
+
+---
+
 ## 2026-07-17 — Session 11 : audit sécurité complet (demandé explicitement par l'utilisateur)
 
 Audit mené directement sur la vraie base de prod (Supabase MCP — `list_tables`, `get_advisors`, requêtes `pg_policies`/`information_schema` en lecture) + revue de code de tout `api/*` et des points d'auth côté client. Pas un audit "sur le diff" : tout le périmètre actuel de l'app.
