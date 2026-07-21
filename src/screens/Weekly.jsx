@@ -98,12 +98,12 @@ export default function Weekly() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, paddingTop: 56, paddingBottom: 20 }}>
           <button
             onClick={() => navigate('/dashboard')}
-            style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--glass)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid var(--glass-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: 'var(--glass-shadow)', cursor: 'pointer', flexShrink: 0 }}
+            style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--surface)', border: '2px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" strokeWidth="2" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
           </button>
           <div>
-            <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 4 }}>BILAN</p>
+            <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--accent-secondary)', marginBottom: 4 }}>BILAN</p>
             <h1 style={{ fontSize: 26, fontWeight: 800, color: 'var(--text-primary)' }}>{t('weekly_recap')}</h1>
           </div>
         </div>
