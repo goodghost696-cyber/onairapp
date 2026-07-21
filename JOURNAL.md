@@ -6,6 +6,33 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo, branche `claude/charming-mendel-dj1GQ`, et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-07-21 — Session 13 : Login/Auth passé à la charte Neon
+
+**Contexte** : PR #8 (Session 12) a été mergée dans `claude/charming-mendel-dj1GQ` (commit `b74a0a5`) — la question "renommer ou découper la PR #8" du journal précédent est donc caduque, c'est déjà réglé. Demandé à l'utilisateur s'il voulait continuer directement sur les écrans restants ou attendre un retour sur la preview Vercel : réponse **continuer directement**, en commençant par Login.
+
+### ✅ Login (`Login.jsx`) passé à la charte Neon
+Récupéré le spec exact de l'écran Auth du prototype via `DesignSync`/`get_file` (le même fichier que Session 12) plutôt que de deviner :
+- Titre "Bienvenue." (700 30px, `-0.02em`) à la place du bloc logo + "ORIGINAL FITNESS · CLICHY" (le logo/sous-titre reste sur Landing, pas besoin de le répéter ici).
+- Tabs Connexion/Inscription : conteneur `#1A1A1A` bordé (`2px solid rgba(255,255,255,.15)`, `border-radius:16`), tab active fond citron **texte `--accent-ink` (foncé)** — **bug de contraste corrigé au passage** : l'ancien style mettait `color:'#fff'` sur l'onglet actif citron, exactement le défaut que l'audit de Session 12 avait pourtant traqué partout ailleurs (Login.jsx n'avait pas encore été comparé en détail, comme noté dans le journal précédent).
+- Inputs : fond `#1A1A1A`, bordure `2px solid rgba(255,255,255,.15)`, `border-radius:14`, texte bold — remplace l'ancien style "glass" (blur transparent) qui ne correspondait plus à la charte Neon (le glass était un reliquat de l'ancien thème).
+- Boutons de soumission (connexion, inscription, envoi lien reset) : passés en pill pleine largeur (`border-radius:999`) avec flèche "→", conformément au spec du prototype — différent du `.btn-accent` global (18px) utilisé partout ailleurs dans l'app, car le prototype réserve spécifiquement le pill total à l'écran Auth/Onboarding (Dashboard/Workout/Settings utilisent 16-18px, vérifié dans le fichier source).
+- Placeholder text passé à `#9A9A9A` (valeur exacte du prototype) à la place de l'ancien `rgba(255,255,255,0.28)`.
+- Champs signup (prénom/email/mot de passe/confirmation/code d'accès) et flux "mot de passe oublié" conservés tels quels (le prototype ne les a pas, c'est une simplification de démo) — seul le skin visuel a changé, la logique n'a pas bougé.
+
+**Vérifié** : `npm run build` passe. **Tentative de vérification visuelle en local** (`vite preview` + Playwright, écran non-authentifié donc en théorie testable sans les limitations de screenshot connues) : échec, mais avec une cause différente de celle documentée en Session 12 — ce n'est pas un "loading" qui reste bloqué, c'est un crash JS immédiat (`supabaseUrl is required`) car `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` ne sont simplement pas configurées dans ce sandbox (pas de fichier `.env` local). Root cause différente mais conclusion identique à Session 12 : **impossible de vérifier visuellement dans ce sandbox**, à valider par l'utilisateur sur la preview Vercel (qui elle a les vraies variables d'env).
+
+### Reste à faire (ordre inchangé depuis Session 12)
+- [ ] Onboarding (`Onboarding.jsx`)
+- [ ] Dashboard (`Dashboard.jsx`)
+- [ ] Workout (`Workout.jsx`)
+- [ ] Nutrition (`Nutrition.jsx`)
+- [ ] Activité/Bilan (`Weekly.jsx`/`Rings.jsx`)
+- [ ] Settings (`Settings.jsx`)
+- [ ] Notifications (écran à créer)
+- [ ] Décision thème clair Neon ou pas (voir Session 12)
+
+---
+
 ## 2026-07-20 — Session 12 : import du design "ON AIR Neon" depuis claude.ai/design, début d'application
 
 ### Contexte : le chantier Landing "bold/flat" (Session 11 tardive) est abandonné
