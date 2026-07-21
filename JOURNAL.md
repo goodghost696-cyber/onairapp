@@ -56,6 +56,10 @@ Les tokens globaux sont posés donc ces écrans héritent déjà des bonnes coul
 ### État git
 Tout commité et poussé sur `claude/journal-review-iltjv9` (PR #8 — **le titre "Mes charges real lift progression" est maintenant très en décalage avec le contenu réel de la PR**, qui contient aussi tout le sprint sécurité 1+2 et maintenant le début du redesign Neon ; à renommer ou à découper en plusieurs PR si l'utilisateur préfère, pas fait spontanément). Working tree clean à la fin de cette session.
 
+### ⏳ Deux points en attente de réponse de l'utilisateur — à traiter en priorité à la prochaine session
+1. **PR #8** : renommer le titre pour refléter le contenu réel (sécurité + redesign, plus juste "Mes charges"), ou découper en plusieurs PR séparées (ex. une pour le sprint sécurité déjà clos, une pour le redesign Neon en cours) ? Pas tranché, à demander en tout premier avant de continuer à empiler des commits dessus.
+2. **Suite du redesign** : est-ce qu'on continue directement sur les écrans listés plus haut (Login/Onboarding/Dashboard/Workout/Nutrition/Bilan/Settings, dans l'ordre suggéré), ou l'utilisateur veut d'abord regarder la preview Vercel (lien donné en fin de session : `https://onairapp-git-claude-jour-60d351-goodghost696-gmailcoms-projects.vercel.app`) et revenir avec des retours avant d'aller plus loin ?
+
 ---
 
 ## 2026-07-17 — Session 11 : audit sécurité complet (demandé explicitement par l'utilisateur)
