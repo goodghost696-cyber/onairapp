@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useApp } from '../context/AppContext'
@@ -15,14 +15,6 @@ const QUOTES = [
   "L'effort paie.",
   'Continue.',
 ]
-
-function LogoutIcon() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--text-muted)">
-      <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
-    </svg>
-  )
-}
 
 function RotatingQuote() {
   const [index, setIndex] = useState(0)
@@ -54,16 +46,11 @@ function RotatingQuote() {
 
 export default function Dashboard() {
   const navigate = useNavigate()
-  const { user, logout } = useAuth()
+  const { user } = useAuth()
   const { appData, updateData } = useApp()
   const { t } = useLanguage()
   const [editingCard, setEditingCard] = useState(null)
   const [inputVal, setInputVal] = useState('')
-
-  function handleLogout() {
-    logout()
-    navigate('/')
-  }
 
   const hour = new Date().getHours()
   const greeting = hour < 12 ? t('greeting_morning') : hour < 18 ? t('greeting_afternoon') : t('greeting_evening')
@@ -99,49 +86,41 @@ export default function Dashboard() {
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingTop: 56, paddingBottom: 28 }}>
           <div>
-            <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 7 }}>ON AIR</p>
+            <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--accent-secondary)', marginBottom: 7 }}>ON AIR</p>
             <h1 style={{ fontSize: 28, fontWeight: 800, lineHeight: 1.15, color: 'var(--text-primary)' }}>{greeting}, {user?.name}.</h1>
             <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4, textTransform: 'capitalize' }}>
               {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
             </p>
           </div>
           <button
-            onClick={handleLogout}
-            style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--glass)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '1px solid var(--glass-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 54, boxShadow: 'var(--glass-shadow)', cursor: 'pointer' }}
+            onClick={() => navigate('/settings')}
+            style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--accent)', color: 'var(--accent-ink)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 54, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
           >
-            <LogoutIcon />
+            {(user?.name || 'A').charAt(0).toUpperCase()}
           </button>
         </div>
 
         {/* Rotating quote */}
         <RotatingQuote />
 
-        {/* Calorie ring */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 36 }}>
-          <CalorieRing current={appData.calories} goal={appData.calorieGoal} size={180} />
-          <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 12 }}>
+        {/* Calorie ring + macros card */}
+        <div style={{ background: 'var(--surface)', border: '2px solid var(--border)', borderRadius: 24, padding: 22, marginBottom: 16, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <CalorieRing current={appData.calories} goal={appData.calorieGoal} size={150} />
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 12, marginBottom: 20 }}>
             Restant · <span style={{ color: 'var(--accent)', fontWeight: 700 }}>{calsRemaining} kcal</span>
           </p>
-        </div>
-
-        {/* Macros */}
-        <div style={{ marginBottom: 32 }}>
-          <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: 18 }}>Macros</p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 12 }}>
             {[
               { label: 'Protéines', val: appData.protein, goal: appData.proteinGoal, unit: 'g' },
               { label: 'Glucides', val: appData.carbs, goal: appData.carbsGoal, unit: 'g' },
               { label: 'Lipides', val: appData.fat, goal: appData.fatGoal, unit: 'g' },
             ].map(m => (
               <div key={m.label}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 7 }}>
-                  <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)' }}>{m.label}</span>
-                  <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>
-                    {m.val}<span style={{ fontSize: 12, fontWeight: 400, color: 'var(--text-secondary)' }}>/{m.goal}{m.unit}</span>
-                  </span>
-                </div>
-                <div style={{ height: 2, background: 'rgba(255,255,255,0.1)', borderRadius: 2, overflow: 'hidden' }}>
-                  <div style={{ width: `${Math.min((m.val / m.goal) * 100, 100)}%`, height: '100%', background: 'var(--accent)', borderRadius: 2, transition: 'width 600ms ease' }} />
+                <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#8A8A8A', margin: '0 0 3px' }}>
+                  {m.label} {m.val}/{m.goal}{m.unit}
+                </p>
+                <div style={{ height: 4, background: '#232323', borderRadius: 2, overflow: 'hidden' }}>
+                  <div style={{ width: `${Math.min((m.val / m.goal) * 100, 100)}%`, height: '100%', background: 'var(--accent-secondary)', borderRadius: 2, transition: 'width 600ms ease' }} />
                 </div>
               </div>
             ))}
@@ -149,12 +128,12 @@ export default function Dashboard() {
         </div>
 
         {/* Activity cards */}
-        <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: 18 }}>{t('activity')}</p>
+        <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: 12 }}>{t('activity')}</p>
         <div className="activity-grid">
           {CARDS.map(card => (
             <div
               key={card.key}
-              className="activity-card-compact"
+              className={`activity-card-compact${card.key === 'water' ? ' activity-card-accent' : ''}`}
               onClick={() => { setEditingCard(card.key); setInputVal('') }}
             >
               <p className="activity-card-label">{card.label}</p>
@@ -174,9 +153,13 @@ export default function Dashboard() {
           ))}
         </div>
 
-        {/* Weekly sessions glass card */}
-        <div style={{ background: 'var(--glass)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)', border: '1px solid var(--glass-border)', borderRadius: 16, padding: 20, marginBottom: 40, boxShadow: 'var(--glass-shadow)', position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', top: 0, left: 12, right: 12, height: 1, background: 'linear-gradient(90deg,transparent,rgba(212,255,0,0.5),transparent)' }} />
+        {/* CTA to today's workout */}
+        <button onClick={() => navigate('/workout')} className="dashboard-cta-btn">
+          <span>Voir mon entraînement du jour</span><span style={{ fontSize: 20 }}>→</span>
+        </button>
+
+        {/* Weekly sessions card */}
+        <div style={{ background: 'var(--surface)', border: '2px solid var(--border)', borderRadius: 16, padding: 20, marginTop: 16, marginBottom: 40 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
             <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)' }}>Séances cette semaine</span>
             <span style={{ fontSize: 22, fontWeight: 800, color: 'var(--accent)', letterSpacing: '-0.5px' }}>

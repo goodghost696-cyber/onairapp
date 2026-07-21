@@ -16,7 +16,7 @@
   flex: 1;
   height: 4px;
   border-radius: 2px;
-  background: rgba(255,255,255,0.15);
+  background: var(--border-strong);
   transition: background 300ms ease;
 }
 
@@ -59,7 +59,7 @@
 
 .onboarding-text-input {
   background: var(--surface);
-  border: 2px solid rgba(255,255,255,0.15);
+  border: 2px solid var(--border-strong);
   color: var(--text-primary);
   padding: 18px 16px;
   font-size: 17px;
@@ -84,7 +84,7 @@
   width: 100%;
   padding: 16px 20px;
   background: var(--surface);
-  border: 2px solid rgba(255,255,255,0.12);
+  border: 2px solid var(--border);
   border-radius: 16px;
   display: flex;
   align-items: center;
@@ -165,7 +165,7 @@
 
 .onboarding-number-input {
   background: var(--surface);
-  border: 2px solid rgba(255,255,255,0.15);
+  border: 2px solid var(--border-strong);
   color: var(--text-primary);
   padding: 18px 44px 18px 20px;
   font-size: 22px;
@@ -217,8 +217,8 @@
 }
 
 .onboarding-next-btn:disabled {
-  background: rgba(255,255,255,0.15);
-  color: rgba(255,255,255,0.3);
+  background: var(--border-strong);
+  color: var(--text-muted);
   box-shadow: none;
   cursor: not-allowed;
 }
@@ -226,7 +226,7 @@
 .onboarding-back-btn {
   background: transparent;
   border: none;
-  color: rgba(255,255,255,0.5);
+  color: var(--text-secondary);
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.06em;

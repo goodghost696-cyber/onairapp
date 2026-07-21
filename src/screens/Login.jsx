@@ -87,7 +87,7 @@ export default function Login() {
 
   const inputStyle = {
     background: 'var(--surface)',
-    border: '2px solid rgba(255,255,255,0.15)',
+    border: '2px solid var(--border-strong)',
     color: 'var(--text-primary)',
     padding: '16px',
     fontSize: 15,
@@ -126,12 +126,12 @@ export default function Login() {
         </h1>
 
         {/* Tabs */}
-        <div style={{ display: 'flex', gap: 8, background: 'var(--surface)', border: '2px solid rgba(255,255,255,0.15)', borderRadius: 16, padding: 4, marginBottom: 22 }}>
+        <div style={{ display: 'flex', gap: 8, background: 'var(--surface)', border: '2px solid var(--border-strong)', borderRadius: 16, padding: 4, marginBottom: 22 }}>
           {['login', 'signup'].map(tabKey => (
             <button key={tabKey} onClick={() => { setTab(tabKey); setError(''); setSignupError(''); setForgotMode(false) }} style={{
               flex: 1, border: 'none', cursor: 'pointer', fontFamily: 'inherit',
               fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase',
-              color: tab === tabKey ? 'var(--accent-ink)' : 'rgba(255,255,255,0.4)',
+              color: tab === tabKey ? 'var(--accent-ink)' : 'var(--text-muted)',
               background: tab === tabKey ? 'var(--accent)' : 'transparent',
               borderRadius: 12, padding: '10px 0',
               transition: 'all 150ms ease',

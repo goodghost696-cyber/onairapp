@@ -62,32 +62,23 @@
 }
 
 .activity-card-compact {
-  background: var(--glass);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid var(--glass-border);
+  background: var(--surface);
+  border: 2px solid var(--border);
   border-radius: 16px;
   padding: 18px 16px;
   cursor: pointer;
   transition: transform 100ms ease;
   position: relative;
   overflow: hidden;
-  box-shadow: var(--glass-shadow);
-}
-
-.activity-card-compact::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 8px;
-  right: 8px;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--glass-highlight), transparent);
-  pointer-events: none;
 }
 
 .activity-card-compact:active {
   transform: scale(0.97);
+}
+
+.activity-card-accent {
+  background: var(--accent-secondary);
+  border-color: var(--accent-secondary);
 }
 
 .activity-card-label {
@@ -96,6 +87,11 @@
   text-transform: uppercase;
   color: var(--text-muted);
   margin: 0 0 6px;
+}
+
+.activity-card-accent .activity-card-label,
+.activity-card-accent .activity-card-unit {
+  color: rgba(255,255,255,0.75);
 }
 
 .activity-card-value {
@@ -128,6 +124,31 @@
   transition: width 400ms ease-out;
 }
 
+.activity-card-accent .activity-card-bar-wrap {
+  background: rgba(255,255,255,0.25);
+}
+
+.activity-card-accent .activity-card-bar-fill {
+  background: #fff;
+}
+
+.dashboard-cta-btn {
+  width: 100%;
+  background: var(--accent);
+  color: var(--accent-ink);
+  border: none;
+  border-radius: 18px;
+  padding: 20px;
+  text-align: left;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .calories-readonly {
   grid-column: 1 / -1;
   cursor: default;
@@ -146,11 +167,9 @@
   transform: translateX(-50%);
   width: 100%;
   max-width: 390px;
-  background: #1e1214;
-  backdrop-filter: blur(40px);
-  -webkit-backdrop-filter: blur(40px);
+  background: #141414;
   border-radius: 20px 20px 0 0;
-  border-top: 1px solid var(--glass-border);
+  border-top: 1px solid var(--border);
   padding: 12px 24px 48px;
   z-index: 201;
   animation: slideUp 280ms cubic-bezier(0.34,1.56,0.64,1);
