@@ -23,8 +23,9 @@ const tabs = [
   },
   {
     path: '/workout',
+    elevated: true,
     icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round">
         <line x1="6" y1="5" x2="6" y2="19"/>
         <line x1="18" y1="5" x2="18" y2="19"/>
         <line x1="2" y1="9" x2="6" y2="9"/>
@@ -83,7 +84,7 @@ export default function BottomNav() {
           return (
             <button
               key={tab.path}
-              className={`nav-btn${active ? ' active' : ''}`}
+              className={`nav-btn${tab.elevated ? ' nav-btn-elevated' : ''}${active ? ' active' : ''}`}
               onClick={() => { navigator.vibrate && navigator.vibrate(6); navigate(tab.path) }}
             >
               {tab.icon}

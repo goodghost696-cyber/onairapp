@@ -6,6 +6,23 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo, branche `claude/charming-mendel-dj1GQ`, et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-07-21 — Session 13 (suite) : nav bar du bas restylée sur référence externe
+
+L'utilisateur a envoyé un screenshot d'une référence externe (maquette générique, pas notre app) demandant explicitement de reprendre **seulement la nav bar du bas** (barre sombre, 5 icônes, bouton central surélevé dans un cercle citron), pas le reste du style de l'image (bold/flat citron-bleu-noir, déjà écarté en Session 11-12).
+
+Clarifié avant de coder (l'utilisateur avait demandé qu'on lui pose des questions) :
+1. Garder nos 5 onglets actuels (Dashboard/Nutrition/Workout/Bilan/Settings) plutôt que copier les icônes du screenshot (maison/check/+/cloche/profil) — **confirmé : on garde nos 5 onglets**, pas de nouvel écran Notifications à construire pour ça.
+2. Quel onglet reçoit le traitement "cercle surélevé" — **Workout**, qui est déjà l'onglet du milieu dans notre ordre actuel donc aucune réorganisation nécessaire.
+
+### ✅ `BottomNav.jsx` / `nav.css`
+- Barre passée du style "pill flottante glass" (fond translucide + blur, centrée avec marge) à une **barre pleine largeur ancrée en bas**, fond `var(--bg)` solide bordé, cohérent avec l'abandon du glass partout ailleurs cette session.
+- Icône Workout (déjà au milieu) surélevée dans un cercle citron 56px (`margin-top:-26px`, bordure `var(--bg)` 3px, ombre) — reproduit le bouton central du screenshot fourni, avec l'icône haltère existante à la place d'un "+" générique puisqu'on garde le sens réel de l'onglet.
+- Couleurs icônes actif/inactif basculées sur `var(--text-primary)`/`var(--text-muted)` (théma-compatibles) au lieu des `rgba(255,255,255,...)` codés en dur.
+
+Build validé. Pas de vérification visuelle possible dans ce sandbox (limitation déjà documentée) — à valider sur la preview Vercel, notamment le espacement avec le FAB Coach IA/Messages (bas-droite, `bottom:96px`) qui n'a pas été retouché et pourrait nécessiter un ajustement si ça chevauche visuellement la nouvelle barre.
+
+---
+
 ## 2026-07-21 — Session 13 : Login/Auth passé à la charte Neon
 
 **Contexte** : PR #8 (Session 12) a été mergée dans `claude/charming-mendel-dj1GQ` (commit `b74a0a5`) — la question "renommer ou découper la PR #8" du journal précédent est donc caduque, c'est déjà réglé. Demandé à l'utilisateur s'il voulait continuer directement sur les écrans restants ou attendre un retour sur la preview Vercel : réponse **continuer directement**, en commençant par Login.
