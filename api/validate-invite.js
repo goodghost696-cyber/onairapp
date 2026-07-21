@@ -1,4 +1,5 @@
 import { applyCors } from './_lib/auth.js';
+import { checkMemoryRateLimit } from './_lib/rateLimit.js';
 
 // Public on purpose (called before the user has an account/session), but
 // only ever reveals a boolean — the real code lives server-side in
@@ -7,6 +8,13 @@ export default async function handler(req, res) {
   applyCors(req, res, 'POST');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  // No user identity exists yet at this point — best-effort IP-based
+  // deterrent against scripted brute-forcing (see rateLimit.js for caveats).
+  const ip = (req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown').split(',')[0].trim();
+  if (!checkMemoryRateLimit(`validate-invite:${ip}`, { max: 10, windowMs: 5 * 60 * 1000 })) {
+    return res.status(429).json({ error: 'Too many attempts, try again shortly' });
+  }
 
   const { code } = req.body || {};
   const expected = process.env.INVITE_CODE || 'ONAIR2026';

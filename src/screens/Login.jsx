@@ -125,7 +125,7 @@ export default function Login() {
               background: tab === tabKey ? 'var(--accent)' : 'transparent',
               borderRadius: 10, padding: '10px 0',
               transition: 'all 150ms ease',
-              boxShadow: tab === tabKey ? '0 4px 16px rgba(191,6,3,0.4)' : 'none',
+              boxShadow: tab === tabKey ? '0 4px 16px rgba(212,255,0,0.4)' : 'none',
             }}>
               {tabKey === 'login' ? t('login_tab') : t('signup_tab')}
             </button>

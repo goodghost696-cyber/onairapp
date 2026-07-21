@@ -176,7 +176,7 @@ export default function Dashboard() {
 
         {/* Weekly sessions glass card */}
         <div style={{ background: 'var(--glass)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)', border: '1px solid var(--glass-border)', borderRadius: 16, padding: 20, marginBottom: 40, boxShadow: 'var(--glass-shadow)', position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', top: 0, left: 12, right: 12, height: 1, background: 'linear-gradient(90deg,transparent,rgba(191,6,3,0.5),transparent)' }} />
+          <div style={{ position: 'absolute', top: 0, left: 12, right: 12, height: 1, background: 'linear-gradient(90deg,transparent,rgba(212,255,0,0.5),transparent)' }} />
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
             <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)' }}>Séances cette semaine</span>
             <span style={{ fontSize: 22, fontWeight: 800, color: 'var(--accent)', letterSpacing: '-0.5px' }}>

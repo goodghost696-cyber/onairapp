@@ -68,7 +68,7 @@ export default function Rings() {
   const [dismissed, setDismissed] = useState({})
 
   const rings = [
-    { id: 'calories', label: 'Calories', current: appData.calories, target: appData.calorieGoal, unit: 'kcal', color: '#E00000' },
+    { id: 'calories', label: 'Calories', current: appData.calories, target: appData.calorieGoal, unit: 'kcal', color: '#D4FF00' },
     { id: 'sessions', label: t('workouts_done'), current: appData.weeklyWorkouts, target: appData.weeklyGoal, unit: '/sem', color: '#1FD66B' },
     { id: 'hydration', label: 'Hydratation', current: appData.water, target: appData.waterGoal, unit: 'ml', color: '#2EA8FF' },
     { id: 'run', label: 'Course', current: appData.kmRun, target: 40, unit: 'km', color: '#F5A623' },

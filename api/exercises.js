@@ -1,4 +1,5 @@
 import { applyCors, requireUser } from './_lib/auth.js';
+import { checkRateLimit } from './_lib/rateLimit.js';
 
 export default async function handler(req, res) {
   applyCors(req, res, 'GET');
@@ -6,6 +7,9 @@ export default async function handler(req, res) {
 
   const user = await requireUser(req);
   if (!user) return res.status(401).json({ error: 'Unauthorized' });
+
+  const rateLimit = await checkRateLimit(req, 'exercises', { max: 60, windowMs: 5 * 60 * 1000 });
+  if (!rateLimit.ok) return res.status(rateLimit.status).json({ error: 'Too many requests, try again shortly' });
 
   const { muscle, type, difficulty, offset = 0 } = req.query;
   const apiKey = process.env.NINJA_API_KEY;

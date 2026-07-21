@@ -4,16 +4,10 @@ import { useApp } from '../context/AppContext'
 import { useAuth } from '../context/AuthContext'
 import { useLanguage } from '../context/LanguageContext'
 import { fetchWeeklyStats } from '../utils/weeklyStats'
+import { fetchLiftProgress } from '../utils/liftProgress'
 import '../styles/Weekly.css'
 
 const BAR_MAX_HEIGHT = 60
-
-const liftProgress = [
-  { name: 'Bench Press', unit: 'kg',   sessions: [75, 80, 80, 85],    dates: ['1 juin', '2 juin', '3 juin', '4 juin'] },
-  { name: 'Back Squat',  unit: 'kg',   sessions: [100, 100, 110, 120], dates: ['1 juin', '2 juin', '3 juin', '4 juin'] },
-  { name: 'Deadlift',    unit: 'kg',   sessions: [120, 130, 130, 140], dates: ['1 juin', '2 juin', '3 juin', '4 juin'] },
-  { name: 'Pull-up',     unit: 'reps', sessions: [8, 9, 10, 10],       dates: ['1 juin', '2 juin', '3 juin', '4 juin'] },
-]
 
 function LiftCurve({ lift }) {
   const max = Math.max(...lift.sessions)
@@ -81,6 +75,7 @@ export default function Weekly() {
   const { t } = useLanguage()
   const [weeklyData, setWeeklyData] = useState([])
   const [sleepData, setSleepData] = useState([])
+  const [liftProgress, setLiftProgress] = useState([])
 
   useEffect(() => {
     if (!user?.id) return
@@ -88,6 +83,7 @@ export default function Weekly() {
       setWeeklyData(weeklyData)
       setSleepData(sleepData)
     })
+    fetchLiftProgress(user.id).then(setLiftProgress)
   }, [user?.id])
 
   const maxCalories = Math.max(...weeklyData.map(d => d.calories), 1)
@@ -163,7 +159,12 @@ export default function Weekly() {
         <div className="lifts-section">
           <p className="section-label">MES CHARGES</p>
           <p className="section-sub">Évolution sur les 4 dernières séances</p>
-          {liftProgress.map((lift, i) => <LiftCurve key={i} lift={lift} />)}
+          {liftProgress.length
+            ? liftProgress.map((lift, i) => <LiftCurve key={i} lift={lift} />)
+            : <div className="card text-sm text-muted" style={{ textAlign: 'center', padding: '20px 16px' }}>
+                Pas encore assez de séances enregistrées pour un même exercice — reviens après quelques séances.
+              </div>
+          }
         </div>
       </div>
 

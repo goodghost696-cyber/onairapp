@@ -21,13 +21,10 @@ export default function Landing() {
       </div>
 
       <div className="landing-hero">
-        <span className="landing-bg-text" aria-hidden="true">ON AIR</span>
-
         <div className={`landing-content${visible ? ' visible' : ''}`}>
-          <span className="landing-kicker">REPOUSSE</span>
+          <span className="landing-kicker">REPOUSSE TES LIMITES</span>
           <h1 className="landing-title">
-            Tes limites.<br />
-            <span className="landing-title-accent">Chaque jour.</span>
+            ON <span className="landing-title-accent">AIR</span>
           </h1>
           <p className="landing-subtitle">
             Suis ta nutrition, tes séances, ta progression. Ton coach dans ta poche.
@@ -40,13 +37,13 @@ export default function Landing() {
           className="landing-btn landing-btn-primary"
           onClick={() => navigate('/login', { state: { tab: 'signup' } })}
         >
-          Rejoindre la salle
+          Rejoindre la salle →
         </button>
         <button
           className="landing-btn landing-btn-secondary"
           onClick={() => navigate('/login', { state: { tab: 'login' } })}
         >
-          Accès coach
+          Accès coach →
         </button>
       </div>
 

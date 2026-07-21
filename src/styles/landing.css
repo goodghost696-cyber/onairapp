@@ -1,8 +1,11 @@
+/* Landing screen — ON AIR Neon identity (dark, lime accent, Space Grotesk) */
 .landing {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
   padding: 0 16px;
+  background: #0A0A0A;
+  color: #fff;
 }
 
 .landing-topbar {
@@ -14,30 +17,13 @@
 
 .landing-hero {
   flex: 1;
-  position: relative;
   display: flex;
   flex-direction: column;
   justify-content: center;
   padding: 40px 0;
 }
 
-.landing-bg-text {
-  position: absolute;
-  font-size: 120px;
-  font-weight: 900;
-  color: #1A1A1A;
-  z-index: 0;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  white-space: nowrap;
-  pointer-events: none;
-  user-select: none;
-}
-
 .landing-content {
-  position: relative;
-  z-index: 1;
   opacity: 0;
   transform: translateY(-12px);
   transition: opacity 400ms ease-out, transform 400ms ease-out;
@@ -60,60 +46,69 @@
 
 .landing-footer {
   text-align: center;
-  padding: 20px 0;
+  padding: 16px 0 20px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.4);
 }
 
 .landing-brand {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.06em;
-  color: var(--text-primary);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #0047FF;
 }
 
 .landing-city {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.06em;
-  color: var(--text-secondary);
+  color: rgba(255,255,255,0.5);
 }
 
 .landing-kicker {
   display: block;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.12em;
-  color: var(--text-secondary);
-  margin-bottom: 8px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #D4FF00;
+  margin-bottom: 14px;
 }
 
 .landing-title {
-  font-size: 40px;
-  font-weight: 800;
-  line-height: 1.1;
-  color: var(--text-primary);
+  font-size: 56px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: #fff;
   margin: 0 0 16px;
 }
 
 .landing-title-accent {
-  color: var(--accent);
+  color: #D4FF00;
 }
 
 .landing-subtitle {
   font-size: 15px;
   line-height: 1.5;
-  color: var(--text-secondary);
-  max-width: 320px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.55);
+  max-width: 300px;
   margin: 0;
 }
 
 .landing-btn {
   width: 100%;
-  padding: 16px;
+  padding: 18px;
   border: none;
-  border-radius: var(--radius-pill);
-  font-size: 15px;
+  border-radius: 999px;
+  font-size: 14px;
   font-weight: 700;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.05em;
   cursor: pointer;
   transition: opacity 150ms ease, transform 150ms ease;
 }
@@ -123,17 +118,13 @@
 }
 
 .landing-btn-primary {
-  background: var(--accent);
-  color: #FFFFFF;
+  background: #D4FF00;
+  color: #0A0A0A;
   margin-bottom: 12px;
 }
 
-.landing-btn-primary:hover {
-  background: var(--accent-hover);
-}
-
 .landing-btn-secondary {
-  background: var(--surface-2);
-  color: var(--text-secondary);
-  border: 1px solid var(--border);
+  background: #1A1A1A;
+  color: #fff;
+  border: 2px solid rgba(255,255,255,0.15);
 }

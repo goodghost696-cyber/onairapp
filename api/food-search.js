@@ -1,4 +1,5 @@
 import { applyCors, requireUser } from './_lib/auth.js';
+import { checkRateLimit } from './_lib/rateLimit.js';
 
 // Proxies Open Food Facts' search-a-licious API server-side: unlike the legacy
 // cgi/search.pl endpoint, search-a-licious never sends Access-Control-Allow-Origin,
@@ -9,6 +10,9 @@ export default async function handler(req, res) {
 
   const user = await requireUser(req);
   if (!user) return res.status(401).json({ error: 'Unauthorized' });
+
+  const rateLimit = await checkRateLimit(req, 'food-search', { max: 60, windowMs: 5 * 60 * 1000 });
+  if (!rateLimit.ok) return res.status(rateLimit.status).json({ error: 'Too many requests, try again shortly' });
 
   const { q, page_size = 12, fields } = req.query;
   if (!q) return res.status(400).json({ error: 'Missing q parameter' });
