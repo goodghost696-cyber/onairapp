@@ -32,14 +32,50 @@ Même méthode : spec exact déjà récupéré via `DesignSync` pendant cette se
 
 Build validé après ce lot aussi. Toujours pas de vérification visuelle possible dans ce sandbox (même limitation Supabase), à valider sur la preview Vercel.
 
-### Reste à faire (ordre inchangé depuis Session 12)
-- [ ] Dashboard (`Dashboard.jsx`)
-- [ ] Workout (`Workout.jsx`)
-- [ ] Nutrition (`Nutrition.jsx`)
-- [ ] Activité/Bilan (`Weekly.jsx`/`Rings.jsx`)
-- [ ] Settings (`Settings.jsx`)
-- [ ] Notifications (écran à créer)
-- [ ] Décision thème clair Neon ou pas (voir Session 12)
+### L'utilisateur a dit d'enchaîner sur tout le reste ("tu peux tout faire, on corrige ensuite")
+Continué sans repasser par une validation écran par écran. Détail ci-dessous.
+
+### ⚠️ Découverte transversale : les labels d'en-tête d'écran étaient tous de la mauvaise couleur
+Le prototype utilise **`#0047FF` (bleu, `--accent-secondary`)** pour le petit label d'en-tête de chaque écran principal ("ON AIR", "WORKOUT", "NUTRITION", "ACTIVITÉ") — vérifié dans les 4 sections du fichier prototype. Notre code utilisait `var(--accent)` (citron) partout, un reliquat probable du remplacement rouge→citron de la Session 12 qui n'avait pas fait cette distinction. **Corrigé sur les 4 écrans concernés** (Dashboard, Workout, Nutrition, Weekly) — c'est le genre d'erreur qu'une comparaison au pixel près avec le fichier source permet d'attraper, plutôt qu'une simple règle "rouge→citron".
+
+### ✅ Dashboard (`Dashboard.jsx` + `dashboard.css`)
+- Ring calories + macros regroupés dans une seule carte bordée `#1A1A1A` (au lieu de deux blocs séparés) — barres macro passées en bleu (`--accent-secondary`), comme le fait le prototype pour cette carte précise.
+- Bouton logout remplacé par un **avatar rond citron avec l'initiale du prénom**, qui navigue vers `/settings` (le logout existe déjà là-bas, donc rien perdu) — reproduit l'avatar du prototype.
+- Grille d'activité (pas/course/eau/sommeil) restylée en cartes solides bordées ; la carte **EAU** mise en bleu plein pour retrouver l'alternance citron/bleu du prototype (qui a "EAU" en bleu dans sa grille 3 stats).
+- Ajouté le bouton **"Voir mon entraînement du jour →"** (citron, `border-radius:18`) qui navigue vers `/workout` — présent dans le prototype, absent de notre Dashboard jusqu'ici.
+- **Bug trouvé en passant** : la bottom sheet d'édition (pas/eau/sommeil/course) avait encore un fond `#1e1214` — un vieux marron/rouge de l'ancien thème, oublié par l'audit de contraste de la Session 12 (qui cherchait des problèmes de texte-sur-accent, pas des couleurs de fond isolées). Corrigé en `#141414`.
+
+### ✅ Workout (`Workout.jsx` + `Workout.css`)
+- Tabs Musculation/Course : le prototype a un pattern **différent** de celui de Login/Onboarding pour ces tabs précises — pas fond citron/texte foncé, mais **fond `#0A0A0A` (le fond de l'écran) + texte citron** pour l'onglet actif, sur un conteneur `#1A1A1A`. Corrigé pour matcher exactement (j'avais failli reproduire le pattern Login par réflexe avant de re-vérifier le fichier source).
+- Cartes (séances de la semaine, carte "PROGRAMME IA", historique) passées en bordure solide `2px`.
+- Icônes de la bibliothèque (Maison/Salle/Dehors) : fond de la pastille icône teinté citron/bleu/citron en alternance, comme les carrés de couleur du prototype (au lieu d'un fond neutre uniforme).
+
+### ✅ Nutrition (`Nutrition.jsx`)
+- Bouton scanner (raccourci vers `/scan`) passé en bordure solide au lieu du glass.
+- **Autre bug de contraste trouvé** (même famille que celui de Login en Session 12) : le sélecteur de type de repas (Petit-déj/Déjeuner/Dîner/Collation, présent dans 2 sheets — ajout manuel et recette IA) mettait `color:'#fff'` sur le bouton actif en fond citron. Corrigé en `var(--accent-ink)` aux deux endroits.
+
+### ✅ Activité/Bilan (`Weekly.jsx` + `Weekly.css`)
+- Bouton retour et cartes de progression de charges passés en bordure/fond solides.
+- *(Le bouton retour lui-même — sa pertinence sur cet écran — reste une question UX ouverte et non traitée, voir le backlog du 2026-07-16 plus bas : seule sa couleur a été mise à jour ici.)*
+
+### ✅ Settings (`Settings.jsx`)
+- Label d'en-tête et bordure du bouton déconnexion mis à jour.
+- `.btn-ghost` (classe globale partagée avec quelques écrans coach) repassée en bordure solide au lieu du glass — bénéficie aussi à `CoachDashboard.jsx`/`MemberDetail.jsx`/`Hydration.jsx` qui l'utilisent.
+
+### ✅ Fix global : `.card` (classe partagée par presque tous les écrans, y compris coach) et `.btn-ghost`
+Les deux repassés du style glass (fond translucide + blur + ombre) au style solide `#1A1A1A` bordé `2px`, cohérent avec tout ce qui a été fait cette session. Ça couvre automatiquement des écrans pas explicitement dans la liste (Hydration, Sleep, Messages, écrans coach) puisqu'ils utilisent la même classe `.card`.
+
+### ⚠️ Découverte + correctif transversal : le thème clair aurait été cassé par mes changements
+En écrivant Login/Onboarding/Dashboard, j'ai d'abord codé les bordures en dur (`rgba(255,255,255,.12)`/`.15`, valeurs exactes du prototype qui est dark-only). Avant d'aller plus loin, vérifié si le thème clair est vraiment accessible en prod — **oui** : `ThemeContext.jsx` + un toggle dans Settings, donc pas du code mort. Une bordure blanche à 12-15% d'opacité serait quasi invisible sur fond clair. Corrigé en ajoutant deux tokens de thème (`--border`, déjà existant à la bonne valeur en dark, et un nouveau `--border-strong`) dans les 3 blocs de `global.css` (`:root`, `[data-theme="dark"]`, `[data-theme="light"]`), puis remplacé toutes les valeurs codées en dur par ces variables dans Login/Onboarding/Dashboard/Workout/Nutrition/Weekly/Settings. Le thème clair reste sur son ancienne palette rouge (décision non tranchée, voir plus bas) mais au moins ses bordures/textes ne sont plus invisibles suite à ces changements.
+
+### Build + vérifications
+`npm run build` validé après chaque écran (7 fois en tout ce lot). Toujours aucune vérification visuelle possible dans ce sandbox (cause documentée en Session 12 puis affinée dans l'entrée Login ci-dessus). Tout poussé sur la PR #10 (draft, vers `claude/charming-mendel-dj1GQ`), en plusieurs commits séparés par écran pour faciliter une revue/rollback ciblé si besoin.
+
+### Reste à faire / décisions en attente
+- [ ] **Notifications** — écran qui n'existe pas dans l'app, présent dans le prototype (liste de notifs, une carte citron mise en avant). **Pas construit cette session** : contrairement aux 7 écrans ci-dessus qui étaient du reskin pur, celui-ci est une fonctionnalité entièrement nouvelle (route, nav, et surtout un vrai modèle de données — qu'est-ce qui déclenche une notif, persistance, lu/non lu — qui n'existe nulle part côté backend). Différent d'un simple ajustement visuel, à cadrer avec l'utilisateur avant de coder plutôt que de improviser un backend de notifications.
+- [ ] **Décision thème clair** : reste sur l'ancienne palette rouge (voir Session 12). Est-ce qu'il doit aussi passer au citron/Neon, ou rester une identité visuelle différente/désactivée ? Pas tranché.
+- [ ] **Écrans non touchés cette session** (pas dans le périmètre annoncé, glass encore présent par endroits) : `Scan.jsx` (un bouton), écrans coach (`CoachDashboard.jsx`, `MemberDetail.jsx`, `ClientsList.jsx`, `CoachMessages.jsx`, `CoachSettings.jsx`), `Messages.jsx`, `Hydration.jsx`, `Sleep.jsx`, `Rings.jsx` — bénéficient déjà partiellement des fix globaux (`.card`, `.btn-ghost`) mais pas vérifiés en détail écran par écran comme les 7 principaux.
+- [ ] Item UX déjà en backlog depuis le 2026-07-16, toujours pas traité : navigation retour incohérente (voir plus bas dans ce journal).
 
 ---
 
