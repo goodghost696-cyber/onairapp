@@ -72,7 +72,7 @@ export default function Settings() {
 
       <div className="screen" style={{ paddingBottom: 110 }}>
         <div className="screen-header" style={{ paddingTop: 56, paddingBottom: 20 }}>
-          <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 7 }}>SETTINGS</p>
+          <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--accent-secondary)', marginBottom: 7 }}>SETTINGS</p>
           <h1 style={{ fontSize: 28, fontWeight: 800, lineHeight: 1.15, color: 'var(--text-primary)' }}>{t('settings_title')}</h1>
         </div>
 
@@ -185,7 +185,7 @@ export default function Settings() {
         )}
 
         <div className="section-label">{t('account_section')}</div>
-        <button onClick={() => { logout(); navigate('/') }} style={{ width: '100%', padding: 16, background: 'transparent', border: '1px solid var(--danger)', color: 'var(--danger)', fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', borderRadius: 12, cursor: 'pointer', marginBottom: 16 }}>
+        <button onClick={() => { logout(); navigate('/') }} style={{ width: '100%', padding: 16, background: 'transparent', border: '2px solid var(--danger)', color: 'var(--danger)', fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', borderRadius: 12, cursor: 'pointer', marginBottom: 16 }}>
           {t('logout')}
         </button>
       </div>

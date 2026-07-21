@@ -176,10 +176,8 @@ button {
 .btn-accent:hover { background: var(--accent-hover); }
 
 .btn-ghost {
-  background: var(--glass);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--glass-border);
+  background: var(--surface);
+  border: 2px solid var(--border);
   color: var(--text-secondary);
   font-size: 13px;
   letter-spacing: 0.1em;
@@ -188,7 +186,6 @@ button {
   width: 100%;
   display: block;
   border-radius: var(--radius-btn);
-  box-shadow: var(--glass-shadow);
 }
 
 .text-xs { font-size: 11px; line-height: 14px; text-transform: uppercase; letter-spacing: 0.1em; }
