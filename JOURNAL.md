@@ -21,8 +21,18 @@ Récupéré le spec exact de l'écran Auth du prototype via `DesignSync`/`get_fi
 
 **Vérifié** : `npm run build` passe. **Tentative de vérification visuelle en local** (`vite preview` + Playwright, écran non-authentifié donc en théorie testable sans les limitations de screenshot connues) : échec, mais avec une cause différente de celle documentée en Session 12 — ce n'est pas un "loading" qui reste bloqué, c'est un crash JS immédiat (`supabaseUrl is required`) car `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` ne sont simplement pas configurées dans ce sandbox (pas de fichier `.env` local). Root cause différente mais conclusion identique à Session 12 : **impossible de vérifier visuellement dans ce sandbox**, à valider par l'utilisateur sur la preview Vercel (qui elle a les vraies variables d'env).
 
+### ✅ Onboarding (`Onboarding.jsx`) passé à la charte Neon
+Même méthode : spec exact déjà récupéré via `DesignSync` pendant cette session (même fichier prototype). Notre Onboarding réel a **6 étapes** (prénom/objectif/niveau/corps/fréquence/équipement) contre 3 dans le prototype (prénom/poids/objectif calorique, une démo simplifiée) — la structure reste la nôtre, seul le skin visuel + une brique manquante ont été alignés :
+- Barre de progression : remplacée par des **segments individuels** (un par étape, `gap:6px`, `height:4px`, citron si atteint / `rgba(255,255,255,.15)` sinon) au lieu de l'ancienne barre continue à 2px — adapté du prototype (qui avait 3 segments fixes pour ses 3 étapes) pour rester correct avec nos 6 étapes.
+- Libellé d'étape : `ON AIR — {n} / {total}` en citron, tel que le prototype.
+- Titre 34px (au lieu de 26px), sous-titre en `--text-secondary` (0.55, au lieu de `--text-muted` à 0.35 — le prototype utilise bien la teinte la plus claire des deux pour le sous-titre).
+- Inputs (texte, poids/taille) et cartes de choix (objectif/niveau/fréquence/équipement) : passés du style "glass" (blur transparent) au solide `#1A1A1A` bordé `2px rgba(255,255,255,.12-.15)`, cohérent avec Login et le reste de la charte.
+- Bouton "Continuer/Commencer" passé en pill pleine (`border-radius:999`), comme le prototype. **État désactivé retravaillé plutôt que copié à l'identique** : le prototype garde un texte `#0A0A0A` (quasi noir) sur un fond `rgba(255,255,255,.15)` même désactivé — sur fond d'écran noir, ce fond translucide reste très sombre, donc le texte foncé y serait quasiment invisible. Corrigé en texte `rgba(255,255,255,.3)` (blanc cassé) sur ce même fond, cohérent avec l'esprit de l'audit de contraste de la Session 12 plutôt qu'une reproduction aveugle du prototype.
+- **Ajouté un bouton "RETOUR"** (ghost, texte seulement) sous le bouton principal dès qu'on n'est plus à la première étape — présent dans le prototype mais absent de notre implémentation jusqu'ici (on ne pouvait pas revenir en arrière). Simple `setCurrentStep(s => s - 1)`, aucun état perdu puisque les réponses restent en mémoire.
+
+Build validé après ce lot aussi. Toujours pas de vérification visuelle possible dans ce sandbox (même limitation Supabase), à valider sur la preview Vercel.
+
 ### Reste à faire (ordre inchangé depuis Session 12)
-- [ ] Onboarding (`Onboarding.jsx`)
 - [ ] Dashboard (`Dashboard.jsx`)
 - [ ] Workout (`Workout.jsx`)
 - [ ] Nutrition (`Nutrition.jsx`)
