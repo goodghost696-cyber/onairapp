@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { FOOD_DATABASE } from '../context/AppContext'
 import { useAuth } from '../context/AuthContext'
@@ -29,6 +29,7 @@ function calcNutrition(food, grams) {
 
 export default function Nutrition() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { appData, addMeal, deleteMeal } = useApp()
   const [editingMeal, setEditingMeal] = useState(null)
   const [editGrams, setEditGrams] = useState('')
@@ -50,6 +51,16 @@ export default function Nutrition() {
   const [recipeError, setRecipeError] = useState('')
 
   useEffect(() => { window.scrollTo(0, 0) }, [])
+
+  // Opened from the bottom nav's "+" menu ("Nouveau repas") — consume the
+  // nav state once so it doesn't reopen on a later back-navigation/refresh.
+  useEffect(() => {
+    if (location.state?.openAddMeal) {
+      openSheet()
+      navigate(location.pathname, { replace: true, state: {} })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state])
 
   const MEAL_TYPES = [t('breakfast'), t('lunch'), t('dinner'), t('snack')]
 
@@ -252,12 +263,12 @@ Réponds en français.`
       <div className="screen" style={{ paddingBottom: 110 }}>
         <div className="screen-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingTop: 56, paddingBottom: 20 }}>
           <div>
-            <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 7 }}>NUTRITION</p>
+            <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--accent-secondary)', marginBottom: 7 }}>NUTRITION</p>
             <span className="text-sm text-secondary" style={{ textTransform: 'capitalize' }}>{new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'short' })}</span>
           </div>
           <button
             onClick={() => navigate('/scan')}
-            style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--glass)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '1px solid var(--glass-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: 'var(--glass-shadow)', cursor: 'pointer', color: 'var(--accent)' }}
+            style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--surface)', border: '2px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, cursor: 'pointer', color: 'var(--accent)' }}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h.01M18 14h.01M14 18h.01M18 18h.01M14 14v4h4v-4z" strokeLinejoin="round"/></svg>
           </button>
@@ -301,7 +312,7 @@ Réponds en français.`
           className="card"
           style={{
             display: 'flex', alignItems: 'center', gap: 12, width: '100%',
-            marginBottom: 16, cursor: 'pointer', border: '1px solid var(--accent)',
+            marginBottom: 16, cursor: 'pointer', border: '2px solid rgba(212,255,0,0.3)',
             background: 'rgba(212,255,0,0.08)', textAlign: 'left',
           }}
         >
@@ -459,7 +470,7 @@ Réponds en français.`
                 <button key={mt} onClick={() => setMealType(mt)} style={{
                   background: mealType === mt ? 'var(--accent)' : 'var(--surface-2)',
                   border: '0.5px solid var(--border)',
-                  color: mealType === mt ? '#fff' : 'var(--text-secondary)',
+                  color: mealType === mt ? 'var(--accent-ink)' : 'var(--text-secondary)',
                   fontSize: 11, fontWeight: 700, padding: '8px 14px', borderRadius: 50,
                   whiteSpace: 'nowrap', flexShrink: 0, cursor: 'pointer',
                 }}>{mt}</button>
@@ -528,7 +539,7 @@ Réponds en français.`
                 <button key={mt} onClick={() => setMealType(mt)} style={{
                   background: mealType === mt ? 'var(--accent)' : 'var(--surface-2)',
                   border: '0.5px solid var(--border)',
-                  color: mealType === mt ? '#fff' : 'var(--text-secondary)',
+                  color: mealType === mt ? 'var(--accent-ink)' : 'var(--text-secondary)',
                   fontSize: 11, fontWeight: 700, padding: '8px 14px', borderRadius: 50,
                   whiteSpace: 'nowrap', flexShrink: 0, cursor: 'pointer',
                 }}>{mt}</button>

@@ -77,15 +77,21 @@ Donne exactement 4-5 exercices adaptés à l'objectif.`
 
   const sectionIcons = {
     maison: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
-    salle: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6.5 6.5h11M6.5 17.5h11M6.5 12h11M3 6.5h.01M3 12h.01M3 17.5h.01M21 6.5h-.01M21 12h-.01M21 17.5h-.01"/></svg>,
+    salle: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent-secondary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6.5 6.5h11M6.5 17.5h11M6.5 12h11M3 6.5h.01M3 12h.01M3 17.5h.01M21 6.5h-.01M21 12h-.01M21 17.5h-.01"/></svg>,
     dehors: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="5" r="2"/><path d="M8 21l2-8-2-3h8l-2 3 2 8"/><path d="M6 12l-2 2M18 12l2 2"/></svg>,
+  }
+
+  const sectionIconBg = {
+    maison: 'rgba(212,255,0,0.12)',
+    salle: 'rgba(0,71,255,0.15)',
+    dehors: 'rgba(212,255,0,0.12)',
   }
 
   return (
     <div className="app-wrapper">
       <div className="screen" style={{ paddingBottom: 110, padding: '0 24px 110px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 56, paddingBottom: 8 }}>
-          <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--accent)' }}>WORKOUT</p>
+          <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--accent-secondary)' }}>WORKOUT</p>
           <span style={{ fontSize: 12, color: 'var(--text-secondary)', textTransform: 'capitalize' }}>{new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'short' })}</span>
         </div>
 
@@ -170,7 +176,7 @@ Donne exactement 4-5 exercices adaptés à l'objectif.`
         {sections.map((s, i) => (
           <div key={s.key} className="card card-animated" style={{ '--delay': `${i*80}ms`, cursor: 'pointer', marginBottom: 8 }} onClick={() => navigate(`/workout/${s.key}`)}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <div style={{ width: 44, height: 44, background: 'var(--surface-2)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <div style={{ width: 44, height: 44, background: sectionIconBg[s.key], borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 {sectionIcons[s.key]}
               </div>
               <div style={{ flex: 1 }}>

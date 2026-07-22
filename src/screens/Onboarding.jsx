@@ -164,14 +164,13 @@ export default function Onboarding() {
   return (
     <div className="onboarding-screen">
       <div className="onboarding-progress">
-        <div
-          className="onboarding-progress-fill"
-          style={{ width: `${((currentStep + 1) / STEPS.length) * 100}%` }}
-        />
+        {STEPS.map((s, i) => (
+          <div key={s.id} className={`onboarding-progress-segment${i <= currentStep ? ' filled' : ''}`} />
+        ))}
       </div>
 
       <div className="onboarding-content">
-        <p className="onboarding-step-count">{currentStep + 1} / {STEPS.length}</p>
+        <p className="onboarding-step-count">ON AIR — {currentStep + 1} / {STEPS.length}</p>
         <h1 className="onboarding-title">{step.title}</h1>
         <p className="onboarding-subtitle">{step.subtitle}</p>
 
@@ -240,13 +239,20 @@ export default function Onboarding() {
           </div>
         )}
 
-        <button
-          className="onboarding-next-btn"
-          onClick={handleNext}
-          disabled={!canProceed()}
-        >
-          {currentStep === STEPS.length - 1 ? 'COMMENCER →' : 'CONTINUER →'}
-        </button>
+        <div className="onboarding-actions">
+          <button
+            className="onboarding-next-btn"
+            onClick={handleNext}
+            disabled={!canProceed()}
+          >
+            {currentStep === STEPS.length - 1 ? 'COMMENCER →' : 'CONTINUER →'}
+          </button>
+          {currentStep > 0 && (
+            <button className="onboarding-back-btn" onClick={() => setCurrentStep(s => s - 1)}>
+              RETOUR
+            </button>
+          )}
+        </div>
       </div>
     </div>
   )

@@ -60,6 +60,7 @@ body {
   --surface-solid: #1A1A1A;
   --surface-2: rgba(255,255,255,0.06);
   --border: rgba(255,255,255,0.12);
+  --border-strong: rgba(255,255,255,0.15);
   --text-primary: #FFFFFF;
   --text-secondary: rgba(255,255,255,0.55);
   --text-muted: rgba(255,255,255,0.35);
@@ -91,6 +92,7 @@ body {
   --surface-solid: #1A1A1A;
   --surface-2: rgba(255,255,255,0.06);
   --border: rgba(255,255,255,0.12);
+  --border-strong: rgba(255,255,255,0.15);
   --text-primary: #FFFFFF;
   --text-secondary: rgba(255,255,255,0.55);
   --text-muted: rgba(255,255,255,0.35);
@@ -109,6 +111,7 @@ body {
   --surface-solid: #ffffff;
   --surface-2: rgba(0,0,0,0.06);
   --border: rgba(0,0,0,0.08);
+  --border-strong: rgba(0,0,0,0.15);
   --text-primary: #1A1A1A;
   --text-secondary: rgba(0,0,0,0.5);
   --text-muted: rgba(0,0,0,0.28);
@@ -173,10 +176,8 @@ button {
 .btn-accent:hover { background: var(--accent-hover); }
 
 .btn-ghost {
-  background: var(--glass);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--glass-border);
+  background: var(--surface);
+  border: 2px solid var(--border);
   color: var(--text-secondary);
   font-size: 13px;
   letter-spacing: 0.1em;
@@ -185,7 +186,6 @@ button {
   width: 100%;
   display: block;
   border-radius: var(--radius-btn);
-  box-shadow: var(--glass-shadow);
 }
 
 .text-xs { font-size: 11px; line-height: 14px; text-transform: uppercase; letter-spacing: 0.1em; }
@@ -204,27 +204,13 @@ button {
 .text-danger { color: var(--danger); }
 
 .card {
-  background: var(--glass);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
+  background: var(--surface);
+  border: 2px solid var(--border);
   padding: 16px;
   margin-bottom: 12px;
   border-radius: var(--radius-card);
   position: relative;
   overflow: hidden;
-}
-
-.card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 12px;
-  right: 12px;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--glass-highlight), transparent);
-  pointer-events: none;
 }
 
 .ai-program-badge {

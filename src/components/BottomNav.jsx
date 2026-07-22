@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { useApp } from '../context/AppContext'
 import '../styles/nav.css'
 
-const tabs = [
+const leftTabs = [
   {
     path: '/dashboard',
     icon: (
@@ -21,6 +22,19 @@ const tabs = [
       </svg>
     )
   },
+]
+
+const rightTabs = [
+  {
+    path: '/weekly',
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+        <rect x="4" y="10" width="4" height="10" rx="1"/>
+        <rect x="10" y="4" width="4" height="16" rx="1"/>
+        <rect x="16" y="12" width="4" height="8" rx="1"/>
+      </svg>
+    )
+  },
   {
     path: '/workout',
     icon: (
@@ -35,29 +49,76 @@ const tabs = [
       </svg>
     )
   },
-  {
-    path: '/weekly',
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
-        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-      </svg>
-    )
-  },
-  {
-    path: '/settings',
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round">
-        <circle cx="12" cy="12" r="3"/>
-        <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/>
-      </svg>
-    )
-  },
 ]
+
+function QuickExerciseSheet({ onClose }) {
+  const { logQuickExercise } = useApp()
+  const [name, setName] = useState('')
+  const [setsCount, setSetsCount] = useState('3')
+  const [reps, setReps] = useState('10')
+  const [kg, setKg] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  async function handleSave() {
+    if (!name.trim()) return
+    setSaving(true)
+    await logQuickExercise({
+      name: name.trim(),
+      setsCount: Math.max(1, parseInt(setsCount) || 1),
+      reps: parseInt(reps) || 0,
+      kg: parseFloat(kg) || 0,
+    })
+    setSaving(false)
+    onClose()
+  }
+
+  return (
+    <>
+      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 199 }} />
+      <div style={{
+        position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)',
+        width: '100%', maxWidth: 390, background: 'var(--surface-solid)',
+        borderRadius: '20px 20px 0 0', borderTop: '1px solid var(--border)',
+        padding: '24px 20px 40px', zIndex: 200,
+      }}>
+        <h2 className="text-lg bold" style={{ marginBottom: 16 }}>Ajouter un exercice</h2>
+        <label className="text-xs text-muted" style={{ display: 'block', marginBottom: 8 }}>NOM DE L'EXERCICE</label>
+        <input
+          type="text"
+          value={name}
+          onChange={e => setName(e.target.value)}
+          placeholder="Ex. Développé couché"
+          autoFocus
+          style={{ marginBottom: 16 }}
+        />
+        <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
+          <div style={{ flex: 1 }}>
+            <label className="text-xs text-muted" style={{ display: 'block', marginBottom: 8 }}>SÉRIES</label>
+            <input type="number" inputMode="numeric" value={setsCount} onChange={e => setSetsCount(e.target.value)} style={{ textAlign: 'center' }} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <label className="text-xs text-muted" style={{ display: 'block', marginBottom: 8 }}>RÉPS</label>
+            <input type="number" inputMode="numeric" value={reps} onChange={e => setReps(e.target.value)} style={{ textAlign: 'center' }} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <label className="text-xs text-muted" style={{ display: 'block', marginBottom: 8 }}>KG</label>
+            <input type="number" inputMode="decimal" value={kg} onChange={e => setKg(e.target.value)} placeholder="0" style={{ textAlign: 'center' }} />
+          </div>
+        </div>
+        <button className="btn-accent" onClick={handleSave} disabled={saving || !name.trim()} style={{ opacity: saving || !name.trim() ? 0.6 : 1 }}>
+          {saving ? '...' : 'ENREGISTRER'}
+        </button>
+      </div>
+    </>
+  )
+}
 
 export default function BottomNav() {
   const navigate = useNavigate()
   const location = useLocation()
   const [hidden, setHidden] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [exerciseSheetOpen, setExerciseSheetOpen] = useState(false)
   const lastScrollY = useRef(0)
 
   useEffect(() => {
@@ -75,22 +136,58 @@ export default function BottomNav() {
     return () => scrollEl.removeEventListener('scroll', handleScroll)
   }, [location.pathname])
 
+  function renderTab(tab) {
+    const active = location.pathname === tab.path || (tab.path === '/workout' && location.pathname.startsWith('/workout'))
+    return (
+      <button
+        key={tab.path}
+        className={`nav-btn${active ? ' active' : ''}`}
+        onClick={() => { navigator.vibrate && navigator.vibrate(6); navigate(tab.path) }}
+      >
+        {tab.icon}
+      </button>
+    )
+  }
+
   return (
-    <nav className={`bottom-nav${hidden ? ' hidden' : ''}`}>
-      <div className="nav-pill">
-        {tabs.map(tab => {
-          const active = location.pathname === tab.path || (tab.path === '/workout' && location.pathname.startsWith('/workout'))
-          return (
+    <>
+      <nav className={`bottom-nav${hidden ? ' hidden' : ''}`}>
+        {menuOpen && <div className="nav-add-overlay" onClick={() => setMenuOpen(false)} />}
+
+        {menuOpen && (
+          <div className="nav-add-menu">
             <button
-              key={tab.path}
-              className={`nav-btn${active ? ' active' : ''}`}
-              onClick={() => { navigator.vibrate && navigator.vibrate(6); navigate(tab.path) }}
+              className="nav-add-menu-item"
+              onClick={() => { setMenuOpen(false); navigate('/nutrition', { state: { openAddMeal: true } }) }}
             >
-              {tab.icon}
+              🍽️ Nouveau repas
             </button>
-          )
-        })}
-      </div>
-    </nav>
+            <button
+              className="nav-add-menu-item"
+              onClick={() => { setMenuOpen(false); setExerciseSheetOpen(true) }}
+            >
+              🏋️ Nouvel exercice
+            </button>
+          </div>
+        )}
+
+        <div className="nav-pill">
+          {leftTabs.map(renderTab)}
+
+          <button
+            className={`nav-btn nav-btn-elevated${menuOpen ? ' active' : ''}`}
+            onClick={() => { navigator.vibrate && navigator.vibrate(6); setMenuOpen(o => !o) }}
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+          </button>
+
+          {rightTabs.map(renderTab)}
+        </div>
+      </nav>
+
+      {exerciseSheetOpen && <QuickExerciseSheet onClose={() => setExerciseSheetOpen(false)} />}
+    </>
   )
 }

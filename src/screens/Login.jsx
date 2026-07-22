@@ -86,46 +86,55 @@ export default function Login() {
   }
 
   const inputStyle = {
-    background: 'var(--glass)',
-    backdropFilter: 'blur(20px)',
-    WebkitBackdropFilter: 'blur(20px)',
-    border: '1px solid var(--glass-border)',
+    background: 'var(--surface)',
+    border: '2px solid var(--border-strong)',
     color: 'var(--text-primary)',
-    padding: '16px 18px',
+    padding: '16px',
     fontSize: 15,
+    fontWeight: 700,
     width: '100%',
     outline: 'none',
     borderRadius: 14,
     fontFamily: 'inherit',
   }
 
+  const pillButtonStyle = {
+    width: '100%',
+    background: 'var(--accent)',
+    color: 'var(--accent-ink)',
+    border: 'none',
+    borderRadius: 999,
+    padding: '18px 16px',
+    fontSize: 14,
+    fontWeight: 700,
+    letterSpacing: '0.05em',
+    textTransform: 'uppercase',
+    fontFamily: 'inherit',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  }
+
   return (
     <div className="app-wrapper">
-      <div style={{ padding: '0 28px 48px', display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      <div style={{ padding: '80px 28px 28px', display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
 
-        {/* Logo area */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 80, paddingBottom: 48 }}>
-          <img
-            src="/icon-onair.png"
-            alt="ON AIR"
-            style={{ width: 72, height: 72, mixBlendMode: 'screen', marginBottom: 14 }}
-          />
-          <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--text-secondary)', animation: 'fadeInDelay 400ms ease-out 200ms both' }}>
-            ORIGINAL FITNESS · CLICHY
-          </p>
-        </div>
+        <h1 style={{ fontSize: 30, fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--text-primary)', margin: '0 0 22px' }}>
+          Bienvenue.
+        </h1>
 
         {/* Tabs */}
-        <div style={{ display: 'flex', background: 'var(--glass)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid var(--glass-border)', borderRadius: 14, padding: 4, marginBottom: 28, gap: 4 }}>
+        <div style={{ display: 'flex', gap: 8, background: 'var(--surface)', border: '2px solid var(--border-strong)', borderRadius: 16, padding: 4, marginBottom: 22 }}>
           {['login', 'signup'].map(tabKey => (
             <button key={tabKey} onClick={() => { setTab(tabKey); setError(''); setSignupError(''); setForgotMode(false) }} style={{
               flex: 1, border: 'none', cursor: 'pointer', fontFamily: 'inherit',
-              fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase',
-              color: tab === tabKey ? '#fff' : 'var(--text-muted)',
+              fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase',
+              color: tab === tabKey ? 'var(--accent-ink)' : 'var(--text-muted)',
               background: tab === tabKey ? 'var(--accent)' : 'transparent',
-              borderRadius: 10, padding: '10px 0',
+              borderRadius: 12, padding: '10px 0',
               transition: 'all 150ms ease',
-              boxShadow: tab === tabKey ? '0 4px 16px rgba(212,255,0,0.4)' : 'none',
             }}>
               {tabKey === 'login' ? t('login_tab') : t('signup_tab')}
             </button>
@@ -140,8 +149,8 @@ export default function Login() {
                 <>
                   <input style={inputStyle} type="email" placeholder={t('email_placeholder')} value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSendReset()} />
                   {forgotError && <span style={{ fontSize: 11, color: 'var(--danger)', letterSpacing: '0.05em' }}>{forgotError}</span>}
-                  <button className="btn-accent" onClick={handleSendReset} disabled={sendingReset} style={{ marginTop: 4, opacity: sendingReset ? 0.7 : 1 }}>
-                    {sendingReset ? '...' : t('send_reset_link_btn')}
+                  <button onClick={handleSendReset} disabled={sendingReset} style={{ ...pillButtonStyle, marginTop: 4, opacity: sendingReset ? 0.7 : 1 }}>
+                    {sendingReset ? '...' : <>{t('send_reset_link_btn')} <span>→</span></>}
                   </button>
                 </>
               ) : (
@@ -165,8 +174,8 @@ export default function Login() {
               >
                 {t('forgot_password_link')}
               </button>
-              <button className="btn-accent" onClick={handleLogin} disabled={loggingIn} style={{ marginTop: 4, opacity: loggingIn ? 0.7 : 1 }}>
-                {loggingIn ? '...' : t('connect_btn')}
+              <button onClick={handleLogin} disabled={loggingIn} style={{ ...pillButtonStyle, marginTop: 4, opacity: loggingIn ? 0.7 : 1 }}>
+                {loggingIn ? '...' : <>{t('connect_btn')} <span>→</span></>}
               </button>
             </div>
           )
@@ -179,15 +188,14 @@ export default function Login() {
             <input style={inputStyle} type="text" placeholder={t('access_code')} value={signupData.code} onChange={e => setSignupData(d => ({ ...d, code: e.target.value }))} />
             {signupError && <span style={{ fontSize: 11, color: 'var(--danger)' }}>{signupError}</span>}
             {signupSuccess && <span style={{ fontSize: 11, color: 'var(--success)' }}>{t('welcome_toast')} {signupData.firstName} 👋 {t('account_created')}</span>}
-            <button className="btn-accent" onClick={handleSignup} disabled={signingUp} style={{ marginTop: 4, opacity: signingUp ? 0.7 : 1 }}>
-              {signingUp ? '...' : t('signup_btn')}
+            <button onClick={handleSignup} disabled={signingUp} style={{ ...pillButtonStyle, marginTop: 4, opacity: signingUp ? 0.7 : 1 }}>
+              {signingUp ? '...' : <>{t('signup_btn')} <span>→</span></>}
             </button>
           </div>
         )}
 
         <style>{`
-          @keyframes fadeInDelay { from { opacity:0; } to { opacity:1; } }
-          input::placeholder { color: rgba(255,255,255,0.28); }
+          input::placeholder { color: #9A9A9A; }
           input:focus { border-color: var(--accent) !important; outline: none; }
         `}</style>
 

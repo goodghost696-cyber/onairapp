@@ -6,6 +6,144 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo, branche `claude/charming-mendel-dj1GQ`, et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-07-21 — Session 13 (suite 2) : le bouton central de la nav devient une action "+", réorganisation des onglets
+
+Retour utilisateur après la preview : garder les icônes de nos 5 onglets mais les revoir ("carte blanche"), et surtout — le bouton citron central doit permettre d'ajouter **soit un repas, soit un exercice**, pas juste naviguer vers Workout. Questions posées avant de coder (le bouton ne peut plus être à la fois un lien direct vers Workout ET une action d'ajout) — réponses obtenues :
+1. Icônes : carte blanche.
+2. Au tap, un petit menu à 2 choix ("Nouveau repas" / "Nouvel exercice"). Pour "Nouvel exercice" : **pas question de repasser par tout le flow "démarrer une séance"** — cas d'usage réel donné par l'utilisateur : il a déjà fini sa séance et a juste oublié d'ajouter un exercice après coup. Doit être simple.
+3. Le bouton Settings peut être retiré de la nav et déplacé ailleurs, discrètement.
+
+### ✅ Réorganisation des 5 onglets (`BottomNav.jsx`, `nav.css`)
+- **Nouvel ordre** : Dashboard, Nutrition, **[+ action]**, Bilan, **Workout** (remplace Settings à cette place).
+- **Settings retiré de la nav** : accessible via l'avatar citron du header Dashboard (déjà ajouté plus tôt cette session, navigue vers `/settings`) — c'est la solution "discrète" demandée, pas de nouvel élément ajouté nulle part.
+- **Icônes revues** : Bilan passe d'une ligne en zigzag à un vrai pictogramme bar-chart (3 barres pleines) pour être identifiable sans ambiguïté. Workout garde son icône haltère (déplacée, pas recréée). Dashboard/Nutrition inchangées (déjà claires — maison, fourchette+couteau).
+- **Bouton central** : n'est plus un lien vers `/workout`, c'est maintenant une action "+" (icône plus simple) qui ouvre un petit menu (mêmes codes visuels que le FAB Coach IA déjà existant : pastilles arrondies qui apparaissent au-dessus, fond `#1A1A1A` bordé) avec deux choix.
+
+### ✅ "Nouveau repas" → réutilise la sheet existante de Nutrition
+`navigate('/nutrition', { state: { openAddMeal: true } })` — `Nutrition.jsx` consomme ce state au montage (`useEffect` sur `location.state`) pour ouvrir automatiquement la sheet d'ajout déjà existante (`openSheet()`), puis nettoie le state (`navigate(..., { replace:true, state:{} })`) pour ne pas la rouvrir sur un retour arrière ou un refresh.
+
+### ✅ "Nouvel exercice" → nouvelle sheet légère, sans passer par une séance
+Nouveau composant `QuickExerciseSheet` (dans `BottomNav.jsx`) : nom de l'exercice (texte libre, pas de bibliothèque à parcourir — volontairement simple comme demandé), séries/répétitions/poids. Nouvelle fonction `logQuickExercise()` dans `AppContext.jsx` :
+- **Insère une ligne `seances` autonome** plutôt que de modifier une séance existante — `seances` n'a pas de policy `UPDATE` (décision volontaire du sprint sécurité de Session 11), donc éditer la "vraie" séance du jour après coup n'est pas possible sans migration. Insérer une nouvelle ligne reste possible (policy `INSERT` déjà là) et correspond bien au cas d'usage réel donné par l'utilisateur.
+- **N'incrémente volontairement pas `weeklyWorkouts`** : ajouter un exercice oublié n'est pas "faire une séance de plus" — l'incrémenter aurait faussé le compteur "X/6 séances" affiché sur Dashboard/Workout/Weekly.
+- Réutilise le même mapper `seanceFromRow()` que les vraies séances donc l'exercice ajouté apparaît normalement dans l'historique Workout et peut même alimenter "Mes charges" (`liftProgress.js`) s'il est refait plus tard — bénéfice secondaire, pas cherché activement.
+
+Build validé. Toujours pas de vérification visuelle possible dans ce sandbox — à tester sur la preview Vercel, notamment : le menu "+" au-dessus de la nav bar, l'ouverture auto de la sheet Nutrition depuis le menu, et l'ajout d'un exercice rapide qui doit apparaître dans l'historique Workout sans changer le compteur de séances de la semaine.
+
+**2026-07-22 — Retour utilisateur sur la preview : "Top !"** — la nav bar (menu +, réorganisation des onglets) est validée visuellement par l'utilisateur. PR #10 toujours en draft, pas mergée.
+
+### 📋 Reste à faire — vue d'ensemble consolidée (à jour au 2026-07-22)
+Cette liste remplace/complète les listes éparpillées plus bas dans le journal (Session 12, Session 11, etc. — laissées telles quelles comme historique, mais ne plus s'y fier pour savoir ce qui reste réellement à faire — se référer à celle-ci).
+
+**Décisions produit à prendre par l'utilisateur (bloquent le travail tant qu'elles ne sont pas tranchées) :**
+1. **Thème clair** : reste sur l'ancienne palette rouge, jamais migré vers Neon. À trancher : Neon aussi en clair, ou identité visuelle différente/désactivée ?
+2. **Écran Notifications** : n'existe pas, présent dans le prototype. Nécessite de cadrer un vrai modèle de données (déclencheurs, persistance, lu/non lu) avant de coder quoi que ce soit — pas juste un reskin.
+3. **Navigation retour incohérente** (backlog du 2026-07-16) : seul Weekly a une flèche retour parmi les écrans à onglet, ce qui est redondant. À trancher : convention unique pour tous les écrans poussés, ou on retire celle de Weekly.
+4. **Lenteur des suggestions de recette IA** (Nutrition) : garder `claude-fable-5` (qualité, plus lent) avec un meilleur indicateur d'attente, ou basculer sur un modèle plus rapide pour cette fonctionnalité précise ?
+5. **"Leaked Password Protection" Supabase** : bloqué sur le plan Free (fonctionnalité Pro uniquement). Décision business : upgrade payant ou accepter le risque résiduel.
+6. **Revoir l'UI Coach** : demandé le 2026-07-10, mis en pause, jamais recadré depuis (pas de détail sur ce qui doit changer).
+7. **Fusion coach + IA en SaaS multi-salles** : question stratégique long-terme posée par l'utilisateur le 2026-07-16, réponse de Claude donnée (voir plus bas), pas de décision finale ni de développement engagé.
+
+**Travail de reskin Neon restant (une fois les décisions ci-dessus prises, ou en parallèle si l'utilisateur préfère avancer sans attendre) :**
+- Écrans jamais vérifiés en détail cette session : `Scan.jsx` (un bouton en glass), écrans coach (`CoachDashboard.jsx`, `MemberDetail.jsx`, `ClientsList.jsx`, `CoachMessages.jsx`, `CoachSettings.jsx`), `Messages.jsx`, `Hydration.jsx`, `Sleep.jsx`, `Rings.jsx`. Bénéficient déjà partiellement des fix globaux (`.card`, `.btn-ghost`) mais pas passés en revue un par un.
+
+**Projet séparé, hors périmètre onairapp :**
+- Dashboard de suivi de conso tokens Anthropic (Session 8) — bloqué en attente que l'utilisateur vérifie si son compte Anthropic est en mode organisation (prérequis pour l'Admin API).
+
+**Pas une tâche, juste un rappel :** PR #10 (tout le redesign Neon depuis Login jusqu'à la nav bar) est toujours en **draft**, jamais mergée — à faire quand l'utilisateur estime que c'est prêt.
+
+---
+
+## 2026-07-21 — Session 13 (suite) : nav bar du bas restylée sur référence externe
+
+L'utilisateur a envoyé un screenshot d'une référence externe (maquette générique, pas notre app) demandant explicitement de reprendre **seulement la nav bar du bas** (barre sombre, 5 icônes, bouton central surélevé dans un cercle citron), pas le reste du style de l'image (bold/flat citron-bleu-noir, déjà écarté en Session 11-12).
+
+Clarifié avant de coder (l'utilisateur avait demandé qu'on lui pose des questions) :
+1. Garder nos 5 onglets actuels (Dashboard/Nutrition/Workout/Bilan/Settings) plutôt que copier les icônes du screenshot (maison/check/+/cloche/profil) — **confirmé : on garde nos 5 onglets**, pas de nouvel écran Notifications à construire pour ça.
+2. Quel onglet reçoit le traitement "cercle surélevé" — **Workout**, qui est déjà l'onglet du milieu dans notre ordre actuel donc aucune réorganisation nécessaire.
+
+### ✅ `BottomNav.jsx` / `nav.css`
+- Barre passée du style "pill flottante glass" (fond translucide + blur, centrée avec marge) à une **barre pleine largeur ancrée en bas**, fond `var(--bg)` solide bordé, cohérent avec l'abandon du glass partout ailleurs cette session.
+- Icône Workout (déjà au milieu) surélevée dans un cercle citron 56px (`margin-top:-26px`, bordure `var(--bg)` 3px, ombre) — reproduit le bouton central du screenshot fourni, avec l'icône haltère existante à la place d'un "+" générique puisqu'on garde le sens réel de l'onglet.
+- Couleurs icônes actif/inactif basculées sur `var(--text-primary)`/`var(--text-muted)` (théma-compatibles) au lieu des `rgba(255,255,255,...)` codés en dur.
+
+Build validé. Pas de vérification visuelle possible dans ce sandbox (limitation déjà documentée) — à valider sur la preview Vercel, notamment le espacement avec le FAB Coach IA/Messages (bas-droite, `bottom:96px`) qui n'a pas été retouché et pourrait nécessiter un ajustement si ça chevauche visuellement la nouvelle barre.
+
+---
+
+## 2026-07-21 — Session 13 : Login/Auth passé à la charte Neon
+
+**Contexte** : PR #8 (Session 12) a été mergée dans `claude/charming-mendel-dj1GQ` (commit `b74a0a5`) — la question "renommer ou découper la PR #8" du journal précédent est donc caduque, c'est déjà réglé. Demandé à l'utilisateur s'il voulait continuer directement sur les écrans restants ou attendre un retour sur la preview Vercel : réponse **continuer directement**, en commençant par Login.
+
+### ✅ Login (`Login.jsx`) passé à la charte Neon
+Récupéré le spec exact de l'écran Auth du prototype via `DesignSync`/`get_file` (le même fichier que Session 12) plutôt que de deviner :
+- Titre "Bienvenue." (700 30px, `-0.02em`) à la place du bloc logo + "ORIGINAL FITNESS · CLICHY" (le logo/sous-titre reste sur Landing, pas besoin de le répéter ici).
+- Tabs Connexion/Inscription : conteneur `#1A1A1A` bordé (`2px solid rgba(255,255,255,.15)`, `border-radius:16`), tab active fond citron **texte `--accent-ink` (foncé)** — **bug de contraste corrigé au passage** : l'ancien style mettait `color:'#fff'` sur l'onglet actif citron, exactement le défaut que l'audit de Session 12 avait pourtant traqué partout ailleurs (Login.jsx n'avait pas encore été comparé en détail, comme noté dans le journal précédent).
+- Inputs : fond `#1A1A1A`, bordure `2px solid rgba(255,255,255,.15)`, `border-radius:14`, texte bold — remplace l'ancien style "glass" (blur transparent) qui ne correspondait plus à la charte Neon (le glass était un reliquat de l'ancien thème).
+- Boutons de soumission (connexion, inscription, envoi lien reset) : passés en pill pleine largeur (`border-radius:999`) avec flèche "→", conformément au spec du prototype — différent du `.btn-accent` global (18px) utilisé partout ailleurs dans l'app, car le prototype réserve spécifiquement le pill total à l'écran Auth/Onboarding (Dashboard/Workout/Settings utilisent 16-18px, vérifié dans le fichier source).
+- Placeholder text passé à `#9A9A9A` (valeur exacte du prototype) à la place de l'ancien `rgba(255,255,255,0.28)`.
+- Champs signup (prénom/email/mot de passe/confirmation/code d'accès) et flux "mot de passe oublié" conservés tels quels (le prototype ne les a pas, c'est une simplification de démo) — seul le skin visuel a changé, la logique n'a pas bougé.
+
+**Vérifié** : `npm run build` passe. **Tentative de vérification visuelle en local** (`vite preview` + Playwright, écran non-authentifié donc en théorie testable sans les limitations de screenshot connues) : échec, mais avec une cause différente de celle documentée en Session 12 — ce n'est pas un "loading" qui reste bloqué, c'est un crash JS immédiat (`supabaseUrl is required`) car `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` ne sont simplement pas configurées dans ce sandbox (pas de fichier `.env` local). Root cause différente mais conclusion identique à Session 12 : **impossible de vérifier visuellement dans ce sandbox**, à valider par l'utilisateur sur la preview Vercel (qui elle a les vraies variables d'env).
+
+### ✅ Onboarding (`Onboarding.jsx`) passé à la charte Neon
+Même méthode : spec exact déjà récupéré via `DesignSync` pendant cette session (même fichier prototype). Notre Onboarding réel a **6 étapes** (prénom/objectif/niveau/corps/fréquence/équipement) contre 3 dans le prototype (prénom/poids/objectif calorique, une démo simplifiée) — la structure reste la nôtre, seul le skin visuel + une brique manquante ont été alignés :
+- Barre de progression : remplacée par des **segments individuels** (un par étape, `gap:6px`, `height:4px`, citron si atteint / `rgba(255,255,255,.15)` sinon) au lieu de l'ancienne barre continue à 2px — adapté du prototype (qui avait 3 segments fixes pour ses 3 étapes) pour rester correct avec nos 6 étapes.
+- Libellé d'étape : `ON AIR — {n} / {total}` en citron, tel que le prototype.
+- Titre 34px (au lieu de 26px), sous-titre en `--text-secondary` (0.55, au lieu de `--text-muted` à 0.35 — le prototype utilise bien la teinte la plus claire des deux pour le sous-titre).
+- Inputs (texte, poids/taille) et cartes de choix (objectif/niveau/fréquence/équipement) : passés du style "glass" (blur transparent) au solide `#1A1A1A` bordé `2px rgba(255,255,255,.12-.15)`, cohérent avec Login et le reste de la charte.
+- Bouton "Continuer/Commencer" passé en pill pleine (`border-radius:999`), comme le prototype. **État désactivé retravaillé plutôt que copié à l'identique** : le prototype garde un texte `#0A0A0A` (quasi noir) sur un fond `rgba(255,255,255,.15)` même désactivé — sur fond d'écran noir, ce fond translucide reste très sombre, donc le texte foncé y serait quasiment invisible. Corrigé en texte `rgba(255,255,255,.3)` (blanc cassé) sur ce même fond, cohérent avec l'esprit de l'audit de contraste de la Session 12 plutôt qu'une reproduction aveugle du prototype.
+- **Ajouté un bouton "RETOUR"** (ghost, texte seulement) sous le bouton principal dès qu'on n'est plus à la première étape — présent dans le prototype mais absent de notre implémentation jusqu'ici (on ne pouvait pas revenir en arrière). Simple `setCurrentStep(s => s - 1)`, aucun état perdu puisque les réponses restent en mémoire.
+
+Build validé après ce lot aussi. Toujours pas de vérification visuelle possible dans ce sandbox (même limitation Supabase), à valider sur la preview Vercel.
+
+### L'utilisateur a dit d'enchaîner sur tout le reste ("tu peux tout faire, on corrige ensuite")
+Continué sans repasser par une validation écran par écran. Détail ci-dessous.
+
+### ⚠️ Découverte transversale : les labels d'en-tête d'écran étaient tous de la mauvaise couleur
+Le prototype utilise **`#0047FF` (bleu, `--accent-secondary`)** pour le petit label d'en-tête de chaque écran principal ("ON AIR", "WORKOUT", "NUTRITION", "ACTIVITÉ") — vérifié dans les 4 sections du fichier prototype. Notre code utilisait `var(--accent)` (citron) partout, un reliquat probable du remplacement rouge→citron de la Session 12 qui n'avait pas fait cette distinction. **Corrigé sur les 4 écrans concernés** (Dashboard, Workout, Nutrition, Weekly) — c'est le genre d'erreur qu'une comparaison au pixel près avec le fichier source permet d'attraper, plutôt qu'une simple règle "rouge→citron".
+
+### ✅ Dashboard (`Dashboard.jsx` + `dashboard.css`)
+- Ring calories + macros regroupés dans une seule carte bordée `#1A1A1A` (au lieu de deux blocs séparés) — barres macro passées en bleu (`--accent-secondary`), comme le fait le prototype pour cette carte précise.
+- Bouton logout remplacé par un **avatar rond citron avec l'initiale du prénom**, qui navigue vers `/settings` (le logout existe déjà là-bas, donc rien perdu) — reproduit l'avatar du prototype.
+- Grille d'activité (pas/course/eau/sommeil) restylée en cartes solides bordées ; la carte **EAU** mise en bleu plein pour retrouver l'alternance citron/bleu du prototype (qui a "EAU" en bleu dans sa grille 3 stats).
+- Ajouté le bouton **"Voir mon entraînement du jour →"** (citron, `border-radius:18`) qui navigue vers `/workout` — présent dans le prototype, absent de notre Dashboard jusqu'ici.
+- **Bug trouvé en passant** : la bottom sheet d'édition (pas/eau/sommeil/course) avait encore un fond `#1e1214` — un vieux marron/rouge de l'ancien thème, oublié par l'audit de contraste de la Session 12 (qui cherchait des problèmes de texte-sur-accent, pas des couleurs de fond isolées). Corrigé en `#141414`.
+
+### ✅ Workout (`Workout.jsx` + `Workout.css`)
+- Tabs Musculation/Course : le prototype a un pattern **différent** de celui de Login/Onboarding pour ces tabs précises — pas fond citron/texte foncé, mais **fond `#0A0A0A` (le fond de l'écran) + texte citron** pour l'onglet actif, sur un conteneur `#1A1A1A`. Corrigé pour matcher exactement (j'avais failli reproduire le pattern Login par réflexe avant de re-vérifier le fichier source).
+- Cartes (séances de la semaine, carte "PROGRAMME IA", historique) passées en bordure solide `2px`.
+- Icônes de la bibliothèque (Maison/Salle/Dehors) : fond de la pastille icône teinté citron/bleu/citron en alternance, comme les carrés de couleur du prototype (au lieu d'un fond neutre uniforme).
+
+### ✅ Nutrition (`Nutrition.jsx`)
+- Bouton scanner (raccourci vers `/scan`) passé en bordure solide au lieu du glass.
+- **Autre bug de contraste trouvé** (même famille que celui de Login en Session 12) : le sélecteur de type de repas (Petit-déj/Déjeuner/Dîner/Collation, présent dans 2 sheets — ajout manuel et recette IA) mettait `color:'#fff'` sur le bouton actif en fond citron. Corrigé en `var(--accent-ink)` aux deux endroits.
+
+### ✅ Activité/Bilan (`Weekly.jsx` + `Weekly.css`)
+- Bouton retour et cartes de progression de charges passés en bordure/fond solides.
+- *(Le bouton retour lui-même — sa pertinence sur cet écran — reste une question UX ouverte et non traitée, voir le backlog du 2026-07-16 plus bas : seule sa couleur a été mise à jour ici.)*
+
+### ✅ Settings (`Settings.jsx`)
+- Label d'en-tête et bordure du bouton déconnexion mis à jour.
+- `.btn-ghost` (classe globale partagée avec quelques écrans coach) repassée en bordure solide au lieu du glass — bénéficie aussi à `CoachDashboard.jsx`/`MemberDetail.jsx`/`Hydration.jsx` qui l'utilisent.
+
+### ✅ Fix global : `.card` (classe partagée par presque tous les écrans, y compris coach) et `.btn-ghost`
+Les deux repassés du style glass (fond translucide + blur + ombre) au style solide `#1A1A1A` bordé `2px`, cohérent avec tout ce qui a été fait cette session. Ça couvre automatiquement des écrans pas explicitement dans la liste (Hydration, Sleep, Messages, écrans coach) puisqu'ils utilisent la même classe `.card`.
+
+### ⚠️ Découverte + correctif transversal : le thème clair aurait été cassé par mes changements
+En écrivant Login/Onboarding/Dashboard, j'ai d'abord codé les bordures en dur (`rgba(255,255,255,.12)`/`.15`, valeurs exactes du prototype qui est dark-only). Avant d'aller plus loin, vérifié si le thème clair est vraiment accessible en prod — **oui** : `ThemeContext.jsx` + un toggle dans Settings, donc pas du code mort. Une bordure blanche à 12-15% d'opacité serait quasi invisible sur fond clair. Corrigé en ajoutant deux tokens de thème (`--border`, déjà existant à la bonne valeur en dark, et un nouveau `--border-strong`) dans les 3 blocs de `global.css` (`:root`, `[data-theme="dark"]`, `[data-theme="light"]`), puis remplacé toutes les valeurs codées en dur par ces variables dans Login/Onboarding/Dashboard/Workout/Nutrition/Weekly/Settings. Le thème clair reste sur son ancienne palette rouge (décision non tranchée, voir plus bas) mais au moins ses bordures/textes ne sont plus invisibles suite à ces changements.
+
+### Build + vérifications
+`npm run build` validé après chaque écran (7 fois en tout ce lot). Toujours aucune vérification visuelle possible dans ce sandbox (cause documentée en Session 12 puis affinée dans l'entrée Login ci-dessus). Tout poussé sur la PR #10 (draft, vers `claude/charming-mendel-dj1GQ`), en plusieurs commits séparés par écran pour faciliter une revue/rollback ciblé si besoin.
+
+### Reste à faire / décisions en attente
+- [ ] **Notifications** — écran qui n'existe pas dans l'app, présent dans le prototype (liste de notifs, une carte citron mise en avant). **Pas construit cette session** : contrairement aux 7 écrans ci-dessus qui étaient du reskin pur, celui-ci est une fonctionnalité entièrement nouvelle (route, nav, et surtout un vrai modèle de données — qu'est-ce qui déclenche une notif, persistance, lu/non lu — qui n'existe nulle part côté backend). Différent d'un simple ajustement visuel, à cadrer avec l'utilisateur avant de coder plutôt que de improviser un backend de notifications.
+- [ ] **Décision thème clair** : reste sur l'ancienne palette rouge (voir Session 12). Est-ce qu'il doit aussi passer au citron/Neon, ou rester une identité visuelle différente/désactivée ? Pas tranché.
+- [ ] **Écrans non touchés cette session** (pas dans le périmètre annoncé, glass encore présent par endroits) : `Scan.jsx` (un bouton), écrans coach (`CoachDashboard.jsx`, `MemberDetail.jsx`, `ClientsList.jsx`, `CoachMessages.jsx`, `CoachSettings.jsx`), `Messages.jsx`, `Hydration.jsx`, `Sleep.jsx`, `Rings.jsx` — bénéficient déjà partiellement des fix globaux (`.card`, `.btn-ghost`) mais pas vérifiés en détail écran par écran comme les 7 principaux.
+- [ ] Item UX déjà en backlog depuis le 2026-07-16, toujours pas traité : navigation retour incohérente (voir plus bas dans ce journal).
+
+---
+
 ## 2026-07-20 — Session 12 : import du design "ON AIR Neon" depuis claude.ai/design, début d'application
 
 ### Contexte : le chantier Landing "bold/flat" (Session 11 tardive) est abandonné
