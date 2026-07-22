@@ -30,6 +30,28 @@ Nouveau composant `QuickExerciseSheet` (dans `BottomNav.jsx`) : nom de l'exercic
 
 Build validé. Toujours pas de vérification visuelle possible dans ce sandbox — à tester sur la preview Vercel, notamment : le menu "+" au-dessus de la nav bar, l'ouverture auto de la sheet Nutrition depuis le menu, et l'ajout d'un exercice rapide qui doit apparaître dans l'historique Workout sans changer le compteur de séances de la semaine.
 
+**2026-07-22 — Retour utilisateur sur la preview : "Top !"** — la nav bar (menu +, réorganisation des onglets) est validée visuellement par l'utilisateur. PR #10 toujours en draft, pas mergée.
+
+### 📋 Reste à faire — vue d'ensemble consolidée (à jour au 2026-07-22)
+Cette liste remplace/complète les listes éparpillées plus bas dans le journal (Session 12, Session 11, etc. — laissées telles quelles comme historique, mais ne plus s'y fier pour savoir ce qui reste réellement à faire — se référer à celle-ci).
+
+**Décisions produit à prendre par l'utilisateur (bloquent le travail tant qu'elles ne sont pas tranchées) :**
+1. **Thème clair** : reste sur l'ancienne palette rouge, jamais migré vers Neon. À trancher : Neon aussi en clair, ou identité visuelle différente/désactivée ?
+2. **Écran Notifications** : n'existe pas, présent dans le prototype. Nécessite de cadrer un vrai modèle de données (déclencheurs, persistance, lu/non lu) avant de coder quoi que ce soit — pas juste un reskin.
+3. **Navigation retour incohérente** (backlog du 2026-07-16) : seul Weekly a une flèche retour parmi les écrans à onglet, ce qui est redondant. À trancher : convention unique pour tous les écrans poussés, ou on retire celle de Weekly.
+4. **Lenteur des suggestions de recette IA** (Nutrition) : garder `claude-fable-5` (qualité, plus lent) avec un meilleur indicateur d'attente, ou basculer sur un modèle plus rapide pour cette fonctionnalité précise ?
+5. **"Leaked Password Protection" Supabase** : bloqué sur le plan Free (fonctionnalité Pro uniquement). Décision business : upgrade payant ou accepter le risque résiduel.
+6. **Revoir l'UI Coach** : demandé le 2026-07-10, mis en pause, jamais recadré depuis (pas de détail sur ce qui doit changer).
+7. **Fusion coach + IA en SaaS multi-salles** : question stratégique long-terme posée par l'utilisateur le 2026-07-16, réponse de Claude donnée (voir plus bas), pas de décision finale ni de développement engagé.
+
+**Travail de reskin Neon restant (une fois les décisions ci-dessus prises, ou en parallèle si l'utilisateur préfère avancer sans attendre) :**
+- Écrans jamais vérifiés en détail cette session : `Scan.jsx` (un bouton en glass), écrans coach (`CoachDashboard.jsx`, `MemberDetail.jsx`, `ClientsList.jsx`, `CoachMessages.jsx`, `CoachSettings.jsx`), `Messages.jsx`, `Hydration.jsx`, `Sleep.jsx`, `Rings.jsx`. Bénéficient déjà partiellement des fix globaux (`.card`, `.btn-ghost`) mais pas passés en revue un par un.
+
+**Projet séparé, hors périmètre onairapp :**
+- Dashboard de suivi de conso tokens Anthropic (Session 8) — bloqué en attente que l'utilisateur vérifie si son compte Anthropic est en mode organisation (prérequis pour l'Admin API).
+
+**Pas une tâche, juste un rappel :** PR #10 (tout le redesign Neon depuis Login jusqu'à la nav bar) est toujours en **draft**, jamais mergée — à faire quand l'utilisateur estime que c'est prêt.
+
 ---
 
 ## 2026-07-21 — Session 13 (suite) : nav bar du bas restylée sur référence externe
