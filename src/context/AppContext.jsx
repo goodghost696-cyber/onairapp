@@ -422,6 +422,47 @@ export function AppProvider({ children }) {
     }))
   }
 
+  // Logs a single exercise outside the full "start a session" flow — e.g. the
+  // member already finished training and just forgot to add one exercise.
+  // Inserted as its own standalone `seances` row rather than editing an
+  // existing one: `seances` has no UPDATE policy (see security audit), so
+  // amending today's real session isn't possible without a schema change.
+  // Deliberately does NOT increment weeklyWorkouts — this is one exercise,
+  // not a full session, so it shouldn't inflate the "X/6 séances" counters.
+  async function logQuickExercise({ name, setsCount, reps, kg }) {
+    const sets = Array.from({ length: setsCount }, () => ({ reps, kg }))
+    let entry = {
+      id: Date.now(),
+      date: new Date().toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }),
+      type: name,
+      exercises: [name],
+      duration: '0 min',
+      totalSets: setsCount,
+      exerciseDetails: [{ name, sets }],
+    }
+
+    if (user?.id) {
+      const { data, error } = await supabase.from('seances').insert({
+        user_id: user.id,
+        date: todayStr(),
+        nom: name,
+        duree_min: 0,
+        exercices: [{ name, sets }],
+      }).select().single()
+
+      if (error) {
+        console.error('[App] logQuickExercise: insert into seances failed', error)
+      } else if (data) {
+        entry = seanceFromRow(data)
+      }
+    }
+
+    setAppData(prev => ({
+      ...prev,
+      sessionHistory: [entry, ...prev.sessionHistory.slice(0, 9)],
+    }))
+  }
+
   // Persists a meal to `repas` and reflects it (+ its totals) in local state.
   // Falls back to a local-only add if the write fails, so the UI never blocks
   // on network — the console error is there for us to catch during testing.
@@ -489,7 +530,7 @@ export function AppProvider({ children }) {
       appData, updateData,
       addExerciseToSession, addExercisesToSession,
       addSetToExercise, toggleSetDone, updateSet,
-      clearActiveSession, addSessionToHistory,
+      clearActiveSession, addSessionToHistory, logQuickExercise,
       addMeal, deleteMeal,
     }}>
       {children}

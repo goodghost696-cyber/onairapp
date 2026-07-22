@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { FOOD_DATABASE } from '../context/AppContext'
 import { useAuth } from '../context/AuthContext'
@@ -29,6 +29,7 @@ function calcNutrition(food, grams) {
 
 export default function Nutrition() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { appData, addMeal, deleteMeal } = useApp()
   const [editingMeal, setEditingMeal] = useState(null)
   const [editGrams, setEditGrams] = useState('')
@@ -50,6 +51,16 @@ export default function Nutrition() {
   const [recipeError, setRecipeError] = useState('')
 
   useEffect(() => { window.scrollTo(0, 0) }, [])
+
+  // Opened from the bottom nav's "+" menu ("Nouveau repas") — consume the
+  // nav state once so it doesn't reopen on a later back-navigation/refresh.
+  useEffect(() => {
+    if (location.state?.openAddMeal) {
+      openSheet()
+      navigate(location.pathname, { replace: true, state: {} })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state])
 
   const MEAL_TYPES = [t('breakfast'), t('lunch'), t('dinner'), t('snack')]
 

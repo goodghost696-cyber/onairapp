@@ -6,6 +6,32 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo, branche `claude/charming-mendel-dj1GQ`, et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-07-21 — Session 13 (suite 2) : le bouton central de la nav devient une action "+", réorganisation des onglets
+
+Retour utilisateur après la preview : garder les icônes de nos 5 onglets mais les revoir ("carte blanche"), et surtout — le bouton citron central doit permettre d'ajouter **soit un repas, soit un exercice**, pas juste naviguer vers Workout. Questions posées avant de coder (le bouton ne peut plus être à la fois un lien direct vers Workout ET une action d'ajout) — réponses obtenues :
+1. Icônes : carte blanche.
+2. Au tap, un petit menu à 2 choix ("Nouveau repas" / "Nouvel exercice"). Pour "Nouvel exercice" : **pas question de repasser par tout le flow "démarrer une séance"** — cas d'usage réel donné par l'utilisateur : il a déjà fini sa séance et a juste oublié d'ajouter un exercice après coup. Doit être simple.
+3. Le bouton Settings peut être retiré de la nav et déplacé ailleurs, discrètement.
+
+### ✅ Réorganisation des 5 onglets (`BottomNav.jsx`, `nav.css`)
+- **Nouvel ordre** : Dashboard, Nutrition, **[+ action]**, Bilan, **Workout** (remplace Settings à cette place).
+- **Settings retiré de la nav** : accessible via l'avatar citron du header Dashboard (déjà ajouté plus tôt cette session, navigue vers `/settings`) — c'est la solution "discrète" demandée, pas de nouvel élément ajouté nulle part.
+- **Icônes revues** : Bilan passe d'une ligne en zigzag à un vrai pictogramme bar-chart (3 barres pleines) pour être identifiable sans ambiguïté. Workout garde son icône haltère (déplacée, pas recréée). Dashboard/Nutrition inchangées (déjà claires — maison, fourchette+couteau).
+- **Bouton central** : n'est plus un lien vers `/workout`, c'est maintenant une action "+" (icône plus simple) qui ouvre un petit menu (mêmes codes visuels que le FAB Coach IA déjà existant : pastilles arrondies qui apparaissent au-dessus, fond `#1A1A1A` bordé) avec deux choix.
+
+### ✅ "Nouveau repas" → réutilise la sheet existante de Nutrition
+`navigate('/nutrition', { state: { openAddMeal: true } })` — `Nutrition.jsx` consomme ce state au montage (`useEffect` sur `location.state`) pour ouvrir automatiquement la sheet d'ajout déjà existante (`openSheet()`), puis nettoie le state (`navigate(..., { replace:true, state:{} })`) pour ne pas la rouvrir sur un retour arrière ou un refresh.
+
+### ✅ "Nouvel exercice" → nouvelle sheet légère, sans passer par une séance
+Nouveau composant `QuickExerciseSheet` (dans `BottomNav.jsx`) : nom de l'exercice (texte libre, pas de bibliothèque à parcourir — volontairement simple comme demandé), séries/répétitions/poids. Nouvelle fonction `logQuickExercise()` dans `AppContext.jsx` :
+- **Insère une ligne `seances` autonome** plutôt que de modifier une séance existante — `seances` n'a pas de policy `UPDATE` (décision volontaire du sprint sécurité de Session 11), donc éditer la "vraie" séance du jour après coup n'est pas possible sans migration. Insérer une nouvelle ligne reste possible (policy `INSERT` déjà là) et correspond bien au cas d'usage réel donné par l'utilisateur.
+- **N'incrémente volontairement pas `weeklyWorkouts`** : ajouter un exercice oublié n'est pas "faire une séance de plus" — l'incrémenter aurait faussé le compteur "X/6 séances" affiché sur Dashboard/Workout/Weekly.
+- Réutilise le même mapper `seanceFromRow()` que les vraies séances donc l'exercice ajouté apparaît normalement dans l'historique Workout et peut même alimenter "Mes charges" (`liftProgress.js`) s'il est refait plus tard — bénéfice secondaire, pas cherché activement.
+
+Build validé. Toujours pas de vérification visuelle possible dans ce sandbox — à tester sur la preview Vercel, notamment : le menu "+" au-dessus de la nav bar, l'ouverture auto de la sheet Nutrition depuis le menu, et l'ajout d'un exercice rapide qui doit apparaître dans l'historique Workout sans changer le compteur de séances de la semaine.
+
+---
+
 ## 2026-07-21 — Session 13 (suite) : nav bar du bas restylée sur référence externe
 
 L'utilisateur a envoyé un screenshot d'une référence externe (maquette générique, pas notre app) demandant explicitement de reprendre **seulement la nav bar du bas** (barre sombre, 5 icônes, bouton central surélevé dans un cercle citron), pas le reste du style de l'image (bold/flat citron-bleu-noir, déjà écarté en Session 11-12).
