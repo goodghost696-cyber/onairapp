@@ -6,6 +6,47 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo, branche `claude/charming-mendel-dj1GQ`, et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-07-22 — Session 14 : PR #10 mergée, thème clair Neon, navigation retour cohérente, décisions produit
+
+**PR #10 mergée** dans `claude/charming-mendel-dj1GQ` (squash, commit `04e1106`) à la demande de l'utilisateur — tout le redesign Neon (Login → nav bar) est maintenant sur la branche de dev principale. Branche de session redémarrée proprement dessus (elle ne contenait plus que de l'historique déjà mergé).
+
+L'utilisateur a répondu aux 7 points de la liste consolidée de la session précédente :
+
+### ✅ 1. Thème clair migré vers Neon (`global.css`)
+Le bloc `:root[data-theme="light"]` utilisait encore l'ancienne palette rouge/beige (`--accent:#bf0603`, `--accent-secondary:#C4956A`) — remplacé par une vraie variante claire du même système Neon :
+- `--bg:#F2F2EF` (canvas gris clair neutre), `--surface:#FFFFFF` (cartes blanches qui "montent" du canvas — même logique inversée que le dark, où les cartes `#1A1A1A` montent du noir `#0A0A0A`).
+- `--text-primary:#0A0A0A`, bordures/text-muted analogues en noir à faible opacité au lieu de blanc.
+- `--accent-secondary:#0047FF` (même bleu qu'en dark, déjà lisible sur blanc, aucun changement nécessaire).
+- **`--accent` assombri à `#3D5200`** (même famille citron, mais `#D4FF00` brut est quasiment invisible comme couleur de texte/bordure sur fond clair — c'est une teinte très proche du blanc). **`--accent-ink` inversé à blanc** pour ce thème (le texte sur un bouton citron doit être clair puisque le citron lui-même est maintenant foncé) — un bouton "citron" passe donc de *fond vif + texte foncé* en dark à *fond olive foncé + texte blanc* en clair, ce qui est le pattern habituel pour adapter un accent "néon" (pensé pour briller sur noir) à un fond clair.
+- **Corrigé au passage** : `body { background: #0A0A0A }` était codé en dur (jamais lié à `--bg`) — sur un écran plus large que 390px, les marges autour de l'app seraient restées noires même en thème clair. Passé à `var(--bg)`.
+- **⚠️ Seule valeur de cette session qui mériterait un vrai réglage à l'œil** : `#3D5200` a été choisi par calcul de contraste (accessible, ~3:1 sur blanc) plutôt que par sensation visuelle — impossible à vérifier dans ce sandbox. Si ça paraît trop terne/kaki une fois vu sur la vraie preview, c'est une seule variable à ajuster, pas une refonte.
+
+### ✅ 2. Suggestions de notifications (réponse donnée, pas encore construit)
+Voir réponse détaillée donnée à l'utilisateur en conversation — reste bloqué sur la même question qu'avant : notifications *in-app* (liste simple alimentée par les événements déjà trackés dans l'app, pas de vraie notif push) vs vraies push notifications (nécessite un service worker + une brique serveur d'envoi, bien plus gros chantier). Pas tranché, pas codé.
+
+### ✅ 3. Navigation retour rendue cohérente
+Convention appliquée : **les écrans racine (accessibles depuis un onglet de nav) n'ont pas de flèche retour ; tous les écrans "poussés" (ouverts depuis un autre écran) en ont une.**
+- **Retirées** (redondantes, l'écran est une racine) : `Weekly.jsx` (onglet Bilan), `ClientsList.jsx` (onglet Clients côté coach).
+- **Ajoutées** (poussés, n'en avaient pas) : `Settings.jsx` (n'est plus un onglet depuis la réorg de la nav bar — accessible uniquement via l'avatar du Dashboard, donc désormais "poussé"), `Messages.jsx` (liste des conversations, ouverte depuis le FAB Coach).
+- **Déjà correctes, non touchées** : `WorkoutSession`, `WorkoutLibrary`, `WorkoutHistory`, `Scan`, `Hydration`, `Sleep`, `Conversation`, `MemberDetail`, `AICoach` (a bien un retour, juste une icône différente — repérée en vérifiant à la main après qu'un grep trop étroit l'ait ratée une première fois).
+- **Repéré en marge, pas touché** : `Rings.jsx` a un bouton retour mais n'est référencé nulle part dans l'app (aucune navigation ne pointe vers `/rings`) — semble être du code mort du même genre que l'ancien `Run.jsx` supprimé en Session 10. Pas supprimé sans confirmation, à valider avec l'utilisateur.
+
+### ✅ 4. Modèle plus rapide pour les recettes IA (`Nutrition.jsx`)
+`claude-fable-5` → `claude-haiku-4-5-20251001` pour `generateRecipe()`. Comme plus rien n'utilise Fable 5 dans l'app, retiré de la liste blanche `ALLOWED_MODELS` dans `api/claude.js` (nettoyage, pas fonctionnel).
+
+### 5. Leaked Password Protection — risque accepté
+Décision de l'utilisateur enregistrée : on n'upgrade pas vers Supabase Pro pour l'instant, le risque résiduel (mots de passe compromis non filtrés à l'inscription) est accepté. Rien à coder, juste à ne plus proposer cette option tant que l'utilisateur ne revient pas dessus.
+
+### 6. UI Coach — confirmé qu'il faudra s'y mettre, toujours pas cadré
+L'utilisateur confirme qu'il faudra reprendre ce chantier, mais sans donner de détail sur ce qui doit changer précisément. Reste bloqué en l'état — il faudra lui redemander ce qu'il veut voir changer avant de coder quoi que ce soit.
+
+### 7. Fusion coach + IA en SaaS multi-salles — réexpliqué à l'utilisateur
+Il avait demandé de reformuler l'idée (voir réponse donnée en conversation, résumé de l'échange du 2026-07-16) : l'idée n'est pas d'abandonner le coach humain pour de l'IA, mais l'inverse — l'app avec un vrai coach humain (ON AIR Clichy) + IA en support est elle-même un produit qu'on pourrait, à terme, vendre en licence à d'autres salles/coachs indépendants plutôt que juste vendre un abonnement membre. Toujours pas de décision finale, juste reformulé pour clarifier.
+
+Build validé après chaque lot de changements. Toujours aucune vérification visuelle possible dans ce sandbox — **le thème clair en particulier** (nouvelle fonctionnalité entière, jamais vue) mérite une vraie vérification sur la preview Vercel avant de considérer que c'est acquis.
+
+---
+
 ## 2026-07-21 — Session 13 (suite 2) : le bouton central de la nav devient une action "+", réorganisation des onglets
 
 Retour utilisateur après la preview : garder les icônes de nos 5 onglets mais les revoir ("carte blanche"), et surtout — le bouton citron central doit permettre d'ajouter **soit un repas, soit un exercice**, pas juste naviguer vers Workout. Questions posées avant de coder (le bouton ne peut plus être à la fois un lien direct vers Workout ET une action d'ajout) — réponses obtenues :
@@ -50,7 +91,7 @@ Cette liste remplace/complète les listes éparpillées plus bas dans le journal
 **Projet séparé, hors périmètre onairapp :**
 - Dashboard de suivi de conso tokens Anthropic (Session 8) — bloqué en attente que l'utilisateur vérifie si son compte Anthropic est en mode organisation (prérequis pour l'Admin API).
 
-**Pas une tâche, juste un rappel :** PR #10 (tout le redesign Neon depuis Login jusqu'à la nav bar) est toujours en **draft**, jamais mergée — à faire quand l'utilisateur estime que c'est prêt.
+**Mise à jour (2026-07-22) :** PR #10 mergée dans `claude/charming-mendel-dj1GQ` — voir l'entrée Session 14 plus haut pour la suite (thème clair, navigation, décisions produit).
 
 ---
 

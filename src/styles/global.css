@@ -13,7 +13,7 @@ body {
   overflow-x: hidden;
   width: 100%;
   min-height: 100vh;
-  background: #0A0A0A;
+  background: var(--bg);
   display: flex;
   justify-content: center;
   color: var(--text-primary);
@@ -106,17 +106,25 @@ body {
 }
 
 :root[data-theme="light"] {
-  --bg: #f5f0f0;
-  --surface: rgba(0,0,0,0.04);
-  --surface-solid: #ffffff;
-  --surface-2: rgba(0,0,0,0.06);
-  --border: rgba(0,0,0,0.08);
+  --bg: #F2F2EF;
+  --surface: #FFFFFF;
+  --surface-solid: #FFFFFF;
+  --surface-2: rgba(0,0,0,0.045);
+  --border: rgba(0,0,0,0.10);
   --border-strong: rgba(0,0,0,0.15);
-  --text-primary: #1A1A1A;
-  --text-secondary: rgba(0,0,0,0.5);
-  --text-muted: rgba(0,0,0,0.28);
-  --accent: #bf0603;
-  --accent-secondary: #C4956A;
+  --text-primary: #0A0A0A;
+  --text-secondary: rgba(0,0,0,0.55);
+  --text-muted: rgba(0,0,0,0.35);
+  /* Same lime hue as dark mode, but darkened — #D4FF00 as a bare text/border
+     color (not a button fill) is nearly invisible against a light page, since
+     the whole point of that citron is being close to white already. This is
+     the one value in this block worth tuning by eye once seen on the real
+     preview (no visual check possible in this sandbox) — everything else
+     here is a standard light-mode neutral swap. */
+  --accent: #3D5200;
+  --accent-hover: #4D6600;
+  --accent-ink: #FFFFFF;
+  --accent-secondary: #0047FF;
   --success: #1A9E55;
   --warning: #D4870A;
   --danger: #bf0603;
@@ -124,7 +132,7 @@ body {
   --glass: rgba(0,0,0,0.04);
   --glass-border: rgba(0,0,0,0.08);
   --glass-highlight: rgba(0,0,0,0.06);
-  --nav-glass: rgba(245,240,240,0.92);
+  --nav-glass: rgba(242,242,239,0.92);
   --nav-border: rgba(0,0,0,0.1);
   --nav-inset: rgba(255,255,255,0.8);
 }

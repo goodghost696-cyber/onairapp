@@ -9,10 +9,10 @@ export const config = {
   },
 };
 
-// Models the app actually uses (AICoach/Scan/Workout/MemberDetail use Haiku,
-// Nutrition's AI recipe feature uses Fable 5 for higher quality) — anything
-// else is rejected rather than silently proxied.
-const ALLOWED_MODELS = new Set(['claude-haiku-4-5-20251001', 'claude-fable-5']);
+// Models the app actually uses — anything else is rejected rather than
+// silently proxied. Fable 5 was used by Nutrition's AI recipe feature until
+// it was swapped to Haiku for speed; removed here since nothing calls it now.
+const ALLOWED_MODELS = new Set(['claude-haiku-4-5-20251001']);
 const MAX_TOKENS_CAP = 1500;
 
 export default async function handler(req, res) {
