@@ -46,6 +46,8 @@ export default function Nutrition() {
   const [toast, setToast] = useState('')
 
   const [recipeSheetOpen, setRecipeSheetOpen] = useState(false)
+  const [recipeStep, setRecipeStep] = useState(1)
+  const [recipeMealType, setRecipeMealType] = useState('')
   const [recipeLoading, setRecipeLoading] = useState(false)
   const [recipe, setRecipe] = useState(null)
   const [recipeError, setRecipeError] = useState('')
@@ -122,8 +124,18 @@ export default function Nutrition() {
 
   function selectFood(f) { setSelectedFood(f); setStep(2) }
 
-  async function generateRecipe() {
+  function openRecipeSheet() {
     setRecipeSheetOpen(true)
+    setRecipeStep(1)
+    setRecipeMealType('')
+    setRecipe(null)
+    setRecipeError('')
+  }
+
+  async function generateRecipe(chosenMealType) {
+    const type = chosenMealType || recipeMealType
+    setRecipeMealType(type)
+    setRecipeStep(2)
     setRecipeLoading(true)
     setRecipeError('')
     setRecipe(null)
@@ -135,7 +147,8 @@ export default function Nutrition() {
     const remainingCarbs = Math.min(100, Math.max(20, Math.round(appData.carbsGoal - appData.carbs) || 40))
     const remainingFat = Math.min(40, Math.max(5, Math.round(appData.fatGoal - appData.fat) || 15))
 
-    const prompt = `Tu es un nutritionniste expert. Propose UNE recette de repas adaptée à ces besoins nutritionnels restants pour aujourd'hui :
+    const prompt = `Tu es un nutritionniste expert. Propose UNE recette adaptée à ces besoins nutritionnels restants pour aujourd'hui :
+- Repas concerné : ${type} — la recette doit être typique et adaptée à ce moment du repas (pas un plat de dîner proposé pour un petit-déjeuner, par exemple).
 - Calories restantes : ${remainingKcal} kcal
 - Protéines restantes : ${remainingProtein}g
 - Glucides restants : ${remainingCarbs}g
@@ -193,7 +206,7 @@ Réponds en français.`
       carbs: recipe.carbs,
       fat: recipe.fats,
       nutriscore: 'B',
-      mealType,
+      mealType: recipeMealType,
     })
     setRecipeSheetOpen(false)
     setToast('Recette ajoutée à ton journal')
@@ -308,7 +321,7 @@ Réponds en français.`
         </div>
 
         <button
-          onClick={generateRecipe}
+          onClick={openRecipeSheet}
           className="card"
           style={{
             display: 'flex', alignItems: 'center', gap: 12, width: '100%',
@@ -496,57 +509,68 @@ Réponds en français.`
       }}>
         <h2 className="text-lg bold" style={{ marginBottom: 16 }}>💡 Idée recette</h2>
 
-        {recipeLoading && (
-          <p style={{ fontSize: 13, color: 'var(--text-muted)', padding: '20px 0', textAlign: 'center' }}>Génération en cours...</p>
-        )}
-
-        {recipeError && (
-          <div style={{ padding: 16, background: 'rgba(255,59,59,0.1)', border: '0.5px solid var(--danger)', borderRadius: 12, marginBottom: 16 }}>
-            <p style={{ color: 'var(--danger)', fontSize: 13, margin: 0 }}>{recipeError}</p>
-          </div>
-        )}
-
-        {recipe && !recipeLoading && (
+        {recipeStep === 1 && (
           <>
-            <h3 className="text-base bold" style={{ marginBottom: 12 }}>{recipe.recipe_name}</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 8, marginBottom: 16, padding: '14px', background: 'var(--surface-2)', borderRadius: 12 }}>
-              {[
-                { label: 'kcal', val: recipe.kcal },
-                { label: 'P', val: `${recipe.proteins}g` },
-                { label: 'G', val: `${recipe.carbs}g` },
-                { label: 'L', val: `${recipe.fats}g` },
-              ].map(m => (
-                <div key={m.label} style={{ textAlign: 'center' }}>
-                  <div className="text-base bold">{m.val}</div>
-                  <div className="text-xs text-muted">{m.label}</div>
-                </div>
-              ))}
-            </div>
-            <div style={{ marginBottom: 16 }}>
-              <div className="text-xs text-muted" style={{ marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Ingrédients</div>
-              <ul style={{ margin: 0, paddingLeft: 18 }}>
-                {(recipe.ingredients || []).map((ing, i) => (
-                  <li key={i} className="text-sm" style={{ marginBottom: 4 }}>{ing}</li>
-                ))}
-              </ul>
-            </div>
-            <div style={{ marginBottom: 20 }}>
-              <div className="text-xs text-muted" style={{ marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Préparation</div>
-              <p className="text-sm" style={{ margin: 0, lineHeight: 1.5 }}>{recipe.instructions}</p>
-            </div>
-            <div style={{ display: 'flex', gap: 8, marginBottom: 16, overflowX: 'auto' }}>
+            <p className="text-sm text-muted" style={{ marginBottom: 16 }}>Pour quel repas ?</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {MEAL_TYPES.map(mt => (
-                <button key={mt} onClick={() => setMealType(mt)} style={{
-                  background: mealType === mt ? 'var(--accent)' : 'var(--surface-2)',
-                  border: '0.5px solid var(--border)',
-                  color: mealType === mt ? 'var(--accent-ink)' : 'var(--text-secondary)',
-                  fontSize: 11, fontWeight: 700, padding: '8px 14px', borderRadius: 50,
-                  whiteSpace: 'nowrap', flexShrink: 0, cursor: 'pointer',
-                }}>{mt}</button>
+                <button key={mt} onClick={() => generateRecipe(mt)} className="card" style={{
+                  textAlign: 'left', cursor: 'pointer', padding: '16px', display: 'flex',
+                  justifyContent: 'space-between', alignItems: 'center',
+                }}>
+                  <span className="text-base bold">{mt}</span>
+                  <span style={{ color: 'var(--accent)' }}>→</span>
+                </button>
               ))}
             </div>
-            <button className="btn-accent" onClick={addRecipeAsMeal} style={{ marginBottom: 8 }}>Ajouter ce repas</button>
-            <button className="scan-retry-btn" onClick={generateRecipe}>Une autre idée</button>
+          </>
+        )}
+
+        {recipeStep === 2 && (
+          <>
+            {recipeLoading && (
+              <p style={{ fontSize: 13, color: 'var(--text-muted)', padding: '20px 0', textAlign: 'center' }}>Génération en cours...</p>
+            )}
+
+            {recipeError && (
+              <div style={{ padding: 16, background: 'rgba(255,59,59,0.1)', border: '0.5px solid var(--danger)', borderRadius: 12, marginBottom: 16 }}>
+                <p style={{ color: 'var(--danger)', fontSize: 13, margin: 0 }}>{recipeError}</p>
+              </div>
+            )}
+
+            {recipe && !recipeLoading && (
+              <>
+                <p className="text-xs text-muted" style={{ marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{recipeMealType}</p>
+                <h3 className="text-base bold" style={{ marginBottom: 12 }}>{recipe.recipe_name}</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 8, marginBottom: 16, padding: '14px', background: 'var(--surface-2)', borderRadius: 12 }}>
+                  {[
+                    { label: 'kcal', val: recipe.kcal },
+                    { label: 'P', val: `${recipe.proteins}g` },
+                    { label: 'G', val: `${recipe.carbs}g` },
+                    { label: 'L', val: `${recipe.fats}g` },
+                  ].map(m => (
+                    <div key={m.label} style={{ textAlign: 'center' }}>
+                      <div className="text-base bold">{m.val}</div>
+                      <div className="text-xs text-muted">{m.label}</div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ marginBottom: 16 }}>
+                  <div className="text-xs text-muted" style={{ marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Ingrédients</div>
+                  <ul style={{ margin: 0, paddingLeft: 18 }}>
+                    {(recipe.ingredients || []).map((ing, i) => (
+                      <li key={i} className="text-sm" style={{ marginBottom: 4 }}>{ing}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div style={{ marginBottom: 20 }}>
+                  <div className="text-xs text-muted" style={{ marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Préparation</div>
+                  <p className="text-sm" style={{ margin: 0, lineHeight: 1.5 }}>{recipe.instructions}</p>
+                </div>
+                <button className="btn-accent" onClick={addRecipeAsMeal} style={{ marginBottom: 8 }}>Ajouter ce repas</button>
+                <button className="scan-retry-btn" onClick={() => generateRecipe()}>Une autre idée</button>
+              </>
+            )}
           </>
         )}
       </div>

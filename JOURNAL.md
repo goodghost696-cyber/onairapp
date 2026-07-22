@@ -6,6 +6,20 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo, branche `claude/charming-mendel-dj1GQ`, et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-07-22 — Session 15 (suite) : choix du type de repas avant de générer une recette IA
+
+Retour utilisateur en testant la PR #11 : "Idée recette" proposait un repas au hasard, sans demander petit-déj/déjeuner/dîner/collation — le prompt envoyé à l'IA n'incluait jamais cette info alors que le sélecteur de type de repas existait déjà dans l'écran, mais seulement *après* la génération (pour classer la recette une fois créée, pas pour la générer).
+
+### ✅ `Nutrition.jsx` — le type de repas est maintenant demandé avant de générer
+- Nouvelle étape 1 dans la sheet "Idée recette" : liste des 4 types de repas à choisir (au lieu d'appeler l'IA immédiatement au clic sur le bouton).
+- Le prompt envoyé à Claude inclut maintenant explicitement le repas concerné, avec l'instruction de proposer quelque chose de cohérent avec ce moment de la journée (pas un plat de dîner suggéré pour un petit-déjeuner).
+- Le sélecteur redondant qui apparaissait après génération (pour reclasser la recette) est retiré — le choix fait en amont sert directement à classer le repas au moment de l'ajouter.
+- Séparé cet état (`recipeMealType`) du `mealType` déjà utilisé par le flux d'ajout manuel d'aliment, pour éviter que les deux sheets ne se marchent dessus.
+
+Build validé, poussé sur la PR #11 existante (pas de nouvelle PR).
+
+---
+
 ## 2026-07-22 — Session 15 : audit complet + côté coach branché sur les vraies données
 
 Demandé un audit complet de l'app. Points marquants trouvés :
