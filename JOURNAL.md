@@ -6,6 +6,47 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo, branche `claude/charming-mendel-dj1GQ`, et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-07-22 — Session 15 : audit complet + côté coach branché sur les vraies données
+
+Demandé un audit complet de l'app. Points marquants trouvés :
+- **Sécurité** : les correctifs critiques de Session 11 tiennent toujours. Nouveau point mineur : `prevent_self_role_escalation()` (le trigger anti-escalade) est appelable en RPC public par `anon`/`authenticated` — même défaut que celui déjà corrigé sur `is_coach()` (grant `PUBLIC` par défaut sur toute fonction). Pas exploitable en pratique (une fonction trigger appelée hors contexte trigger échoue), **pas encore corrigé** — à faire par cohérence, pas urgent.
+- **`npm audit`** : 0 vulnérabilité en prod. 2 signalées côté outils de dev uniquement (vite/esbuild), n'affectent pas le build livré.
+- **Découverte majeure : le côté coach donnait une fausse impression de marcher.** `ClientsList.jsx` interrogeait bien la vraie base, mais `CoachDashboard.jsx`, `MemberDetail.jsx` et `CoachMessages.jsx` tournaient tous sur des `MOCK_MEMBERS` codés en dur. C'était l'étape 5-6 de la roadmap de persistance (jamais faite), invisible tant qu'on n'avait pas vérifié fichier par fichier — une session qui n'aurait vérifié que `ClientsList.jsx` aurait conclu à tort que "le coach marche".
+
+Utilisateur a validé de traiter la partie **données réelles** (repas/séances/activité/objectifs pour le coach) tout de suite, et de laisser la **messagerie persistée** (aucune table `messages` n'existe dans le schéma) comme chantier séparé, pas fait cette session.
+
+### ✅ Migration Supabase — coachs en lecture seule sur les données membres (`add_coach_read_access_to_member_data`)
+Nouvelles policies `SELECT` sur `objectifs`, `repas`, `seances`, `activite_jour`, gated par `is_coach()` — même pattern que la policy déjà existante sur `profiles`. **Lecture seule uniquement** : aucun GRANT INSERT/UPDATE/DELETE ajouté, un coach ne peut que consulter, jamais modifier les données d'un membre. Appliqué en prod puis vérifié directement via `pg_policies`. `scripts/supabase_schema.sql` mis à jour dans la foulée (comme prescrit en tête de ce fichier).
+
+### ✅ `src/utils/coachStats.js` (nouveau) — calcul du statut réel par membre
+- `fetchMemberActivitySummaries(userIds)` : 2 requêtes au total (pas une par membre) pour agréger `seances`/`activite_jour` sur tous les clients d'un coup — calcule un vrai `status` (ON TRACK / AT RISK / INACTIVE) à partir de la récence et du volume d'activité réels, plus `lastActiveDate`/`sessionsThisWeek`. Remplace entièrement les champs `status`/`lastSeen`/`sessions` fictifs des `MOCK_MEMBERS`.
+- `fetchMemberDetailStats(userId)` : version détaillée pour la fiche d'un seul membre — moyennes calories/sommeil/pas sur les données réelles, dates de séances de la semaine pour le graphique, `objectifs` réels.
+- **Note sur l'"objectif" qualitatif (ex. "Prise de masse")** : ce champ n'existe **nulle part en base** — il vit uniquement dans `user_metadata` de Supabase Auth (jamais persisté dans `profiles`), donc un coach ne peut pas le lire via le SDK client (ça nécessiterait `service_role`, volontairement pas exposé côté client). Remplacé par les vrais objectifs numériques de la table `objectifs` (calories/protéines/pas/eau) plutôt que d'essayer de faire semblant.
+
+### ✅ `CoachDashboard.jsx`, `MemberDetail.jsx` branchés sur les vraies données
+- Stats du tableau de bord (Clients/Séances 7j/Alertes/Actifs) toutes calculées depuis les vraies tables, plus de "Progression +12%" inventée.
+- Fiche membre : poids/taille réels (`profiles`), séances/calories/sommeil/pas réels (moyennes calculées), graphique hebdo réel, objectifs réels. L'analyse IA envoie maintenant les vraies stats du membre au prompt au lieu des données mockées.
+
+### ✅ `CoachMessages.jsx`/`Conversation.jsx` — dépendance à `MOCK_MEMBERS` retirée sans faire semblant
+Comme la messagerie n'est pas persistée (décision : chantier séparé), remplacé la liste de conversations par les vrais clients (`profiles`) mais **sans inventer de faux derniers messages à côté d'un vrai prénom** — ç'aurait été pire que le mock initial (attribuer une fausse citation à une vraie personne). Affiche "Aucune conversation pour l'instant" à la place. `Conversation.jsx` récupère le vrai prénom du membre pour l'en-tête ; le contenu de la conversation reste un placeholder générique (plus haut de citer "Léo" alors que n'importe quel membre réel peut maintenant s'afficher dans ce header).
+
+### 🐛 Bugs trouvés en marge, corrigés au passage
+- `Conversation.jsx` référençait `<BottomNav />` sans jamais l'importer — plantage runtime garanti pour un membre ouvrant `/messages/coach` (le cas `isCoach=false`). Import ajouté.
+- **Contraste** : `Conversation.jsx` (bulle de message + bouton envoyer) et `AICoach.jsx` (bouton envoyer) mettaient du texte/icône `'#000'`/`'#fff'` codé en dur sur fond `var(--accent)` — avec le thème clair qui inverse `--accent-ink` en blanc sur un fond citron assombri, un `'#000'` codé en dur y serait devenu noir-sur-noir. Basculé sur `var(--accent-ink)` partout, plus robuste aux deux thèmes.
+- `Rings.jsx` supprimé (voir plus haut) confirmé mort ; profité de l'audit pour vérifier qu'aucun autre écran n'a le même problème.
+
+Build validé. Toujours aucune vérification visuelle possible dans ce sandbox — **particulièrement important cette fois** : impossible de créer de vrais comptes coach/membre de test avec des séances/repas réels pour vérifier que les calculs de moyennes/statuts sont right, à tester en conditions réelles par l'utilisateur.
+
+### Reste ouvert après cette session
+- **Messagerie persistée** (nouvelle table + policies) — chantier séparé, pas commencé.
+- **Push notifications** (décidé "vraies push" en Session 14) — pas commencé, nécessite VAPID + service worker + table d'abonnements + fonction d'envoi + décision sur les déclencheurs.
+- Nettoyage sécurité mineur : `prevent_self_role_escalation()` public via RPC.
+- Reskin Neon des écrans coach + Scan/Hydration/Sleep/ResetPassword (visuel uniquement, pas de données).
+- UI Coach à recadrer avec l'utilisateur (contenu, pas juste le style).
+- Thème clair : toujours pas vu en vrai sur la preview.
+
+---
+
 ## 2026-07-22 — Session 14 : PR #10 mergée, thème clair Neon, navigation retour cohérente, décisions produit
 
 **PR #10 mergée** dans `claude/charming-mendel-dj1GQ` (squash, commit `04e1106`) à la demande de l'utilisateur — tout le redesign Neon (Login → nav bar) est maintenant sur la branche de dev principale. Branche de session redémarrée proprement dessus (elle ne contenait plus que de l'historique déjà mergé).
