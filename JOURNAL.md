@@ -6,6 +6,31 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo, branche `claude/charming-mendel-dj1GQ`, et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-07-22 — Session 15 (suite 2) : PR #11 mergée, chantier découpé en deux (Membre / Coach)
+
+**PR #11 mergée** dans `claude/charming-mendel-dj1GQ` (squash, commit `8b2e40c`) — thème clair Neon, navigation retour cohérente, modèle IA recette plus rapide, coach branché sur les vraies données, fix du choix de repas pour les recettes IA. Tout ce qui a été fait en Sessions 13-15 est maintenant sur la branche de dev principale.
+
+**Décision organisationnelle de l'utilisateur** : diviser le reste du travail en deux chantiers séparés — **Membre** et **Coach** — plutôt qu'une liste unique. Répartition ci-dessous, état vérifié fichier par fichier au moment d'écrire ces lignes (notamment `CoachSettings.jsx`, jamais audité jusqu'ici : déjà sur données réelles — nom/email/code d'accès viennent du vrai compte, rien à corriger côté données là-dessus, juste du reskin visuel comme le reste du côté coach).
+
+### 🧑 Chantier MEMBRE — reste à faire
+- **Reskin Neon** : `Scan.jsx`, `Hydration.jsx`, `Sleep.jsx`, `ResetPassword.jsx` pas encore passés en revue en détail (bénéficient déjà des fix globaux `.card`/`.btn-ghost` mais gardent des restes de style "glass" par endroits, notamment `Scan.jsx` et `ResetPassword.jsx` repérés lors du dernier audit).
+- **Thème clair** : jamais vu en vrai sur la preview — la valeur d'accent assombrie (`#3D5200`) a été choisie par calcul de contraste, pas par l'œil, à valider ou ajuster.
+- **Push notifications** : décidé "vraies push" (Session 14), rien construit. C'est principalement un chantier membre (c'est lui qui les reçoit) même si le déclenchement peut venir d'actions coach (ex. réponse à un message).
+- **Messagerie persistée** : aucune table en base, `Messages.jsx`/`Conversation.jsx` (côté membre) sont entièrement fictifs/locaux. Partagé avec le chantier coach (même table, deux écrans côté membre + deux côté coach à brancher dessus une fois construite).
+
+### 🧑‍💼 Chantier COACH — reste à faire
+- **Reskin Neon** : `CoachDashboard.jsx`, `ClientsList.jsx`, `MemberDetail.jsx`, `CoachMessages.jsx`, `CoachSettings.jsx` — aucun n'a encore été passé au style Neon en détail (données déjà réelles depuis cette session, c'est uniquement visuel qui reste).
+- **UI Coach à recadrer** : l'utilisateur a confirmé qu'il faudra s'y mettre mais sans détail sur quoi changer précisément — nécessite un brief avant de coder quoi que ce soit au-delà du reskin.
+- **Messagerie persistée** : voir ci-dessus, partagée avec le chantier membre — `CoachMessages.jsx`/`Conversation.jsx` (côté coach) affichent déjà les vrais noms de clients mais aucune conversation réelle.
+- **Nettoyage sécurité mineur** : `prevent_self_role_escalation()` (le trigger anti-escalade de rôle) est appelable en RPC public par `anon`/`authenticated` — même défaut déjà corrigé sur `is_coach()`. Concerne l'espace coach (protection des comptes coach/admin), pas exploitable en pratique, pas urgent.
+- **Toggles de notifications non fonctionnels** : "Alertes membres"/"Nouveaux messages" dans `CoachSettings.jsx` ne font rien (état local seulement) — dépend du chantier push notifications ci-dessus.
+
+### Transversal (ni purement membre, ni purement coach)
+- Messagerie persistée (déjà listée des deux côtés).
+- Push notifications (déjà listé côté membre, le toggle de préférence existe aussi côté coach).
+
+---
+
 ## 2026-07-22 — Session 15 (suite) : choix du type de repas avant de générer une recette IA
 
 Retour utilisateur en testant la PR #11 : "Idée recette" proposait un repas au hasard, sans demander petit-déj/déjeuner/dîner/collation — le prompt envoyé à l'IA n'incluait jamais cette info alors que le sélecteur de type de repas existait déjà dans l'écran, mais seulement *après* la génération (pour classer la recette une fois créée, pas pour la générer).
