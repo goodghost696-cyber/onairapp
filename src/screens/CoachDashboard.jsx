@@ -2,25 +2,8 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
+import { fetchMemberActivitySummaries, lastSeenLabel } from '../utils/coachStats'
 import CoachNav from '../components/CoachNav'
-
-export const MOCK_MEMBERS = [
-  { id:1,  name:'Léo',     lastSeen:'Aujourd\'hui', sessions:5, status:'ON TRACK', calories:1847, sleep:'7h23', steps:8247,  weight:78,  goal:'Prise de masse' },
-  { id:2,  name:'Sarah',   lastSeen:'Hier',         sessions:3, status:'AT RISK',  calories:1200, sleep:'4h50', steps:4200,  weight:62,  goal:'Perte de poids' },
-  { id:3,  name:'Marcus',  lastSeen:'Il y a 5j',    sessions:1, status:'INACTIVE', calories:900,  sleep:'6h10', steps:2100,  weight:85,  goal:'Prise de masse' },
-  { id:4,  name:'Amina',   lastSeen:'Aujourd\'hui', sessions:6, status:'ON TRACK', calories:2100, sleep:'8h05', steps:11000, weight:58,  goal:'Performance' },
-  { id:5,  name:'Jordan',  lastSeen:'Aujourd\'hui', sessions:4, status:'ON TRACK', calories:2300, sleep:'7h45', steps:9500,  weight:82,  goal:'Sèche' },
-  { id:6,  name:'Yasmine', lastSeen:'Il y a 2j',    sessions:2, status:'AT RISK',  calories:1400, sleep:'5h30', steps:5100,  weight:55,  goal:'Tonicité' },
-  { id:7,  name:'Kevin',   lastSeen:'Hier',         sessions:4, status:'ON TRACK', calories:2600, sleep:'7h00', steps:7800,  weight:90,  goal:'Prise de masse' },
-  { id:8,  name:'Inès',    lastSeen:'Il y a 3j',    sessions:2, status:'AT RISK',  calories:1600, sleep:'6h20', steps:6200,  weight:60,  goal:'Perte de poids' },
-  { id:9,  name:'Thomas',  lastSeen:'Aujourd\'hui', sessions:5, status:'ON TRACK', calories:2200, sleep:'8h00', steps:10200, weight:76,  goal:'Performance' },
-  { id:10, name:'Camille', lastSeen:'Il y a 7j',    sessions:0, status:'INACTIVE', calories:800,  sleep:'5h00', steps:1800,  weight:65,  goal:'Remise en forme' },
-  { id:11, name:'Rayan',   lastSeen:'Hier',         sessions:3, status:'ON TRACK', calories:2400, sleep:'7h30', steps:8900,  weight:73,  goal:'Sèche' },
-  { id:12, name:'Lucie',   lastSeen:'Il y a 4j',    sessions:1, status:'INACTIVE', calories:1100, sleep:'5h45', steps:3200,  weight:57,  goal:'Tonicité' },
-  { id:13, name:'Axel',    lastSeen:'Aujourd\'hui', sessions:6, status:'ON TRACK', calories:2800, sleep:'7h50', steps:12000, weight:88,  goal:'Prise de masse' },
-  { id:14, name:'Nadia',   lastSeen:'Il y a 2j',    sessions:2, status:'AT RISK',  calories:1350, sleep:'6h00', steps:4800,  weight:61,  goal:'Perte de poids' },
-  { id:15, name:'Ethan',   lastSeen:'Hier',         sessions:3, status:'ON TRACK', calories:1950, sleep:'7h15', steps:7500,  weight:71,  goal:'Performance' },
-]
 
 const STATUS_COLORS = { 'ON TRACK': 'var(--success)', 'AT RISK': 'var(--warning)', 'INACTIVE': 'var(--danger)' }
 
@@ -38,16 +21,21 @@ export default function CoachDashboard() {
         .from('profiles')
         .select('*')
         .eq('role', 'member')
-      if (!cancelled) {
-        if (!error && data) setMembers(data)
-        setLoading(false)
-      }
+      if (cancelled) return
+      if (error || !data) { setLoading(false); return }
+
+      const summaries = await fetchMemberActivitySummaries(data.map(m => m.user_id))
+      if (cancelled) return
+      setMembers(data.map(m => ({ ...m, ...summaries[m.user_id] })))
+      setLoading(false)
     }
     fetchMembers()
     return () => { cancelled = true }
   }, [])
 
   const alerts = members.filter(m => m.status && m.status !== 'ON TRACK')
+  const activeToday = members.filter(m => m.lastActiveDate && lastSeenLabel(m.lastActiveDate) === "Aujourd'hui")
+  const sessionsThisWeekTotal = members.reduce((sum, m) => sum + (m.sessionsThisWeek || 0), 0)
 
   return (
     <div className="app-wrapper">
@@ -67,9 +55,9 @@ export default function CoachDashboard() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 6, marginBottom: 16 }}>
           {[
             { label: 'Clients', val: loading ? '-' : members.length },
-            { label: 'Séances', val: 47 },
-            { label: 'Alertes', val: alerts.length, danger: true },
-            { label: 'Progression', val: '+12%' },
+            { label: 'Séances (7j)', val: loading ? '-' : sessionsThisWeekTotal },
+            { label: 'Alertes', val: loading ? '-' : alerts.length, danger: true },
+            { label: 'Actifs', val: loading ? '-' : activeToday.length },
           ].map(m => (
             <div key={m.label} className="card" style={{ textAlign: 'center', padding: '12px 6px' }}>
               <div style={{ fontSize: 18, fontWeight: 700, color: m.danger ? 'var(--danger)' : 'var(--text-primary)' }}>{m.val}</div>
@@ -92,7 +80,9 @@ export default function CoachDashboard() {
                   <span className="text-xs text-accent">VOIR →</span>
                 </div>
                 <div className="text-sm text-secondary" style={{ marginTop: 4 }}>
-                  {m.status === 'INACTIVE' ? `Absent ${(m.lastSeen || '').toLowerCase()} · Calories en chute` : `Sommeil perturbé · Fatigue détectée`}
+                  {m.status === 'INACTIVE'
+                    ? `Dernière activité : ${lastSeenLabel(m.lastActiveDate).toLowerCase()}`
+                    : `${m.sessionsThisWeek || 0} séance${m.sessionsThisWeek > 1 ? 's' : ''} cette semaine · dernière activité ${lastSeenLabel(m.lastActiveDate).toLowerCase()}`}
                 </div>
               </div>
             ))}
@@ -101,7 +91,8 @@ export default function CoachDashboard() {
 
         <div className="section-label">ACTIFS AUJOURD'HUI</div>
         {loading && <p className="text-sm text-muted">Chargement des clients...</p>}
-        {!loading && members.filter(m => m.lastSeen === 'Aujourd\'hui').map(m => (
+        {!loading && activeToday.length === 0 && <p className="text-sm text-muted">Personne d'actif aujourd'hui pour l'instant.</p>}
+        {!loading && activeToday.map(m => (
           <div key={m.id} className="card" style={{ cursor: 'pointer', marginBottom: 8 }} onClick={() => navigate(`/coach/member/${m.id}`)}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--surface-2)', border: `1.5px solid ${STATUS_COLORS[m.status] || 'var(--border)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: STATUS_COLORS[m.status] || 'var(--text-muted)', flexShrink: 0 }}>
@@ -112,7 +103,7 @@ export default function CoachDashboard() {
                   <span className="text-base bold">{m.prenom}</span>
                   <span style={{ fontSize: 10, color: STATUS_COLORS[m.status] || 'var(--text-muted)', border: `1px solid ${STATUS_COLORS[m.status] || 'var(--border)'}`, padding: '2px 6px', borderRadius: 4, letterSpacing: 0.5 }}>{m.status || '-'}</span>
                 </div>
-                <div className="text-xs text-muted" style={{ marginTop: 2 }}>{m.goal || '-'} · {m.sessions ?? '-'} séances</div>
+                <div className="text-xs text-muted" style={{ marginTop: 2 }}>{m.sessionsThisWeek || 0} séance{m.sessionsThisWeek > 1 ? 's' : ''} cette semaine</div>
               </div>
             </div>
           </div>

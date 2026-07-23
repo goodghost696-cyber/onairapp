@@ -16,7 +16,6 @@ import MemberDetail from './screens/MemberDetail'
 import WorkoutLibrary from './screens/WorkoutLibrary'
 import WorkoutSession from './screens/WorkoutSession'
 import WorkoutHistory from './screens/WorkoutHistory'
-import Rings from './screens/Rings'
 import ClientsList from './screens/ClientsList'
 import Messages from './screens/Messages'
 import Conversation from './screens/Conversation'
@@ -62,7 +61,6 @@ export default function App() {
           <Route path="/weekly" element={<Weekly />} />
           <Route path="/scan" element={<Scan />} />
           <Route path="/ai-coach" element={<AICoach />} />
-          <Route path="/rings" element={<Rings />} />
           <Route path="/messages" element={<Messages />} />
           <Route path="/messages/coach" element={<Conversation />} />
           <Route path="/settings" element={<Settings />} />

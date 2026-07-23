@@ -6,6 +6,102 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo, branche `claude/charming-mendel-dj1GQ`, et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-07-22 — Session 15 (suite) : choix du type de repas avant de générer une recette IA
+
+Retour utilisateur en testant la PR #11 : "Idée recette" proposait un repas au hasard, sans demander petit-déj/déjeuner/dîner/collation — le prompt envoyé à l'IA n'incluait jamais cette info alors que le sélecteur de type de repas existait déjà dans l'écran, mais seulement *après* la génération (pour classer la recette une fois créée, pas pour la générer).
+
+### ✅ `Nutrition.jsx` — le type de repas est maintenant demandé avant de générer
+- Nouvelle étape 1 dans la sheet "Idée recette" : liste des 4 types de repas à choisir (au lieu d'appeler l'IA immédiatement au clic sur le bouton).
+- Le prompt envoyé à Claude inclut maintenant explicitement le repas concerné, avec l'instruction de proposer quelque chose de cohérent avec ce moment de la journée (pas un plat de dîner suggéré pour un petit-déjeuner).
+- Le sélecteur redondant qui apparaissait après génération (pour reclasser la recette) est retiré — le choix fait en amont sert directement à classer le repas au moment de l'ajouter.
+- Séparé cet état (`recipeMealType`) du `mealType` déjà utilisé par le flux d'ajout manuel d'aliment, pour éviter que les deux sheets ne se marchent dessus.
+
+Build validé, poussé sur la PR #11 existante (pas de nouvelle PR).
+
+---
+
+## 2026-07-22 — Session 15 : audit complet + côté coach branché sur les vraies données
+
+Demandé un audit complet de l'app. Points marquants trouvés :
+- **Sécurité** : les correctifs critiques de Session 11 tiennent toujours. Nouveau point mineur : `prevent_self_role_escalation()` (le trigger anti-escalade) est appelable en RPC public par `anon`/`authenticated` — même défaut que celui déjà corrigé sur `is_coach()` (grant `PUBLIC` par défaut sur toute fonction). Pas exploitable en pratique (une fonction trigger appelée hors contexte trigger échoue), **pas encore corrigé** — à faire par cohérence, pas urgent.
+- **`npm audit`** : 0 vulnérabilité en prod. 2 signalées côté outils de dev uniquement (vite/esbuild), n'affectent pas le build livré.
+- **Découverte majeure : le côté coach donnait une fausse impression de marcher.** `ClientsList.jsx` interrogeait bien la vraie base, mais `CoachDashboard.jsx`, `MemberDetail.jsx` et `CoachMessages.jsx` tournaient tous sur des `MOCK_MEMBERS` codés en dur. C'était l'étape 5-6 de la roadmap de persistance (jamais faite), invisible tant qu'on n'avait pas vérifié fichier par fichier — une session qui n'aurait vérifié que `ClientsList.jsx` aurait conclu à tort que "le coach marche".
+
+Utilisateur a validé de traiter la partie **données réelles** (repas/séances/activité/objectifs pour le coach) tout de suite, et de laisser la **messagerie persistée** (aucune table `messages` n'existe dans le schéma) comme chantier séparé, pas fait cette session.
+
+### ✅ Migration Supabase — coachs en lecture seule sur les données membres (`add_coach_read_access_to_member_data`)
+Nouvelles policies `SELECT` sur `objectifs`, `repas`, `seances`, `activite_jour`, gated par `is_coach()` — même pattern que la policy déjà existante sur `profiles`. **Lecture seule uniquement** : aucun GRANT INSERT/UPDATE/DELETE ajouté, un coach ne peut que consulter, jamais modifier les données d'un membre. Appliqué en prod puis vérifié directement via `pg_policies`. `scripts/supabase_schema.sql` mis à jour dans la foulée (comme prescrit en tête de ce fichier).
+
+### ✅ `src/utils/coachStats.js` (nouveau) — calcul du statut réel par membre
+- `fetchMemberActivitySummaries(userIds)` : 2 requêtes au total (pas une par membre) pour agréger `seances`/`activite_jour` sur tous les clients d'un coup — calcule un vrai `status` (ON TRACK / AT RISK / INACTIVE) à partir de la récence et du volume d'activité réels, plus `lastActiveDate`/`sessionsThisWeek`. Remplace entièrement les champs `status`/`lastSeen`/`sessions` fictifs des `MOCK_MEMBERS`.
+- `fetchMemberDetailStats(userId)` : version détaillée pour la fiche d'un seul membre — moyennes calories/sommeil/pas sur les données réelles, dates de séances de la semaine pour le graphique, `objectifs` réels.
+- **Note sur l'"objectif" qualitatif (ex. "Prise de masse")** : ce champ n'existe **nulle part en base** — il vit uniquement dans `user_metadata` de Supabase Auth (jamais persisté dans `profiles`), donc un coach ne peut pas le lire via le SDK client (ça nécessiterait `service_role`, volontairement pas exposé côté client). Remplacé par les vrais objectifs numériques de la table `objectifs` (calories/protéines/pas/eau) plutôt que d'essayer de faire semblant.
+
+### ✅ `CoachDashboard.jsx`, `MemberDetail.jsx` branchés sur les vraies données
+- Stats du tableau de bord (Clients/Séances 7j/Alertes/Actifs) toutes calculées depuis les vraies tables, plus de "Progression +12%" inventée.
+- Fiche membre : poids/taille réels (`profiles`), séances/calories/sommeil/pas réels (moyennes calculées), graphique hebdo réel, objectifs réels. L'analyse IA envoie maintenant les vraies stats du membre au prompt au lieu des données mockées.
+
+### ✅ `CoachMessages.jsx`/`Conversation.jsx` — dépendance à `MOCK_MEMBERS` retirée sans faire semblant
+Comme la messagerie n'est pas persistée (décision : chantier séparé), remplacé la liste de conversations par les vrais clients (`profiles`) mais **sans inventer de faux derniers messages à côté d'un vrai prénom** — ç'aurait été pire que le mock initial (attribuer une fausse citation à une vraie personne). Affiche "Aucune conversation pour l'instant" à la place. `Conversation.jsx` récupère le vrai prénom du membre pour l'en-tête ; le contenu de la conversation reste un placeholder générique (plus haut de citer "Léo" alors que n'importe quel membre réel peut maintenant s'afficher dans ce header).
+
+### 🐛 Bugs trouvés en marge, corrigés au passage
+- `Conversation.jsx` référençait `<BottomNav />` sans jamais l'importer — plantage runtime garanti pour un membre ouvrant `/messages/coach` (le cas `isCoach=false`). Import ajouté.
+- **Contraste** : `Conversation.jsx` (bulle de message + bouton envoyer) et `AICoach.jsx` (bouton envoyer) mettaient du texte/icône `'#000'`/`'#fff'` codé en dur sur fond `var(--accent)` — avec le thème clair qui inverse `--accent-ink` en blanc sur un fond citron assombri, un `'#000'` codé en dur y serait devenu noir-sur-noir. Basculé sur `var(--accent-ink)` partout, plus robuste aux deux thèmes.
+- `Rings.jsx` supprimé (voir plus haut) confirmé mort ; profité de l'audit pour vérifier qu'aucun autre écran n'a le même problème.
+
+Build validé. Toujours aucune vérification visuelle possible dans ce sandbox — **particulièrement important cette fois** : impossible de créer de vrais comptes coach/membre de test avec des séances/repas réels pour vérifier que les calculs de moyennes/statuts sont right, à tester en conditions réelles par l'utilisateur.
+
+### Reste ouvert après cette session
+- **Messagerie persistée** (nouvelle table + policies) — chantier séparé, pas commencé.
+- **Push notifications** (décidé "vraies push" en Session 14) — pas commencé, nécessite VAPID + service worker + table d'abonnements + fonction d'envoi + décision sur les déclencheurs.
+- Nettoyage sécurité mineur : `prevent_self_role_escalation()` public via RPC.
+- Reskin Neon des écrans coach + Scan/Hydration/Sleep/ResetPassword (visuel uniquement, pas de données).
+- UI Coach à recadrer avec l'utilisateur (contenu, pas juste le style).
+- Thème clair : toujours pas vu en vrai sur la preview.
+
+---
+
+## 2026-07-22 — Session 14 : PR #10 mergée, thème clair Neon, navigation retour cohérente, décisions produit
+
+**PR #10 mergée** dans `claude/charming-mendel-dj1GQ` (squash, commit `04e1106`) à la demande de l'utilisateur — tout le redesign Neon (Login → nav bar) est maintenant sur la branche de dev principale. Branche de session redémarrée proprement dessus (elle ne contenait plus que de l'historique déjà mergé).
+
+L'utilisateur a répondu aux 7 points de la liste consolidée de la session précédente :
+
+### ✅ 1. Thème clair migré vers Neon (`global.css`)
+Le bloc `:root[data-theme="light"]` utilisait encore l'ancienne palette rouge/beige (`--accent:#bf0603`, `--accent-secondary:#C4956A`) — remplacé par une vraie variante claire du même système Neon :
+- `--bg:#F2F2EF` (canvas gris clair neutre), `--surface:#FFFFFF` (cartes blanches qui "montent" du canvas — même logique inversée que le dark, où les cartes `#1A1A1A` montent du noir `#0A0A0A`).
+- `--text-primary:#0A0A0A`, bordures/text-muted analogues en noir à faible opacité au lieu de blanc.
+- `--accent-secondary:#0047FF` (même bleu qu'en dark, déjà lisible sur blanc, aucun changement nécessaire).
+- **`--accent` assombri à `#3D5200`** (même famille citron, mais `#D4FF00` brut est quasiment invisible comme couleur de texte/bordure sur fond clair — c'est une teinte très proche du blanc). **`--accent-ink` inversé à blanc** pour ce thème (le texte sur un bouton citron doit être clair puisque le citron lui-même est maintenant foncé) — un bouton "citron" passe donc de *fond vif + texte foncé* en dark à *fond olive foncé + texte blanc* en clair, ce qui est le pattern habituel pour adapter un accent "néon" (pensé pour briller sur noir) à un fond clair.
+- **Corrigé au passage** : `body { background: #0A0A0A }` était codé en dur (jamais lié à `--bg`) — sur un écran plus large que 390px, les marges autour de l'app seraient restées noires même en thème clair. Passé à `var(--bg)`.
+- **⚠️ Seule valeur de cette session qui mériterait un vrai réglage à l'œil** : `#3D5200` a été choisi par calcul de contraste (accessible, ~3:1 sur blanc) plutôt que par sensation visuelle — impossible à vérifier dans ce sandbox. Si ça paraît trop terne/kaki une fois vu sur la vraie preview, c'est une seule variable à ajuster, pas une refonte.
+
+### ✅ 2. Suggestions de notifications (réponse donnée, pas encore construit)
+Voir réponse détaillée donnée à l'utilisateur en conversation — reste bloqué sur la même question qu'avant : notifications *in-app* (liste simple alimentée par les événements déjà trackés dans l'app, pas de vraie notif push) vs vraies push notifications (nécessite un service worker + une brique serveur d'envoi, bien plus gros chantier). Pas tranché, pas codé.
+
+### ✅ 3. Navigation retour rendue cohérente
+Convention appliquée : **les écrans racine (accessibles depuis un onglet de nav) n'ont pas de flèche retour ; tous les écrans "poussés" (ouverts depuis un autre écran) en ont une.**
+- **Retirées** (redondantes, l'écran est une racine) : `Weekly.jsx` (onglet Bilan), `ClientsList.jsx` (onglet Clients côté coach).
+- **Ajoutées** (poussés, n'en avaient pas) : `Settings.jsx` (n'est plus un onglet depuis la réorg de la nav bar — accessible uniquement via l'avatar du Dashboard, donc désormais "poussé"), `Messages.jsx` (liste des conversations, ouverte depuis le FAB Coach).
+- **Déjà correctes, non touchées** : `WorkoutSession`, `WorkoutLibrary`, `WorkoutHistory`, `Scan`, `Hydration`, `Sleep`, `Conversation`, `MemberDetail`, `AICoach` (a bien un retour, juste une icône différente — repérée en vérifiant à la main après qu'un grep trop étroit l'ait ratée une première fois).
+- **Repéré en marge, pas touché** : `Rings.jsx` a un bouton retour mais n'est référencé nulle part dans l'app (aucune navigation ne pointe vers `/rings`) — semble être du code mort du même genre que l'ancien `Run.jsx` supprimé en Session 10. Pas supprimé sans confirmation, à valider avec l'utilisateur.
+
+### ✅ 4. Modèle plus rapide pour les recettes IA (`Nutrition.jsx`)
+`claude-fable-5` → `claude-haiku-4-5-20251001` pour `generateRecipe()`. Comme plus rien n'utilise Fable 5 dans l'app, retiré de la liste blanche `ALLOWED_MODELS` dans `api/claude.js` (nettoyage, pas fonctionnel).
+
+### 5. Leaked Password Protection — risque accepté
+Décision de l'utilisateur enregistrée : on n'upgrade pas vers Supabase Pro pour l'instant, le risque résiduel (mots de passe compromis non filtrés à l'inscription) est accepté. Rien à coder, juste à ne plus proposer cette option tant que l'utilisateur ne revient pas dessus.
+
+### 6. UI Coach — confirmé qu'il faudra s'y mettre, toujours pas cadré
+L'utilisateur confirme qu'il faudra reprendre ce chantier, mais sans donner de détail sur ce qui doit changer précisément. Reste bloqué en l'état — il faudra lui redemander ce qu'il veut voir changer avant de coder quoi que ce soit.
+
+### 7. Fusion coach + IA en SaaS multi-salles — réexpliqué à l'utilisateur
+Il avait demandé de reformuler l'idée (voir réponse donnée en conversation, résumé de l'échange du 2026-07-16) : l'idée n'est pas d'abandonner le coach humain pour de l'IA, mais l'inverse — l'app avec un vrai coach humain (ON AIR Clichy) + IA en support est elle-même un produit qu'on pourrait, à terme, vendre en licence à d'autres salles/coachs indépendants plutôt que juste vendre un abonnement membre. Toujours pas de décision finale, juste reformulé pour clarifier.
+
+Build validé après chaque lot de changements. Toujours aucune vérification visuelle possible dans ce sandbox — **le thème clair en particulier** (nouvelle fonctionnalité entière, jamais vue) mérite une vraie vérification sur la preview Vercel avant de considérer que c'est acquis.
+
+---
+
 ## 2026-07-21 — Session 13 (suite 2) : le bouton central de la nav devient une action "+", réorganisation des onglets
 
 Retour utilisateur après la preview : garder les icônes de nos 5 onglets mais les revoir ("carte blanche"), et surtout — le bouton citron central doit permettre d'ajouter **soit un repas, soit un exercice**, pas juste naviguer vers Workout. Questions posées avant de coder (le bouton ne peut plus être à la fois un lien direct vers Workout ET une action d'ajout) — réponses obtenues :
@@ -50,7 +146,7 @@ Cette liste remplace/complète les listes éparpillées plus bas dans le journal
 **Projet séparé, hors périmètre onairapp :**
 - Dashboard de suivi de conso tokens Anthropic (Session 8) — bloqué en attente que l'utilisateur vérifie si son compte Anthropic est en mode organisation (prérequis pour l'Admin API).
 
-**Pas une tâche, juste un rappel :** PR #10 (tout le redesign Neon depuis Login jusqu'à la nav bar) est toujours en **draft**, jamais mergée — à faire quand l'utilisateur estime que c'est prêt.
+**Mise à jour (2026-07-22) :** PR #10 mergée dans `claude/charming-mendel-dj1GQ` — voir l'entrée Session 14 plus haut pour la suite (thème clair, navigation, décisions produit).
 
 ---
 

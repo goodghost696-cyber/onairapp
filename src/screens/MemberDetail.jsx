@@ -1,38 +1,71 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { MOCK_MEMBERS } from './CoachDashboard'
+import { supabase } from '../lib/supabase'
+import { fetchMemberDetailStats, lastSeenLabel } from '../utils/coachStats'
 import CoachNav from '../components/CoachNav'
 import { authHeader } from '../lib/supabase'
 
 const STATUS_COLORS = { 'ON TRACK': 'var(--success)', 'AT RISK': 'var(--warning)', 'INACTIVE': 'var(--danger)' }
 
-const MOCK_OBJECTIVES = {
-  default: ['5 séances cette semaine', '2500 kcal/jour', '8h de sommeil', '10 000 pas/jour']
-}
-
 const weekDays = ['L', 'M', 'M', 'J', 'V', 'S', 'D']
+
+// Returns the ISO date for each of the last 7 days (oldest first), paired
+// with the French weekday initial used by the chart.
+function last7Days() {
+  const days = []
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(Date.now() - i * 86400000)
+    days.push({ iso: d.toISOString().slice(0, 10), label: weekDays[(d.getDay() + 6) % 7] })
+  }
+  return days
+}
 
 export default function MemberDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const [member, setMember] = useState(null)
+  const [stats, setStats] = useState(null)
+  const [notFound, setNotFound] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [analysis, setAnalysis] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [analysisLoading, setAnalysisLoading] = useState(false)
   const [showMessage, setShowMessage] = useState(false)
   const [message, setMessage] = useState('')
   const [msgSent, setMsgSent] = useState(false)
 
-  const member = MOCK_MEMBERS.find(m => m.id === parseInt(id))
-  if (!member) return (
+  useEffect(() => {
+    let cancelled = false
+    async function load() {
+      setLoading(true)
+      const { data: profile, error } = await supabase.from('profiles').select('*').eq('id', id).single()
+      if (cancelled) return
+      if (error || !profile) {
+        setNotFound(true)
+        setLoading(false)
+        return
+      }
+      setMember(profile)
+      const detail = await fetchMemberDetailStats(profile.user_id)
+      if (cancelled) return
+      setStats(detail)
+      setLoading(false)
+    }
+    load()
+    return () => { cancelled = true }
+  }, [id])
+
+  if (loading) return (
+    <div className="app-wrapper"><div className="screen"><p className="text-base text-muted" style={{ marginTop: 40 }}>Chargement...</p></div></div>
+  )
+  if (notFound || !member) return (
     <div className="app-wrapper"><div className="screen"><p className="text-base text-muted" style={{ marginTop: 40 }}>Membre introuvable.</p></div></div>
   )
 
-  const color = STATUS_COLORS[member.status] || 'var(--text-muted)'
-
-  // Mock weekly sessions data
-  const sessionsSeed = [1,0,1,1,0,0,0].map((v, i) => ({ day: weekDays[i], count: (member.id + i) % 3 === 0 ? 1 : v }))
+  const color = STATUS_COLORS[stats?.status] || 'var(--text-muted)'
+  const sessionDays = last7Days().map(d => ({ ...d, done: stats?.weekSessionDates?.has(d.iso) }))
 
   async function generateAnalysis() {
-    setLoading(true)
+    setAnalysisLoading(true)
     setAnalysis('')
     try {
       const res = await fetch('/api/claude', {
@@ -44,8 +77,8 @@ export default function MemberDetail() {
         body: JSON.stringify({
           model: 'claude-haiku-4-5-20251001',
           max_tokens: 400,
-          system: `Tu es Thomas, coach chez ON AIR Fitness Clichy. Bilan court sur ${member.name}. Données : séances ${member.sessions}/mois, dernière visite ${member.lastSeen}, calories ${member.calories} kcal, sommeil ${member.sleep}, pas ${member.steps}, statut ${member.status}, objectif ${member.goal}. 3 phrases max. Direct, pro, actionnable. Termine par une reco concrète. Pas de bullet points. Pas de titre.`,
-          messages: [{ role: 'user', content: `Bilan pour ${member.name}` }],
+          system: `Tu es Thomas, coach chez ON AIR Fitness Clichy. Bilan court sur ${member.prenom}. Données réelles des 7 derniers jours : ${stats.sessionsThisWeek} séances, calories moyennes ${stats.avgCalories} kcal/jour, sommeil moyen ${stats.avgSleepH}h, pas moyens ${stats.avgSteps}/jour, statut ${stats.status}, dernière activité ${lastSeenLabel(stats.lastActiveDate)}. 3 phrases max. Direct, pro, actionnable. Termine par une reco concrète. Pas de bullet points. Pas de titre.`,
+          messages: [{ role: 'user', content: `Bilan pour ${member.prenom}` }],
         }),
       })
       if (!res.ok) throw new Error()
@@ -54,10 +87,13 @@ export default function MemberDetail() {
     } catch {
       setAnalysis('Erreur lors de la génération. Réessaie.')
     } finally {
-      setLoading(false)
+      setAnalysisLoading(false)
     }
   }
 
+  // Messaging isn't persisted anywhere yet (no messages table in the
+  // schema) — this is a placeholder confirmation until that's built as its
+  // own piece of work, not silently wired to a real send.
   function sendMessage() {
     setMsgSent(true)
     setTimeout(() => { setShowMessage(false); setMsgSent(false); setMessage('') }, 1500)
@@ -70,18 +106,18 @@ export default function MemberDetail() {
           <button style={{ background: 'none', border: 'none', cursor: 'pointer' }} onClick={() => navigate('/coach')}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" strokeWidth="1.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
           </button>
-          <h1 className="text-xl bold" style={{ flex: 1 }}>{member.name}</h1>
-          <span style={{ border: `1px solid ${color}`, color, fontSize: 9, padding: '3px 8px', borderRadius: 4, letterSpacing: 1, textTransform: 'uppercase', fontWeight: 700 }}>{member.status}</span>
+          <h1 className="text-xl bold" style={{ flex: 1 }}>{member.prenom}</h1>
+          <span style={{ border: `1px solid ${color}`, color, fontSize: 9, padding: '3px 8px', borderRadius: 4, letterSpacing: 1, textTransform: 'uppercase', fontWeight: 700 }}>{stats.status}</span>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
           {[
-            { label: 'Objectif', val: member.goal },
-            { label: 'Séances', val: member.sessions },
-            { label: 'Calories moy.', val: `${member.calories} kcal` },
-            { label: 'Sommeil moy.', val: member.sleep },
-            { label: 'Pas/jour', val: member.steps.toLocaleString() },
-            { label: 'Poids', val: `${member.weight} kg` },
+            { label: 'Poids', val: member.poids ? `${member.poids} kg` : '—' },
+            { label: 'Taille', val: member.taille ? `${member.taille} cm` : '—' },
+            { label: 'Séances (7j)', val: stats.sessionsThisWeek },
+            { label: 'Calories moy.', val: stats.avgCalories ? `${stats.avgCalories} kcal` : '—' },
+            { label: 'Sommeil moy.', val: stats.avgSleepH ? `${stats.avgSleepH}h` : '—' },
+            { label: 'Pas/jour moy.', val: stats.avgSteps ? stats.avgSteps.toLocaleString() : '—' },
           ].map(s => (
             <div key={s.label} className="card card-animated" style={{ '--delay': '0ms', padding: '12px 16px' }}>
               <div className="text-xs text-muted">{s.label}</div>
@@ -95,30 +131,31 @@ export default function MemberDetail() {
         <div className="card" style={{ marginBottom: 8 }}>
           <div style={{ width: '100%' }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
-              {sessionsSeed.map((d, i) => (
+              {sessionDays.map((d, i) => (
                 <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                  <div style={{ width: '100%', height: d.count > 0 ? 36 : 6, background: d.count > 0 ? 'var(--accent)' : 'var(--border)', borderRadius: '3px 3px 0 0' }} />
-                  <span style={{ fontSize: 9, color: 'var(--text-muted)', overflow: 'hidden', width: '100%', textAlign: 'center' }}>{d.day}</span>
+                  <div style={{ width: '100%', height: d.done ? 36 : 6, background: d.done ? 'var(--accent)' : 'var(--border)', borderRadius: '3px 3px 0 0' }} />
+                  <span style={{ fontSize: 9, color: 'var(--text-muted)', overflow: 'hidden', width: '100%', textAlign: 'center' }}>{d.label}</span>
                 </div>
               ))}
             </div>
           </div>
         </div>
 
-        {/* Objectives */}
-        <div className="section-label">OBJECTIFS ASSIGNÉS</div>
+        {/* Objectives — real numeric goals from the objectifs table */}
+        <div className="section-label">OBJECTIFS</div>
         <div className="card" style={{ marginBottom: 8 }}>
-          {MOCK_OBJECTIVES.default.map((obj, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: i < MOCK_OBJECTIVES.default.length - 1 ? '0.5px solid var(--border)' : 'none' }}>
-              <div style={{ width: 18, height: 18, borderRadius: '50%', border: '1.5px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: i % 2 === 0 ? 'var(--success)' : 'var(--border)' }} />
-              </div>
+          {stats.objectifs ? [
+            `${stats.objectifs.calories_jour} kcal/jour`,
+            `${stats.objectifs.proteines}g de protéines/jour`,
+            `${stats.objectifs.pas_jour?.toLocaleString()} pas/jour`,
+            `${stats.objectifs.eau_ml} ml d'eau/jour`,
+          ].map((obj, i, arr) => (
+            <div key={i} style={{ padding: '8px 0', borderBottom: i < arr.length - 1 ? '0.5px solid var(--border)' : 'none' }}>
               <span className="text-sm">{obj}</span>
             </div>
-          ))}
-          <button style={{ background: 'none', border: '0.5px dashed var(--border)', color: 'var(--accent)', fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', padding: '8px 16px', borderRadius: 8, cursor: 'pointer', width: '100%', marginTop: 10 }}>
-            + ASSIGNER UN OBJECTIF
-          </button>
+          )) : (
+            <p className="text-sm text-muted">Aucun objectif enregistré pour ce membre.</p>
+          )}
         </div>
 
         {/* Message button */}
@@ -128,8 +165,8 @@ export default function MemberDetail() {
 
         {/* AI Analysis */}
         <div className="section-label">ANALYSE IA</div>
-        <button className="btn-accent" onClick={generateAnalysis} disabled={loading} style={{ opacity: loading ? 0.7 : 1, marginBottom: analysis ? 0 : 16 }}>
-          {loading ? 'GÉNÉRATION EN COURS...' : 'GÉNÉRER ANALYSE IA'}
+        <button className="btn-accent" onClick={generateAnalysis} disabled={analysisLoading} style={{ opacity: analysisLoading ? 0.7 : 1, marginBottom: analysis ? 0 : 16 }}>
+          {analysisLoading ? 'GÉNÉRATION EN COURS...' : 'GÉNÉRER ANALYSE IA'}
         </button>
         {analysis && (
           <div className="card" style={{ marginTop: 12, animation: 'fadeIn 400ms ease-out' }}>
@@ -145,7 +182,7 @@ export default function MemberDetail() {
         <>
           <div onClick={() => setShowMessage(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 200 }} />
           <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 390, background: 'var(--surface)', borderRadius: '20px 20px 0 0', padding: '24px 20px 40px', zIndex: 201 }}>
-            <h2 className="text-lg bold" style={{ marginBottom: 16 }}>Message à {member.name}</h2>
+            <h2 className="text-lg bold" style={{ marginBottom: 16 }}>Message à {member.prenom}</h2>
             <textarea value={message} onChange={e => setMessage(e.target.value)} placeholder="Écris ton message..." style={{ width: '100%', minHeight: 100, background: 'var(--surface-2)', border: '0.5px solid var(--border)', borderRadius: 10, color: 'var(--text-primary)', fontSize: 15, padding: '12px', resize: 'none', outline: 'none', fontFamily: 'inherit' }} />
             <button className="btn-accent" onClick={sendMessage} style={{ marginTop: 12 }}>
               {msgSent ? '✓ ENVOYÉ' : 'ENVOYER'}

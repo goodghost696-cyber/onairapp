@@ -131,6 +131,10 @@ create policy "Users can update own objectifs"
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
 
+-- Read-only — coaches never modify a member's own goals, just view them.
+create policy "Coaches can view all objectifs"
+  on objectifs for select using (is_coach());
+
 -- ── repas ─────────────────────────────────────────────────
 create table if not exists repas (
   id         uuid primary key default gen_random_uuid(),
@@ -161,6 +165,11 @@ create policy "Users can insert own repas"
 create policy "Users can delete own repas"
   on repas for delete using (auth.uid() = user_id);
 
+-- Read-only — lets CoachDashboard/MemberDetail show a member's real meals
+-- instead of the hardcoded mock data they used before.
+create policy "Coaches can view all repas"
+  on repas for select using (is_coach());
+
 -- ── seances ───────────────────────────────────────────────
 create table if not exists seances (
   id         uuid primary key default gen_random_uuid(),
@@ -181,6 +190,10 @@ create policy "Users can insert own seances"
   on seances for insert with check (auth.uid() = user_id);
 create policy "Users can delete own seances"
   on seances for delete using (auth.uid() = user_id);
+
+-- Read-only — same reasoning as repas above.
+create policy "Coaches can view all seances"
+  on seances for select using (is_coach());
 
 -- ── activite_jour ─────────────────────────────────────────
 create table if not exists activite_jour (
@@ -206,6 +219,10 @@ create policy "Users can update own activite"
   on activite_jour for update
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
+
+-- Read-only — same reasoning as repas above.
+create policy "Coaches can view all activite_jour"
+  on activite_jour for select using (is_coach());
 
 -- ── api_rate_limit ────────────────────────────────────────
 -- Backs per-user sliding-window rate limiting for the api/* serverless
