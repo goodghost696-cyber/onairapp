@@ -6,6 +6,21 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo, branche `claude/charming-mendel-dj1GQ`, et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-08-04 — Session 16 : comptes coach de test créés, messagerie en cours
+
+### ⚠️ À faire — signalé par l'utilisateur, priorité
+**Revoir le design de la nav bar côté coach** (`CoachNav.jsx`). Repéré en vérifiant la fiche `MemberDetail.jsx` sur la vraie preview — l'utilisateur veut que ce soit retravaillé, pas de détail donné sur la direction pour l'instant. À rattacher au chantier "UI Coach à recadrer" déjà en attente côté Coach (voir plus bas) — probablement la même discussion à avoir avec l'utilisateur sur ce qu'il veut voir changer.
+
+### ✅ Comptes de test coach créés/corrigés en prod
+- `coach@onairapp.com` (existait déjà, jamais utilisé) — mot de passe réinitialisé, reste `role='coach'`. C'est le compte à utiliser côté coach.
+- `goodghost696@gmail.com` (Arnaud, compte principal de l'utilisateur) — temporairement promu `coach` par erreur puis **repassé `member`** immédiatement sur demande de l'utilisateur : il doit rester membre pour servir de compte de test côté membre pendant que `coach@onairapp.com` sert de compte coach.
+- Vérifié en vrai sur la preview : connexion coach fonctionne, `MemberDetail.jsx` affiche bien les vraies données d'Arnaud (objectifs réels, séances 7j, etc.) — juste "INACTIVE"/valeurs à "—" car pas encore d'activité loggée récente, comportement normal.
+
+### 🚧 En cours — messagerie persistée
+Démarrée cette session (voir plan détaillé dans la conversation) : nouvelle table `messages` + policies RLS (lecture par les deux participants, écriture limitée aux paires membre↔coach réelles, `read_at` modifiable par le destinataire uniquement) + branchement de `Conversation.jsx`/`CoachMessages.jsx`/`Messages.jsx` sur les vraies données avec abonnement realtime Supabase. Pas encore committé au moment d'écrire cette entrée — à compléter/vérifier à la prochaine relecture de ce journal si la session s'arrête en cours de route.
+
+---
+
 ## 2026-07-22 — Session 15 (suite 2) : PR #11 mergée, chantier découpé en deux (Membre / Coach)
 
 **PR #11 mergée** dans `claude/charming-mendel-dj1GQ` (squash, commit `8b2e40c`) — thème clair Neon, navigation retour cohérente, modèle IA recette plus rapide, coach branché sur les vraies données, fix du choix de repas pour les recettes IA. Tout ce qui a été fait en Sessions 13-15 est maintenant sur la branche de dev principale.
