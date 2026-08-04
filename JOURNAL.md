@@ -16,8 +16,15 @@ Entrées les plus récentes en haut.
 - `goodghost696@gmail.com` (Arnaud, compte principal de l'utilisateur) — temporairement promu `coach` par erreur puis **repassé `member`** immédiatement sur demande de l'utilisateur : il doit rester membre pour servir de compte de test côté membre pendant que `coach@onairapp.com` sert de compte coach.
 - Vérifié en vrai sur la preview : connexion coach fonctionne, `MemberDetail.jsx` affiche bien les vraies données d'Arnaud (objectifs réels, séances 7j, etc.) — juste "INACTIVE"/valeurs à "—" car pas encore d'activité loggée récente, comportement normal.
 
-### 🚧 En cours — messagerie persistée
-Démarrée cette session (voir plan détaillé dans la conversation) : nouvelle table `messages` + policies RLS (lecture par les deux participants, écriture limitée aux paires membre↔coach réelles, `read_at` modifiable par le destinataire uniquement) + branchement de `Conversation.jsx`/`CoachMessages.jsx`/`Messages.jsx` sur les vraies données avec abonnement realtime Supabase. Pas encore committé au moment d'écrire cette entrée — à compléter/vérifier à la prochaine relecture de ce journal si la session s'arrête en cours de route.
+### ✅ Messagerie persistée
+Table `messages` + policies RLS (lecture par les deux participants, écriture limitée aux paires membre↔coach réelles, `read_at` modifiable par le destinataire uniquement) + branchement de `Conversation.jsx`/`CoachMessages.jsx`/`Messages.jsx` sur les vraies données avec abonnement realtime Supabase (deux appareils connectés voient les messages arriver sans refresh). Poussé sur la PR #12 (pas encore mergée dans `claude/charming-mendel-dj1GQ`).
+
+### 🐛 Bugs trouvés en testant sur téléphone, corrigés
+- **`CoachNav.jsx` cassée en CSS** — les icônes de la nav coach étaient enfants directs de `.bottom-nav`, qui n'a pas de `display:flex` propre (contrairement à `BottomNav` qui les enveloppe dans `.nav-pill`) : elles s'empilaient verticalement en bas à gauche au lieu d'une barre horizontale, et ce bloc mal formé passait *par-dessus* le champ de message de `Conversation.jsx` (z-index 100 vs 90) — impossible d'écrire un message côté coach, le champ existait mais était caché dessous. Corrigé en ajoutant le même wrapper `.nav-pill`. **Ce bug préexistait cette session, probablement déjà en prod depuis la Session 13** (nav jamais vérifiée en vrai sur mobile avant aujourd'hui).
+- **Contours blancs sur Landing** — le thème clair activé ailleurs dans l'app persiste globalement (`data-theme` sur `<html>`, `localStorage`), et s'appliquait aussi à `body`/`#root` pendant que `Landing.jsx` reste volontairement toujours sombre (splash design) — d'où des marges blanches visibles autour de la colonne noire sur un écran plus large que 390px. `Landing.jsx` force maintenant `data-theme="dark"` le temps d'être monté, restaure la valeur précédente en la quittant. **Pas vérifié si Login/Onboarding ont le même souci** — pas de bug rapporté dessus pour l'instant, à surveiller.
+
+### ⚠️ Toujours en attente
+**Design de la nav bar coach à revoir** (demande initiale de l'utilisateur, voir plus haut) — le fix ci-dessus corrige la casse fonctionnelle (nav utilisable), pas le design lui-même.
 
 ---
 
