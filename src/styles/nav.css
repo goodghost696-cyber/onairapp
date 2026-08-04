@@ -58,7 +58,11 @@
 
 .nav-label { display: none; }
 
-/* Elevated middle action (Workout) — raised lime circle, matches the reference nav */
+/* Elevated middle action — raised lime circle, matches the reference nav.
+   Used two ways: BottomNav's "+" quick-add toggle (rotates open/close via
+   .active, tied to menuOpen state) and CoachNav's Board tab (a plain
+   navigation target — see .nav-btn-elevated.nav-tab-active below, which
+   deliberately doesn't rotate since there's no open/close state there). */
 .nav-btn-elevated {
   width: 56px;
   height: 56px;
@@ -72,6 +76,10 @@
 .nav-btn-elevated svg {
   color: var(--accent-ink);
   stroke-width: 2;
+}
+
+.nav-btn-elevated.nav-tab-active {
+  border-color: var(--text-primary);
 }
 
 .nav-btn-elevated.active {
