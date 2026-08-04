@@ -29,9 +29,6 @@ export default function MemberDetail() {
   const [loading, setLoading] = useState(true)
   const [analysis, setAnalysis] = useState('')
   const [analysisLoading, setAnalysisLoading] = useState(false)
-  const [showMessage, setShowMessage] = useState(false)
-  const [message, setMessage] = useState('')
-  const [msgSent, setMsgSent] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -91,14 +88,6 @@ export default function MemberDetail() {
     }
   }
 
-  // Messaging isn't persisted anywhere yet (no messages table in the
-  // schema) — this is a placeholder confirmation until that's built as its
-  // own piece of work, not silently wired to a real send.
-  function sendMessage() {
-    setMsgSent(true)
-    setTimeout(() => { setShowMessage(false); setMsgSent(false); setMessage('') }, 1500)
-  }
-
   return (
     <div className="app-wrapper">
       <div className="screen" style={{ paddingBottom: 110 }}>
@@ -150,7 +139,7 @@ export default function MemberDetail() {
             `${stats.objectifs.pas_jour?.toLocaleString()} pas/jour`,
             `${stats.objectifs.eau_ml} ml d'eau/jour`,
           ].map((obj, i, arr) => (
-            <div key={i} style={{ padding: '8px 0', borderBottom: i < arr.length - 1 ? '0.5px solid var(--border)' : 'none' }}>
+            <div key={i} style={{ padding: '8px 0', borderBottom: i < arr.length - 1 ? '2px solid var(--border)' : 'none' }}>
               <span className="text-sm">{obj}</span>
             </div>
           )) : (
@@ -158,8 +147,10 @@ export default function MemberDetail() {
           )}
         </div>
 
-        {/* Message button */}
-        <button className="btn-ghost" style={{ marginBottom: 16 }} onClick={() => setShowMessage(true)}>
+        {/* Message button — opens the real persisted conversation (messages
+            table) instead of the fake local-state modal this used to be,
+            which looked like it sent something but never persisted it. */}
+        <button className="btn-ghost" style={{ marginBottom: 16 }} onClick={() => navigate(`/coach/messages/${member.id}`)}>
           ENVOYER UN MESSAGE
         </button>
 
@@ -176,20 +167,6 @@ export default function MemberDetail() {
         )}
         <style>{`@keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }`}</style>
       </div>
-
-      {/* Message modal */}
-      {showMessage && (
-        <>
-          <div onClick={() => setShowMessage(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 200 }} />
-          <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 390, background: 'var(--surface)', borderRadius: '20px 20px 0 0', padding: '24px 20px 40px', zIndex: 201 }}>
-            <h2 className="text-lg bold" style={{ marginBottom: 16 }}>Message à {member.prenom}</h2>
-            <textarea value={message} onChange={e => setMessage(e.target.value)} placeholder="Écris ton message..." style={{ width: '100%', minHeight: 100, background: 'var(--surface-2)', border: '0.5px solid var(--border)', borderRadius: 10, color: 'var(--text-primary)', fontSize: 15, padding: '12px', resize: 'none', outline: 'none', fontFamily: 'inherit' }} />
-            <button className="btn-accent" onClick={sendMessage} style={{ marginTop: 12 }}>
-              {msgSent ? '✓ ENVOYÉ' : 'ENVOYER'}
-            </button>
-          </div>
-        </>
-      )}
       <CoachNav />
     </div>
   )

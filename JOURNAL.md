@@ -6,6 +6,27 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo, branche `claude/charming-mendel-dj1GQ`, et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-08-04 — Session 16 (suite 3) : tour côté coach, 2 bugs trouvés + reskin
+
+Demandé un tour rapide de tout le côté coach avant de continuer. Deux vrais bugs trouvés (pas juste du visuel) :
+
+### 🐛 `ClientsList.jsx` — stats jamais chargées, en silence
+Contrairement à `CoachDashboard.jsx`/`MemberDetail.jsx`, cet écran ne récupérait que `profiles.*` et n'appelait jamais `fetchMemberActivitySummaries()` — chaque carte affichait "Vu — · — séances", barre de progression toujours à 0%, bordure de statut jamais colorée, et **les filtres TOUS/ON TRACK/AT RISK/INACTIVE ne matchaient jamais rien** puisque `m.status` était toujours `undefined`. Corrigé — même pattern que `CoachDashboard.jsx`.
+
+### 🐛 `MemberDetail.jsx` — le bouton "Envoyer un message" simulait l'envoi
+Modale locale (`setTimeout`, aucune écriture en base) qui datait d'avant la messagerie persistée — à l'époque un placeholder honnête, devenu un vrai piège une fois la vraie messagerie construite (le coach croit avoir envoyé un message, rien ne part). Remplacé par une navigation directe vers la vraie conversation (`/coach/messages/:id`). L'**analyse IA** juste en dessous, elle, fonctionne correctement (vraies stats du membre envoyées au prompt) — vérifié, rien à corriger dessus.
+
+### ✅ Reskin Neon coach — dernière ligne droite
+- `CoachDashboard.jsx` : label "ON AIR" était en citron (`.text-accent`) au lieu de bleu — même bug que Hydration/Sleep plus tôt cette session, corrigé en `var(--accent-secondary)`.
+- `MemberDetail.jsx`, `CoachSettings.jsx` : bordures 0.5px → 2px pour matcher `.card`.
+- `ClientsList.jsx`, `CoachMessages.jsx` : déjà propres après le fix ci-dessus / le fix email de tout à l'heure.
+
+### Reste après cette passe
+- **Design de la nav bar coach** (icônes/style, la casse fonctionnelle est déjà réparée) — toujours en attente d'un brief de l'utilisateur.
+- **`CoachDashboard.jsx`** : le bouton "VOIR →" dans les alertes reste en citron (`.text-accent`) — laissé tel quel, lecture comme un lien d'action (CTA) plutôt qu'un label d'en-tête, pas le même bug que les labels.
+
+---
+
 ## 2026-08-04 — Session 16 : comptes coach de test créés, messagerie en cours
 
 ### ⚠️ À faire — signalé par l'utilisateur, priorité

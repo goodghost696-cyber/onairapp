@@ -42,7 +42,7 @@ export default function CoachDashboard() {
       <div className="screen" style={{ paddingBottom: 110 }}>
         <div className="screen-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 0 8px' }}>
           <div>
-            <span className="text-xs text-accent bold">ON AIR</span>
+            <span className="text-xs bold" style={{ color: 'var(--accent-secondary)' }}>ON AIR</span>
             <span className="text-xs text-muted" style={{ marginLeft: 10 }}>Coach · {user?.name}</span>
           </div>
           <button style={{ background: 'none', border: 'none', cursor: 'pointer' }} onClick={() => { logout(); navigate('/') }}>
