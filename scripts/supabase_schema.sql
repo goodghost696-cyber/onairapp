@@ -25,6 +25,7 @@ create table if not exists profiles (
   taille     numeric,
   age        int,
   role       text not null default 'member',
+  objectif   text,
   created_at timestamptz default now(),
   unique(user_id)
 );
@@ -78,7 +79,7 @@ grant execute on function public.is_coach() to authenticated;
 -- and re-GRANT an explicit column allowlist that excludes `role`/`id`/
 -- `user_id`/`created_at`.
 revoke update on public.profiles from authenticated, anon;
-grant update (prenom, email, poids, taille, age) on public.profiles to authenticated;
+grant update (prenom, email, poids, taille, age, objectif) on public.profiles to authenticated;
 
 -- Defense in depth on top of the GRANT restriction above: block any role
 -- change coming through PostgREST as `authenticated` unless the caller is
@@ -312,3 +313,32 @@ create index if not exists messages_unread_idx
 
 -- Realtime: let clients subscribe to new rows in their conversation.
 alter publication supabase_realtime add table messages;
+
+-- ── coach_notes ───────────────────────────────────────────
+-- Private notes a coach keeps on a member (injury, particular goal,
+-- etc.) — one evolving note per coach↔member pair, not a dated feed.
+create table if not exists coach_notes (
+  id         uuid primary key default gen_random_uuid(),
+  coach_id   uuid not null references auth.users(id) on delete cascade,
+  member_id  uuid not null references auth.users(id) on delete cascade,
+  content    text not null default '',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique(coach_id, member_id)
+);
+
+alter table coach_notes enable row level security;
+
+-- Strictly private to the authoring coach — not even another coach can
+-- read it, and a member never can (no policy grants them access, RLS
+-- default-denies).
+create policy "Coach can view own notes"
+  on coach_notes for select using (auth.uid() = coach_id);
+create policy "Coach can insert own notes"
+  on coach_notes for insert with check (auth.uid() = coach_id and is_coach());
+create policy "Coach can update own notes"
+  on coach_notes for update
+  using (auth.uid() = coach_id)
+  with check (auth.uid() = coach_id);
+
+create index if not exists coach_notes_lookup_idx on coach_notes (coach_id, member_id);

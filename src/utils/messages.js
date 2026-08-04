@@ -61,6 +61,23 @@ export async function markConversationRead(currentUserId, otherUserId) {
   if (error) console.error('[messages] markConversationRead failed', error)
 }
 
+// Total unread count across every conversation for the current user — a
+// count-only query (head: true), not a full row fetch, since nav bars call
+// this on every mount.
+export async function fetchUnreadCount(userId) {
+  if (!userId) return 0
+  const { count, error } = await supabase
+    .from('messages')
+    .select('id', { count: 'exact', head: true })
+    .eq('receiver_id', userId)
+    .is('read_at', null)
+  if (error) {
+    console.error('[messages] fetchUnreadCount failed', error)
+    return 0
+  }
+  return count || 0
+}
+
 // Live updates for a conversation — Postgres changes filters can't express
 // an OR across two columns, so two subscriptions cover both directions.
 export function subscribeToMessages(currentUserId, onInsert) {

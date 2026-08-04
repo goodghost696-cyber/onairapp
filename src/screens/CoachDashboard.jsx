@@ -36,6 +36,12 @@ export default function CoachDashboard() {
   const alerts = members.filter(m => m.status && m.status !== 'ON TRACK')
   const activeToday = members.filter(m => m.lastActiveDate && lastSeenLabel(m.lastActiveDate) === "Aujourd'hui")
   const sessionsThisWeekTotal = members.reduce((sum, m) => sum + (m.sessionsThisWeek || 0), 0)
+  // Falls back to the most recently active members when nobody's active
+  // *today* specifically — otherwise this section (and often the whole
+  // dashboard below the stat tiles) reads as blank most of the day.
+  const recentFallback = activeToday.length === 0
+    ? [...members].filter(m => m.lastActiveDate).sort((a, b) => (b.lastActiveDate || '').localeCompare(a.lastActiveDate || '')).slice(0, 5)
+    : []
 
   return (
     <div className="app-wrapper">
@@ -89,10 +95,10 @@ export default function CoachDashboard() {
           </>
         )}
 
-        <div className="section-label">ACTIFS AUJOURD'HUI</div>
+        <div className="section-label">{activeToday.length > 0 ? "ACTIFS AUJOURD'HUI" : 'ACTIVITÉ RÉCENTE'}</div>
         {loading && <p className="text-sm text-muted">Chargement des clients...</p>}
-        {!loading && activeToday.length === 0 && <p className="text-sm text-muted">Personne d'actif aujourd'hui pour l'instant.</p>}
-        {!loading && activeToday.map(m => (
+        {!loading && activeToday.length === 0 && recentFallback.length === 0 && <p className="text-sm text-muted">Aucune activité enregistrée pour l'instant.</p>}
+        {!loading && (activeToday.length > 0 ? activeToday : recentFallback).map(m => (
           <div key={m.id} className="card" style={{ cursor: 'pointer', marginBottom: 8 }} onClick={() => navigate(`/coach/member/${m.id}`)}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--surface-2)', border: `1.5px solid ${STATUS_COLORS[m.status] || 'var(--border)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: STATUS_COLORS[m.status] || 'var(--text-muted)', flexShrink: 0 }}>
@@ -103,7 +109,11 @@ export default function CoachDashboard() {
                   <span className="text-base bold">{m.prenom}</span>
                   <span style={{ fontSize: 10, color: STATUS_COLORS[m.status] || 'var(--text-muted)', border: `1px solid ${STATUS_COLORS[m.status] || 'var(--border)'}`, padding: '2px 6px', borderRadius: 4, letterSpacing: 0.5 }}>{m.status || '-'}</span>
                 </div>
-                <div className="text-xs text-muted" style={{ marginTop: 2 }}>{m.sessionsThisWeek || 0} séance{m.sessionsThisWeek > 1 ? 's' : ''} cette semaine</div>
+                <div className="text-xs text-muted" style={{ marginTop: 2 }}>
+                  {activeToday.length > 0
+                    ? `${m.sessionsThisWeek || 0} séance${m.sessionsThisWeek > 1 ? 's' : ''} cette semaine`
+                    : `Vu ${lastSeenLabel(m.lastActiveDate).toLowerCase()} · ${m.sessionsThisWeek || 0} séance${m.sessionsThisWeek > 1 ? 's' : ''} cette semaine`}
+                </div>
               </div>
             </div>
           </div>

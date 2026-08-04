@@ -123,3 +123,39 @@ export async function fetchMemberDetailStats(userId) {
     weekSessionDates: sessionDates,
   }
 }
+
+// A coach's private note on one member — one evolving note per pair, not
+// a dated feed. RLS restricts this to the authoring coach only (not even
+// other coaches, never the member themselves).
+export async function fetchCoachNote(coachId, memberId) {
+  if (!coachId || !memberId) return ''
+  const { data, error } = await supabase
+    .from('coach_notes')
+    .select('content')
+    .eq('coach_id', coachId)
+    .eq('member_id', memberId)
+    .maybeSingle()
+  if (error) { console.error('[coachStats] fetchCoachNote failed', error); return '' }
+  return data?.content || ''
+}
+
+export async function saveCoachNote(coachId, memberId, content) {
+  const { error } = await supabase
+    .from('coach_notes')
+    .upsert({ coach_id: coachId, member_id: memberId, content, updated_at: new Date().toISOString() }, { onConflict: 'coach_id,member_id' })
+  if (error) { console.error('[coachStats] saveCoachNote failed', error); return { success: false } }
+  return { success: true }
+}
+
+// Raw recent rows for a member's page — the averages above are good for a
+// trend, but a coach spotting a specific problem (a bad meal, a skipped
+// session) needs to see the actual entries, not just a number.
+export async function fetchMemberRecentActivity(userId) {
+  const [{ data: repas, error: e1 }, { data: seances, error: e2 }] = await Promise.all([
+    supabase.from('repas').select('nom, calories, date, type_repas').eq('user_id', userId).order('date', { ascending: false }).order('created_at', { ascending: false }).limit(8),
+    supabase.from('seances').select('nom, date, duree_min, exercices').eq('user_id', userId).order('date', { ascending: false }).order('created_at', { ascending: false }).limit(8),
+  ])
+  if (e1) console.error('[coachStats] recent repas fetch failed', e1)
+  if (e2) console.error('[coachStats] recent seances fetch failed', e2)
+  return { recentMeals: repas || [], recentSessions: seances || [] }
+}

@@ -6,6 +6,51 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo, branche `claude/charming-mendel-dj1GQ`, et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-08-04 — Session 16 (suite 5) : brief UI Coach — 5 points identifiés par Claude, à traiter
+
+L'utilisateur n'avait jamais donné de brief concret sur "l'UI Coach à recadrer" (confirmé en relisant tout le journal — juste des confirmations répétées que ça devait être revu, jamais de détail). Demandé à Claude de proposer lui-même ce qui cloche, contenu (pas juste style). Liste ci-dessous validée par l'utilisateur ("je veux tout ce que tu viens de dire") :
+
+1. **`ClientsList.jsx` — badge objectif toujours "-"** : le champ objectif qualitatif (ex. "Prise de masse") choisi à l'onboarding n'était jamais persisté dans `profiles` (uniquement dans `user_metadata`), donc le badge affiche "-" pour 100% des membres, en permanence — plus trompeur qu'utile.
+2. **Aucune pastille de message non lu dans la nav coach.** Le coach n'a aucun moyen de savoir qu'un membre lui a écrit sans ouvrir l'onglet Messages à chaque fois.
+3. **`MemberDetail.jsx` ne montre que des moyennes**, jamais le détail réel (quels repas, quelle séance) — utile pour repérer un problème précis, pas juste suivre une tendance.
+4. **Pas de notes coach.** Aucun champ pour que le coach garde une note privée sur un membre (blessure, objectif particulier, etc.).
+5. **Dashboard coach potentiellement vide la moitié du temps** — "Actifs aujourd'hui" n'affiche rien si personne n'a bougé depuis ce matin, pas de repli sur l'activité récente.
+
+### ✅ 1. Objectif membre persisté + badge réel
+- Migration `add_objectif_to_profiles` : nouvelle colonne `profiles.objectif` (text), backfillée pour les comptes existants depuis `raw_user_meta_data->>'goal'` (auth.users) là où elle était déjà connue.
+- `AuthContext.jsx` (`updateUserProfile`) : `objectif` ajouté à l'upsert `profiles`, en plus de `user_metadata` — persisté aux deux endroits maintenant (Onboarding et modifications ultérieures dans Settings).
+- `ClientsList.jsx` : badge lit `m.objectif` (vraie colonne) au lieu de `m.goal` (jamais rempli). Ajouté `'Nutrition'` à `GOAL_COLORS` (option d'onboarding manquante de la palette).
+
+### ✅ 2. Pastille non-lu sur l'icône Messages du nav coach
+- Nouveau `fetchUnreadCount(userId)` dans `src/utils/messages.js` (`count: 'exact', head: true` — pas de payload transféré, juste le nombre).
+- `CoachNav.jsx` : petit point citron sur l'icône Messages si `unreadCount > 0`, rafraîchi au montage (la nav se remonte à chaque navigation entre écrans coach, donc reste à jour sans logique supplémentaire).
+
+### ✅ 3. Détail des repas/séances récents dans `MemberDetail.jsx`
+- Nouveau `fetchMemberRecentActivity(userId)` dans `coachStats.js` : 8 derniers repas + 8 dernières séances (lecture seule, mêmes policies déjà en place).
+- Deux nouvelles sections "DERNIERS REPAS" / "DERNIÈRES SÉANCES" sous les stats agrégées existantes.
+
+### ✅ 4. Notes coach privées
+- Migration `add_coach_notes` : nouvelle table `coach_notes` (une note par paire coach↔membre, upsert). RLS stricte : **seul le coach auteur** peut lire/écrire sa note — même un autre coach ne la voit pas, et un membre n'y a jamais accès (aucune policy ne le permet).
+- `MemberDetail.jsx` : nouvelle section "NOTES COACH" — textarea + bouton enregistrer, charge la note existante au montage.
+
+### ✅ 5. Dashboard coach — repli sur l'activité récente si personne n'est actif aujourd'hui
+- `CoachDashboard.jsx` : si `activeToday` est vide, la section bascule sur les 5 membres les plus récemment actifs (n'importe quand, pas juste aujourd'hui) sous le label "ACTIVITÉ RÉCENTE" au lieu de rester sur un écran quasi blanc.
+
+Build validé après chaque lot. Comme toujours, pas de vérification visuelle possible dans ce sandbox — à confirmer sur la preview, en particulier les notes coach (nouvelle feature jamais vue) et le badge non-lu.
+
+### 🐛 Retour utilisateur sur la preview : nav bar "dégueulasse", corrigé
+`.nav-pill` avait `background: var(--bg)` — **exactement la même couleur que le fond de la page**, donc aucun contraste de surface propre (contrairement à toutes les autres cartes de l'app, qui utilisent `--surface` pour "monter" du fond noir). Quasi invisible en clair, complètement plat en sombre — la barre entière, et le bouton "Board" surélevé avec, se fondaient dans le fond. Passé à `var(--surface)`, bordure de découpe du bouton surélevé alignée dessus (`var(--surface)` au lieu de `var(--bg)`), ombre du bouton renforcée. Root cause identique à celle déjà documentée en Session 12 pour d'autres composants — un `--bg` copié-collé au lieu de `--surface` sur un composant réutilisé partout dans l'app.
+
+### 🐛 Deuxième retour utilisateur (capture à l'appui) : le bouton "Board" restait décalé
+Le fix de contraste ci-dessus était déployé et confirmé actif (vérifié via l'API Vercel — le SHA déployé correspondait bien au dernier commit), donc pas un souci de cache comme d'abord suspecté. La vraie cause, visible sur la capture envoyée par l'utilisateur : **le bouton surélevé n'était pas au centre de la barre**. `.nav-pill` utilisait `justify-content: space-between` sur 4 éléments à plat (2 tabs à gauche, le bouton élevé, 1 tab à droite) — le bouton se retrouvait 3ᵉ sur 4, donc visiblement décalé à droite. Ça fonctionnait par coïncidence côté membre (2+1+2=5, parfaitement symétrique), pas côté coach. Corrigé en enveloppant les tabs gauche/droite dans des conteneurs `flex:1` (`.nav-pill-side`) — le bouton élevé est maintenant garanti au centre visuel réel, peu importe le nombre d'icônes de chaque côté.
+
+### 🔄 Troisième retour utilisateur : le bouton "Board" est maintenant centré mais les espacements restent bancals — nav bar revenue à un layout plat
+Une fois vraiment centré, le nouveau souci est apparu sur la capture suivante : Clients/Messages collés serrés à gauche, un grand vide, le bouton élevé, un autre grand vide, Réglages tout seul à droite — techniquement centré mais visuellement déséquilibré (rythme d'espacement irrégulier). **L'utilisateur a tranché : revenir à la barre plate d'origine plutôt que continuer à chasser un espacement propre avec seulement 4 icônes** (contrairement au nav membre, qui a 5 éléments et se prête naturellement au 2+1+2). `CoachNav.jsx` repassé sur les 4 onglets à plat (Board, Clients, Messages, Réglages), espacés uniformément par `justify-content: space-between` — qui fonctionne bien avec un nombre pair d'éléments identiques, contrairement au mélange elevated+plat. Garde le fix de contraste (`--surface`) et la pastille non-lu sur Messages. `.nav-pill-side`/`.nav-tab-active` retirés de `nav.css` (plus utilisés) ; `.nav-btn-elevated` conservé, toujours utilisé par le bouton "+" membre.
+
+**Conclusion pour la prochaine session si le sujet revient** : le style "bouton surélevé au milieu" ne marche proprement qu'avec un nombre impair d'icônes réparties symétriquement (comme les 5 du nav membre). Le nav coach en a 4 — soit on retire un onglet pour en avoir 5 avec un élément central logique, soit on garde la barre plate. Pas de solution intermédiaire propre trouvée.
+
+---
+
 ## 2026-08-04 — Session 16 (suite 4) : nav bar coach alignée sur le style membre
 
 Demande explicite de l'utilisateur : "je veux la même [nav] qu'il y a sur la partie membre". Le nav membre a 5 éléments (2 + bouton citron surélevé au milieu + 2) ; le nav coach n'en a que 4 (Board/Clients/Messages/Réglages), sans bouton central — question posée : que doit faire le bouton surélevé côté coach ? **Réponse : élever l'onglet "Board" (CoachDashboard) au milieu**, plutôt qu'un vrai bouton d'action "+" ou un simple alignement de style sans cercle.

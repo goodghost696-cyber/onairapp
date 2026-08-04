@@ -1,9 +1,16 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { fetchMemberDetailStats, lastSeenLabel } from '../utils/coachStats'
+import { useAuth } from '../context/AuthContext'
+import { fetchMemberDetailStats, fetchMemberRecentActivity, fetchCoachNote, saveCoachNote, lastSeenLabel } from '../utils/coachStats'
 import CoachNav from '../components/CoachNav'
 import { authHeader } from '../lib/supabase'
+
+function formatShortDate(iso) {
+  if (!iso) return ''
+  const d = new Date(`${iso}T00:00:00`)
+  return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })
+}
 
 const STATUS_COLORS = { 'ON TRACK': 'var(--success)', 'AT RISK': 'var(--warning)', 'INACTIVE': 'var(--danger)' }
 
@@ -23,12 +30,17 @@ function last7Days() {
 export default function MemberDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [member, setMember] = useState(null)
   const [stats, setStats] = useState(null)
+  const [recent, setRecent] = useState({ recentMeals: [], recentSessions: [] })
   const [notFound, setNotFound] = useState(false)
   const [loading, setLoading] = useState(true)
   const [analysis, setAnalysis] = useState('')
   const [analysisLoading, setAnalysisLoading] = useState(false)
+  const [note, setNote] = useState('')
+  const [noteSaving, setNoteSaving] = useState(false)
+  const [noteSaved, setNoteSaved] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -42,14 +54,31 @@ export default function MemberDetail() {
         return
       }
       setMember(profile)
-      const detail = await fetchMemberDetailStats(profile.user_id)
+      const [detail, activity, existingNote] = await Promise.all([
+        fetchMemberDetailStats(profile.user_id),
+        fetchMemberRecentActivity(profile.user_id),
+        user?.id ? fetchCoachNote(user.id, profile.user_id) : Promise.resolve(''),
+      ])
       if (cancelled) return
       setStats(detail)
+      setRecent(activity)
+      setNote(existingNote)
       setLoading(false)
     }
     load()
     return () => { cancelled = true }
-  }, [id])
+  }, [id, user?.id])
+
+  async function handleSaveNote() {
+    if (!user?.id || !member?.user_id) return
+    setNoteSaving(true)
+    const result = await saveCoachNote(user.id, member.user_id, note)
+    setNoteSaving(false)
+    if (result.success) {
+      setNoteSaved(true)
+      setTimeout(() => setNoteSaved(false), 1500)
+    }
+  }
 
   if (loading) return (
     <div className="app-wrapper"><div className="screen"><p className="text-base text-muted" style={{ marginTop: 40 }}>Chargement...</p></div></div>
@@ -145,6 +174,55 @@ export default function MemberDetail() {
           )) : (
             <p className="text-sm text-muted">Aucun objectif enregistré pour ce membre.</p>
           )}
+        </div>
+
+        {/* Recent activity — the averages above are good for a trend, but
+            spotting a specific problem (a bad meal, a skipped session)
+            needs the actual entries. */}
+        <div className="section-label">DERNIERS REPAS</div>
+        <div className="card" style={{ marginBottom: 8 }}>
+          {recent.recentMeals.length > 0 ? recent.recentMeals.map((r, i) => (
+            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: i < recent.recentMeals.length - 1 ? '2px solid var(--border)' : 'none' }}>
+              <div>
+                <div className="text-sm">{r.nom}</div>
+                <div className="text-xs text-muted">{formatShortDate(r.date)}{r.type_repas ? ` · ${r.type_repas}` : ''}</div>
+              </div>
+              <span className="text-sm bold">{r.calories} kcal</span>
+            </div>
+          )) : (
+            <p className="text-sm text-muted">Aucun repas enregistré récemment.</p>
+          )}
+        </div>
+
+        <div className="section-label">DERNIÈRES SÉANCES</div>
+        <div className="card" style={{ marginBottom: 8 }}>
+          {recent.recentSessions.length > 0 ? recent.recentSessions.map((s, i) => (
+            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: i < recent.recentSessions.length - 1 ? '2px solid var(--border)' : 'none' }}>
+              <div>
+                <div className="text-sm">{s.nom}</div>
+                <div className="text-xs text-muted">{formatShortDate(s.date)} · {(s.exercices || []).length} exercice{(s.exercices || []).length > 1 ? 's' : ''}</div>
+              </div>
+              <span className="text-sm bold">{s.duree_min} min</span>
+            </div>
+          )) : (
+            <p className="text-sm text-muted">Aucune séance enregistrée récemment.</p>
+          )}
+        </div>
+
+        {/* Coach notes — private to this coach, never visible to the
+            member (RLS scoped to auth.uid() = coach_id, no member policy
+            exists at all). */}
+        <div className="section-label">NOTES COACH</div>
+        <div className="card" style={{ marginBottom: 8 }}>
+          <textarea
+            value={note}
+            onChange={e => setNote(e.target.value)}
+            placeholder="Note privée sur ce membre (blessure, objectif particulier...)"
+            style={{ width: '100%', minHeight: 80, background: 'var(--surface-2)', border: '2px solid var(--border)', borderRadius: 10, color: 'var(--text-primary)', fontSize: 14, padding: 12, resize: 'vertical', outline: 'none', fontFamily: 'inherit' }}
+          />
+          <button className="btn-ghost" onClick={handleSaveNote} disabled={noteSaving} style={{ marginTop: 10 }}>
+            {noteSaving ? '...' : noteSaved ? '✓ ENREGISTRÉ' : 'ENREGISTRER LA NOTE'}
+          </button>
         </div>
 
         {/* Message button — opens the real persisted conversation (messages

@@ -162,6 +162,10 @@ export function AuthProvider({ children }) {
         email: profile.email,
         poids: profile.weight ? parseFloat(profile.weight) : null,
         taille: profile.height ? parseFloat(profile.height) : null,
+        // Was only ever written to user_metadata (line above) — never
+        // persisted here, so ClientsList.jsx's coach-facing goal badge
+        // had nothing real to read and always showed "-".
+        objectif: profile.goal || undefined,
       }, { onConflict: 'user_id' })
       if (profileError) {
         console.error('[Auth] updateUserProfile: profiles upsert failed', profileError)
