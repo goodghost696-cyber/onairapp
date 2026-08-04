@@ -11,6 +11,20 @@ Entrées les plus récentes en haut.
 ### ✅ Variables VAPID ajoutées par l'utilisateur dans Vercel
 Les 4 variables (`VAPID_PUBLIC_KEY`, `VITE_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`) sont configurées sur Production + Preview. Push notifications membre normalement opérationnelles une fois ce commit déployé.
 
+### ✅ Notification IA — relance après inactivité (le seul des 4 cas d'usage retenu)
+Question posée par l'utilisateur : est-ce que l'IA peut aussi notifier un membre directement, et à quels moments ça aurait du sens ? Proposé 4 pistes (relance inactivité / récap hebdo IA / encouragement post-séance / rappel repas), l'utilisateur n'a retenu **que la première** — la seule avec une vraie donnée de détection déjà existante (le calcul ON TRACK/AT RISK/INACTIVE de `coachStats.js`) et un vrai enjeu business (rétention).
+
+- **`api/cron/inactivity-nudge.js`** (nouveau) : job quotidien (Vercel Cron, `vercel.json`) qui pousse une notif aux membres passés INACTIVE (aucune activité depuis 5+ jours, même seuil que `computeStatus()` côté coach) — **une seule fois par épisode d'inactivité**, pas tous les jours tant qu'ils restent inactifs (nouvelle colonne `profiles.last_inactivity_nudge_at` pour le tracking).
+- Utilise la **service_role key** (déjà présente dans les réglages Vercel du projet, contrairement aux clés VAPID) — c'est un job système sans utilisateur connecté à qui rattacher un token RLS, contrairement à `api/send-push.js` (déclenché par un coach qui écrit à un membre précis). Lit toutes les activités + tous les abonnements push, en bypassant RLS volontairement.
+- Message volontairement simple/statique pour cette v1 ("Ça fait quelques jours qu'on ne t'a pas vu — une petite séance aujourd'hui ?"), pas généré dynamiquement par Claude à chaque envoi — évite un appel IA coûteux par notification pour un message qui n'a pas besoin d'être personnalisé pour être utile.
+
+### ⚠️ Deuxième variable Vercel à ajouter : `CRON_SECRET`
+En plus des 4 clés VAPID, il faut une 5ᵉ variable pour sécuriser l'endpoint cron (sinon n'importe qui trouvant l'URL pourrait déclencher des envois en masse) :
+```
+CRON_SECRET=466e56ae6c87d079447b7ed1eb01783b835f81f85c29125d
+```
+**Production uniquement suffit** (les cron jobs Vercel ne s'exécutent que sur les déploiements de production, jamais sur les previews). `SUPABASE_SERVICE_ROLE_KEY` était déjà présente en Production dans les réglages du projet (vue dans une capture d'écran de l'utilisateur) — rien à ajouter pour celle-là.
+
 Demandé de démarrer les push notifications, **scopées côté membre uniquement** ("mais juste pour la partie membre") — un membre reçoit une vraie notification push quand son coach lui écrit. Pas de push côté coach dans cette passe.
 
 ### ⚠️ Bloquant à connaître : variables d'environnement Vercel non configurées
