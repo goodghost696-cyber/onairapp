@@ -49,22 +49,24 @@ export default function CoachNav() {
 
   return (
     <nav className="bottom-nav">
-      {tabs.map(tab => {
-        let active
-        if (tab.path === '/coach') {
-          active = location.pathname === '/coach'
-        } else if (tab.path === '/coach/clients') {
-          active = location.pathname === '/coach/clients'
-        } else {
-          active = location.pathname === tab.path || location.pathname.startsWith(tab.path + '/')
-        }
-        return (
-          <div key={tab.path} className={`nav-btn${active ? ' active' : ''}`}
-            onClick={() => { navigator.vibrate && navigator.vibrate(6); navigate(tab.path) }}>
-            {tab.icon}
-          </div>
-        )
-      })}
+      <div className="nav-pill">
+        {tabs.map(tab => {
+          let active
+          if (tab.path === '/coach') {
+            active = location.pathname === '/coach'
+          } else if (tab.path === '/coach/clients') {
+            active = location.pathname === '/coach/clients'
+          } else {
+            active = location.pathname === tab.path || location.pathname.startsWith(tab.path + '/')
+          }
+          return (
+            <div key={tab.path} className={`nav-btn${active ? ' active' : ''}`}
+              onClick={() => { navigator.vibrate && navigator.vibrate(6); navigate(tab.path) }}>
+              {tab.icon}
+            </div>
+          )
+        })}
+      </div>
     </nav>
   )
 }

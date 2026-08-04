@@ -1,22 +1,29 @@
 import { useState } from 'react'
-import { useNavigate, Outlet } from 'react-router-dom'
+import { useNavigate, useLocation, Outlet } from 'react-router-dom'
 import BottomNav from '../components/BottomNav'
 import '../styles/fab.css'
 
 const MemberLayout = () => {
   const [showFAB, setShowFAB] = useState(false)
   const navigate = useNavigate()
+  const location = useLocation()
+  // Hidden on /messages* — the FAB's own position (bottom:96px, right:16px,
+  // z-index:95) sits directly on top of Conversation.jsx's send button
+  // (bottom:100px, z-index:90), blocking it entirely. Also redundant there:
+  // you're already inside the conversation the FAB's "Mon Coach" entry
+  // would open.
+  const hideFAB = location.pathname.startsWith('/messages')
 
   return (
     <div className="member-layout">
       <Outlet />
       <BottomNav />
 
-      {showFAB && (
+      {showFAB && !hideFAB && (
         <div className="fab-overlay" onClick={() => setShowFAB(false)} />
       )}
 
-      <div className="fab-container">
+      {!hideFAB && <div className="fab-container">
         {showFAB && (
           <div className="fab-menu">
             <button className="fab-menu-item" onClick={() => { setShowFAB(false); navigate('/ai-coach') }}>
@@ -47,7 +54,7 @@ const MemberLayout = () => {
             <path d="M4 4h12a1 1 0 011 1v7a1 1 0 01-1 1H6l-3 3V5a1 1 0 011-1z"/>
           </svg>
         </button>
-      </div>
+      </div>}
     </div>
   )
 }

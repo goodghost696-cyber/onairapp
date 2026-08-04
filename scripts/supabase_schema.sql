@@ -47,6 +47,14 @@ create policy "Users can update own profile"
 create policy "Coaches can view all profiles"
   on profiles for select using (is_coach());
 
+-- Reverse direction: a member needs to discover "the" coach to message
+-- them (fetchPrimaryCoach() in src/utils/messages.js) — scoped to
+-- coach/admin rows only, so a member still can't read another member's
+-- profile through this policy.
+create policy "Anyone authenticated can view coach/admin profiles"
+  on profiles for select
+  using (role in ('coach', 'admin'));
+
 create or replace function public.is_coach()
 returns boolean language sql security definer set search_path = public stable as $$
   select exists (select 1 from public.profiles where user_id = auth.uid() and role in ('coach','admin'));
@@ -247,3 +255,60 @@ create policy "Users can delete own rate limit rows"
 
 create index if not exists api_rate_limit_user_endpoint_idx
   on api_rate_limit (user_id, endpoint, created_at);
+
+-- ── messages ──────────────────────────────────────────────
+-- Persisted member↔coach chat. Each row is one message, ordered by
+-- created_at; a "conversation" is just every row shared between two
+-- specific participants (no separate conversations table needed for a
+-- single coach per gym).
+create table if not exists messages (
+  id          uuid primary key default gen_random_uuid(),
+  sender_id   uuid not null references auth.users(id) on delete cascade,
+  receiver_id uuid not null references auth.users(id) on delete cascade,
+  content     text not null check (char_length(trim(content)) > 0),
+  created_at  timestamptz not null default now(),
+  read_at     timestamptz
+);
+
+alter table messages enable row level security;
+
+-- Either participant can read the thread.
+create policy "Participants can view their messages"
+  on messages for select
+  using (auth.uid() = sender_id or auth.uid() = receiver_id);
+
+-- Insert only as yourself, and only into a real member↔coach pair — blocks
+-- a member from messaging another member, or spoofing sender_id, without
+-- needing a separate relationships/conversations table.
+create policy "Users can message a valid member/coach counterpart"
+  on messages for insert
+  with check (
+    auth.uid() = sender_id
+    and (
+      is_coach()
+      or exists (
+        select 1 from public.profiles p
+        where p.user_id = receiver_id and p.role in ('coach', 'admin')
+      )
+    )
+  );
+
+-- Same pattern as profiles.role: a per-row USING/WITH CHECK can't restrict
+-- which columns change, so lock the UPDATE grant down to read_at only —
+-- the receiver can mark a message read, nothing else about it is editable
+-- (no message-editing feature, by design).
+revoke update on public.messages from authenticated, anon;
+grant update (read_at) on public.messages to authenticated;
+
+create policy "Receiver can mark a message read"
+  on messages for update
+  using (auth.uid() = receiver_id)
+  with check (auth.uid() = receiver_id);
+
+create index if not exists messages_thread_idx
+  on messages (least(sender_id, receiver_id), greatest(sender_id, receiver_id), created_at);
+create index if not exists messages_unread_idx
+  on messages (receiver_id) where read_at is null;
+
+-- Realtime: let clients subscribe to new rows in their conversation.
+alter publication supabase_realtime add table messages;
