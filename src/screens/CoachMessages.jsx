@@ -67,6 +67,11 @@ export default function CoachMessages() {
                 <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: 'var(--accent-ink)', flexShrink: 0 }}>{m.prenom?.[0] || '?'}</div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div className="text-base bold">{m.prenom}</div>
+                  {/* Email always shown, not just when names collide — several
+                      members can share a first name (two "Arnaud" caused a
+                      coach to message the wrong one on 2026-08-04), and this
+                      is the one unambiguous identifier available client-side. */}
+                  <div className="text-xs text-muted" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.email}</div>
                   <div className="text-sm text-muted" style={{ marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {summary?.lastMessage ? summary.lastMessage.content : "Aucune conversation pour l'instant"}
                   </div>
