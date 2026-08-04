@@ -34,7 +34,7 @@ Modale locale (`setTimeout`, aucune écriture en base) qui datait d'avant la mes
 - `ClientsList.jsx`, `CoachMessages.jsx` : déjà propres après le fix ci-dessus / le fix email de tout à l'heure.
 
 ### Reste après cette passe
-- **Design de la nav bar coach** (icônes/style, la casse fonctionnelle est déjà réparée) — toujours en attente d'un brief de l'utilisateur.
+- ~~Design de la nav bar coach~~ — fait en Session 16 (suite 4), voir plus haut.
 - **`CoachDashboard.jsx`** : le bouton "VOIR →" dans les alertes reste en citron (`.text-accent`) — laissé tel quel, lecture comme un lien d'action (CTA) plutôt qu'un label d'en-tête, pas le même bug que les labels.
 
 ---
@@ -81,7 +81,7 @@ Table `messages` + policies RLS (lecture par les deux participants, écriture li
 
 ### 🧑‍💼 Chantier COACH — reste à faire
 - ~~Reskin Neon (`CoachDashboard.jsx`, `ClientsList.jsx`, `MemberDetail.jsx`, `CoachMessages.jsx`, `CoachSettings.jsx`)~~ — fait en Session 16 (suite 3, PR #14 mergée). **Reskin coach entièrement terminé**, plus rien en glass nulle part dans l'app.
-- **UI Coach à recadrer** : l'utilisateur a confirmé qu'il faudra s'y mettre mais sans détail sur quoi changer précisément — nécessite un brief avant de coder quoi que ce soit. Inclut maintenant explicitement la **nav bar coach** (demande Session 16) — sa casse fonctionnelle est réparée, mais pas son design.
+- **UI Coach à recadrer** : l'utilisateur a confirmé qu'il faudra s'y mettre mais sans détail sur quoi changer précisément — nécessite un brief avant de coder quoi que ce soit. La **nav bar coach** (demandée Session 16) est réglée à part, voir plus haut — ne fait plus partie de ce point en attente.
 - ~~Messagerie persistée~~ — faite et testée en Session 16, voir plus haut.
 - **Nettoyage sécurité mineur** : `prevent_self_role_escalation()` (le trigger anti-escalade de rôle) est appelable en RPC public par `anon`/`authenticated` — même défaut déjà corrigé sur `is_coach()`. Concerne l'espace coach (protection des comptes coach/admin), pas exploitable en pratique, pas urgent.
 - **Toggles de notifications non fonctionnels** : "Alertes membres"/"Nouveaux messages" dans `CoachSettings.jsx` ne font rien (état local seulement) — dépend du chantier push notifications ci-dessus.
