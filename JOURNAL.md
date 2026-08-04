@@ -6,6 +6,27 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo, branche `claude/charming-mendel-dj1GQ`, et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-08-04 — Session 16 (suite 3) : tour côté coach, 2 bugs trouvés + reskin
+
+Demandé un tour rapide de tout le côté coach avant de continuer. Deux vrais bugs trouvés (pas juste du visuel) :
+
+### 🐛 `ClientsList.jsx` — stats jamais chargées, en silence
+Contrairement à `CoachDashboard.jsx`/`MemberDetail.jsx`, cet écran ne récupérait que `profiles.*` et n'appelait jamais `fetchMemberActivitySummaries()` — chaque carte affichait "Vu — · — séances", barre de progression toujours à 0%, bordure de statut jamais colorée, et **les filtres TOUS/ON TRACK/AT RISK/INACTIVE ne matchaient jamais rien** puisque `m.status` était toujours `undefined`. Corrigé — même pattern que `CoachDashboard.jsx`.
+
+### 🐛 `MemberDetail.jsx` — le bouton "Envoyer un message" simulait l'envoi
+Modale locale (`setTimeout`, aucune écriture en base) qui datait d'avant la messagerie persistée — à l'époque un placeholder honnête, devenu un vrai piège une fois la vraie messagerie construite (le coach croit avoir envoyé un message, rien ne part). Remplacé par une navigation directe vers la vraie conversation (`/coach/messages/:id`). L'**analyse IA** juste en dessous, elle, fonctionne correctement (vraies stats du membre envoyées au prompt) — vérifié, rien à corriger dessus.
+
+### ✅ Reskin Neon coach — dernière ligne droite
+- `CoachDashboard.jsx` : label "ON AIR" était en citron (`.text-accent`) au lieu de bleu — même bug que Hydration/Sleep plus tôt cette session, corrigé en `var(--accent-secondary)`.
+- `MemberDetail.jsx`, `CoachSettings.jsx` : bordures 0.5px → 2px pour matcher `.card`.
+- `ClientsList.jsx`, `CoachMessages.jsx` : déjà propres après le fix ci-dessus / le fix email de tout à l'heure.
+
+### Reste après cette passe
+- **Design de la nav bar coach** (icônes/style, la casse fonctionnelle est déjà réparée) — toujours en attente d'un brief de l'utilisateur.
+- **`CoachDashboard.jsx`** : le bouton "VOIR →" dans les alertes reste en citron (`.text-accent`) — laissé tel quel, lecture comme un lien d'action (CTA) plutôt qu'un label d'en-tête, pas le même bug que les labels.
+
+---
+
 ## 2026-08-04 — Session 16 : comptes coach de test créés, messagerie en cours
 
 ### ⚠️ À faire — signalé par l'utilisateur, priorité
@@ -26,6 +47,9 @@ Table `messages` + policies RLS (lecture par les deux participants, écriture li
 - **Deux profils "Arnaud" en base** (`goodghost696@gmail.com` + un compte de test fantôme `coach@onair.fr` jamais utilisé) — un message de test envoyé par erreur au mauvais "Arnaud", indiscernables dans la liste `CoachMessages`. Compte fantôme supprimé (cascade propre), et l'email est maintenant affiché sous le prénom dans la liste des conversations coach pour éviter que ça se reproduise avec de vrais clients homonymes.
 - **FAB "Coach IA / Mon Coach" bloquait le bouton d'envoi côté membre** — le FAB global de `MemberLayout.jsx` (bottom:96px, z-index:95) se superposait exactement au bouton d'envoi de `Conversation.jsx` (bottom:100px, z-index:90), le rendant totalement inaccessible au clic. Masqué désormais sur les routes `/messages*` (redondant à cet endroit de toute façon).
 
+### ✅ Reskin Neon membre terminé
+`Scan.jsx`, `Hydration.jsx`, `Sleep.jsx`, `ResetPassword.jsx` — dernier glass remplacé par le style solide bordé, labels d'en-tête corrigés en bleu (`--accent-secondary`) comme sur les écrans principaux. PR #13, mergée dans `claude/charming-mendel-dj1GQ`. **Plus aucun écran membre en attente de reskin.**
+
 ### ⚠️ Toujours en attente
 **Design de la nav bar coach à revoir** (demande initiale de l'utilisateur, voir plus haut) — le fix ci-dessus corrige la casse fonctionnelle (nav utilisable), pas le design lui-même.
 
@@ -38,14 +62,14 @@ Table `messages` + policies RLS (lecture par les deux participants, écriture li
 **Décision organisationnelle de l'utilisateur** : diviser le reste du travail en deux chantiers séparés — **Membre** et **Coach** — plutôt qu'une liste unique. Répartition ci-dessous, état vérifié fichier par fichier au moment d'écrire ces lignes (notamment `CoachSettings.jsx`, jamais audité jusqu'ici : déjà sur données réelles — nom/email/code d'accès viennent du vrai compte, rien à corriger côté données là-dessus, juste du reskin visuel comme le reste du côté coach).
 
 ### 🧑 Chantier MEMBRE — reste à faire
-- **Reskin Neon** : `Scan.jsx`, `Hydration.jsx`, `Sleep.jsx`, `ResetPassword.jsx` pas encore passés en revue en détail (bénéficient déjà des fix globaux `.card`/`.btn-ghost` mais gardent des restes de style "glass" par endroits, notamment `Scan.jsx` et `ResetPassword.jsx` repérés lors du dernier audit).
+- ~~Reskin Neon (`Scan.jsx`, `Hydration.jsx`, `Sleep.jsx`, `ResetPassword.jsx`)~~ — fait en Session 16 (PR #13, mergée) : glass restant remplacé par le style solide, labels d'en-tête corrigés en bleu. **Reskin membre entièrement terminé.**
 - **Thème clair** : jamais vu en vrai sur la preview — la valeur d'accent assombrie (`#3D5200`) a été choisie par calcul de contraste, pas par l'œil, à valider ou ajuster.
 - **Push notifications** : décidé "vraies push" (Session 14), rien construit. C'est principalement un chantier membre (c'est lui qui les reçoit) même si le déclenchement peut venir d'actions coach (ex. réponse à un message).
 - ~~Messagerie persistée~~ — faite et testée en Session 16, voir plus haut.
 
 ### 🧑‍💼 Chantier COACH — reste à faire
-- **Reskin Neon** : `CoachDashboard.jsx`, `ClientsList.jsx`, `MemberDetail.jsx`, `CoachMessages.jsx`, `CoachSettings.jsx` — aucun n'a encore été passé au style Neon en détail (données déjà réelles depuis cette session, c'est uniquement visuel qui reste).
-- **UI Coach à recadrer** : l'utilisateur a confirmé qu'il faudra s'y mettre mais sans détail sur quoi changer précisément — nécessite un brief avant de coder quoi que ce soit au-delà du reskin. Inclut maintenant explicitement la **nav bar coach** (demande Session 16).
+- ~~Reskin Neon (`CoachDashboard.jsx`, `ClientsList.jsx`, `MemberDetail.jsx`, `CoachMessages.jsx`, `CoachSettings.jsx`)~~ — fait en Session 16 (suite 3, PR #14 mergée). **Reskin coach entièrement terminé**, plus rien en glass nulle part dans l'app.
+- **UI Coach à recadrer** : l'utilisateur a confirmé qu'il faudra s'y mettre mais sans détail sur quoi changer précisément — nécessite un brief avant de coder quoi que ce soit. Inclut maintenant explicitement la **nav bar coach** (demande Session 16) — sa casse fonctionnelle est réparée, mais pas son design.
 - ~~Messagerie persistée~~ — faite et testée en Session 16, voir plus haut.
 - **Nettoyage sécurité mineur** : `prevent_self_role_escalation()` (le trigger anti-escalade de rôle) est appelable en RPC public par `anon`/`authenticated` — même défaut déjà corrigé sur `is_coach()`. Concerne l'espace coach (protection des comptes coach/admin), pas exploitable en pratique, pas urgent.
 - **Toggles de notifications non fonctionnels** : "Alertes membres"/"Nouveaux messages" dans `CoachSettings.jsx` ne font rien (état local seulement) — dépend du chantier push notifications ci-dessus.

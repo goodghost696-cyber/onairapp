@@ -39,17 +39,17 @@ export default function CoachSettings() {
 
         <div className="section-label">PROFIL COACH</div>
         <div className="card">
-          <div style={{ padding: '14px 0', borderBottom: '0.5px solid var(--border)', display: 'flex', justifyContent: 'space-between' }}>
+          <div style={{ padding: '14px 0', borderBottom: '2px solid var(--border)', display: 'flex', justifyContent: 'space-between' }}>
             <span className="text-sm text-secondary">Nom</span><span className="text-sm">{user?.name}</span>
           </div>
-          <div style={{ padding: '14px 0', borderBottom: '0.5px solid var(--border)', display: 'flex', justifyContent: 'space-between' }}>
+          <div style={{ padding: '14px 0', borderBottom: '2px solid var(--border)', display: 'flex', justifyContent: 'space-between' }}>
             <span className="text-sm text-secondary">Email</span><span className="text-sm">{user?.email}</span>
           </div>
         </div>
 
         <div className="section-label">SALLE</div>
         <div className="card">
-          <div style={{ padding: '14px 0', borderBottom: '0.5px solid var(--border)', display: 'flex', justifyContent: 'space-between' }}>
+          <div style={{ padding: '14px 0', borderBottom: '2px solid var(--border)', display: 'flex', justifyContent: 'space-between' }}>
             <span className="text-sm text-secondary">Salle</span><span className="text-sm">ON AIR Clichy</span>
           </div>
           <div style={{ padding: '14px 0', display: 'flex', justifyContent: 'space-between' }}>
@@ -60,7 +60,7 @@ export default function CoachSettings() {
         <div className="section-label">NOTIFICATIONS</div>
         <div className="card">
           {[{ key: 'alerts', label: 'Alertes membres' }, { key: 'messages', label: 'Nouveaux messages' }].map(n => (
-            <div key={n.key} className="flex justify-between items-center" style={{ padding: '14px 0', borderBottom: '0.5px solid var(--border)' }}>
+            <div key={n.key} className="flex justify-between items-center" style={{ padding: '14px 0', borderBottom: '2px solid var(--border)' }}>
               <span className="text-sm text-secondary">{n.label}</span>
               <Toggle on={notifs[n.key]} onToggle={() => setNotifs(p => ({...p, [n.key]: !p[n.key]}))} />
             </div>
@@ -68,7 +68,7 @@ export default function CoachSettings() {
         </div>
 
         <div className="section-label">COMPTE</div>
-        <button onClick={() => { logout(); navigate('/') }} style={{ width: '100%', padding: 16, background: 'transparent', border: '1px solid var(--danger)', color: 'var(--danger)', fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', borderRadius: 12, cursor: 'pointer', marginBottom: 16 }}>
+        <button onClick={() => { logout(); navigate('/') }} style={{ width: '100%', padding: 16, background: 'transparent', border: '2px solid var(--danger)', color: 'var(--danger)', fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', borderRadius: 12, cursor: 'pointer', marginBottom: 16 }}>
           SE DÉCONNECTER
         </button>
       </div>

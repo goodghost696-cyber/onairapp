@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import CoachNav from '../components/CoachNav'
 import { supabase } from '../lib/supabase'
+import { fetchMemberActivitySummaries, lastSeenLabel } from '../utils/coachStats'
 
 const STATUS_COLORS = { 'ON TRACK': 'var(--success)', 'AT RISK': 'var(--warning)', 'INACTIVE': 'var(--danger)' }
 const GOAL_COLORS = {
@@ -29,10 +30,16 @@ export default function ClientsList() {
         .from('profiles')
         .select('*')
         .eq('role', 'member')
-      if (!cancelled) {
-        if (!error && data) setMembers(data)
-        setLoading(false)
-      }
+      if (cancelled) return
+      if (error || !data) { setLoading(false); return }
+      // Same pattern as CoachDashboard.jsx — this screen was pulling only
+      // profiles.* and never merging real activity, so every card silently
+      // showed "Vu — · — séances" and the status filter chips never matched
+      // anything (m.status was always undefined).
+      const summaries = await fetchMemberActivitySummaries(data.map(m => m.user_id))
+      if (cancelled) return
+      setMembers(data.map(m => ({ ...m, ...summaries[m.user_id] })))
+      setLoading(false)
     }
     fetchMembers()
     return () => { cancelled = true }
@@ -84,9 +91,9 @@ export default function ClientsList() {
                   <span className="text-base bold">{m.prenom}</span>
                   <span style={{ fontSize: 9, border: `1px solid ${GOAL_COLORS[m.goal] || 'var(--border)'}`, color: GOAL_COLORS[m.goal] || 'var(--text-muted)', padding: '2px 6px', borderRadius: 4, letterSpacing: 0.5, textTransform: 'uppercase', fontWeight: 700 }}>{m.goal || '-'}</span>
                 </div>
-                <div className="text-xs text-muted">Vu {(m.lastSeen || '-').toLowerCase()} · {m.sessions ?? '-'} séances</div>
+                <div className="text-xs text-muted">Vu {lastSeenLabel(m.lastActiveDate).toLowerCase()} · {m.sessionsThisWeek ?? 0} séance{m.sessionsThisWeek > 1 ? 's' : ''}</div>
                 <div className="progress-bar" style={{ marginTop: 6 }}>
-                  <div className="progress-fill" style={{ width: `${Math.min((m.sessions || 0)/8*100,100)}%` }} />
+                  <div className="progress-fill" style={{ width: `${Math.min((m.sessionsThisWeek || 0)/8*100,100)}%` }} />
                 </div>
               </div>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
