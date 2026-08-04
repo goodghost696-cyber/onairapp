@@ -290,12 +290,12 @@ button {
 }
 .scan-btn.secondary {
   background: var(--surface);
-  border: 0.5px solid var(--border);
+  border: 2px solid var(--border);
   color: var(--text-primary);
 }
 .scan-btn.tertiary {
   background: var(--surface);
-  border: 0.5px solid var(--border);
+  border: 2px solid var(--border);
   color: var(--text-primary);
 }
 .scan-btn-sub {
@@ -380,7 +380,7 @@ button {
   letter-spacing: 0.5px;
 }
 .scan-items-list {
-  border-top: 0.5px solid var(--border);
+  border-top: 2px solid var(--border);
   margin-bottom: 16px;
 }
 .scan-item-row {
@@ -388,7 +388,7 @@ button {
   justify-content: space-between;
   align-items: center;
   padding: 10px 0;
-  border-bottom: 0.5px solid var(--border);
+  border-bottom: 2px solid var(--border);
   font-size: 13px;
   color: var(--text-secondary);
 }
@@ -403,7 +403,7 @@ button {
 .scan-meal-selector::-webkit-scrollbar { display: none; }
 .meal-chip {
   background: var(--surface);
-  border: 0.5px solid var(--border);
+  border: 2px solid var(--border);
   color: var(--text-secondary);
   font-size: 11px;
   font-weight: 700;
@@ -438,7 +438,7 @@ button {
   padding: 14px;
   background: none;
   color: var(--text-muted);
-  border: 0.5px solid var(--border);
+  border: 2px solid var(--border);
   border-radius: 12px;
   font-size: 11px;
   font-weight: 700;

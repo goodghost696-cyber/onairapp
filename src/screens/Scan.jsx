@@ -396,7 +396,7 @@ export default function Scan() {
                       value={item.grams}
                       onChange={e => updateItemGrams(i, parseInt(e.target.value, 10) || 0)}
                       style={{
-                        width: 64, background: 'var(--glass)', border: '1px solid var(--glass-border)',
+                        width: 64, background: 'var(--surface-2)', border: '2px solid var(--border)',
                         borderRadius: 8, color: 'var(--text-primary)', padding: '4px 8px', fontSize: 13, fontFamily: 'inherit',
                       }}
                     />

@@ -44,14 +44,16 @@ export default function ResetPassword() {
     }
   }
 
+  // Matches Login.jsx's inputStyle — same solid #1A1A1A-bordered treatment
+  // the rest of the Auth flow got in Session 13; this screen just hadn't
+  // been compared against the prototype yet.
   const inputStyle = {
-    background: 'var(--glass)',
-    backdropFilter: 'blur(20px)',
-    WebkitBackdropFilter: 'blur(20px)',
-    border: '1px solid var(--glass-border)',
+    background: 'var(--surface)',
+    border: '2px solid var(--border-strong)',
     color: 'var(--text-primary)',
-    padding: '16px 18px',
+    padding: '16px',
     fontSize: 15,
+    fontWeight: 700,
     width: '100%',
     outline: 'none',
     borderRadius: 14,
