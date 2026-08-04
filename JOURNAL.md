@@ -68,8 +68,8 @@ Table `messages` + policies RLS (lecture par les deux participants, écriture li
 - ~~Messagerie persistée~~ — faite et testée en Session 16, voir plus haut.
 
 ### 🧑‍💼 Chantier COACH — reste à faire
-- **Reskin Neon** : `CoachDashboard.jsx`, `ClientsList.jsx`, `MemberDetail.jsx`, `CoachMessages.jsx`, `CoachSettings.jsx` — aucun n'a encore été passé au style Neon en détail (données déjà réelles depuis cette session, c'est uniquement visuel qui reste).
-- **UI Coach à recadrer** : l'utilisateur a confirmé qu'il faudra s'y mettre mais sans détail sur quoi changer précisément — nécessite un brief avant de coder quoi que ce soit au-delà du reskin. Inclut maintenant explicitement la **nav bar coach** (demande Session 16).
+- ~~Reskin Neon (`CoachDashboard.jsx`, `ClientsList.jsx`, `MemberDetail.jsx`, `CoachMessages.jsx`, `CoachSettings.jsx`)~~ — fait en Session 16 (suite 3, PR #14 mergée). **Reskin coach entièrement terminé**, plus rien en glass nulle part dans l'app.
+- **UI Coach à recadrer** : l'utilisateur a confirmé qu'il faudra s'y mettre mais sans détail sur quoi changer précisément — nécessite un brief avant de coder quoi que ce soit. Inclut maintenant explicitement la **nav bar coach** (demande Session 16) — sa casse fonctionnelle est réparée, mais pas son design.
 - ~~Messagerie persistée~~ — faite et testée en Session 16, voir plus haut.
 - **Nettoyage sécurité mineur** : `prevent_self_role_escalation()` (le trigger anti-escalade de rôle) est appelable en RPC public par `anon`/`authenticated` — même défaut déjà corrigé sur `is_coach()`. Concerne l'espace coach (protection des comptes coach/admin), pas exploitable en pratique, pas urgent.
 - **Toggles de notifications non fonctionnels** : "Alertes membres"/"Nouveaux messages" dans `CoachSettings.jsx` ne font rien (état local seulement) — dépend du chantier push notifications ci-dessus.
