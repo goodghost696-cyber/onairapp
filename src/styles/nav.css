@@ -31,18 +31,6 @@
   box-shadow: 0 16px 48px rgba(0,0,0,0.45);
 }
 
-/* Used by CoachNav to guarantee the elevated button sits at the bar's
-   true center regardless of an uneven tab count on each side (4 tabs
-   total here vs the member nav's symmetric 5, where plain
-   space-between happened to center it by coincidence). */
-.nav-pill-side {
-  flex: 1;
-  display: flex;
-  align-items: center;
-}
-.nav-pill-side.left { justify-content: flex-start; }
-.nav-pill-side.right { justify-content: flex-end; }
-
 .nav-btn {
   width: 40px;
   height: 40px;
@@ -75,11 +63,11 @@
 
 .nav-label { display: none; }
 
-/* Elevated middle action — raised lime circle, matches the reference nav.
-   Used two ways: BottomNav's "+" quick-add toggle (rotates open/close via
-   .active, tied to menuOpen state) and CoachNav's Board tab (a plain
-   navigation target — see .nav-btn-elevated.nav-tab-active below, which
-   deliberately doesn't rotate since there's no open/close state there). */
+/* Elevated middle action (BottomNav's "+" quick-add toggle) — raised lime
+   circle, matches the reference nav. CoachNav briefly reused this for its
+   Board tab but reverted (see CoachNav.jsx) — 4 tabs can't be split 2+1+2
+   like the member nav's 5, so the button always ended up off-center or
+   unevenly spaced no matter how it was arranged. */
 .nav-btn-elevated {
   width: 56px;
   height: 56px;
@@ -96,10 +84,6 @@
 .nav-btn-elevated svg {
   color: var(--accent-ink);
   stroke-width: 2;
-}
-
-.nav-btn-elevated.nav-tab-active {
-  border-color: var(--text-primary);
 }
 
 .nav-btn-elevated.active {
