@@ -14,6 +14,37 @@ self.addEventListener('activate', e => {
   );
 });
 
+self.addEventListener('push', e => {
+  let data = { title: 'ON AIR', body: 'Nouvelle notification', url: '/messages' };
+  try {
+    if (e.data) data = { ...data, ...e.data.json() };
+  } catch { /* keep defaults if the payload isn't JSON */ }
+
+  e.waitUntil(
+    self.registration.showNotification(data.title, {
+      body: data.body,
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
+      data: { url: data.url },
+    })
+  );
+});
+
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  const url = e.notification.data?.url || '/messages';
+  e.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clients => {
+      const existing = clients.find(c => 'focus' in c);
+      if (existing) {
+        existing.navigate(url);
+        return existing.focus();
+      }
+      return self.clients.openWindow(url);
+    })
+  );
+});
+
 self.addEventListener('fetch', e => {
   const { request } = e;
 

@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase'
+import { supabase, authHeader } from '../lib/supabase'
 
 // Single-coach-per-gym model (same assumption as the rest of the app —
 // Login/App.jsx route every coach/admin account to the same /coach space).
@@ -46,7 +46,30 @@ export async function sendMessage(senderId, receiverId, content) {
     console.error('[messages] sendMessage failed', error)
     return { success: false, error }
   }
+
+  // Best-effort push, member-side only for now — the endpoint reads the
+  // receiver's subscriptions using OUR (the sender's) token, gated by a
+  // "coach can view member subscriptions" RLS policy, so this silently
+  // no-ops (0 sent) when a member messages a coach rather than needing a
+  // role check here. Never blocks or fails the send itself.
+  notifyReceiver(receiverId, trimmed).catch(err => console.error('[messages] push notify failed', err))
+
   return { success: true, message: data }
+}
+
+async function notifyReceiver(receiverId, content) {
+  const headers = await authHeader()
+  if (!headers.Authorization) return
+  await fetch('/api/send-push', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...headers },
+    body: JSON.stringify({
+      receiverId,
+      title: 'Ton coach t’a écrit',
+      body: content.length > 100 ? `${content.slice(0, 100)}…` : content,
+      url: '/messages/coach',
+    }),
+  })
 }
 
 // Marks every unread message from `otherUserId` to `currentUserId` as read.
