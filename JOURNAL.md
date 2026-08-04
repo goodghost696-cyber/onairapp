@@ -38,6 +38,9 @@ L'utilisateur n'avait jamais donné de brief concret sur "l'UI Coach à recadrer
 
 Build validé après chaque lot. Comme toujours, pas de vérification visuelle possible dans ce sandbox — à confirmer sur la preview, en particulier les notes coach (nouvelle feature jamais vue) et le badge non-lu.
 
+### 🐛 Retour utilisateur sur la preview : nav bar "dégueulasse", corrigé
+`.nav-pill` avait `background: var(--bg)` — **exactement la même couleur que le fond de la page**, donc aucun contraste de surface propre (contrairement à toutes les autres cartes de l'app, qui utilisent `--surface` pour "monter" du fond noir). Quasi invisible en clair, complètement plat en sombre — la barre entière, et le bouton "Board" surélevé avec, se fondaient dans le fond. Passé à `var(--surface)`, bordure de découpe du bouton surélevé alignée dessus (`var(--surface)` au lieu de `var(--bg)`), ombre du bouton renforcée. Root cause identique à celle déjà documentée en Session 12 pour d'autres composants — un `--bg` copié-collé au lieu de `--surface` sur un composant réutilisé partout dans l'app.
+
 ---
 
 ## 2026-08-04 — Session 16 (suite 4) : nav bar coach alignée sur le style membre
