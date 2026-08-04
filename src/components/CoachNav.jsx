@@ -1,4 +1,7 @@
+import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
+import { fetchUnreadCount } from '../utils/messages'
 import '../styles/nav.css'
 
 // "Board" (CoachDashboard) is rendered separately, elevated in the middle
@@ -53,6 +56,18 @@ const rightTabs = [
 export default function CoachNav() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { user } = useAuth()
+  const [unread, setUnread] = useState(0)
+
+  // Nav is remounted on every coach-screen navigation (each screen renders
+  // its own <CoachNav />), so a fetch-on-mount here naturally stays fresh
+  // without extra subscription logic.
+  useEffect(() => {
+    if (!user?.id) return
+    let cancelled = false
+    fetchUnreadCount(user.id).then(count => { if (!cancelled) setUnread(count) })
+    return () => { cancelled = true }
+  }, [user?.id, location.pathname])
 
   function isActive(path) {
     if (path === '/coach') return location.pathname === '/coach'
@@ -62,10 +77,14 @@ export default function CoachNav() {
 
   function renderTab(tab) {
     const active = isActive(tab.path)
+    const showBadge = tab.path === '/coach/messages' && unread > 0
     return (
-      <div key={tab.path} className={`nav-btn${active ? ' active' : ''}`}
+      <div key={tab.path} className={`nav-btn${active ? ' active' : ''}`} style={{ position: 'relative' }}
         onClick={() => { navigator.vibrate && navigator.vibrate(6); navigate(tab.path) }}>
         {tab.icon}
+        {showBadge && (
+          <span style={{ position: 'absolute', top: 4, right: 4, width: 8, height: 8, borderRadius: '50%', background: 'var(--accent)', border: '1.5px solid var(--bg)' }} />
+        )}
       </div>
     )
   }

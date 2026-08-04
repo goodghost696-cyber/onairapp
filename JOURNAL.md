@@ -6,6 +6,40 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo, branche `claude/charming-mendel-dj1GQ`, et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-08-04 — Session 16 (suite 5) : brief UI Coach — 5 points identifiés par Claude, à traiter
+
+L'utilisateur n'avait jamais donné de brief concret sur "l'UI Coach à recadrer" (confirmé en relisant tout le journal — juste des confirmations répétées que ça devait être revu, jamais de détail). Demandé à Claude de proposer lui-même ce qui cloche, contenu (pas juste style). Liste ci-dessous validée par l'utilisateur ("je veux tout ce que tu viens de dire") :
+
+1. **`ClientsList.jsx` — badge objectif toujours "-"** : le champ objectif qualitatif (ex. "Prise de masse") choisi à l'onboarding n'était jamais persisté dans `profiles` (uniquement dans `user_metadata`), donc le badge affiche "-" pour 100% des membres, en permanence — plus trompeur qu'utile.
+2. **Aucune pastille de message non lu dans la nav coach.** Le coach n'a aucun moyen de savoir qu'un membre lui a écrit sans ouvrir l'onglet Messages à chaque fois.
+3. **`MemberDetail.jsx` ne montre que des moyennes**, jamais le détail réel (quels repas, quelle séance) — utile pour repérer un problème précis, pas juste suivre une tendance.
+4. **Pas de notes coach.** Aucun champ pour que le coach garde une note privée sur un membre (blessure, objectif particulier, etc.).
+5. **Dashboard coach potentiellement vide la moitié du temps** — "Actifs aujourd'hui" n'affiche rien si personne n'a bougé depuis ce matin, pas de repli sur l'activité récente.
+
+### ✅ 1. Objectif membre persisté + badge réel
+- Migration `add_objectif_to_profiles` : nouvelle colonne `profiles.objectif` (text), backfillée pour les comptes existants depuis `raw_user_meta_data->>'goal'` (auth.users) là où elle était déjà connue.
+- `AuthContext.jsx` (`updateUserProfile`) : `objectif` ajouté à l'upsert `profiles`, en plus de `user_metadata` — persisté aux deux endroits maintenant (Onboarding et modifications ultérieures dans Settings).
+- `ClientsList.jsx` : badge lit `m.objectif` (vraie colonne) au lieu de `m.goal` (jamais rempli). Ajouté `'Nutrition'` à `GOAL_COLORS` (option d'onboarding manquante de la palette).
+
+### ✅ 2. Pastille non-lu sur l'icône Messages du nav coach
+- Nouveau `fetchUnreadCount(userId)` dans `src/utils/messages.js` (`count: 'exact', head: true` — pas de payload transféré, juste le nombre).
+- `CoachNav.jsx` : petit point citron sur l'icône Messages si `unreadCount > 0`, rafraîchi au montage (la nav se remonte à chaque navigation entre écrans coach, donc reste à jour sans logique supplémentaire).
+
+### ✅ 3. Détail des repas/séances récents dans `MemberDetail.jsx`
+- Nouveau `fetchMemberRecentActivity(userId)` dans `coachStats.js` : 8 derniers repas + 8 dernières séances (lecture seule, mêmes policies déjà en place).
+- Deux nouvelles sections "DERNIERS REPAS" / "DERNIÈRES SÉANCES" sous les stats agrégées existantes.
+
+### ✅ 4. Notes coach privées
+- Migration `add_coach_notes` : nouvelle table `coach_notes` (une note par paire coach↔membre, upsert). RLS stricte : **seul le coach auteur** peut lire/écrire sa note — même un autre coach ne la voit pas, et un membre n'y a jamais accès (aucune policy ne le permet).
+- `MemberDetail.jsx` : nouvelle section "NOTES COACH" — textarea + bouton enregistrer, charge la note existante au montage.
+
+### ✅ 5. Dashboard coach — repli sur l'activité récente si personne n'est actif aujourd'hui
+- `CoachDashboard.jsx` : si `activeToday` est vide, la section bascule sur les 5 membres les plus récemment actifs (n'importe quand, pas juste aujourd'hui) sous le label "ACTIVITÉ RÉCENTE" au lieu de rester sur un écran quasi blanc.
+
+Build validé après chaque lot. Comme toujours, pas de vérification visuelle possible dans ce sandbox — à confirmer sur la preview, en particulier les notes coach (nouvelle feature jamais vue) et le badge non-lu.
+
+---
+
 ## 2026-08-04 — Session 16 (suite 4) : nav bar coach alignée sur le style membre
 
 Demande explicite de l'utilisateur : "je veux la même [nav] qu'il y a sur la partie membre". Le nav membre a 5 éléments (2 + bouton citron surélevé au milieu + 2) ; le nav coach n'en a que 4 (Board/Clients/Messages/Réglages), sans bouton central — question posée : que doit faire le bouton surélevé côté coach ? **Réponse : élever l'onglet "Board" (CoachDashboard) au milieu**, plutôt qu'un vrai bouton d'action "+" ou un simple alignement de style sans cercle.

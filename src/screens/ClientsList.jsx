@@ -5,13 +5,13 @@ import { supabase } from '../lib/supabase'
 import { fetchMemberActivitySummaries, lastSeenLabel } from '../utils/coachStats'
 
 const STATUS_COLORS = { 'ON TRACK': 'var(--success)', 'AT RISK': 'var(--warning)', 'INACTIVE': 'var(--danger)' }
+// Keys match the exact values Onboarding.jsx's goal step writes to
+// profiles.objectif — see STEPS[1].options there.
 const GOAL_COLORS = {
   'Prise de masse': 'var(--accent)',
   'Perte de poids': 'var(--warning)',
   'Performance': 'var(--success)',
-  'Sèche': '#8B5CF6',
-  'Tonicité': '#2EA8FF',
-  'Remise en forme': 'var(--text-muted)',
+  'Nutrition': '#2EA8FF',
 }
 const FILTERS = ['TOUS', 'ON TRACK', 'AT RISK', 'INACTIVE']
 
@@ -89,7 +89,7 @@ export default function ClientsList() {
               <div style={{ flex: 1 }}>
                 <div className="flex justify-between items-center" style={{ marginBottom: 2 }}>
                   <span className="text-base bold">{m.prenom}</span>
-                  <span style={{ fontSize: 9, border: `1px solid ${GOAL_COLORS[m.goal] || 'var(--border)'}`, color: GOAL_COLORS[m.goal] || 'var(--text-muted)', padding: '2px 6px', borderRadius: 4, letterSpacing: 0.5, textTransform: 'uppercase', fontWeight: 700 }}>{m.goal || '-'}</span>
+                  <span style={{ fontSize: 9, border: `1px solid ${GOAL_COLORS[m.objectif] || 'var(--border)'}`, color: GOAL_COLORS[m.objectif] || 'var(--text-muted)', padding: '2px 6px', borderRadius: 4, letterSpacing: 0.5, textTransform: 'uppercase', fontWeight: 700 }}>{m.objectif || '-'}</span>
                 </div>
                 <div className="text-xs text-muted">Vu {lastSeenLabel(m.lastActiveDate).toLowerCase()} · {m.sessionsThisWeek ?? 0} séance{m.sessionsThisWeek > 1 ? 's' : ''}</div>
                 <div className="progress-bar" style={{ marginTop: 6 }}>
