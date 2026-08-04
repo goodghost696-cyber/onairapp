@@ -8,6 +8,9 @@ Entrées les plus récentes en haut.
 
 ## 2026-08-04 — Session 16 (suite 6) : push notifications, côté membre uniquement
 
+### ✅ Variables VAPID ajoutées par l'utilisateur dans Vercel
+Les 4 variables (`VAPID_PUBLIC_KEY`, `VITE_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`) sont configurées sur Production + Preview. Push notifications membre normalement opérationnelles une fois ce commit déployé.
+
 Demandé de démarrer les push notifications, **scopées côté membre uniquement** ("mais juste pour la partie membre") — un membre reçoit une vraie notification push quand son coach lui écrit. Pas de push côté coach dans cette passe.
 
 ### ⚠️ Bloquant à connaître : variables d'environnement Vercel non configurées
