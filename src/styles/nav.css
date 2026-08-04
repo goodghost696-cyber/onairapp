@@ -16,7 +16,12 @@
 }
 
 .nav-pill {
-  background: var(--bg);
+  /* Was var(--bg) — identical to the page background, so the pill had
+     zero contrast of its own (every other surface in the app lifts off
+     --bg via --surface; this one didn't). Barely visible in light theme,
+     completely invisible in dark — reported as "the nav bar looks ugly"
+     on the coach dashboard. */
+  background: var(--surface);
   border: 2px solid var(--border);
   border-radius: 30px;
   padding: 8px 16px;
@@ -69,8 +74,11 @@
   border-radius: 50%;
   background: var(--accent);
   margin-top: -26px;
-  border: 3px solid var(--bg);
-  box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+  /* Matches .nav-pill's background (not --bg) so this reads as a ring cut
+     through the pill's surface, not a mismatched dark halo now that the
+     pill itself is no longer the same flat color as the page. */
+  border: 3px solid var(--surface);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.5);
 }
 
 .nav-btn-elevated svg {
