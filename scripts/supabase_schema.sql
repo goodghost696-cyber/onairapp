@@ -26,6 +26,10 @@ create table if not exists profiles (
   age        int,
   role       text not null default 'member',
   objectif   text,
+  -- Server-only, written by api/cron/inactivity-nudge.js to send one push
+  -- per inactivity episode rather than daily spam — nothing in the app
+  -- reads or writes this from the client.
+  last_inactivity_nudge_at timestamptz,
   created_at timestamptz default now(),
   unique(user_id)
 );
