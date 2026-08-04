@@ -92,7 +92,12 @@ export default function CoachNav() {
   return (
     <nav className="bottom-nav">
       <div className="nav-pill">
-        {leftTabs.map(renderTab)}
+        {/* Explicit flex:1 side groups (see .nav-pill-side in nav.css) so
+            the elevated button sits at the bar's true visual center
+            regardless of how many icons are on each side — with only
+            justify-content:space-between across 4 flat items (2 left, 1
+            elevated, 1 right), it landed 3rd-of-4, visibly off-center. */}
+        <div className="nav-pill-side left">{leftTabs.map(renderTab)}</div>
 
         <div
           className={`nav-btn nav-btn-elevated${isActive(boardTab.path) ? ' nav-tab-active' : ''}`}
@@ -101,7 +106,7 @@ export default function CoachNav() {
           {boardTab.icon}
         </div>
 
-        {rightTabs.map(renderTab)}
+        <div className="nav-pill-side right">{rightTabs.map(renderTab)}</div>
       </div>
     </nav>
   )

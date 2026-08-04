@@ -31,6 +31,18 @@
   box-shadow: 0 16px 48px rgba(0,0,0,0.45);
 }
 
+/* Used by CoachNav to guarantee the elevated button sits at the bar's
+   true center regardless of an uneven tab count on each side (4 tabs
+   total here vs the member nav's symmetric 5, where plain
+   space-between happened to center it by coincidence). */
+.nav-pill-side {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+.nav-pill-side.left { justify-content: flex-start; }
+.nav-pill-side.right { justify-content: flex-end; }
+
 .nav-btn {
   width: 40px;
   height: 40px;
