@@ -6,6 +6,18 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo, branche `claude/charming-mendel-dj1GQ`, et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-08-04 — Session 16 (suite 4) : nav bar coach alignée sur le style membre
+
+Demande explicite de l'utilisateur : "je veux la même [nav] qu'il y a sur la partie membre". Le nav membre a 5 éléments (2 + bouton citron surélevé au milieu + 2) ; le nav coach n'en a que 4 (Board/Clients/Messages/Réglages), sans bouton central — question posée : que doit faire le bouton surélevé côté coach ? **Réponse : élever l'onglet "Board" (CoachDashboard) au milieu**, plutôt qu'un vrai bouton d'action "+" ou un simple alignement de style sans cercle.
+
+### ✅ `CoachNav.jsx` réorganisé
+- Nouvel ordre : Clients, Messages, **[Board surélevé]**, Réglages (2 + 1 + 1, la nav coach n'ayant que 4 items contre 5 côté membre — pas de symétrie parfaite possible, mais le traitement visuel est identique).
+- Réutilise `.nav-btn-elevated` (même cercle citron 56px que le bouton "+" membre) mais **pas** la classe `.active` du "+" : celle-ci fait tourner l'icône à 135° (pensée pour transformer visuellement un "+" en croix de fermeture), ce qui aurait fait tourner l'icône grille de Board de façon incongrue sur un simple onglet de navigation. Nouvelle classe `.nav-tab-active` ajoutée dans `nav.css` : même surbrillance de bordure, sans rotation.
+
+Build validé. Comme toujours, pas de vérification visuelle possible dans ce sandbox — à confirmer sur la preview.
+
+---
+
 ## 2026-08-04 — Session 16 (suite 3) : tour côté coach, 2 bugs trouvés + reskin
 
 Demandé un tour rapide de tout le côté coach avant de continuer. Deux vrais bugs trouvés (pas juste du visuel) :

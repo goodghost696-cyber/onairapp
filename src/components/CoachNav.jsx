@@ -1,16 +1,20 @@
 import { useNavigate, useLocation } from 'react-router-dom'
 import '../styles/nav.css'
 
-const tabs = [
-  {
-    path: '/coach',
-    label: 'Board',
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
-      </svg>
-    )
-  },
+// "Board" (CoachDashboard) is rendered separately, elevated in the middle
+// of the bar — same treatment as the member nav's raised lime circle —
+// per the user's request to match the member nav bar's look.
+const boardTab = {
+  path: '/coach',
+  label: 'Board',
+  icon: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+    </svg>
+  )
+}
+
+const leftTabs = [
   {
     path: '/coach/clients',
     label: 'Clients',
@@ -31,6 +35,9 @@ const tabs = [
       </svg>
     )
   },
+]
+
+const rightTabs = [
   {
     path: '/coach/settings',
     label: 'Réglages',
@@ -47,25 +54,35 @@ export default function CoachNav() {
   const navigate = useNavigate()
   const location = useLocation()
 
+  function isActive(path) {
+    if (path === '/coach') return location.pathname === '/coach'
+    if (path === '/coach/clients') return location.pathname === '/coach/clients'
+    return location.pathname === path || location.pathname.startsWith(path + '/')
+  }
+
+  function renderTab(tab) {
+    const active = isActive(tab.path)
+    return (
+      <div key={tab.path} className={`nav-btn${active ? ' active' : ''}`}
+        onClick={() => { navigator.vibrate && navigator.vibrate(6); navigate(tab.path) }}>
+        {tab.icon}
+      </div>
+    )
+  }
+
   return (
     <nav className="bottom-nav">
       <div className="nav-pill">
-        {tabs.map(tab => {
-          let active
-          if (tab.path === '/coach') {
-            active = location.pathname === '/coach'
-          } else if (tab.path === '/coach/clients') {
-            active = location.pathname === '/coach/clients'
-          } else {
-            active = location.pathname === tab.path || location.pathname.startsWith(tab.path + '/')
-          }
-          return (
-            <div key={tab.path} className={`nav-btn${active ? ' active' : ''}`}
-              onClick={() => { navigator.vibrate && navigator.vibrate(6); navigate(tab.path) }}>
-              {tab.icon}
-            </div>
-          )
-        })}
+        {leftTabs.map(renderTab)}
+
+        <div
+          className={`nav-btn nav-btn-elevated${isActive(boardTab.path) ? ' nav-tab-active' : ''}`}
+          onClick={() => { navigator.vibrate && navigator.vibrate(6); navigate(boardTab.path) }}
+        >
+          {boardTab.icon}
+        </div>
+
+        {rightTabs.map(renderTab)}
       </div>
     </nav>
   )
