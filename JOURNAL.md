@@ -26,6 +26,9 @@ Table `messages` + policies RLS (lecture par les deux participants, écriture li
 - **Deux profils "Arnaud" en base** (`goodghost696@gmail.com` + un compte de test fantôme `coach@onair.fr` jamais utilisé) — un message de test envoyé par erreur au mauvais "Arnaud", indiscernables dans la liste `CoachMessages`. Compte fantôme supprimé (cascade propre), et l'email est maintenant affiché sous le prénom dans la liste des conversations coach pour éviter que ça se reproduise avec de vrais clients homonymes.
 - **FAB "Coach IA / Mon Coach" bloquait le bouton d'envoi côté membre** — le FAB global de `MemberLayout.jsx` (bottom:96px, z-index:95) se superposait exactement au bouton d'envoi de `Conversation.jsx` (bottom:100px, z-index:90), le rendant totalement inaccessible au clic. Masqué désormais sur les routes `/messages*` (redondant à cet endroit de toute façon).
 
+### ✅ Reskin Neon membre terminé
+`Scan.jsx`, `Hydration.jsx`, `Sleep.jsx`, `ResetPassword.jsx` — dernier glass remplacé par le style solide bordé, labels d'en-tête corrigés en bleu (`--accent-secondary`) comme sur les écrans principaux. PR #13, mergée dans `claude/charming-mendel-dj1GQ`. **Plus aucun écran membre en attente de reskin.**
+
 ### ⚠️ Toujours en attente
 **Design de la nav bar coach à revoir** (demande initiale de l'utilisateur, voir plus haut) — le fix ci-dessus corrige la casse fonctionnelle (nav utilisable), pas le design lui-même.
 
@@ -38,7 +41,7 @@ Table `messages` + policies RLS (lecture par les deux participants, écriture li
 **Décision organisationnelle de l'utilisateur** : diviser le reste du travail en deux chantiers séparés — **Membre** et **Coach** — plutôt qu'une liste unique. Répartition ci-dessous, état vérifié fichier par fichier au moment d'écrire ces lignes (notamment `CoachSettings.jsx`, jamais audité jusqu'ici : déjà sur données réelles — nom/email/code d'accès viennent du vrai compte, rien à corriger côté données là-dessus, juste du reskin visuel comme le reste du côté coach).
 
 ### 🧑 Chantier MEMBRE — reste à faire
-- **Reskin Neon** : `Scan.jsx`, `Hydration.jsx`, `Sleep.jsx`, `ResetPassword.jsx` pas encore passés en revue en détail (bénéficient déjà des fix globaux `.card`/`.btn-ghost` mais gardent des restes de style "glass" par endroits, notamment `Scan.jsx` et `ResetPassword.jsx` repérés lors du dernier audit).
+- ~~Reskin Neon (`Scan.jsx`, `Hydration.jsx`, `Sleep.jsx`, `ResetPassword.jsx`)~~ — fait en Session 16 (PR #13, mergée) : glass restant remplacé par le style solide, labels d'en-tête corrigés en bleu. **Reskin membre entièrement terminé.**
 - **Thème clair** : jamais vu en vrai sur la preview — la valeur d'accent assombrie (`#3D5200`) a été choisie par calcul de contraste, pas par l'œil, à valider ou ajuster.
 - **Push notifications** : décidé "vraies push" (Session 14), rien construit. C'est principalement un chantier membre (c'est lui qui les reçoit) même si le déclenchement peut venir d'actions coach (ex. réponse à un message).
 - ~~Messagerie persistée~~ — faite et testée en Session 16, voir plus haut.
