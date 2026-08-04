@@ -13,6 +13,21 @@ export default function Landing() {
     return () => clearTimeout(t)
   }, [])
 
+  // Landing is deliberately always dark (the neon splash), independent of
+  // the in-app theme toggle — but that toggle persists globally via
+  // data-theme on <html>, so body/#root's margins outside the 390px column
+  // would otherwise pick up the light theme's background while this
+  // screen's own content stays hardcoded dark (white borders bleeding in
+  // around the splash on any viewport wider than 390px). Force dark chrome
+  // while this screen is mounted, restore whatever was there before on
+  // unmount so the real app theme resumes correctly after login.
+  useEffect(() => {
+    const html = document.documentElement
+    const prev = html.getAttribute('data-theme')
+    html.setAttribute('data-theme', 'dark')
+    return () => { html.setAttribute('data-theme', prev || 'dark') }
+  }, [])
+
   return (
     <div className="landing">
       <div className="landing-topbar">
