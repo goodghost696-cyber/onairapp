@@ -16,12 +16,15 @@ Entrées les plus récentes en haut.
 - `goodghost696@gmail.com` (Arnaud, compte principal de l'utilisateur) — temporairement promu `coach` par erreur puis **repassé `member`** immédiatement sur demande de l'utilisateur : il doit rester membre pour servir de compte de test côté membre pendant que `coach@onairapp.com` sert de compte coach.
 - Vérifié en vrai sur la preview : connexion coach fonctionne, `MemberDetail.jsx` affiche bien les vraies données d'Arnaud (objectifs réels, séances 7j, etc.) — juste "INACTIVE"/valeurs à "—" car pas encore d'activité loggée récente, comportement normal.
 
-### ✅ Messagerie persistée
-Table `messages` + policies RLS (lecture par les deux participants, écriture limitée aux paires membre↔coach réelles, `read_at` modifiable par le destinataire uniquement) + branchement de `Conversation.jsx`/`CoachMessages.jsx`/`Messages.jsx` sur les vraies données avec abonnement realtime Supabase (deux appareils connectés voient les messages arriver sans refresh). Poussé sur la PR #12 (pas encore mergée dans `claude/charming-mendel-dj1GQ`).
+### ✅ Messagerie persistée — testée bout en bout, fonctionnelle
+Table `messages` + policies RLS (lecture par les deux participants, écriture limitée aux paires membre↔coach réelles, `read_at` modifiable par le destinataire uniquement) + branchement de `Conversation.jsx`/`CoachMessages.jsx`/`Messages.jsx` sur les vraies données avec abonnement realtime Supabase (deux appareils connectés voient les messages arriver sans refresh). **Confirmé par l'utilisateur en conditions réelles (ordi coach ↔ phone membre) après les correctifs ci-dessous.** Poussé sur la PR #12 (pas encore mergée dans `claude/charming-mendel-dj1GQ`).
 
 ### 🐛 Bugs trouvés en testant sur téléphone, corrigés
 - **`CoachNav.jsx` cassée en CSS** — les icônes de la nav coach étaient enfants directs de `.bottom-nav`, qui n'a pas de `display:flex` propre (contrairement à `BottomNav` qui les enveloppe dans `.nav-pill`) : elles s'empilaient verticalement en bas à gauche au lieu d'une barre horizontale, et ce bloc mal formé passait *par-dessus* le champ de message de `Conversation.jsx` (z-index 100 vs 90) — impossible d'écrire un message côté coach, le champ existait mais était caché dessous. Corrigé en ajoutant le même wrapper `.nav-pill`. **Ce bug préexistait cette session, probablement déjà en prod depuis la Session 13** (nav jamais vérifiée en vrai sur mobile avant aujourd'hui).
 - **Contours blancs sur Landing** — le thème clair activé ailleurs dans l'app persiste globalement (`data-theme` sur `<html>`, `localStorage`), et s'appliquait aussi à `body`/`#root` pendant que `Landing.jsx` reste volontairement toujours sombre (splash design) — d'où des marges blanches visibles autour de la colonne noire sur un écran plus large que 390px. `Landing.jsx` force maintenant `data-theme="dark"` le temps d'être monté, restaure la valeur précédente en la quittant. **Pas vérifié si Login/Onboarding ont le même souci** — pas de bug rapporté dessus pour l'instant, à surveiller.
+- **RLS bloquait un membre de trouver "son" coach** — `profiles` n'avait qu'une policy coach→membres, jamais l'inverse ; `fetchPrimaryCoach()` côté membre renvoyait donc silencieusement rien (`Aucun coach disponible`). Nouvelle policy `SELECT` scopée aux lignes `role in ('coach','admin')` uniquement — un membre ne peut toujours pas lire le profil d'un autre membre par ce biais.
+- **Deux profils "Arnaud" en base** (`goodghost696@gmail.com` + un compte de test fantôme `coach@onair.fr` jamais utilisé) — un message de test envoyé par erreur au mauvais "Arnaud", indiscernables dans la liste `CoachMessages`. Compte fantôme supprimé (cascade propre), et l'email est maintenant affiché sous le prénom dans la liste des conversations coach pour éviter que ça se reproduise avec de vrais clients homonymes.
+- **FAB "Coach IA / Mon Coach" bloquait le bouton d'envoi côté membre** — le FAB global de `MemberLayout.jsx` (bottom:96px, z-index:95) se superposait exactement au bouton d'envoi de `Conversation.jsx` (bottom:100px, z-index:90), le rendant totalement inaccessible au clic. Masqué désormais sur les routes `/messages*` (redondant à cet endroit de toute façon).
 
 ### ⚠️ Toujours en attente
 **Design de la nav bar coach à revoir** (demande initiale de l'utilisateur, voir plus haut) — le fix ci-dessus corrige la casse fonctionnelle (nav utilisable), pas le design lui-même.
@@ -38,17 +41,16 @@ Table `messages` + policies RLS (lecture par les deux participants, écriture li
 - **Reskin Neon** : `Scan.jsx`, `Hydration.jsx`, `Sleep.jsx`, `ResetPassword.jsx` pas encore passés en revue en détail (bénéficient déjà des fix globaux `.card`/`.btn-ghost` mais gardent des restes de style "glass" par endroits, notamment `Scan.jsx` et `ResetPassword.jsx` repérés lors du dernier audit).
 - **Thème clair** : jamais vu en vrai sur la preview — la valeur d'accent assombrie (`#3D5200`) a été choisie par calcul de contraste, pas par l'œil, à valider ou ajuster.
 - **Push notifications** : décidé "vraies push" (Session 14), rien construit. C'est principalement un chantier membre (c'est lui qui les reçoit) même si le déclenchement peut venir d'actions coach (ex. réponse à un message).
-- **Messagerie persistée** : aucune table en base, `Messages.jsx`/`Conversation.jsx` (côté membre) sont entièrement fictifs/locaux. Partagé avec le chantier coach (même table, deux écrans côté membre + deux côté coach à brancher dessus une fois construite).
+- ~~Messagerie persistée~~ — faite et testée en Session 16, voir plus haut.
 
 ### 🧑‍💼 Chantier COACH — reste à faire
 - **Reskin Neon** : `CoachDashboard.jsx`, `ClientsList.jsx`, `MemberDetail.jsx`, `CoachMessages.jsx`, `CoachSettings.jsx` — aucun n'a encore été passé au style Neon en détail (données déjà réelles depuis cette session, c'est uniquement visuel qui reste).
-- **UI Coach à recadrer** : l'utilisateur a confirmé qu'il faudra s'y mettre mais sans détail sur quoi changer précisément — nécessite un brief avant de coder quoi que ce soit au-delà du reskin.
-- **Messagerie persistée** : voir ci-dessus, partagée avec le chantier membre — `CoachMessages.jsx`/`Conversation.jsx` (côté coach) affichent déjà les vrais noms de clients mais aucune conversation réelle.
+- **UI Coach à recadrer** : l'utilisateur a confirmé qu'il faudra s'y mettre mais sans détail sur quoi changer précisément — nécessite un brief avant de coder quoi que ce soit au-delà du reskin. Inclut maintenant explicitement la **nav bar coach** (demande Session 16).
+- ~~Messagerie persistée~~ — faite et testée en Session 16, voir plus haut.
 - **Nettoyage sécurité mineur** : `prevent_self_role_escalation()` (le trigger anti-escalade de rôle) est appelable en RPC public par `anon`/`authenticated` — même défaut déjà corrigé sur `is_coach()`. Concerne l'espace coach (protection des comptes coach/admin), pas exploitable en pratique, pas urgent.
 - **Toggles de notifications non fonctionnels** : "Alertes membres"/"Nouveaux messages" dans `CoachSettings.jsx` ne font rien (état local seulement) — dépend du chantier push notifications ci-dessus.
 
 ### Transversal (ni purement membre, ni purement coach)
-- Messagerie persistée (déjà listée des deux côtés).
 - Push notifications (déjà listé côté membre, le toggle de préférence existe aussi côté coach).
 
 ---
