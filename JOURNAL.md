@@ -6,7 +6,42 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo, branche `claude/charming-mendel-dj1GQ`, et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
-## 2026-08-04 — Session 16 (suite 5) : brief UI Coach — 5 points identifiés par Claude, à traiter
+## 2026-08-04 — Session 16 (suite 6) : push notifications, côté membre uniquement
+
+Demandé de démarrer les push notifications, **scopées côté membre uniquement** ("mais juste pour la partie membre") — un membre reçoit une vraie notification push quand son coach lui écrit. Pas de push côté coach dans cette passe.
+
+### ⚠️ Bloquant à connaître : variables d'environnement Vercel non configurées
+Je n'ai aucun outil pour ajouter des variables d'environnement dans Vercel — le code est complet et fonctionnel, mais **rien ne marchera tant que l'utilisateur n'a pas ajouté 4 variables manuellement** dans les réglages du projet Vercel (Production + Preview) :
+```
+VAPID_PUBLIC_KEY=BO6IQmSJEznpslPC0IzESOSwB1XYD1zBADFdCrKhugc9IVyd246VDiB_XIvw6hxicdLSqoRiOIEtft4r10VumwI
+VITE_VAPID_PUBLIC_KEY=BO6IQmSJEznpslPC0IzESOSwB1XYD1zBADFdCrKhugc9IVyd246VDiB_XIvw6hxicdLSqoRiOIEtft4r10VumwI
+VAPID_PRIVATE_KEY=5EyfgBPaZiNQBrC2eXhugcw0DnS0p5H18oRc-kUMaP0
+VAPID_SUBJECT=mailto:contact@onairapp.com
+```
+`VAPID_PRIVATE_KEY` ne doit **jamais** être exposé côté client — seul `VITE_VAPID_PUBLIC_KEY` (même valeur que `VAPID_PUBLIC_KEY`, préfixe `VITE_` requis pour que Vite l'expose au bundle) l'est. Clés générées avec `web-push` (`generateVAPIDKeys()`), documentées aussi dans `.env.example`. **Sans ces variables sur Vercel, le bouton "Notifications push" dans Settings échouera silencieusement (`push not configured`).**
+
+### ✅ Infrastructure
+- Migration `add_push_subscriptions` : table `push_subscriptions` (une ligne par navigateur/appareil abonné). RLS : chacun gère ses propres abonnements (select/insert/update/delete), **plus** une policy `is_coach()` en lecture/suppression permettant à `api/send-push.js` de lire les abonnements d'un membre avec le **propre token du coach expéditeur** — pas besoin de `service_role` key, même logique déjà utilisée pour `objectifs`/`repas`/`seances`. Migration séparée `allow_coach_cleanup_stale_push_subscriptions` pour la suppression (oubliée dans la première passe, sinon le nettoyage des abonnements morts échouait silencieusement sous RLS).
+- `api/send-push.js` (nouveau) : reçoit `{receiverId, title, body, url}`, authentifié (`requireUser`), utilise `web-push` avec les clés VAPID pour envoyer à tous les abonnements du destinataire. Nettoie automatiquement les abonnements expirés (404/410 du service de push).
+- `src/utils/push.js` (nouveau) : `subscribeToPush()`/`unsubscribeFromPush()`/`getPushSubscriptionState()` — gère la permission navigateur + l'upsert/delete dans `push_subscriptions`.
+- `public/sw.js` : gestion des événements `push` (affiche la notif) et `notificationclick` (focus/ouvre l'app sur l'URL pertinente).
+
+### ✅ Déclencheur branché : nouveau message du coach
+`sendMessage()` dans `messages.js` appelle maintenant `/api/send-push` en best-effort après l'insertion d'un message (jamais bloquant, jamais visible par l'utilisateur si ça échoue). Comme la lecture des abonnements côté serveur est gated par `is_coach()`, un membre qui écrit à son coach ne déclenche silencieusement aucun envoi (0 ligne lisible) — pas besoin d'un check de rôle explicite dans le code.
+
+### ✅ UI réelle dans `Settings.jsx` (membre)
+Nouveau toggle "Notifications push" tout en haut de la section Notifications — **contrairement aux 3 toggles existants juste en dessous (hydratation/séance/récap hebdo, toujours de purs placeholders locaux)**, celui-ci fait vraiment quelque chose : demande la permission navigateur, s'abonne/désabonne réellement, persiste en base. Affiche un message si l'utilisateur a bloqué les notifications au niveau du navigateur.
+
+Build validé, `node --check` sur `api/send-push.js` (endpoint serverless, pas passé par le build Vite). Comme toujours, pas de vérification visuelle ni fonctionnelle réelle possible dans ce sandbox — **et cette fois, impossible de tester même une fois les clés ajoutées, sans un vrai appareil/navigateur qui accepte les notifications**, à valider entièrement par l'utilisateur une fois les variables Vercel configurées.
+
+### Reste après cette session
+- **Push côté coach** (un membre écrit → le coach reçoit une notif) — pas fait, scope explicitement limité au membre cette fois.
+- **Les 3 toggles de rappels dans `Settings.jsx`** (hydratation/séance/récap hebdo) restent des placeholders — nécessiteraient une vraie logique de déclenchement programmée (cron), pas juste un événement en direct comme les messages.
+- **`prevent_self_role_escalation()` public en RPC** — toujours pas nettoyé, pas urgent.
+
+---
+
+
 
 L'utilisateur n'avait jamais donné de brief concret sur "l'UI Coach à recadrer" (confirmé en relisant tout le journal — juste des confirmations répétées que ça devait être revu, jamais de détail). Demandé à Claude de proposer lui-même ce qui cloche, contenu (pas juste style). Liste ci-dessous validée par l'utilisateur ("je veux tout ce que tu viens de dire") :
 

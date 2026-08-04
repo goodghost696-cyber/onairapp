@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useApp } from '../context/AppContext'
 import { useLanguage } from '../context/LanguageContext'
 import { useTheme } from '../context/ThemeContext'
 import { BOUNDS, clamp } from '../utils/validation'
+import { isPushSupported, getPushSubscriptionState, subscribeToPush, unsubscribeFromPush } from '../utils/push'
 
 function Toggle({ on, onToggle }) {
   return (
@@ -34,6 +35,28 @@ export default function Settings() {
   const [showHealthSync, setShowHealthSync] = useState(false)
   const [healthData, setHealthData] = useState({ steps: '', sleep_hours: '', sleep_minutes: '' })
   const [syncToast, setSyncToast] = useState(false)
+  // Real (not simulated) — the three toggles above are still local-state
+  // placeholders (no scheduling logic built yet). This one actually
+  // subscribes the browser to Web Push and persists it in push_subscriptions.
+  const [pushState, setPushState] = useState('loading')
+
+  useEffect(() => {
+    if (!isPushSupported()) { setPushState('unsupported'); return }
+    getPushSubscriptionState().then(setPushState)
+  }, [])
+
+  async function handleTogglePush() {
+    if (pushState === 'loading') return
+    if (pushState === 'subscribed') {
+      setPushState('loading')
+      await unsubscribeFromPush()
+      setPushState('unsubscribed')
+    } else {
+      setPushState('loading')
+      const result = await subscribeToPush(user?.id)
+      setPushState(result.success ? 'subscribed' : (result.error === 'permission-denied' ? 'denied' : 'unsubscribed'))
+    }
+  }
 
   const [profile, setProfile] = useState({ name: user?.name || '', email: user?.email || '', weight: '78', height: '180' })
   const [goals, setGoals] = useState({ calories: String(appData.calorieGoal), protein: String(appData.proteinGoal), water: String(appData.waterGoal), steps: String(appData.stepsGoal) })
@@ -101,6 +124,15 @@ export default function Settings() {
 
         <div className="section-label">{t('notifications_section')}</div>
         <div className="card">
+          {pushState !== 'unsupported' && (
+            <div className="flex justify-between items-center" style={{ padding: '14px 0', borderBottom: '0.5px solid var(--border)' }}>
+              <div>
+                <div className="text-sm text-secondary">Notifications push</div>
+                {pushState === 'denied' && <div className="text-xs" style={{ color: 'var(--danger)', marginTop: 2 }}>Bloquées dans les réglages du navigateur</div>}
+              </div>
+              <Toggle on={pushState === 'subscribed'} onToggle={handleTogglePush} />
+            </div>
+          )}
           {[
             { key: 'hydration', label: t('hydration_reminder') },
             { key: 'session', label: t('workout_reminder') },
