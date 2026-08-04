@@ -41,6 +41,9 @@ Build validé après chaque lot. Comme toujours, pas de vérification visuelle p
 ### 🐛 Retour utilisateur sur la preview : nav bar "dégueulasse", corrigé
 `.nav-pill` avait `background: var(--bg)` — **exactement la même couleur que le fond de la page**, donc aucun contraste de surface propre (contrairement à toutes les autres cartes de l'app, qui utilisent `--surface` pour "monter" du fond noir). Quasi invisible en clair, complètement plat en sombre — la barre entière, et le bouton "Board" surélevé avec, se fondaient dans le fond. Passé à `var(--surface)`, bordure de découpe du bouton surélevé alignée dessus (`var(--surface)` au lieu de `var(--bg)`), ombre du bouton renforcée. Root cause identique à celle déjà documentée en Session 12 pour d'autres composants — un `--bg` copié-collé au lieu de `--surface` sur un composant réutilisé partout dans l'app.
 
+### 🐛 Deuxième retour utilisateur (capture à l'appui) : le bouton "Board" restait décalé
+Le fix de contraste ci-dessus était déployé et confirmé actif (vérifié via l'API Vercel — le SHA déployé correspondait bien au dernier commit), donc pas un souci de cache comme d'abord suspecté. La vraie cause, visible sur la capture envoyée par l'utilisateur : **le bouton surélevé n'était pas au centre de la barre**. `.nav-pill` utilisait `justify-content: space-between` sur 4 éléments à plat (2 tabs à gauche, le bouton élevé, 1 tab à droite) — le bouton se retrouvait 3ᵉ sur 4, donc visiblement décalé à droite. Ça fonctionnait par coïncidence côté membre (2+1+2=5, parfaitement symétrique), pas côté coach. Corrigé en enveloppant les tabs gauche/droite dans des conteneurs `flex:1` (`.nav-pill-side`) — le bouton élevé est maintenant garanti au centre visuel réel, peu importe le nombre d'icônes de chaque côté.
+
 ---
 
 ## 2026-08-04 — Session 16 (suite 4) : nav bar coach alignée sur le style membre
