@@ -47,6 +47,14 @@ create policy "Users can update own profile"
 create policy "Coaches can view all profiles"
   on profiles for select using (is_coach());
 
+-- Reverse direction: a member needs to discover "the" coach to message
+-- them (fetchPrimaryCoach() in src/utils/messages.js) — scoped to
+-- coach/admin rows only, so a member still can't read another member's
+-- profile through this policy.
+create policy "Anyone authenticated can view coach/admin profiles"
+  on profiles for select
+  using (role in ('coach', 'admin'));
+
 create or replace function public.is_coach()
 returns boolean language sql security definer set search_path = public stable as $$
   select exists (select 1 from public.profiles where user_id = auth.uid() and role in ('coach','admin'));
