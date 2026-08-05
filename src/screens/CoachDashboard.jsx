@@ -58,23 +58,29 @@ export default function CoachDashboard() {
 
         <h1 className="text-xl bold" style={{ marginBottom: 20 }}>Tableau de bord</h1>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 6, marginBottom: 16 }}>
-          {[
-            { label: 'Clients', val: loading ? '-' : members.length },
-            { label: 'Séances (7j)', val: loading ? '-' : sessionsThisWeekTotal },
-            { label: 'Alertes', val: loading ? '-' : alerts.length, danger: true },
-            { label: 'Actifs', val: loading ? '-' : activeToday.length },
-          ].map(m => (
-            <div key={m.label} className="card" style={{ textAlign: 'center', padding: '12px 6px' }}>
-              <div style={{ fontSize: 18, fontWeight: 700, color: m.danger ? 'var(--danger)' : 'var(--text-primary)' }}>{m.val}</div>
-              <div style={{ fontSize: 9, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 3 }}>{m.label}</div>
-            </div>
-          ))}
-        </div>
+        {/* .coach-stats caps this at a sane width on desktop — left
+            unwrapped, these 4 tiles would stretch to the full ~1600px
+            shell width, leaving a tiny number floating lost in a huge
+            card. */}
+        <div className="coach-stats">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 6, marginBottom: 16 }}>
+            {[
+              { label: 'Clients', val: loading ? '-' : members.length },
+              { label: 'Séances (7j)', val: loading ? '-' : sessionsThisWeekTotal },
+              { label: 'Alertes', val: loading ? '-' : alerts.length, danger: true },
+              { label: 'Actifs', val: loading ? '-' : activeToday.length },
+            ].map(m => (
+              <div key={m.label} className="card" style={{ textAlign: 'center', padding: '12px 6px' }}>
+                <div style={{ fontSize: 18, fontWeight: 700, color: m.danger ? 'var(--danger)' : 'var(--text-primary)' }}>{m.val}</div>
+                <div style={{ fontSize: 9, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 3 }}>{m.label}</div>
+              </div>
+            ))}
+          </div>
 
-        <button className="btn-ghost" onClick={() => navigate('/coach/clients')} style={{ marginBottom: 20 }}>
-          VOIR TOUS MES CLIENTS →
-        </button>
+          <button className="btn-ghost" onClick={() => navigate('/coach/clients')} style={{ marginBottom: 20 }}>
+            VOIR TOUS MES CLIENTS →
+          </button>
+        </div>
 
         {alerts.length > 0 && (
           <>

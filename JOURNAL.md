@@ -6,6 +6,22 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo, branche `claude/charming-mendel-dj1GQ`, et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-08-05 — Session 18 (suite 5) : responsive coach — audit proactif + fond qui ne remplissait pas la largeur
+
+Deux allers-retours supplémentaires avec l'utilisateur (deux nouvelles captures d'écran), plutôt que d'attendre qu'il trouve chaque bug un par un.
+
+### 🔍 Audit proactif après la suite 4 — 2 zones non protégées trouvées et corrigées avant qu'elles posent problème
+En réexaminant tous les écrans coach après le correctif `auto-fit`, deux blocs de contenu n'étaient enveloppés ni par `.coach-grid` ni par `.coach-narrow` et auraient donc hérité de la pleine largeur (~1600px) sans plafond :
+- `CoachDashboard.jsx` : les 4 tuiles de stats (Clients/Séances/Alertes/Actifs) + le bouton "Voir tous mes clients" — un chiffre minuscule aurait fini perdu dans une carte énorme. Enveloppés dans une nouvelle classe `.coach-stats` (plafond 640px).
+- `ClientsList.jsx` : la barre de recherche (`input` en `width:100%`) serait devenue une immense boîte de texte vide. Enveloppée dans `.coach-toolbar` (plafond 480px).
+
+### 🐛 Le fond (dégradé + couleur de fond) ne remplissait pas toute la largeur
+Nouvelle capture d'écran de l'utilisateur : au-delà du contenu, une bande sur les bords semblait "différente" du reste. Cause réelle : `#root.coach-shell` portait à la fois le fond (`--bg`, dégradé `::before`) **et** le plafond de largeur du contenu — au-delà du plafond, seul le fond plat de `body` (même couleur en théorie, mais le dégradé `::before` s'arrêtait net à la même limite, créant une coupure visible). Corrigé en séparant les deux responsabilités : `#root.coach-shell` (et son `::before`) repassent à 100% de la largeur pour que le fond soit continu jusqu'aux bords, et c'est maintenant `.screen` elle-même qui porte le plafond (`max-width: 1600px; margin: auto`) pour garder le contenu lisible et centré.
+
+Tout dans `src/styles/coach.css` + 2 petits ajouts de classe dans `CoachDashboard.jsx`/`ClientsList.jsx`, aucun autre changement de balisage.
+
+---
+
 ## 2026-08-05 — Session 18 (suite 4) : responsive coach — corrigé grâce à une vraie capture d'écran
 
 L'utilisateur a envoyé une capture d'écran du dashboard coach sur ordinateur. Deux bugs réels confirmés (exactement le genre de chose que je ne pouvais pas voir tout seul) :

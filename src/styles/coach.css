@@ -13,23 +13,28 @@
  * mobile layout, untouched.
  */
 @media (min-width: 900px) {
-  /* First version of this file capped things at 1100px — on an actual wide
-     monitor (checked via screenshot, 2026-08-05) that left huge dead black
-     margins on both sides, worse than the problem this was meant to fix.
-     Scales with the viewport instead now (94vw), with a generous upper cap
-     only so it doesn't run fully edge-to-edge on an ultra-wide monitor. */
+  /* #root carries the app's --bg fill and the decorative gradient
+     (::before) — capping ITS width (first version: 1100px, second: 94vw)
+     always leaves a visible seam past that edge where only body's flat
+     background shows, because #root's own background/gradient stop there.
+     Fix: #root's background now spans the full width (max-width:100% —
+     it's already width:100% from global.css, this just removes the cap),
+     and only the actual CONTENT wrapper (.screen) below gets a max-width
+     + auto margins to stay centered and readable. Background and content
+     width are two different concerns; conflating them into one property
+     on #root is what caused both prior bugs. */
   #root.coach-shell {
-    max-width: min(94vw, 1600px);
+    max-width: 100%;
   }
 
-  /* Decorative background gradient (global.css #root::before) was also
-     hardcoded to 390px — without this override it stays pinned to a
-     390px-wide strip instead of spanning the wider shell. */
   #root.coach-shell::before {
-    max-width: min(94vw, 1600px);
+    max-width: 100%;
   }
 
   #root.coach-shell .screen {
+    max-width: 1600px;
+    margin-left: auto;
+    margin-right: auto;
     padding-left: 48px;
     padding-right: 48px;
   }
@@ -64,5 +69,19 @@
     max-width: 720px;
     margin-left: auto;
     margin-right: auto;
+  }
+
+  /* Same overstretch bug as the grid, different shape: any raw content
+     that isn't wrapped in .coach-grid or .coach-narrow just inherits the
+     full ~1600px width by default. Caught two instances by re-auditing
+     every coach screen instead of waiting for another screenshot to catch
+     them one at a time: CoachDashboard's 4 KPI tiles (a number floating
+     lost in a huge card) and ClientsList's search input (a giant empty
+     text box). Both get their own comfortable cap instead. */
+  #root.coach-shell .coach-stats {
+    max-width: 640px;
+  }
+  #root.coach-shell .coach-toolbar {
+    max-width: 480px;
   }
 }
