@@ -6,6 +6,24 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo, branche `claude/charming-mendel-dj1GQ`, et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-08-05 — Session 18 : bug de scroll Nutrition résolu + rappel process PR
+
+### 🐛 Bug de scroll intempestif sur Nutrition — trouvé et corrigé
+Root cause identifiée : dans `Nutrition.jsx`, la "Bottom Sheet" d'ajout de repas (`step === 1`) reste **toujours montée dans le DOM**, seulement masquée visuellement via `transform: translateY(100%)` — ce n'est pas un rendu conditionnel (`{sheetOpen && ...}`), c'est fait exprès pour permettre l'animation de glissement à l'ouverture. Son champ de recherche avait `autoFocus`, qui se déclenche donc **dès le montage du composant Nutrition**, c'est-à-dire littéralement au moment où on tape sur l'onglet — avant même que la feuille soit ouverte. Le navigateur tente alors de faire défiler la page vers cet input soi-disant "hors écran", d'où le scroll vers le bas systématique juste après le tap. C'est le seul `autoFocus` du fichier (et du projet) qui n'était pas protégé par un rendu conditionnel — comparé à `BottomNav.jsx`, `Dashboard.jsx`, le sheet "modifier repas" de `Nutrition.jsx` lui-même, qui sont tous bien conditionnels.
+
+Corrigé : `autoFocus` retiré, remplacé par un `useEffect` qui appelle `.focus()` sur une ref, uniquement quand `sheetOpen && step === 1`, après un léger délai (340ms) le temps que l'animation d'ouverture (320ms) soit terminée.
+
+### 📌 Rappel process — toujours merger avant de considérer une session terminée
+La PR #18 (Session 17) était restée en **draft, jamais mergée**, ce qui fait qu'une nouvelle session ouverte juste après ne voyait aucun des changements/entrées de journal de la Session 17 en lisant `claude/charming-mendel-dj1GQ` (la branche de reprise). Corrigé en mergeant la PR #18. **Règle à appliquer systématiquement désormais : merger la PR avant de considérer un lot de travail comme terminé, pas seulement la pousser en draft.**
+
+### Reste à trancher
+- Idée produit : bibliothèque d'exercices 100% IA (voir entrée Session 17 ci-dessous) — toujours pas tranché avec l'utilisateur.
+- `prevent_self_role_escalation()` : nettoyage GRANT RPC, sécurité, faible risque, toujours différé.
+- Push notifications côté coach (membre → coach) : symétrique de ce qui existe déjà côté membre, pas commencé.
+- 3 toggles de rappel factices dans `Settings.jsx` (hydratation/séance/récap hebdo) à côté du vrai toggle push — incohérent visuellement, pas corrigé.
+
+---
+
 ## 2026-08-05 — Session 17 : audit complet demandé par l'utilisateur, plusieurs vrais bugs trouvés
 
 L'utilisateur a signalé 3 problèmes précis et demandé explicitement d'inspecter tout le reste du code pour trouver quoi améliorer. Trois bugs confirmés et corrigés, un quatrième (scroll intempestif sur Nutrition) pas encore identifié avec certitude.
