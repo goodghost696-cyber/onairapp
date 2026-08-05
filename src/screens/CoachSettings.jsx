@@ -16,10 +16,6 @@ function Toggle({ on, onToggle }) {
 export default function CoachSettings() {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
-  // "Alertes membres" stays a local-state placeholder (no scheduling logic
-  // built yet) — "Nouveaux messages" used to be one too, now replaced below
-  // by a real push subscription (same mechanism as the member side).
-  const [notifs, setNotifs] = useState({ alerts: true })
   const [inviteCode, setInviteCode] = useState('...')
   const [pushState, setPushState] = useState('loading')
 
@@ -91,12 +87,11 @@ export default function CoachSettings() {
               <Toggle on={pushState === 'subscribed'} onToggle={handleTogglePush} />
             </div>
           )}
-          {[{ key: 'alerts', label: 'Alertes membres' }].map(n => (
-            <div key={n.key} className="flex justify-between items-center" style={{ padding: '14px 0', borderBottom: '2px solid var(--border)' }}>
-              <span className="text-sm text-secondary">{n.label}</span>
-              <Toggle on={notifs[n.key]} onToggle={() => setNotifs(p => ({...p, [n.key]: !p[n.key]}))} />
-            </div>
-          ))}
+          {/* "Alertes membres" used to live here as a local-state
+              placeholder — no scheduling logic behind it, toggling it did
+              nothing. Removed for the same reason as Settings.jsx's three
+              (see there) rather than leave a toggle that lies about what it
+              does. */}
         </div>
 
         <div className="section-label">COMPTE</div>

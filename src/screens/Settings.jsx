@@ -31,7 +31,6 @@ export default function Settings() {
   const { appData, updateData } = useApp()
   const { lang, setLanguage, t } = useLanguage()
   const { theme, toggleTheme } = useTheme()
-  const [notifs, setNotifs] = useState({ hydration: true, session: true, weekly: true })
   const [showHealthSync, setShowHealthSync] = useState(false)
   const [healthData, setHealthData] = useState({ steps: '', sleep_hours: '', sleep_minutes: '' })
   const [syncToast, setSyncToast] = useState(false)
@@ -133,16 +132,13 @@ export default function Settings() {
               <Toggle on={pushState === 'subscribed'} onToggle={handleTogglePush} />
             </div>
           )}
-          {[
-            { key: 'hydration', label: t('hydration_reminder') },
-            { key: 'session', label: t('workout_reminder') },
-            { key: 'weekly', label: t('weekly_recap_notif') },
-          ].map(n => (
-            <div key={n.key} className="flex justify-between items-center" style={{ padding: '14px 0', borderBottom: '0.5px solid var(--border)' }}>
-              <span className="text-sm text-secondary">{n.label}</span>
-              <Toggle on={notifs[n.key]} onToggle={() => setNotifs(p => ({...p, [n.key]: !p[n.key]}))} />
-            </div>
-          ))}
+          {/* The "hydratation"/"séance"/"récap hebdo" toggles that used to
+              live here were pure local-state placeholders — no scheduling
+              logic existed behind them, so toggling them did nothing at
+              all. Removed rather than left to mislead a member into
+              thinking they'd get reminders that were never sent. If/when a
+              real scheduled-reminder system gets built, this is where the
+              toggles would come back, wired to something real. */}
         </div>
 
         <div className="section-label">Apparence</div>
