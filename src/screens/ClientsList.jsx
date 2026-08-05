@@ -80,26 +80,28 @@ export default function ClientsList() {
 
         {loading && <p className="text-sm text-muted">Chargement des clients...</p>}
 
-        {!loading && filtered.map((m, i) => (
-          <div key={m.id} className="card card-animated" style={{ '--delay': `${i*40}ms`, cursor: 'pointer', marginBottom: 8 }} onClick={() => navigate(`/coach/member/${m.id}`)}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--surface-2)', border: `1.5px solid ${STATUS_COLORS[m.status] || 'var(--border)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 16, color: STATUS_COLORS[m.status] || 'var(--text-muted)', flexShrink: 0 }}>
-                {m.prenom?.[0] || '?'}
-              </div>
-              <div style={{ flex: 1 }}>
-                <div className="flex justify-between items-center" style={{ marginBottom: 2 }}>
-                  <span className="text-base bold">{m.prenom}</span>
-                  <span style={{ fontSize: 9, border: `1px solid ${GOAL_COLORS[m.objectif] || 'var(--border)'}`, color: GOAL_COLORS[m.objectif] || 'var(--text-muted)', padding: '2px 6px', borderRadius: 4, letterSpacing: 0.5, textTransform: 'uppercase', fontWeight: 700 }}>{m.objectif || '-'}</span>
+        <div className="coach-grid">
+          {!loading && filtered.map((m, i) => (
+            <div key={m.id} className="card card-animated" style={{ '--delay': `${i*40}ms`, cursor: 'pointer', marginBottom: 8 }} onClick={() => navigate(`/coach/member/${m.id}`)}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--surface-2)', border: `1.5px solid ${STATUS_COLORS[m.status] || 'var(--border)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 16, color: STATUS_COLORS[m.status] || 'var(--text-muted)', flexShrink: 0 }}>
+                  {m.prenom?.[0] || '?'}
                 </div>
-                <div className="text-xs text-muted">Vu {lastSeenLabel(m.lastActiveDate).toLowerCase()} · {m.sessionsThisWeek ?? 0} séance{m.sessionsThisWeek > 1 ? 's' : ''}</div>
-                <div className="progress-bar" style={{ marginTop: 6 }}>
-                  <div className="progress-fill" style={{ width: `${Math.min((m.sessionsThisWeek || 0)/8*100,100)}%` }} />
+                <div style={{ flex: 1 }}>
+                  <div className="flex justify-between items-center" style={{ marginBottom: 2 }}>
+                    <span className="text-base bold">{m.prenom}</span>
+                    <span style={{ fontSize: 9, border: `1px solid ${GOAL_COLORS[m.objectif] || 'var(--border)'}`, color: GOAL_COLORS[m.objectif] || 'var(--text-muted)', padding: '2px 6px', borderRadius: 4, letterSpacing: 0.5, textTransform: 'uppercase', fontWeight: 700 }}>{m.objectif || '-'}</span>
+                  </div>
+                  <div className="text-xs text-muted">Vu {lastSeenLabel(m.lastActiveDate).toLowerCase()} · {m.sessionsThisWeek ?? 0} séance{m.sessionsThisWeek > 1 ? 's' : ''}</div>
+                  <div className="progress-bar" style={{ marginTop: 6 }}>
+                    <div className="progress-fill" style={{ width: `${Math.min((m.sessionsThisWeek || 0)/8*100,100)}%` }} />
+                  </div>
                 </div>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
               </div>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
       <CoachNav />
     </div>

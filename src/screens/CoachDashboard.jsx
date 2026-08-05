@@ -79,45 +79,49 @@ export default function CoachDashboard() {
         {alerts.length > 0 && (
           <>
             <div className="section-label" style={{ color: 'var(--danger)' }}>NÉCESSITE ATTENTION</div>
-            {alerts.map(m => (
-              <div key={m.id} className="card" style={{ borderLeft: '2px solid var(--danger)', marginBottom: 8, cursor: 'pointer' }} onClick={() => navigate(`/coach/member/${m.id}`)}>
-                <div className="flex justify-between items-center">
-                  <span className="text-base bold">{m.prenom}</span>
-                  <span className="text-xs text-accent">VOIR →</span>
+            <div className="coach-grid">
+              {alerts.map(m => (
+                <div key={m.id} className="card" style={{ borderLeft: '2px solid var(--danger)', marginBottom: 8, cursor: 'pointer' }} onClick={() => navigate(`/coach/member/${m.id}`)}>
+                  <div className="flex justify-between items-center">
+                    <span className="text-base bold">{m.prenom}</span>
+                    <span className="text-xs text-accent">VOIR →</span>
+                  </div>
+                  <div className="text-sm text-secondary" style={{ marginTop: 4 }}>
+                    {m.status === 'INACTIVE'
+                      ? `Dernière activité : ${lastSeenLabel(m.lastActiveDate).toLowerCase()}`
+                      : `${m.sessionsThisWeek || 0} séance${m.sessionsThisWeek > 1 ? 's' : ''} cette semaine · dernière activité ${lastSeenLabel(m.lastActiveDate).toLowerCase()}`}
+                  </div>
                 </div>
-                <div className="text-sm text-secondary" style={{ marginTop: 4 }}>
-                  {m.status === 'INACTIVE'
-                    ? `Dernière activité : ${lastSeenLabel(m.lastActiveDate).toLowerCase()}`
-                    : `${m.sessionsThisWeek || 0} séance${m.sessionsThisWeek > 1 ? 's' : ''} cette semaine · dernière activité ${lastSeenLabel(m.lastActiveDate).toLowerCase()}`}
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </>
         )}
 
         <div className="section-label">{activeToday.length > 0 ? "ACTIFS AUJOURD'HUI" : 'ACTIVITÉ RÉCENTE'}</div>
         {loading && <p className="text-sm text-muted">Chargement des clients...</p>}
         {!loading && activeToday.length === 0 && recentFallback.length === 0 && <p className="text-sm text-muted">Aucune activité enregistrée pour l'instant.</p>}
-        {!loading && (activeToday.length > 0 ? activeToday : recentFallback).map(m => (
-          <div key={m.id} className="card" style={{ cursor: 'pointer', marginBottom: 8 }} onClick={() => navigate(`/coach/member/${m.id}`)}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--surface-2)', border: `1.5px solid ${STATUS_COLORS[m.status] || 'var(--border)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: STATUS_COLORS[m.status] || 'var(--text-muted)', flexShrink: 0 }}>
-                {m.prenom?.[0] || '?'}
-              </div>
-              <div style={{ flex: 1 }}>
-                <div className="flex justify-between items-center">
-                  <span className="text-base bold">{m.prenom}</span>
-                  <span style={{ fontSize: 10, color: STATUS_COLORS[m.status] || 'var(--text-muted)', border: `1px solid ${STATUS_COLORS[m.status] || 'var(--border)'}`, padding: '2px 6px', borderRadius: 4, letterSpacing: 0.5 }}>{m.status || '-'}</span>
+        <div className="coach-grid">
+          {!loading && (activeToday.length > 0 ? activeToday : recentFallback).map(m => (
+            <div key={m.id} className="card" style={{ cursor: 'pointer', marginBottom: 8 }} onClick={() => navigate(`/coach/member/${m.id}`)}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--surface-2)', border: `1.5px solid ${STATUS_COLORS[m.status] || 'var(--border)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: STATUS_COLORS[m.status] || 'var(--text-muted)', flexShrink: 0 }}>
+                  {m.prenom?.[0] || '?'}
                 </div>
-                <div className="text-xs text-muted" style={{ marginTop: 2 }}>
-                  {activeToday.length > 0
-                    ? `${m.sessionsThisWeek || 0} séance${m.sessionsThisWeek > 1 ? 's' : ''} cette semaine`
-                    : `Vu ${lastSeenLabel(m.lastActiveDate).toLowerCase()} · ${m.sessionsThisWeek || 0} séance${m.sessionsThisWeek > 1 ? 's' : ''} cette semaine`}
+                <div style={{ flex: 1 }}>
+                  <div className="flex justify-between items-center">
+                    <span className="text-base bold">{m.prenom}</span>
+                    <span style={{ fontSize: 10, color: STATUS_COLORS[m.status] || 'var(--text-muted)', border: `1px solid ${STATUS_COLORS[m.status] || 'var(--border)'}`, padding: '2px 6px', borderRadius: 4, letterSpacing: 0.5 }}>{m.status || '-'}</span>
+                  </div>
+                  <div className="text-xs text-muted" style={{ marginTop: 2 }}>
+                    {activeToday.length > 0
+                      ? `${m.sessionsThisWeek || 0} séance${m.sessionsThisWeek > 1 ? 's' : ''} cette semaine`
+                      : `Vu ${lastSeenLabel(m.lastActiveDate).toLowerCase()} · ${m.sessionsThisWeek || 0} séance${m.sessionsThisWeek > 1 ? 's' : ''} cette semaine`}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
       <CoachNav />
     </div>

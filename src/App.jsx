@@ -24,6 +24,7 @@ import Settings from './screens/Settings'
 import CoachSettings from './screens/CoachSettings'
 import Onboarding from './screens/Onboarding'
 import MemberLayout from './layouts/MemberLayout'
+import CoachLayout from './layouts/CoachLayout'
 
 function ProtectedRoute({ children, requiredRole }) {
   const { user } = useAuth()
@@ -66,13 +67,19 @@ export default function App() {
           <Route path="/settings" element={<Settings />} />
         </Route>
 
-        {/* Coach routes */}
-        <Route path="/coach" element={<ProtectedRoute requiredRole="coach"><CoachDashboard /></ProtectedRoute>} />
-        <Route path="/coach/member/:id" element={<ProtectedRoute requiredRole="coach"><MemberDetail /></ProtectedRoute>} />
-        <Route path="/coach/clients" element={<ProtectedRoute requiredRole="coach"><ClientsList /></ProtectedRoute>} />
-        <Route path="/coach/messages" element={<ProtectedRoute requiredRole="coach"><CoachMessages /></ProtectedRoute>} />
-        <Route path="/coach/messages/:memberId" element={<ProtectedRoute requiredRole="coach"><Conversation isCoach /></ProtectedRoute>} />
-        <Route path="/coach/settings" element={<ProtectedRoute requiredRole="coach"><CoachSettings /></ProtectedRoute>} />
+        {/* Coach routes — wrapped in CoachLayout, which scopes the desktop-
+            responsive rules in coach.css to this section only (see that
+            file for why: a coach is much more likely than a member to work
+            from a computer, so this side gets a real wide-screen layout
+            instead of the same 390px mobile column as the rest of the app). */}
+        <Route element={<ProtectedRoute requiredRole="coach"><CoachLayout /></ProtectedRoute>}>
+          <Route path="/coach" element={<CoachDashboard />} />
+          <Route path="/coach/member/:id" element={<MemberDetail />} />
+          <Route path="/coach/clients" element={<ClientsList />} />
+          <Route path="/coach/messages" element={<CoachMessages />} />
+          <Route path="/coach/messages/:memberId" element={<Conversation isCoach />} />
+          <Route path="/coach/settings" element={<CoachSettings />} />
+        </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
