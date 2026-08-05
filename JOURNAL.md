@@ -6,6 +6,18 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo, branche `claude/charming-mendel-dj1GQ`, et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-08-05 — Session 18 (suite 7) : Dashboard — inspiration visuelle d'une app référence, scopée à un ajustement contenu
+
+L'utilisateur a partagé des captures Behance d'une app référence ("Athlevo" — une marketplace pour réserver coach/salle) en demandant ce que j'en pense côté style visuel. Précisé de ne pas copier tel quel : Athlevo utilise de grandes cartes CTA avec **photos** (coach, salle) — ON AIR n'a pas cet inventaire de photos (c'est du suivi personnel, pas une marketplace à parcourir), donc copier le pattern brut aurait laissé des cartes vides. Traduit l'énergie du style (cartes plus affirmées, glow, icônes) sans les photos :
+- `.dashboard-cta-btn` ("Voir mon entraînement du jour") : passé d'une barre plate à une carte plus grande avec un glow radial `--accent-secondary` en coin (au lieu d'un dégradé plein lime→bleu — vérifié le contraste texte `--accent-ink` sur `--accent-secondary` : ~3.4:1, sous le seuil WCAG AA de 4.5:1, donc le bleu reste cantonné à un glow en arrière-plan, jamais sous le texte).
+- Cartes d'activité (Pas/Course/Eau/Sommeil) : ajout d'une icône emoji par carte (👟🏃💧😴), dans l'esprit de la rangée d'icônes de catégories d'Athlevo.
+
+Volontairement **pas** de refonte complète du Dashboard à l'aveugle — juste ces deux ajustements contenus, pour limiter le risque sans retour visuel possible ici.
+
+Point encore ouvert : l'utilisateur a dit vouloir "garder l'idée de l'app" en plus du style — à clarifier la prochaine fois si c'est vraiment le concept marketplace (réserver un coach/une salle) qui l'intéresse en plus du style visuel, ce qui serait un changement de direction produit bien plus large que ce qui a été fait ici.
+
+---
+
 ## 2026-08-05 — Session 18 (suite 6) : tutoriel de bienvenue pour les nouveaux membres
 
 L'utilisateur a fait remarquer qu'un nouveau membre termine l'inscription (`Onboarding.jsx`, qui ne collecte que le profil — prénom/objectif/poids/etc.) et atterrit directement sur le Dashboard sans aucune explication du fonctionnement de l'app.

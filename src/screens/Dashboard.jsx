@@ -56,10 +56,10 @@ export default function Dashboard() {
   const greeting = hour < 12 ? t('greeting_morning') : hour < 18 ? t('greeting_afternoon') : t('greeting_evening')
 
   const CARDS = [
-    { key: 'steps', label: 'PAS', value: appData.steps, unit: 'pas', target: 10000 },
-    { key: 'kmRun', label: 'COURSE', value: appData.kmRun, unit: 'km', target: null },
-    { key: 'water', label: 'EAU', value: appData.water, unit: 'ml', target: 2500 },
-    { key: 'sleep', label: 'SOMMEIL', value: appData.sleep?.hours || 0, unit: 'h', target: 8 },
+    { key: 'steps', label: 'PAS', icon: '👟', value: appData.steps, unit: 'pas', target: 10000 },
+    { key: 'kmRun', label: 'COURSE', icon: '🏃', value: appData.kmRun, unit: 'km', target: null },
+    { key: 'water', label: 'EAU', icon: '💧', value: appData.water, unit: 'ml', target: 2500 },
+    { key: 'sleep', label: 'SOMMEIL', icon: '😴', value: appData.sleep?.hours || 0, unit: 'h', target: 8 },
   ]
 
   const handleSave = () => {
@@ -136,6 +136,7 @@ export default function Dashboard() {
               className={`activity-card-compact${card.key === 'water' ? ' activity-card-accent' : ''}`}
               onClick={() => { setEditingCard(card.key); setInputVal('') }}
             >
+              <span className="activity-card-icon">{card.icon}</span>
               <p className="activity-card-label">{card.label}</p>
               <p className="activity-card-value">
                 {card.key === 'steps' ? appData.steps.toLocaleString('fr-FR') : card.value}
@@ -155,7 +156,8 @@ export default function Dashboard() {
 
         {/* CTA to today's workout */}
         <button onClick={() => navigate('/workout')} className="dashboard-cta-btn">
-          <span>Voir mon entraînement du jour</span><span style={{ fontSize: 20 }}>→</span>
+          <span>Voir mon entraînement du jour</span>
+          <span className="dashboard-cta-icon">🔥</span>
         </button>
 
         {/* Weekly sessions card */}

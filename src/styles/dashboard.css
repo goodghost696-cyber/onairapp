@@ -81,6 +81,12 @@
   border-color: var(--accent-secondary);
 }
 
+.activity-card-icon {
+  font-size: 20px;
+  display: block;
+  margin-bottom: 8px;
+}
+
 .activity-card-label {
   font-size: 10px;
   letter-spacing: 2px;
@@ -132,21 +138,42 @@
   background: #fff;
 }
 
+/* Bolder "hero card" treatment (glow + bigger type) instead of the previous
+   flat single-color bar — inspired by a reference the user shared (a
+   marketplace-style booking app with big photo CTA cards). No real
+   photography to put behind a card here (this app tracks personal
+   activity, it doesn't list coaches/venues to browse), so the same energy
+   is translated through depth/glow instead.
+   The base stays solid --accent (not a lime→blue gradient) deliberately:
+   --accent-ink (near-black) text has strong contrast on --accent (lime,
+   very light) but would be borderline unreadable blended with
+   --accent-secondary (a fairly dark blue) — checked the numbers, ~3.4:1,
+   under WCAG AA's 4.5:1 for text. The blue only shows as a corner glow
+   behind where the button's icon sits, never under the text itself. */
 .dashboard-cta-btn {
   width: 100%;
-  background: var(--accent);
+  background:
+    radial-gradient(120% 160% at 100% 0%, var(--accent-secondary) 0%, transparent 55%),
+    var(--accent);
   color: var(--accent-ink);
   border: none;
-  border-radius: 18px;
-  padding: 20px;
+  border-radius: 22px;
+  padding: 26px 24px;
   text-align: left;
-  font-size: 15px;
-  font-weight: 700;
+  font-size: 17px;
+  font-weight: 800;
   font-family: inherit;
   cursor: pointer;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  box-shadow: 0 12px 32px rgba(212,255,0,0.25);
+}
+
+.dashboard-cta-icon {
+  font-size: 22px;
+  flex-shrink: 0;
+  margin-left: 12px;
 }
 
 .calories-readonly {
