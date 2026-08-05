@@ -8,6 +8,7 @@ import { authHeader } from '../lib/supabase'
 import { BOUNDS, clamp } from '../utils/validation'
 import NutriscoreBadge from '../components/NutriscoreBadge'
 import SwipeableRow from '../components/SwipeableRow'
+import '../styles/nutrition.css'
 
 // Manual food-search entries encode their grams in the name ("Skyr (100g)")
 // — extracted so "Modifier" can rescale calories/macros proportionally.
@@ -303,10 +304,10 @@ Réponds en français.`
           </button>
         </div>
 
-        <div className="card" style={{ marginBottom: 16 }}>
+        <div className="card nutrition-hero-card" style={{ marginBottom: 16 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 4 }}>
             <div>
-              <span style={{ fontSize: 36, fontWeight: 800, fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>{appData.calories}</span>
+              <span style={{ fontSize: 44, fontWeight: 800, fontVariantNumeric: 'tabular-nums', lineHeight: 1, letterSpacing: '-1.5px' }}>{appData.calories}</span>
               <span className="text-sm text-muted" style={{ marginLeft: 6 }}>kcal</span>
             </div>
             <div style={{ textAlign: 'right' }}>
@@ -338,16 +339,16 @@ Réponds en français.`
 
         <button
           onClick={openRecipeSheet}
-          className="card"
+          className="card nutrition-recipe-card"
           style={{
-            display: 'flex', alignItems: 'center', gap: 12, width: '100%',
-            marginBottom: 16, cursor: 'pointer', border: '2px solid rgba(212,255,0,0.3)',
+            display: 'flex', alignItems: 'center', gap: 14, width: '100%',
+            marginBottom: 16, cursor: 'pointer', border: '2px solid rgba(212,255,0,0.35)',
             background: 'rgba(212,255,0,0.08)', textAlign: 'left',
           }}
         >
-          <span style={{ fontSize: 22 }}>💡</span>
+          <span className="nutrition-recipe-icon">💡</span>
           <div>
-            <div className="text-sm bold">Idée recette</div>
+            <div className="text-base bold">Idée recette</div>
             <div className="text-xs text-muted">Suggestion IA basée sur ce qu'il te reste aujourd'hui</div>
           </div>
         </button>
