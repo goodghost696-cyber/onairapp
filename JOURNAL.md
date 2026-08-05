@@ -8,19 +8,32 @@ Entrées les plus récentes en haut.
 
 ## 📍 État au 2026-08-05 (fin de session 18) — à lire en premier
 
-Tout ce qui suit dans cette entrée et les deux d'en dessous a été fait aujourd'hui et est **mergé sur `claude/charming-mendel-dj1GQ`** (vérifié avant de clore la session — plus de PR en attente, working tree propre).
+Tout ce qui suit dans cette entrée et les entrées d'en dessous a été fait aujourd'hui et est **mergé sur `claude/charming-mendel-dj1GQ`** (vérifié avant de clore la session — plus de PR en attente, working tree propre).
 
 **Fait aujourd'hui, dans l'ordre :**
 1. Résolu le bug de scroll intempestif sur Nutrition (root cause : `autoFocus` sur un input toujours monté dans le DOM).
 2. Ajouté les notifications push côté coach (symétrique du côté membre) + corrigé le toggle factice dans `CoachSettings.jsx`.
-3. Décidé avec l'utilisateur de **ne pas** faire une bibliothèque d'exercices 100% IA pour l'instant (voir détail plus bas).
-4. Fait un premier passage responsive desktop pour la partie coach uniquement (le membre reste inchangé).
+3. Décidé avec l'utilisateur de **ne pas** faire une bibliothèque d'exercices 100% IA pour l'instant.
+4. Fait un premier passage responsive desktop pour la partie coach uniquement (le membre reste inchangé) — **non vérifié visuellement, à confirmer par capture d'écran**.
+5. Supprimé les 4 toggles de rappel factices (3 dans `Settings.jsx`, 1 dans `CoachSettings.jsx`) qui ne faisaient rien.
+6. Nettoyage sécurité : `prevent_self_role_escalation()` n'est plus appelable en RPC public (voir détail plus bas).
 
 **À faire en priorité à la prochaine session :**
-- **Demander à l'utilisateur une capture d'écran du rendu desktop côté coach** (dashboard, clients, messages, fiche membre) avant d'aller plus loin — ce travail n'a jamais pu être vérifié visuellement dans ce sandbox et a un vrai risque de détails cassés (voir entrée détaillée ci-dessous).
+- **Demander à l'utilisateur une capture d'écran du rendu desktop côté coach** (dashboard, clients, messages, fiche membre) avant d'aller plus loin — ce travail n'a jamais pu être vérifié visuellement dans ce sandbox et a un vrai risque de détails cassés.
 - Une fois validé : décider si la nav coach doit devenir une sidebar sur grand écran (volontairement pas touchée cette session).
-- 4 toggles de rappel factices restants, sans effet réel : "hydratation"/"séance"/"récap hebdo" dans `Settings.jsx` (membre) + "Alertes membres" dans `CoachSettings.jsx` (coach). À corriger ou supprimer.
-- `prevent_self_role_escalation()` : nettoyage GRANT RPC, sécurité, faible risque, différé depuis plusieurs sessions.
+- Si un vrai système de rappels programmés (hydratation/séance/récap hebdo) est voulu un jour, c'est à reconstruire de zéro — les toggles factices ont été retirés plutôt que laissés à mentir sur leur effet.
+
+---
+
+## 2026-08-05 — Session 18 (suite 2) : toggles factices retirés + nettoyage sécurité RPC
+
+### 🧹 Toggles de rappel factices — supprimés
+Aucun des deux n'avait de logique de planification derrière (juste un `useState` local togglé sans effet) — laissés en place, ils auraient continué à faire croire à un vrai rappel programmé qui n'existe pas, à côté des vrais toggles push qui, eux, fonctionnent.
+- **`src/screens/Settings.jsx`** (membre) : retiré "Rappel hydratation" / "Rappel séance" / "Récap hebdomadaire" + le state `notifs` associé.
+- **`src/screens/CoachSettings.jsx`** (coach) : retiré "Alertes membres" + le state `notifs` associé.
+
+### 🔒 Sécurité — `prevent_self_role_escalation()` n'est plus appelable en RPC public
+Même défaut déjà corrigé sur `is_coach()` en session 11 : Supabase accorde `EXECUTE` par défaut à `PUBLIC` **et** explicitement à `anon`/`authenticated`/`service_role` à la création de toute fonction — deux couches de grant séparées, il faut révoquer les deux (un `revoke ... from public` seul ne suffit pas, vérifié en interrogeant `pg_proc.proacl` avant/après). Pas exploitable en pratique (Postgres refuse d'appeler une fonction trigger hors contexte trigger), corrigé par cohérence. Le déclenchement du trigger lui-même ne dépend pas du droit `EXECUTE` de l'appelant sur la fonction, donc rien n'a été re-accordé — vérifié après coup que seuls `postgres`/`service_role` ont encore `EXECUTE`. Deux migrations Supabase appliquées (`revoke_public_execute_on_role_escalation_trigger`, `revoke_role_escalation_trigger_execute_explicit`), `scripts/supabase_schema.sql` synchronisé.
 
 ---
 

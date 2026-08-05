@@ -115,6 +115,18 @@ create trigger trg_prevent_self_role_escalation
   before update on public.profiles
   for each row execute function public.prevent_self_role_escalation();
 
+-- Same defect already fixed above on is_coach(): every new Supabase project
+-- grants EXECUTE on new functions to PUBLIC *and* explicitly to
+-- anon/authenticated/service_role via default privileges, so this trigger
+-- function was directly callable via RPC. Not exploitable in practice —
+-- Postgres rejects a trigger function called outside trigger context — but
+-- fixed for consistency. Both layers need revoking (a `from public` alone
+-- leaves the explicit per-role grants in place). No re-grant needed:
+-- firing the trigger doesn't require the invoking session to hold EXECUTE
+-- on the function itself, only table-level UPDATE (already gated above).
+revoke execute on function public.prevent_self_role_escalation() from public;
+revoke execute on function public.prevent_self_role_escalation() from anon, authenticated;
+
 -- ── objectifs ─────────────────────────────────────────────
 create table if not exists objectifs (
   id            uuid primary key default gen_random_uuid(),
