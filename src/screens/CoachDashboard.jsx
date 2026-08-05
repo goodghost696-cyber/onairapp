@@ -56,7 +56,7 @@ export default function CoachDashboard() {
           </button>
         </div>
 
-        <h1 className="text-xl bold" style={{ marginBottom: 20 }}>Tableau de bord</h1>
+        <h1 className="text-xl bold" style={{ marginBottom: 20 }}>📋 Tableau de bord</h1>
 
         {/* .coach-stats caps this at a sane width on desktop — left
             unwrapped, these 4 tiles would stretch to the full ~1600px
