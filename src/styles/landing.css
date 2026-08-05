@@ -59,7 +59,7 @@
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: #0047FF;
+  color: #8B93E8;
 }
 
 .landing-city {
@@ -75,7 +75,7 @@
   font-weight: 700;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: #D4FF00;
+  color: #F0C14B;
   margin-bottom: 14px;
 }
 
@@ -89,7 +89,7 @@
 }
 
 .landing-title-accent {
-  color: #D4FF00;
+  color: #F0C14B;
 }
 
 .landing-subtitle {
@@ -118,8 +118,8 @@
 }
 
 .landing-btn-primary {
-  background: #D4FF00;
-  color: #0A0A0A;
+  background: #F0C14B;
+  color: #1A1608;
   margin-bottom: 12px;
 }
 

@@ -135,8 +135,9 @@ export default function Nutrition() {
 
   const preview = selectedFood ? calcNutrition(selectedFood, grams) : null
 
-  function openSheet() {
+  function openSheet(presetMealType) {
     setSheetOpen(true); setStep(1); setFoodSearch(''); setSelectedFood(null); setGrams(100)
+    if (presetMealType) setMealType(presetMealType)
   }
 
   function selectFood(f) { setSelectedFood(f); setStep(2) }
@@ -312,24 +313,39 @@ Réponds en français.`
             </div>
             <div style={{ textAlign: 'right' }}>
               <div className="text-xs text-muted">Restant</div>
-              <div className="text-base bold" style={{ color: 'var(--success)' }}>{appData.calorieGoal - appData.calories}</div>
+              {/* Was var(--success) — a bright green on the new light gold
+                  gradient card has ~1.1:1 contrast, essentially invisible
+                  (checked the luminance numbers). The mockup itself doesn't
+                  use a colored highlight here either — plain dark ink,
+                  inherited from .card-hero's own color, matches it exactly. */}
+              <div className="text-base bold">{appData.calorieGoal - appData.calories}</div>
             </div>
           </div>
-          <div style={{ position: 'relative', height: 8, background: 'var(--surface-2)', borderRadius: 4, marginBottom: 16, overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${Math.min(appData.calories/appData.calorieGoal*100,100)}%`, background: 'var(--accent)', borderRadius: 4, transition: 'width 500ms ease-out' }} />
+          {/* Track/fill colors below were var(--surface-2)/var(--accent) —
+              both assume a dark card background. var(--surface-2) (translucent
+              white) is invisible on the new light gold card; var(--accent) is
+              gold-on-gold, same problem. Dark, translucent-ink track (matches
+              the mockup's own calorie card exactly) + solid ink fill instead. */}
+          <div style={{ position: 'relative', height: 8, background: 'rgba(26,22,8,0.15)', borderRadius: 4, marginBottom: 16, overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${Math.min(appData.calories/appData.calorieGoal*100,100)}%`, background: '#1A1608', borderRadius: 4, transition: 'width 500ms ease-out' }} />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {[
-              { label: 'Protéines', val: appData.protein, goal: appData.proteinGoal, color: '#4FC3F7', delay: '0ms' },
-              { label: 'Glucides',  val: appData.carbs,   goal: appData.carbsGoal,   color: '#FFA726', delay: '80ms' },
-              { label: 'Lipides',   val: appData.fat,     goal: appData.fatGoal,     color: '#A78BFA', delay: '160ms' },
+              // Darkened versions of the macro-identity colors — the original
+              // (light blue/orange/purple) were picked for a dark card and
+              // some (orange especially, ~1.15:1) nearly disappear against
+              // the new light gold gradient. Same hues, just dark enough to
+              // read as a graphical element (~4:1+) on a light background.
+              { label: 'Protéines', val: appData.protein, goal: appData.proteinGoal, color: '#0B5AA8', delay: '0ms' },
+              { label: 'Glucides',  val: appData.carbs,   goal: appData.carbsGoal,   color: '#8A4600', delay: '80ms' },
+              { label: 'Lipides',   val: appData.fat,     goal: appData.fatGoal,     color: '#5B3FA8', delay: '160ms' },
             ].map(m => (
               <div key={m.label}>
                 <div className="flex justify-between items-center" style={{ marginBottom: 4 }}>
                   <span className="text-xs text-muted">{m.label}</span>
                   <span className="text-xs bold">{m.val}g <span className="text-muted">/ {m.goal}g</span></span>
                 </div>
-                <div style={{ height: 4, background: 'var(--surface-2)', borderRadius: 2, overflow: 'hidden' }}>
+                <div style={{ height: 4, background: 'rgba(26,22,8,0.15)', borderRadius: 2, overflow: 'hidden' }}>
                   <div style={{ height: '100%', width: `${Math.min(m.val/m.goal*100,100)}%`, background: m.color, borderRadius: 2, transition: `width 500ms ease-out ${m.delay}` }} />
                 </div>
               </div>
@@ -339,11 +355,10 @@ Réponds en français.`
 
         <button
           onClick={openRecipeSheet}
-          className="card nutrition-recipe-card"
+          className="card card-violet nutrition-recipe-card"
           style={{
             display: 'flex', alignItems: 'center', gap: 14, width: '100%',
-            marginBottom: 16, cursor: 'pointer', border: '2px solid rgba(212,255,0,0.35)',
-            background: 'rgba(212,255,0,0.08)', textAlign: 'left',
+            marginBottom: 16, cursor: 'pointer', textAlign: 'left',
           }}
         >
           <span className="nutrition-recipe-icon">💡</span>
@@ -352,6 +367,28 @@ Réponds en français.`
             <div className="text-xs text-muted">Suggestion IA basée sur ce qu'il te reste aujourd'hui</div>
           </div>
         </button>
+
+        {/* New — the mockup shows a meal-type icon row here (Matin/Midi/Soir/
+            Snack) that didn't exist in the app before. Wired to something
+            real rather than purely decorative: tapping one opens "Ajouter
+            un repas" with that type pre-selected instead of the default. */}
+        <div style={{ display: 'flex', gap: 16, marginBottom: 20 }}>
+          {[
+            { type: MEAL_TYPES[0], icon: '🍳', label: 'Matin' },
+            { type: MEAL_TYPES[1], icon: '🥗', label: 'Midi' },
+            { type: MEAL_TYPES[2], icon: '🍽️', label: 'Soir' },
+            { type: MEAL_TYPES[3], icon: '🍎', label: 'Snack' },
+          ].map(m => (
+            <button
+              key={m.label}
+              onClick={() => openSheet(m.type)}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', flex: 1 }}
+            >
+              <span style={{ width: 50, height: 50, borderRadius: '50%', background: 'var(--surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>{m.icon}</span>
+              <span className="text-xs text-muted" style={{ letterSpacing: 0 }}>{m.label}</span>
+            </button>
+          ))}
+        </div>
 
         <div className="section-label">{t('today_meals')}</div>
         <p className="text-xs text-muted" style={{ marginTop: -4, marginBottom: 10 }}>Glisse un repas vers la gauche pour le modifier ou le supprimer.</p>
@@ -421,7 +458,7 @@ Réponds en français.`
         width: 52, height: 52, borderRadius: '50%',
         background: 'var(--accent)', border: 'none', cursor: 'pointer',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        boxShadow: '0 4px 20px rgba(212,255,0,0.4)',
+        boxShadow: '0 4px 20px rgba(240,193,75,0.4)',
       }}>
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent-ink)" strokeWidth="2.5" strokeLinecap="round">
           <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>

@@ -81,10 +81,33 @@
   border-color: var(--accent-secondary);
 }
 
+/* Bare emoji (no badge) — kept for anywhere still using the plain version;
+   .activity-card-icon-badge below is the upgraded circular version used
+   on Dashboard now. */
 .activity-card-icon {
   font-size: 20px;
   display: block;
   margin-bottom: 8px;
+}
+
+/* Circular badge — matches the mockup's 50px icon circles (Pas/Course/
+   Muscu/Eau) more closely than a bare floating emoji, while keeping this
+   card's actual data (number + bar) that the mockup's icon-only circles
+   don't show at all. */
+.activity-card-icon-badge {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  margin-bottom: 10px;
+}
+
+.activity-card-accent .activity-card-icon-badge {
+  background: rgba(28,32,80,0.12);
 }
 
 .activity-card-label {
@@ -95,9 +118,16 @@
   margin: 0 0 6px;
 }
 
+/* Was white-on-white(ish) — --accent-secondary is a light violet now (was
+   a dark royal blue, where white text/track had good contrast). Same fix
+   as everywhere else touched by the rebrand: dark navy ink instead. */
 .activity-card-accent .activity-card-label,
 .activity-card-accent .activity-card-unit {
-  color: rgba(255,255,255,0.75);
+  color: rgba(28,32,80,0.65);
+}
+
+.activity-card-accent .activity-card-value {
+  color: #1C2050;
 }
 
 .activity-card-value {
@@ -131,25 +161,21 @@
 }
 
 .activity-card-accent .activity-card-bar-wrap {
-  background: rgba(255,255,255,0.25);
+  background: rgba(28,32,80,0.18);
 }
 
 .activity-card-accent .activity-card-bar-fill {
-  background: #fff;
+  background: #1C2050;
 }
 
 /* Bolder "hero card" treatment (glow + bigger type) instead of the previous
-   flat single-color bar — inspired by a reference the user shared (a
-   marketplace-style booking app with big photo CTA cards). No real
-   photography to put behind a card here (this app tracks personal
-   activity, it doesn't list coaches/venues to browse), so the same energy
-   is translated through depth/glow instead.
-   The base stays solid --accent (not a lime→blue gradient) deliberately:
-   --accent-ink (near-black) text has strong contrast on --accent (lime,
-   very light) but would be borderline unreadable blended with
-   --accent-secondary (a fairly dark blue) — checked the numbers, ~3.4:1,
-   under WCAG AA's 4.5:1 for text. The blue only shows as a corner glow
-   behind where the button's icon sits, never under the text itself. */
+   flat single-color bar. Base is solid --accent with --accent-secondary as
+   a corner glow, not a full diagonal gradient between the two — kept
+   deliberately even after the 2026-08-06 gold/violet rebrand: the new
+   --accent-secondary (light violet) actually has good contrast with
+   --accent-ink now (~6:1, better than the old blue's ~3.4:1), but this
+   structure still reads clean as a single-accent CTA rather than a mixed
+   one, so it stayed as-is — just inherits the new colors via the tokens. */
 .dashboard-cta-btn {
   width: 100%;
   background:
@@ -167,7 +193,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 12px 32px rgba(212,255,0,0.25);
+  box-shadow: 0 12px 32px rgba(240,193,75,0.25);
 }
 
 .dashboard-cta-icon {

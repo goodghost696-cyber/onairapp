@@ -82,9 +82,9 @@ Donne exactement 4-5 exercices adaptés à l'objectif.`
   }
 
   const sectionIconBg = {
-    maison: 'rgba(212,255,0,0.12)',
-    salle: 'rgba(0,71,255,0.15)',
-    dehors: 'rgba(212,255,0,0.12)',
+    maison: 'rgba(240,193,75,0.12)',
+    salle: 'rgba(139,147,232,0.15)',
+    dehors: 'rgba(240,193,75,0.12)',
   }
 
   return (
@@ -100,7 +100,12 @@ Donne exactement 4-5 exercices adaptés à l'objectif.`
         <div className="card card-hero card-animated" style={{ '--delay': '0ms', marginBottom: 14 }}>
           <div className="flex justify-between items-center">
             <span className="text-sm text-muted">{t('sessions_week')}</span>
-            <span style={{ fontSize: 22, fontWeight: 800, color: 'var(--accent)' }}>{appData.weeklyWorkouts}<span style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 400 }}>/{appData.weeklyGoal}</span></span>
+            {/* var(--accent) is gold now — invisible on this card's own gold
+                gradient background. var(--text-secondary) has the same
+                problem (translucent white on a light card). Dark ink instead,
+                inherited color for the big number, explicit translucent-ink
+                for the smaller "/goal" part. */}
+            <span style={{ fontSize: 22, fontWeight: 800 }}>{appData.weeklyWorkouts}<span style={{ fontSize: 14, color: 'rgba(26,22,8,0.6)', fontWeight: 400 }}>/{appData.weeklyGoal}</span></span>
           </div>
           <div className="progress-bar" style={{ marginTop: 10 }}>
             <div className="progress-fill" style={{ width: `${appData.weeklyWorkouts/appData.weeklyGoal*100}%` }} />

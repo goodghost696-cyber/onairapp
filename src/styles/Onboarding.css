@@ -98,7 +98,7 @@
 
 .onboarding-option.selected {
   border-color: var(--accent);
-  background: rgba(212,255,0,0.1);
+  background: rgba(240,193,75,0.1);
 }
 
 .onboarding-option-left {
@@ -213,7 +213,7 @@
   cursor: pointer;
   transition: background 150ms ease, opacity 150ms ease;
   font-family: inherit;
-  box-shadow: 0 8px 32px rgba(212,255,0,0.35);
+  box-shadow: 0 8px 32px rgba(240,193,75,0.35);
 }
 
 .onboarding-next-btn:disabled {

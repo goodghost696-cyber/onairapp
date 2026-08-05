@@ -11,14 +11,17 @@
 .card.nutrition-recipe-card {
   border-radius: 20px;
   padding: 18px;
-  box-shadow: 0 8px 28px rgba(212,255,0,0.12);
+  box-shadow: 0 8px 28px rgba(240,193,75,0.12);
 }
 
 .nutrition-recipe-icon {
   width: 44px;
   height: 44px;
   border-radius: 14px;
-  background: rgba(212,255,0,0.15);
+  /* Translucent white, not gold — this badge now sits on the violet
+     .card-violet gradient (matches the mockup's icon badge on its own
+     "Idée recette" card exactly). */
+  background: rgba(255,255,255,0.5);
   display: flex;
   align-items: center;
   justify-content: center;
