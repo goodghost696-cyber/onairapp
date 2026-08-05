@@ -14,7 +14,8 @@ L'utilisateur a partagé des captures Behance d'une app référence ("Athlevo" �
 
 Volontairement **pas** de refonte complète du Dashboard à l'aveugle — juste ces deux ajustements contenus, pour limiter le risque sans retour visuel possible ici.
 
-Point encore ouvert : l'utilisateur a dit vouloir "garder l'idée de l'app" en plus du style — à clarifier la prochaine fois si c'est vraiment le concept marketplace (réserver un coach/une salle) qui l'intéresse en plus du style visuel, ce qui serait un changement de direction produit bien plus large que ce qui a été fait ici.
+### 💡 Idée notée pour plus tard — concept marketplace (réserver coach/salle)
+Clarifié avec l'utilisateur : "garder l'idée de l'app" (en plus du style) faisait bien référence au concept marketplace d'Athlevo — plusieurs coachs/salles réservables, façon Calendly/Booksy, pas juste l'esthétique. **Rien construit** — l'utilisateur a précisé qu'il voulait seulement que l'idée soit notée pour une réflexion future, pas une exécution immédiate. Pour la prochaine fois où ce sujet revient : c'est un changement de direction produit majeur (le modèle actuel est "un seul coach par salle" — messagerie, dashboard coach, notes en dépendent tous), pas une fonctionnalité isolée. Nécessiterait de définir : cohabitation ou remplacement du modèle actuel, nombre de coachs/salles réels concernés, gestion des créneaux, paiement ou non — avant tout code.
 
 ---
 
