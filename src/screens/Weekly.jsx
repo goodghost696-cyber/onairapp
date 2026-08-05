@@ -59,12 +59,18 @@ function LiftCurve({ lift }) {
   )
 }
 
+// This bar chart sits inside .card-hero (the light gold gradient card) —
+// var(--success)/var(--accent)/var(--warning)/var(--surface-2) were all
+// picked for a dark card and, checked against the new gold background,
+// land between ~1.1:1 and ~1.2:1 contrast (--accent is literally gold on
+// gold now). Fixed dark tones instead, same semantic meaning, actually
+// visible on the light card.
 function calBarColor(cal, goal) {
-  if (cal === 0) return 'var(--surface-2)'
+  if (cal === 0) return 'rgba(26,22,8,0.15)'
   const pct = cal / goal
-  if (pct >= 1) return 'var(--success)'
-  if (pct >= 0.8) return 'var(--accent)'
-  return 'var(--warning)'
+  if (pct >= 1) return '#14532D'
+  if (pct >= 0.8) return '#8A4600'
+  return '#9A3412'
 }
 
 export default function Weekly() {
@@ -109,7 +115,11 @@ export default function Weekly() {
               return (
                 <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, justifyContent: 'flex-end', height: '100%' }}>
                   <div style={{ width: '100%', height: `${barH}px`, background: calBarColor(d.calories, appData.calorieGoal), borderRadius: '3px 3px 0 0', transition: 'height 600ms ease' }} />
-                  <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>{d.day}</span>
+                  {/* Inline var(--text-muted) resolves from the app theme,
+                      not from being inside .card-hero — a CSS class override
+                      can't reach an inline style, so this needs its own fix:
+                      translucent dark ink instead of translucent white. */}
+                  <span style={{ fontSize: 9, color: 'rgba(26,22,8,0.5)' }}>{d.day}</span>
                 </div>
               )
             })}

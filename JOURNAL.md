@@ -6,6 +6,51 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo, branche `claude/charming-mendel-dj1GQ`, et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-08-06 — Session 18 (suite 14) : rebrand complet — palette or/bleu-violet ("Style Athlevo")
+
+L'utilisateur a exporté une maquette depuis Claude Design (`Fitness App - Style Athlevo.dc.html`, 3 écrans : Accueil, Nutrition, Entraînement) montrant une nouvelle direction visuelle inspirée d'Athlevo (Behance) : palette or/bleu-violet, cartes en dégradé (au lieu du glow subtil sur fond sombre), badges circulaires, nav flottante avec bouton central doré. Demande explicite : appliquer partout dans l'app, pas juste les 3 écrans montrés.
+
+### ✅ Nouvelle palette — tokens CSS (`global.css`)
+- `--accent` : `#D4FF00` (citron) → `#F0C14B` (or)
+- `--accent-secondary` : `#0047FF` (bleu roi) → `#8B93E8` (bleu-violet)
+- `--accent-ink` : `#0A0A0A` → `#1A1608` (encre chaude, exacte du mockup)
+- Nouveau token `--accent-secondary-ink` (`#1C2050`) — nécessaire car le nouveau violet est **clair**, contrairement à l'ancien bleu roi (foncé) : le texte blanc qui fonctionnait sur l'ancien bleu devient illisible sur le nouveau violet, il faut du texte marine foncé à la place (exactement ce que fait le mockup).
+- Thème clair : adapté en conservant le même principe qu'avant (teintes foncées pour un usage en texte/icône nu sur fond clair) — **pas couvert par le mockup** (fond noir profond partout), donc à valider visuellement en priorité.
+- Balayé tout le code pour les couleurs codées en dur de l'ancienne palette (`#D4FF00`, `#0047FF`, et leurs équivalents `rgba(212,255,0,...)`/`rgba(0,71,255,...)`) — zéro occurrence restante, tout passe maintenant par les tokens ou leurs équivalents dorés/violets directs.
+
+### 🐛 Bugs de contraste réels trouvés en convertissant — pas juste un changement de teinte
+Le nouveau violet est **beaucoup plus clair** que l'ancien bleu roi, et l'or est clair par nature — plusieurs endroits qui fonctionnaient très bien avec les anciennes couleurs (foncées) sont devenus illisibles avec les nouvelles (claires) :
+- Texte vert (`var(--success)`) sur fond or : **~1,1:1** de contraste (quasi invisible) — trouvé sur la carte calories de Nutrition. Remplacé par l'encre foncée partout où c'était utilisé sur une carte claire.
+- Barres de progression (`var(--surface-2)`/`var(--accent)` comme piste/remplissage) : la piste blanche translucide devient invisible sur fond clair, et un remplissage doré sur fond doré est doré-sur-doré. Corrigé via une règle CSS ciblée (`.card-hero .progress-bar`/`.progress-fill`) qui couvre **automatiquement** tous les écrans utilisant ces classes partagées (Hydratation, Sommeil), sans avoir besoin de les corriger un par un.
+- Texte blanc sur fond violet clair : `.today-session-btn` (Entraînement) et `.activity-card-accent` (carte "Eau" du Dashboard) utilisaient du texte blanc sur `var(--accent-secondary)` — fonctionnait avec l'ancien bleu foncé (~contraste correct), plus du tout avec le nouveau violet clair (~2,9:1, sous le seuil). Passé au texte marine foncé.
+- Couleurs macro (Protéines/Glucides/Lipides, bleu clair/orange/violet clair) : l'orange en particulier tombe à ~1,15:1 sur fond or (même famille de teinte). Toutes les trois assombries pour rester lisibles comme éléments graphiques sur fond clair, tout en gardant la distinction de teinte par macro.
+- `calBarColor()` (Bilan hebdo) : les 4 couleurs possibles (succès/accent/warning/vide) tombaient toutes entre ~1,1:1 et ~1,2:1 sur le nouveau fond or. Remplacées par des teintes foncées équivalentes.
+
+Chaque contraste a été vérifié par calcul de luminance relative (formule WCAG), pas à l'œil — puisqu'aucune vérification visuelle n'est possible dans ce sandbox.
+
+### ✅ Cartes en dégradé — nouvelles classes réutilisables
+- `.card.card-hero` (global.css) : carte principale de chaque écran, dégradé or plein (`linear-gradient(120deg,#F0C14B,#F7DD8E 55%,#FFFFFF 130%)`) au lieu du glow subtil sur fond sombre d'avant. `color` posé sur la classe elle-même pour que tout texte hérité (sans couleur explicite) devienne automatiquement lisible, plus des surcharges `.text-primary/secondary/muted` pour les cas utilisant les classes utilitaires.
+- `.card.card-violet` (nouveau) : variante violette pour les CTA secondaires ("Idée recette" sur Nutrition), même logique.
+- Appliqué sur : Dashboard (carte calories, remplace l'ancien anneau `CalorieRing.jsx` — composant gardé mais plus utilisé, pour cohérence visuelle avec Nutrition qui utilisait déjà ce format plat), Nutrition (carte calories + "Idée recette" en violet), Workout/Weekly/Hydration/Sleep (déjà `.card-hero`, recolorées automatiquement + couleurs internes corrigées).
+
+### ✅ Autres éléments repris de la maquette
+- Avatar du header (Dashboard) et bouton central de la nav : dégradé or au lieu d'un aplat.
+- Boutons "Ma séance du jour" (violet, texte marine)/"+ Programme IA" (contour doré) et onglet actif "Musculation" (fond doré) sur Workout.
+- Nav bar : `border-radius` 30px→24px (rectangle légèrement moins arrondi, comme le mockup), bouton central passé en dégradé — **structure et icônes non touchées** volontairement (voir "décisions" ci-dessous).
+- Nouvelle rangée d'icônes Matin/Midi/Soir/Snack sur Nutrition (n'existait pas avant) — pas juste décorative, ouvre la feuille d'ajout de repas avec le type pré-sélectionné.
+- Badges d'icônes circulaires sur les cartes d'activité du Dashboard (icône dans un cercle plutôt que flottante).
+
+### ⚠️ Décisions prises sans redemander (l'utilisateur avait dit d'agir, pas de questionner)
+- **Nav bar** : forme/couleurs reprises, mais **icônes et disposition non touchées**. Après 3 tentatives ratées de redesign de la nav en session 16 (toutes annulées sur demande explicite de l'utilisateur), je n'ai pas pris le risque de retoucher la structure sans retour visuel — seule la couleur/forme du conteneur a changé.
+- **Cartes d'activité du Dashboard (Pas/Course/Eau/Sommeil)** : le mockup montre des cercles icône-seul sans données. Gardé les cartes actuelles avec les vrais chiffres (pas/km/ml/heures) — remplacer par des boutons sans données aurait été une vraie régression fonctionnelle pour une app de suivi. Juste mis l'icône dans un badge circulaire pour se rapprocher du langage visuel du mockup sans perdre l'info.
+- **Pas de barre de recherche ajoutée sur le Dashboard** : le mockup en montre une ("Rechercher un aliment, une séance…") qui n'existe pas dans l'app actuelle et n'a pas d'équivalent fonctionnel évident (chercher dans quoi exactement ?). Non ajoutée plutôt que de poser un champ de recherche non fonctionnel.
+- **Icônes de navigation Nutrition/Entraînement du 2ᵉ bouton de la nav** : le SVG du mockup à cette position est ambigu (ressemble à un haltère, pas clairement à de la nutrition). Gardé l'icône assiette/fourchette actuelle de l'app, plus claire.
+
+### Reste à valider
+- **Tout ceci n'a pu être vérifié que par le calcul (contraste WCAG) et le CSS compilé, jamais visuellement** — capture d'écran nécessaire dès que possible pour confirmer le rendu réel, en particulier : le thème clair (jamais montré dans le mockup, adaptation de ma part), et les nouvelles couleurs de macros/barres.
+
+---
+
 ## 2026-08-06 — Session 18 (suite 13) : fond décoratif décentré (root cause trouvée) + responsive desktop côté membre
 
 Capture d'écran de l'utilisateur sur Entraînement (desktop) : le "carte héro" était bien visible cette fois, mais le dégradé décoratif de fond apparaissait plaqué à gauche de l'écran, déconnecté du contenu (qui, lui, restait bien centré).

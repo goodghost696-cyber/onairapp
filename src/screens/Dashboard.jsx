@@ -5,7 +5,6 @@ import { useApp } from '../context/AppContext'
 import { useLanguage } from '../context/LanguageContext'
 import { save } from '../utils/storage'
 import { BOUNDS, clamp } from '../utils/validation'
-import CalorieRing from '../components/CalorieRing'
 import '../styles/dashboard.css'
 
 const QUOTES = [
@@ -92,9 +91,11 @@ export default function Dashboard() {
               {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
             </p>
           </div>
+          {/* Solid --accent → gold gradient, matching the mockup's avatar
+              badge exactly. */}
           <button
             onClick={() => navigate('/settings')}
-            style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--accent)', color: 'var(--accent-ink)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 54, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
+            style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg, var(--accent), #FBE08A)', color: 'var(--accent-ink)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 54, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
           >
             {(user?.name || 'A').charAt(0).toUpperCase()}
           </button>
@@ -103,31 +104,53 @@ export default function Dashboard() {
         {/* Rotating quote */}
         <RotatingQuote />
 
-        {/* Calorie ring + macros card */}
-        <div style={{ background: 'var(--surface)', border: '2px solid var(--border)', borderRadius: 24, padding: 22, marginBottom: 16, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <CalorieRing current={appData.calories} goal={appData.calorieGoal} size={150} />
-          <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 12, marginBottom: 20 }}>
-            Restant · <span style={{ color: 'var(--accent)', fontWeight: 700 }}>{calsRemaining} kcal</span>
-          </p>
-          <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {/* Calorie card — was a ring (CalorieRing.jsx) on a plain dark
+            surface; converted to the same flat gold-gradient "hero" card
+            Nutrition.jsx already uses, matching the mockup's "Calories du
+            jour" card and keeping the two calorie displays in the app
+            visually consistent with each other. CalorieRing.jsx itself is
+            untouched/still available, just not used here anymore. */}
+        <div className="card card-hero" style={{ marginBottom: 16 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 4 }}>
+            <div>
+              <span style={{ fontSize: 44, fontWeight: 800, fontVariantNumeric: 'tabular-nums', lineHeight: 1, letterSpacing: '-1.5px' }}>{appData.calories}</span>
+              <span className="text-sm text-muted" style={{ marginLeft: 6 }}>kcal</span>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <div className="text-xs text-muted">Restant</div>
+              <div className="text-base bold">{calsRemaining} kcal</div>
+            </div>
+          </div>
+          <div style={{ position: 'relative', height: 8, background: 'rgba(26,22,8,0.15)', borderRadius: 4, marginBottom: 16, marginTop: 12, overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${Math.min(appData.calories / appData.calorieGoal * 100, 100)}%`, background: '#1A1608', borderRadius: 4, transition: 'width 500ms ease-out' }} />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {[
-              { label: 'Protéines', val: appData.protein, goal: appData.proteinGoal, unit: 'g' },
-              { label: 'Glucides', val: appData.carbs, goal: appData.carbsGoal, unit: 'g' },
-              { label: 'Lipides', val: appData.fat, goal: appData.fatGoal, unit: 'g' },
+              { label: 'Protéines', val: appData.protein, goal: appData.proteinGoal, unit: 'g', color: '#0B5AA8' },
+              { label: 'Glucides', val: appData.carbs, goal: appData.carbsGoal, unit: 'g', color: '#8A4600' },
+              { label: 'Lipides', val: appData.fat, goal: appData.fatGoal, unit: 'g', color: '#5B3FA8' },
             ].map(m => (
               <div key={m.label}>
-                <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 3px' }}>
-                  {m.label} {m.val}/{m.goal}{m.unit}
-                </p>
-                <div style={{ height: 4, background: 'var(--surface-2)', borderRadius: 2, overflow: 'hidden' }}>
-                  <div style={{ width: `${Math.min((m.val / m.goal) * 100, 100)}%`, height: '100%', background: 'var(--accent-secondary)', borderRadius: 2, transition: 'width 600ms ease' }} />
+                <div className="flex justify-between items-center" style={{ marginBottom: 4 }}>
+                  <span className="text-xs text-muted">{m.label}</span>
+                  <span className="text-xs bold">{m.val}{m.unit} <span className="text-muted">/ {m.goal}{m.unit}</span></span>
+                </div>
+                <div style={{ height: 4, background: 'rgba(26,22,8,0.15)', borderRadius: 2, overflow: 'hidden' }}>
+                  <div style={{ width: `${Math.min((m.val / m.goal) * 100, 100)}%`, height: '100%', background: m.color, borderRadius: 2, transition: 'width 600ms ease' }} />
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Activity cards */}
+        {/* Activity cards — kept the existing data-rich cards (live numbers
+            + progress bar, tap to edit) rather than switching to the
+            mockup's icon-only circles: those show no data at all, which
+            would be a real functional step back for a tracking app. Took
+            the part of the mockup that *is* a straightforward improvement
+            instead — the icon now sits in an actual circular badge
+            (.activity-card-icon-badge) instead of floating loose, matching
+            the mockup's icon-circle language without losing the numbers. */}
         <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: 12 }}>{t('activity')}</p>
         <div className="activity-grid">
           {CARDS.map(card => (
@@ -136,7 +159,7 @@ export default function Dashboard() {
               className={`activity-card-compact${card.key === 'water' ? ' activity-card-accent' : ''}`}
               onClick={() => { setEditingCard(card.key); setInputVal('') }}
             >
-              <span className="activity-card-icon">{card.icon}</span>
+              <span className="activity-card-icon-badge">{card.icon}</span>
               <p className="activity-card-label">{card.label}</p>
               <p className="activity-card-value">
                 {card.key === 'steps' ? appData.steps.toLocaleString('fr-FR') : card.value}

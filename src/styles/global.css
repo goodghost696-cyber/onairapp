@@ -49,9 +49,11 @@ body {
   inset: 0;
   pointer-events: none;
   z-index: 0;
+  /* Gold + blue-violet, matching the new accent pair (was lime + royal
+     blue) — same positions/shape as the mockup's own page-level glow. */
   background:
-    radial-gradient(ellipse 90% 55% at 18% 25%, rgba(212,255,0,0.10) 0%, transparent 62%),
-    radial-gradient(ellipse 60% 40% at 85% 80%, rgba(0,71,255,0.14) 0%, transparent 55%);
+    radial-gradient(ellipse 90% 55% at 18% 25%, rgba(240,193,75,0.12) 0%, transparent 62%),
+    radial-gradient(ellipse 60% 40% at 85% 80%, rgba(139,147,232,0.16) 0%, transparent 55%);
 }
 
 #root > * {
@@ -74,10 +76,19 @@ body {
   --text-primary: #FFFFFF;
   --text-secondary: rgba(255,255,255,0.55);
   --text-muted: rgba(255,255,255,0.35);
-  --accent: #D4FF00;
-  --accent-hover: #c2eb00;
-  --accent-ink: #0A0A0A;
-  --accent-secondary: #0047FF;
+  /* Rebrand 2026-08-06: gold + blue-violet, from a "Style Athlevo" design
+     export (Behance reference the user asked to match). Was lime (#D4FF00)
+     + royal blue (#0047FF). --accent-ink/--accent-secondary-ink pair with
+     these for text placed directly on a SOLID fill of that color (nav
+     center button, small badges) — the new GRADIENT cards (.card-gold /
+     .card-violet below) use their own fixed dark text colors instead,
+     since a light pastel-to-white gradient surface reads the same
+     regardless of app theme, unlike a flat theme-reactive fill. */
+  --accent: #F0C14B;
+  --accent-hover: #E6B13A;
+  --accent-ink: #1A1608;
+  --accent-secondary: #8B93E8;
+  --accent-secondary-ink: #1C2050;
   --success: #1FD66B;
   --warning: #F5A623;
   --danger: #FF3B3B;
@@ -106,9 +117,10 @@ body {
   --text-primary: #FFFFFF;
   --text-secondary: rgba(255,255,255,0.55);
   --text-muted: rgba(255,255,255,0.35);
-  --accent: #D4FF00;
-  --accent-ink: #0A0A0A;
-  --accent-secondary: #0047FF;
+  --accent: #F0C14B;
+  --accent-ink: #1A1608;
+  --accent-secondary: #8B93E8;
+  --accent-secondary-ink: #1C2050;
   --success: #1FD66B;
   --warning: #F5A623;
   --danger: #FF3B3B;
@@ -125,16 +137,20 @@ body {
   --text-primary: #0A0A0A;
   --text-secondary: rgba(0,0,0,0.55);
   --text-muted: rgba(0,0,0,0.35);
-  /* Same lime hue as dark mode, but darkened — #D4FF00 as a bare text/border
-     color (not a button fill) is nearly invisible against a light page, since
-     the whole point of that citron is being close to white already. This is
-     the one value in this block worth tuning by eye once seen on the real
-     preview (no visual check possible in this sandbox) — everything else
-     here is a standard light-mode neutral swap. */
-  --accent: #3D5200;
-  --accent-hover: #4D6600;
+  /* Darkened versions of the new gold/violet, same reasoning as the old
+     lime had here: the bright dark-theme hue is unusable as bare text/icon
+     color on a light page (too close to white/already light), so this is
+     a separate darker shade for that specific use — solid-fill UI (the nav
+     center button, badges) that needs to flip to a dark accent + white ink
+     in light theme. The light-theme look wasn't part of the mockup (dark
+     background throughout, "fond noir profond" explicitly) — this is a
+     conservative adaptation of the same hues, not a literal spec, and is
+     the one thing here most worth a look on the real preview once seen. */
+  --accent: #8A6300;
+  --accent-hover: #A67700;
   --accent-ink: #FFFFFF;
-  --accent-secondary: #0047FF;
+  --accent-secondary: #4A52B0;
+  --accent-secondary-ink: #FFFFFF;
   --success: #1A9E55;
   --warning: #D4870A;
   --danger: #bf0603;
@@ -198,7 +214,7 @@ button {
   display: block;
   transition: background 150ms;
   border-radius: var(--radius-btn);
-  box-shadow: 0 8px 32px rgba(212,255,0,0.25);
+  box-shadow: 0 8px 32px rgba(240,193,75,0.3);
 }
 .btn-accent:hover { background: var(--accent-hover); }
 
@@ -251,12 +267,55 @@ button {
    specificity than plain .card, so it always wins regardless of import/
    bundle order, this time verified against the compiled output before
    shipping. */
+/* Rebrand 2026-08-06 — was a subtle lime corner-glow on the app's normal
+   dark --surface. Style Athlevo mockup calls for a full light gold
+   gradient card instead (matches the mockup's "Calories du jour" card
+   exactly). This is a real background-lightness change, not just a hue
+   swap, so every screen using .card-hero needs its child text re-checked
+   for contrast — `color` set here so any child that doesn't set its own
+   color (plain/inherited text) automatically gets the correct dark warm
+   ink via inheritance, and the .text-* utility overrides below catch the
+   rest. Inline-styled elements (progress bar tracks using
+   `background:'var(--surface-2)'`, an inline style CSS classes can't
+   override) still needed fixing screen-by-screen — see each screen's own
+   diff from this session for the specific inline-color adjustments. */
 .card.card-hero {
   border-radius: 24px;
-  background:
-    radial-gradient(120% 140% at 100% 0%, rgba(212,255,0,0.12) 0%, transparent 55%),
-    var(--surface);
+  background: linear-gradient(120deg, #F0C14B 0%, #F7DD8E 55%, #FFFFFF 130%);
+  border: none;
+  color: #1A1608;
 }
+.card.card-hero .text-primary { color: #1A1608; }
+.card.card-hero .text-secondary { color: rgba(26,22,8,0.6); }
+.card.card-hero .text-muted { color: rgba(26,22,8,0.45); }
+
+/* Violet variant — secondary CTA cards (matches the mockup's "Course du
+   jour" / "Idée recette" cards). Same reasoning as .card-hero above for
+   the color/text-* overrides, just the other half of the new palette. */
+.card.card-violet {
+  border-radius: 20px;
+  background: linear-gradient(120deg, #8B93E8 0%, #C9CDF5 65%, #FFFFFF 140%);
+  border: none;
+  color: #1C2050;
+}
+.card.card-violet .text-primary { color: #1C2050; }
+.card.card-violet .text-secondary { color: rgba(28,32,80,0.65); }
+.card.card-violet .text-muted { color: rgba(28,32,80,0.5); }
+
+/* .progress-bar/.progress-fill (Hydration, Sleep, and anywhere else that
+   uses the shared class instead of an inline-styled bar) assume a dark
+   card: translucent-white track, --accent or --success fill. Both break on
+   the new light gradient cards — the white track goes near-invisible, and
+   --success (bright green, ~1.1:1 against gold) nearly disappears. Scoped
+   overrides here fix every current AND future .progress-bar inside a hero
+   card automatically, no per-screen fix needed like Nutrition's inline
+   bars required. */
+.card-hero .progress-bar, .card-violet .progress-bar { background: rgba(26,22,8,0.15); }
+.card-hero .progress-fill { background: #1A1608; }
+.card-hero .progress-fill.success { background: #14532D; }
+.card-violet .progress-bar { background: rgba(28,32,80,0.15); }
+.card-violet .progress-fill { background: #1C2050; }
+.card-violet .progress-fill.success { background: #14532D; }
 
 .ai-program-badge {
   background: transparent;
@@ -517,5 +576,5 @@ button {
 .lang-btn.active {
   border-color: var(--accent);
   color: var(--accent);
-  background: rgba(212,255,0,0.08);
+  background: rgba(240,193,75,0.08);
 }
