@@ -23,6 +23,7 @@ import CoachMessages from './screens/CoachMessages'
 import Settings from './screens/Settings'
 import CoachSettings from './screens/CoachSettings'
 import Onboarding from './screens/Onboarding'
+import AppTour from './screens/AppTour'
 import MemberLayout from './layouts/MemberLayout'
 import CoachLayout from './layouts/CoachLayout'
 
@@ -43,6 +44,13 @@ export default function App() {
     <Routes>
         <Route path="/onboarding" element={
           localStorage.getItem('onair_just_registered') && user && user.role === 'member' ? <Onboarding /> : <Navigate to="/login" replace />
+        } />
+        {/* Same one-shot pattern as /onboarding above — reachable only right
+            after Onboarding sets the flag, so it can't be replayed by
+            revisiting the URL or seen by a member who never went through
+            onboarding (e.g. one created directly by SQL). */}
+        <Route path="/welcome" element={
+          localStorage.getItem('onair_show_tour') && user && user.role === 'member' ? <AppTour /> : <Navigate to="/dashboard" replace />
         } />
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={user ? <Navigate to={user.role === 'coach' || user.role === 'admin' ? '/coach' : '/dashboard'} replace /> : <Login />} />

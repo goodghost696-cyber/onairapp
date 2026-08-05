@@ -6,6 +6,19 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo, branche `claude/charming-mendel-dj1GQ`, et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-08-05 — Session 18 (suite 6) : tutoriel de bienvenue pour les nouveaux membres
+
+L'utilisateur a fait remarquer qu'un nouveau membre termine l'inscription (`Onboarding.jsx`, qui ne collecte que le profil — prénom/objectif/poids/etc.) et atterrit directement sur le Dashboard sans aucune explication du fonctionnement de l'app.
+
+### ✅ `AppTour.jsx` — nouveau, 5 écrans statiques affichés une seule fois
+Volontairement **pas** une bulle/spotlight qui pointe sur les vrais boutons en direct — un positionnement précis par élément, sur toutes les tailles d'écran, sans pouvoir le vérifier visuellement, c'est exactement le genre de pari qui a mal tourné aujourd'hui sur le responsive coach. À la place : 5 écrans autonomes (Bienvenue, Dashboard, Nutrition, Entraînement, Coach), même structure visuelle que `Onboarding.jsx` (réutilise `Onboarding.css`), bouton "Passer" toujours disponible.
+
+**Déclenchement** : `Onboarding.jsx` redirige maintenant vers `/welcome` (au lieu de `/dashboard`) à la fin, en posant un flag `onair_show_tour` — consommé une fois par `AppTour.jsx` puis navigation vers `/dashboard`. Route `/welcome` gardée par le même pattern que `/onboarding` (flag + rôle membre), donc impossible à revoir en tapant l'URL ou pour un compte créé directement en SQL sans être passé par l'inscription.
+
+Pas encore vu par l'utilisateur — comme toujours, seul le raisonnement + le build ont pu être vérifiés ici, pas le rendu réel.
+
+---
+
 ## 2026-08-05 — Session 18 (suite 5) : responsive coach — audit proactif + fond qui ne remplissait pas la largeur
 
 Deux allers-retours supplémentaires avec l'utilisateur (deux nouvelles captures d'écran), plutôt que d'attendre qu'il trouve chaque bug un par un.
