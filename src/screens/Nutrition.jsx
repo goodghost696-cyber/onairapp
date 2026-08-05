@@ -392,9 +392,15 @@ Réponds en français.`
         </>
       )}
 
-      {/* FAB */}
+      {/* FAB — left side, not right: MemberLayout's global "Coach IA / Mon
+          Coach" FAB (fab.css .fab-container) sits at bottom:96px,
+          right:16px, z-index:95 on every member screen — this button used
+          to sit almost exactly on top of it (bottom:90, right:16, same
+          z-index), making the two indistinguishable/impossible to tap
+          reliably. Same class of bug already fixed once on the
+          Conversation screen's send button. */}
       <button onClick={openSheet} style={{
-        position: 'fixed', bottom: 90, right: 16, zIndex: 95,
+        position: 'fixed', bottom: 90, left: 16, zIndex: 95,
         width: 52, height: 52, borderRadius: '50%',
         background: 'var(--accent)', border: 'none', cursor: 'pointer',
         display: 'flex', alignItems: 'center', justifyContent: 'center',

@@ -5,6 +5,10 @@ import { useLanguage } from '../context/LanguageContext'
 import { ExerciseModal } from '../components/ExerciseModal'
 import { useExercises } from '../hooks/useExercises'
 
+// Doubled from 8 to 16 per section (was too thin — "pas assez d'exercices
+// proposés") and used as the guaranteed baseline regardless of whether
+// api/exercises.js (API Ninjas, third-party, can be slow/rate-limited/down)
+// returns anything for a given session.
 const LOCAL_EXERCISES = {
   maison: [
     { id: 'm1', name: 'Push-up',          muscles: 'Pectoraux · Triceps · Épaules' },
@@ -15,6 +19,14 @@ const LOCAL_EXERCISES = {
     { id: 'm6', name: 'Dips Chaise',       muscles: 'Triceps · Épaules' },
     { id: 'm7', name: 'Mountain Climber', muscles: 'Core · Cardio' },
     { id: 'm8', name: 'Glute Bridge',     muscles: 'Fessiers · Ischio · Core' },
+    { id: 'm9', name: 'Pompes Diamant',   muscles: 'Triceps · Pectoraux' },
+    { id: 'm10', name: 'Superman',         muscles: 'Dos bas · Fessiers' },
+    { id: 'm11', name: 'Chaise Murale',    muscles: 'Quadriceps · Endurance' },
+    { id: 'm12', name: 'Crunchs',          muscles: 'Abdos' },
+    { id: 'm13', name: 'Jumping Jacks',    muscles: 'Cardio · Full body' },
+    { id: 'm14', name: 'Squat Sauté',      muscles: 'Quadriceps · Fessiers · Explosivité' },
+    { id: 'm15', name: 'Gainage Latéral',  muscles: 'Obliques · Core' },
+    { id: 'm16', name: 'Pompes Pike',      muscles: 'Épaules · Triceps' },
   ],
   salle: [
     { id: 's1', name: 'Bench Press',              muscles: 'Pectoraux · Triceps · Épaules' },
@@ -25,6 +37,14 @@ const LOCAL_EXERCISES = {
     { id: 's6', name: 'Romanian Deadlift',        muscles: 'Ischio · Fessiers · Dos' },
     { id: 's7', name: 'Incline Dumbbell Press',   muscles: 'Pectoraux haut · Triceps' },
     { id: 's8', name: 'Cable Row',                muscles: 'Dos · Biceps · Core' },
+    { id: 's9', name: 'Leg Press',                muscles: 'Quadriceps · Fessiers' },
+    { id: 's10', name: 'Lat Pulldown',             muscles: 'Dos · Biceps' },
+    { id: 's11', name: 'Leg Curl',                 muscles: 'Ischio-jambiers' },
+    { id: 's12', name: 'Élévations Latérales',     muscles: 'Épaules' },
+    { id: 's13', name: 'Curl Biceps Barre',        muscles: 'Biceps' },
+    { id: 's14', name: 'Extension Triceps Poulie', muscles: 'Triceps' },
+    { id: 's15', name: 'Hip Thrust',               muscles: 'Fessiers · Ischio' },
+    { id: 's16', name: 'Front Squat',              muscles: 'Quadriceps · Core' },
   ],
   dehors: [
     { id: 'd1', name: 'Sprint 100m',   muscles: 'Full body · Cardio intense' },
@@ -35,6 +55,14 @@ const LOCAL_EXERCISES = {
     { id: 'd6', name: 'Pistol Squat',  muscles: 'Quadriceps · Équilibre' },
     { id: 'd7', name: 'Hill Sprint',   muscles: 'Cardio · Fessiers · Ischio' },
     { id: 'd8', name: 'Muscle-up',     muscles: 'Dos · Pectoraux · Triceps' },
+    { id: 'd9', name: 'Fartlek',       muscles: 'Cardio · Endurance' },
+    { id: 'd10', name: 'Broad Jump',    muscles: 'Explosivité · Quadriceps' },
+    { id: 'd11', name: "Farmer's Walk", muscles: 'Full body · Grip' },
+    { id: 'd12', name: 'Step-up Banc',  muscles: 'Quadriceps · Fessiers' },
+    { id: 'd13', name: 'Battle Ropes',  muscles: 'Full body · Cardio' },
+    { id: 'd14', name: 'Sprint Escaliers', muscles: 'Cardio · Quadriceps' },
+    { id: 'd15', name: 'Trail Run',     muscles: 'Cardio · Endurance' },
+    { id: 'd16', name: 'Sac de Sable Clean', muscles: 'Full body · Explosivité' },
   ],
 }
 

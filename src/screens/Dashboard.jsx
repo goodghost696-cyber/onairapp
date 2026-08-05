@@ -116,10 +116,10 @@ export default function Dashboard() {
               { label: 'Lipides', val: appData.fat, goal: appData.fatGoal, unit: 'g' },
             ].map(m => (
               <div key={m.label}>
-                <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#8A8A8A', margin: '0 0 3px' }}>
+                <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 3px' }}>
                   {m.label} {m.val}/{m.goal}{m.unit}
                 </p>
-                <div style={{ height: 4, background: '#232323', borderRadius: 2, overflow: 'hidden' }}>
+                <div style={{ height: 4, background: 'var(--surface-2)', borderRadius: 2, overflow: 'hidden' }}>
                   <div style={{ width: `${Math.min((m.val / m.goal) * 100, 100)}%`, height: '100%', background: 'var(--accent-secondary)', borderRadius: 2, transition: 'width 600ms ease' }} />
                 </div>
               </div>
@@ -166,7 +166,7 @@ export default function Dashboard() {
               {appData.weeklyWorkouts}<span style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 400 }}>/{appData.weeklyGoal}</span>
             </span>
           </div>
-          <div style={{ height: 2, background: 'rgba(255,255,255,0.1)', borderRadius: 2, overflow: 'hidden' }}>
+          <div style={{ height: 2, background: 'var(--surface-2)', borderRadius: 2, overflow: 'hidden' }}>
             <div style={{ width: `${Math.min((appData.weeklyWorkouts / appData.weeklyGoal) * 100, 100)}%`, height: '100%', background: 'var(--accent)', borderRadius: 2, transition: 'width 600ms ease' }} />
           </div>
         </div>

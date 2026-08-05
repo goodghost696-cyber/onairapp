@@ -20,7 +20,7 @@ export default function CalorieRing({ current, goal, size = 180 }) {
           </filter>
         </defs>
         {/* Track */}
-        <circle cx="90" cy="90" r={radius} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="2.5"/>
+        <circle cx="90" cy="90" r={radius} fill="none" stroke="var(--surface-2)" strokeWidth="2.5"/>
         {/* Progress arc */}
         <circle
           cx="90" cy="90" r={radius}
