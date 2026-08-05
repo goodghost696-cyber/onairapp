@@ -28,10 +28,19 @@ Même famille de bug que ceux déjà corrigés plusieurs fois cette session (Lan
 - `global.css` : `.progress-bar` (classe **partagée** par Hydratation/Bilan/liste clients coach/etc.) avait sa piste en blanc dur.
 - `global.css` : `.scan-btn-sub` — bug à deux niveaux dans la même ligne : cassé en thème clair (comme les autres) **et** contraste texte-sur-accent jamais attrapé par l'audit de Session 12 (ce dernier cherchait `color:#fff`/`white`, pas la forme `rgba(255,255,255,0.6)`) — le sous-titre du bouton "Appareil photo" (fond citron) était en blanc translucide au lieu de `--accent-ink`. Séparé en 3 règles par variante (primary/secondary/tertiary) au lieu d'un défaut partagé ambigu.
 
-### ⚠️ Bug non résolu — scroll intempestif sur Nutrition
-L'utilisateur rapporte : "quand je clique dessus la page descend toute seule" sur la page Nutrition. Cherché `autoFocus`/`scrollIntoView`/`window.scrollTo` dans tout le composant et ses dépendances directes (`SwipeableRow`, `NutriscoreBadge`, `BottomNav`) — rien trouvé qui expliquerait un scroll automatique vers le bas avec certitude. **Pas corrigé** — demandé à l'utilisateur plus de détail (à quel moment exactement, est-ce systématique) plutôt que de deviner un fix à l'aveugle sans pouvoir le vérifier visuellement dans ce sandbox.
+### ⚠️ Bug non résolu — scroll intempestif sur Nutrition (précisions obtenues, à corriger en priorité la prochaine session)
+L'utilisateur rapporte : "quand je clique dessus la page descend toute seule" sur la page Nutrition. Cherché `autoFocus`/`scrollIntoView`/`window.scrollTo` dans tout le composant et ses dépendances directes (`SwipeableRow`, `NutriscoreBadge`, `BottomNav`) — rien trouvé qui expliquerait un scroll automatique vers le bas avec certitude. **Pas corrigé** dans cette session, faute de budget pour creuser davantage.
 
-Build validé après chaque lot. Comme toujours, aucune vérification visuelle possible dans ce sandbox.
+**Précisions données par l'utilisateur, à exploiter dès le début de la prochaine session** :
+- Ça arrive **systématiquement**, pas seulement parfois.
+- Ça se déclenche **juste après avoir tapé sur le bouton/onglet Nutrition** (donc au moment de la navigation vers la page, pas après un clic sur un élément précis à l'intérieur — carte, bouton scanner, etc. écartés).
+
+Pistes pas encore explorées à checker en premier : le comportement de `BottomNav.jsx` au changement d'onglet (son listener de scroll utilise une ref `lastScrollY` qui n'est jamais réinitialisée entre deux navigations, seulement l'effet qui se réattache — possible incohérence au premier scroll event après un changement de page) ; l'animation `headerIn` sur `.screen-header` (translateY(-10px)→0, rejouée à chaque montage) ; et surtout comparer avec les autres écrans à onglet (Dashboard/Workout/Weekly) pour voir si le bug est spécifique à Nutrition ou généralisé mais seulement remarqué là.
+
+### 💡 Idée produit à trancher — la bibliothèque d'exercices devrait-elle être 100% IA ?
+Question posée par l'utilisateur : plutôt que la bibliothèque actuelle (locale + API Ninjas tierce, qu'on vient de doubler et de déboguer), est-ce que ce ne serait pas mieux de ne garder **que de l'IA** pour proposer des exercices sur cette page — tout en gardant la possibilité de logger les exercices réellement faits dans la journée (le flux "séance"/`WorkoutSession.jsx` resterait inchangé, c'est bien la bibliothèque de découverte qui serait concernée). Pas tranché, pas commencé — juste évoqué en fin de session, à creuser avec l'utilisateur avant de coder quoi que ce soit (impact : remplacerait potentiellement tout le travail qu'on vient de faire sur `WorkoutLibrary.jsx`/`ExerciseModal.jsx`/`api/exercises.js`, donc à valider clairement avant de s'y lancer).
+
+Build validé après chaque lot. Comme toujours, aucune vérification visuelle possible dans ce sandbox. **Session arrêtée ici faute de budget tokens restant** — PR #18 poussée et déployée sur preview, toujours en draft, pas mergée.
 
 ---
 
