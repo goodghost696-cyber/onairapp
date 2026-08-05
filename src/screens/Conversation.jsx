@@ -96,7 +96,7 @@ export default function Conversation({ isCoach = false }) {
   }
 
   return (
-    <div className="app-wrapper" style={{ height: '100vh', overflow: 'hidden', position: 'relative' }}>
+    <div className={`app-wrapper${isCoach ? ' coach-narrow' : ''}`} style={{ height: '100vh', overflow: 'hidden', position: 'relative' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '20px 16px 12px', borderBottom: '0.5px solid var(--border)', background: 'var(--bg)', position: 'sticky', top: 0, zIndex: 10 }}>
         <button style={{ background: 'none', border: 'none', cursor: 'pointer' }} onClick={() => navigate(isCoach ? '/coach/messages' : '/messages')}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" strokeWidth="1.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>

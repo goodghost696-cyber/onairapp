@@ -1,1 +1,57 @@
-/* Coach dashboard styles handled inline */
+/* Desktop layout for the coach side only.
+ *
+ * global.css caps #root at max-width:390px everywhere — right for a
+ * mobile-first member app, cramped for a coach working from a computer
+ * (narrow centered column with big empty margins on a wide screen). This
+ * file widens things back out, but ONLY while a /coach/* route is mounted:
+ * CoachLayout.jsx toggles the `coach-shell` class on #root for exactly
+ * that duration, so the member side is byte-for-byte unaffected on every
+ * viewport size.
+ *
+ * Gated to min-width:900px so phones/small tablets — including a coach
+ * checking in from their own phone — still get the normal single-column
+ * mobile layout, untouched.
+ */
+@media (min-width: 900px) {
+  #root.coach-shell {
+    max-width: 1100px;
+  }
+
+  /* Decorative background gradient (global.css #root::before) was also
+     hardcoded to 390px — without this override it stays pinned to a
+     390px-wide strip instead of spanning the wider shell. */
+  #root.coach-shell::before {
+    max-width: 1100px;
+  }
+
+  #root.coach-shell .screen {
+    padding-left: 48px;
+    padding-right: 48px;
+  }
+
+  /* List screens (clients, messages inbox, dashboard's alert/activity
+     lists) — reflow from a single mobile column into a responsive grid.
+     Card markup itself is untouched; only the wrapping container's
+     display changes, so this is the lowest-risk way to use the extra
+     width for screens that are naturally a list of independent items. */
+  #root.coach-shell .coach-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 12px;
+    align-items: start;
+  }
+  #root.coach-shell .coach-grid > .card {
+    margin-bottom: 0;
+  }
+
+  /* Detail/form screens (member profile, settings, a message thread) don't
+     reflow into a grid — stretching a single column of text/inputs across
+     1100px would just make lines unreadably wide. These stay a single
+     column, just centered at a comfortable reading width instead of the
+     mobile app's 390px. */
+  #root.coach-shell .coach-narrow {
+    max-width: 720px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}

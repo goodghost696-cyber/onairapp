@@ -6,6 +6,27 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo, branche `claude/charming-mendel-dj1GQ`, et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-08-05 — Session 18 (suite) : premier passage responsive desktop, côté coach uniquement
+
+### ✅ Layout desktop pour la partie coach — première passe, à valider visuellement
+L'utilisateur a fait remarquer à juste titre que même si l'app est déjà accessible comme "webapp" sur ordinateur (même URL Vercel), la mise en page était une copie collée de la version téléphone (`#root { max-width: 390px }` partout, y compris sur grand écran). Décidé de traiter ça côté **coach uniquement** (recommandation, acceptée) — le membre reste mobile-first, cohérent avec l'usage attendu.
+
+**Mécanisme** (`src/layouts/CoachLayout.jsx`, nouveau) : les 6 routes `/coach/*` sont maintenant enveloppées dans un layout qui ajoute la classe `coach-shell` sur `#root` pendant qu'il est monté (même technique que le forçage du thème sombre sur Landing), et la retire au démontage. Toutes les règles desktop (`src/styles/coach.css`, nouveau contenu) sont scopées à `#root.coach-shell` + `@media (min-width: 900px)` — donc **zéro changement pour le membre, à n'importe quelle taille d'écran**, et **zéro changement pour le coach sur mobile** (un coach qui checke depuis son téléphone garde la même colonne compacte qu'avant).
+
+Ce qui change au-dessus de 900px de large, côté coach seulement :
+- `#root` passe de 390px à 1100px de large.
+- Les écrans-listes (`CoachDashboard` alertes + activité, `ClientsList`, `CoachMessages`) passent d'une colonne unique à une grille responsive (`repeat(auto-fill, minmax(320px,1fr))`) — le balisage de chaque carte n'a pas été touché, seul le conteneur qui les enveloppe change d'affichage (`display:grid`). Risque volontairement minimisé : aucune carte individuelle réécrite.
+- Les écrans détail/formulaire (`MemberDetail`, `CoachSettings`, le fil de conversation coach dans `Conversation.jsx`) restent en colonne unique mais centrée à 720px au lieu d'être étirée sur 1100px (du texte/formulaire sur une ligne de 1100px serait illisible) — nouvelle classe utilitaire `.coach-narrow`.
+- **La nav (`CoachNav.jsx`) n'a pas été touchée du tout** — elle reste la pilule flottante en bas de l'écran, centrée sur la largeur totale de la fenêtre (elle est en `position:fixed`, indépendante de la largeur de `#root`). Volontairement laissée de côté dans cette première passe : après plusieurs tentatives ratées de redesign de cette nav en session 16 (contraste cassé, centrage foireux, finalement revenue en arrière sur demande explicite), je préfère ne pas retoucher sa structure sans retour visuel de l'utilisateur d'abord.
+
+**⚠️ Non vérifié visuellement** — comme toujours dans ce sandbox, aucune capture d'écran possible. Le raisonnement CSS a été vérifié pas à pas (spécificité, portée des sélecteurs, cascade) et le build passe, mais ce premier jet a un vrai risque de détails visuels à corriger une fois vu en vrai (espacements, alignement de la nav flottante par rapport au contenu élargi, etc.). **À faire en priorité la prochaine fois que l'utilisateur se connecte côté coach depuis un ordinateur : demander une capture d'écran avant d'aller plus loin.**
+
+### Reste à trancher / faire
+- Valider visuellement le responsive desktop ci-dessus (voir avertissement).
+- Discuter si la nav coach doit devenir une sidebar sur grand écran une fois le reste validé (pas fait dans cette passe, volontairement).
+
+---
+
 ## 2026-08-05 — Session 18 : bug de scroll Nutrition résolu + rappel process PR
 
 ### 🐛 Bug de scroll intempestif sur Nutrition — trouvé et corrigé
