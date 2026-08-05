@@ -6,6 +6,21 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo, branche `claude/charming-mendel-dj1GQ`, et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-08-05 — Session 18 (suite 10) : root cause probable du "aucun changement" — cache HTTP de index.html jamais configuré
+
+Après plusieurs rounds où l'utilisateur ne voyait aucun changement malgré des PR mergées et vérifiées par build, remis en question l'hypothèse "mes changements sont ratés" pour plutôt chercher pourquoi il ne verrait **rien du tout**, changement ou pas.
+
+### 🐛 `index.html` n'avait aucune règle de cache HTTP explicite dans `vercel.json`
+Seul `/assets/*` (fichiers JS/CSS avec hash Vite, cache long terme légitime) avait une règle. `index.html` — le point d'entrée qui référence ces fichiers hashés — n'en avait aucune, livré avec le comportement de cache par défaut de Vercel. Combiné à la stratégie "network-first" du service worker (`public/sw.js`) pour les requêtes de navigation, un `fetch()` "network-first" peut quand même être satisfait par le cache HTTP du navigateur lui-même si aucun en-tête n'interdit explicitement ça — l'utilisateur pouvait recharger autant de fois qu'il voulait, une ancienne version de `index.html` (pointant vers d'anciens fichiers JS/CSS) pouvait continuer à être servie indéfiniment, peu importe le nombre de déploiements réussis derrière.
+
+**Corrigé** :
+- `vercel.json` : nouvelle règle `Cache-Control: no-cache, no-store, must-revalidate` sur `/(.*)` (tout), avec la règle `/assets/(.*)` positionnée après pour la surcharger spécifiquement sur les fichiers hashés (qui, eux, doivent rester en cache long terme — sûr car leur nom change à chaque build).
+- `public/sw.js` : nom de cache passé de `onair-v1` à `onair-v2` — force tout service worker déjà installé à vider son cache au prochain `activate`, en défense supplémentaire (ce nom n'avait jamais changé depuis la création du fichier).
+
+**Si le problème persiste après ce correctif**, il faudra que l'utilisateur vide manuellement le cache de son navigateur/téléphone une fois (l'ancien service worker/cache peut survivre à ce déploiement lui-même, c'est le prochain qui sera garanti visible immédiatement).
+
+---
+
 ## 2026-08-05 — Session 18 (suite 9) : capture d'écran Nutrition — "aucun changement", 2 vrais problèmes trouvés
 
 L'utilisateur a envoyé une capture de la page Nutrition en disant "aucun changement". Deux causes réelles :

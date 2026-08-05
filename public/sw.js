@@ -1,4 +1,10 @@
-const CACHE = 'onair-v1';
+// Bumped v1 -> v2: forces every existing installed service worker to drop
+// its old cache on next activate (see below), instead of reusing it forever
+// since this name never changed across any prior deploy. Root cause of a
+// real "I never see any change" report from a user (2026-08-05) was most
+// likely index.html having no explicit Cache-Control header — fixed in
+// vercel.json — but bumping this too is cheap, harmless defense in depth.
+const CACHE = 'onair-v2';
 const ASSETS = ['/', '/index.html'];
 
 self.addEventListener('install', e => {
