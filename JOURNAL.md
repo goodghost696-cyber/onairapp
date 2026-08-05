@@ -6,6 +6,20 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo, branche `claude/charming-mendel-dj1GQ`, et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-08-05 — Session 18 (suite 4) : responsive coach — corrigé grâce à une vraie capture d'écran
+
+L'utilisateur a envoyé une capture d'écran du dashboard coach sur ordinateur. Deux bugs réels confirmés (exactement le genre de chose que je ne pouvais pas voir tout seul) :
+
+### 🐛 1. Énormes marges noires vides à gauche/droite
+`#root.coach-shell` était plafonné à `max-width: 1100px` en dur — sur un écran large (la capture montrait clairement un moniteur bien plus large que ça), ça laisse un immense vide de chaque côté, pire visuellement que le problème que ça devait résoudre. Corrigé : `max-width: min(94vw, 1600px)` — s'adapte à la largeur réelle de la fenêtre au lieu d'un plafond fixe, toujours avec un cap généreux pour ne pas aller bord à bord sur un écran ultra-large.
+
+### 🐛 2. Les cartes clients ("Arnaud"/"Gisèle") ne remplissaient pas la largeur
+`.coach-grid` utilisait `grid-template-columns: repeat(auto-fill, minmax(320px, 1fr))`. Avec `auto-fill`, une ligne avec moins de cartes que ce qui tiendrait (ici 2) réserve quand même les colonnes vides comme si elles existaient — les vraies cartes restent bloquées à la largeur plancher (320px) au lieu de s'étirer. Corrigé : `auto-fit` à la place, qui supprime les colonnes vides et laisse `1fr` s'appliquer réellement aux cartes présentes.
+
+Les deux corrections sont dans `src/styles/coach.css` uniquement — aucun changement de balisage, toujours scopé à `#root.coach-shell` (partie membre non affectée).
+
+---
+
 ## 📍 État au 2026-08-05 (fin de session 18) — à lire en premier
 
 Tout ce qui suit dans cette entrée et les entrées d'en dessous a été fait aujourd'hui et est **mergé sur `claude/charming-mendel-dj1GQ`** (vérifié avant de clore la session — plus de PR en attente, working tree propre).
