@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { FOOD_DATABASE } from '../context/AppContext'
@@ -51,8 +51,24 @@ export default function Nutrition() {
   const [recipeLoading, setRecipeLoading] = useState(false)
   const [recipe, setRecipe] = useState(null)
   const [recipeError, setRecipeError] = useState('')
+  const foodSearchInputRef = useRef(null)
 
   useEffect(() => { window.scrollTo(0, 0) }, [])
+
+  // The "add meal" sheet below stays mounted at all times (only slid
+  // off-screen via CSS transform) so its opening animation can play — it's
+  // never conditionally rendered. That means an `autoFocus` on its input
+  // used to fire the instant Nutrition.jsx mounted, i.e. right when the tab
+  // was tapped, before the sheet was even open. The browser then tried to
+  // scroll that "off-screen" fixed-position input into view, which is what
+  // caused the page to auto-scroll every single time the tab was opened.
+  // Fix: focus manually, only once the sheet has actually finished sliding in.
+  useEffect(() => {
+    if (sheetOpen && step === 1) {
+      const timer = setTimeout(() => foodSearchInputRef.current?.focus(), 340)
+      return () => clearTimeout(timer)
+    }
+  }, [sheetOpen, step])
 
   // Opened from the bottom nav's "+" menu ("Nouveau repas") — consume the
   // nav state once so it doesn't reopen on a later back-navigation/refresh.
@@ -430,11 +446,11 @@ Réponds en français.`
           <>
             <h2 className="text-lg bold" style={{ marginBottom: 16 }}>{t('add_food_title')}</h2>
             <input
+              ref={foodSearchInputRef}
               value={foodSearch}
               onChange={e => setFoodSearch(e.target.value)}
               placeholder="Rechercher un aliment..."
               style={{ marginBottom: 8 }}
-              autoFocus
             />
             {searching && (
               <p style={{ fontSize: 12, color: 'var(--text-muted)', padding: '8px 0', marginBottom: 4 }}>Recherche en cours...</p>
