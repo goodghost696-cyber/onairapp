@@ -6,6 +6,28 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo, branche `claude/charming-mendel-dj1GQ`, et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-08-06 — Session 18 (suite 13) : fond décoratif décentré (root cause trouvée) + responsive desktop côté membre
+
+Capture d'écran de l'utilisateur sur Entraînement (desktop) : le "carte héro" était bien visible cette fois, mais le dégradé décoratif de fond apparaissait plaqué à gauche de l'écran, déconnecté du contenu (qui, lui, restait bien centré).
+
+### 🐛 `#root::before` — root cause trouvée : `position: fixed` + `inset:0` + `max-width` = coincé à gauche du viewport
+Le dégradé décoratif (`#root::before`, `global.css`) était en `position: fixed` avec `inset: 0` et `max-width: 390px`. `position: fixed` est relatif au **viewport**, pas à `#root` — avec `left:0` et `right:0` tous les deux imposés par `inset:0` mais une largeur plafonnée à 390px, la combinaison est sur-contrainte : la spec CSS résout ça en gardant `left:0` et en ignorant `right`, donc l'élément se retrouve **collé au bord gauche du viewport**, peu importe où `#root` lui-même est réellement centré. Sur un écran plus large que 390px, le dégradé se détache visuellement du contenu (qui, lui, est correctement centré par `body`) — exactement ce que montrait la capture. Ce bug existait depuis le début, sur tous les écrans larges, coach compris — juste jamais remarqué avant faute de retour visuel.
+
+**Corrigé** : `position: fixed` → `position: absolute` (relatif à `#root`, déjà `position: relative`) — le dégradé suit maintenant `#root` exactement, quelle que soit sa largeur ou son centrage. Permet aussi de supprimer la règle `#root.coach-shell::before { max-width: ... }` devenue redondante dans `coach.css` (le pseudo-élément suit `#root` automatiquement désormais, plus besoin de dupliquer la largeur).
+
+### ✅ Responsive desktop étendu à la partie membre (même mécanisme que le coach)
+L'utilisateur a demandé une vraie version "webapp" responsive pour la partie membre aussi, pas seulement le coach. Réutilisé exactement le pattern validé côté coach (deux itérations de bugs déjà payées et corrigées là-bas) :
+- **`src/layouts/MemberLayout.jsx`** : ajoute la classe `member-shell` sur `#root` pendant qu'une route membre est montée (même mécanisme que `CoachLayout.jsx`).
+- **`src/styles/member.css`** (nouveau) : scopé à `#root.member-shell` + `@media (min-width: 900px)` — zéro changement sur mobile, zéro changement côté coach. Contrairement au coach (listes/grilles de clients), les écrans membre sont une pile de "cartes héro" sans contenu de type grille — donc pas besoin de reflow en grille : juste `.app-wrapper` (présent sur quasi tous les écrans membre) plafonné à 560px et centré, dont hérite tout le contenu à l'intérieur.
+- **Vérifié directement dans le CSS compilé** (`dist/assets/*.css`) avant de livrer : `position:absolute` confirmé sans `max-width` résiduel, règles `member-shell` présentes avec le bon contenu.
+
+La nav du bas (`BottomNav.jsx`) n'a pas été touchée — même choix que pour la nav coach, reste une pilule flottante centrée sur la largeur totale de l'écran.
+
+### 💬 Point en attente — changement de palette de couleurs
+L'utilisateur a évoqué vouloir changer la palette de couleurs de l'app ("je pense qu'on va changer de couleur"), sans préciser vers quoi. Pas commencé — à clarifier (quelles couleurs, quelle direction) avant d'y toucher, contrairement aux corrections de layout qui sont objectivement vérifiables.
+
+---
+
 ## 2026-08-05 — Session 18 (suite 12) : traitement "carte héro" étendu à tous les écrans membre restants
 
 L'utilisateur a insisté, à raison, que le style devait couvrir toute l'app, pas être découvert incrément par incrément à chaque capture d'écran.
