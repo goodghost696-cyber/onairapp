@@ -23,7 +23,7 @@ export default function Sleep() {
           <button style={{ background: 'none', border: 'none', cursor: 'pointer' }} onClick={() => navigate('/dashboard')}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" strokeWidth="1.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
           </button>
-          <span className="text-xs bold" style={{ color: 'var(--accent-secondary)' }}>SOMMEIL</span>
+          <span className="text-xs bold" style={{ color: 'var(--accent-secondary)' }}>😴 SOMMEIL</span>
         </div>
 
         <div className="card card-animated" style={{ textAlign: 'center', padding: 32, '--delay': '50ms' }}>

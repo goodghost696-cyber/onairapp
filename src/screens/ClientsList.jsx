@@ -55,7 +55,7 @@ export default function ClientsList() {
     <div className="app-wrapper">
       <div className="screen" style={{ paddingBottom: 110 }}>
         <div className="screen-header" style={{ padding: '20px 0 8px' }}>
-          <h1 className="text-xl bold">Mes Clients</h1>
+          <h1 className="text-xl bold">👥 Mes Clients</h1>
           <span className="text-xs text-muted">{loading ? '...' : `${members.length} membres`}</span>
         </div>
 

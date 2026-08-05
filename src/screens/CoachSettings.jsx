@@ -53,7 +53,7 @@ export default function CoachSettings() {
     <div className="app-wrapper">
       <div className="screen coach-narrow" style={{ paddingBottom: 110 }}>
         <div className="screen-header" style={{ padding: '20px 0 12px' }}>
-          <h1 className="text-xl bold">Paramètres</h1>
+          <h1 className="text-xl bold">⚙️ Paramètres</h1>
         </div>
 
         <div className="section-label">PROFIL COACH</div>

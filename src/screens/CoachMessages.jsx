@@ -54,7 +54,7 @@ export default function CoachMessages() {
     <div className="app-wrapper">
       <div className="screen" style={{ paddingBottom: 110 }}>
         <div className="screen-header" style={{ padding: '20px 0 12px' }}>
-          <h1 className="text-xl bold">Messages</h1>
+          <h1 className="text-xl bold">💬 Messages</h1>
         </div>
         {loading && <p className="text-sm text-muted">Chargement...</p>}
         {!loading && sorted.length === 0 && <p className="text-sm text-muted">Aucun client pour l'instant.</p>}

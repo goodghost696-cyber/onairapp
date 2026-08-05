@@ -106,6 +106,7 @@
   border: none;
   border-radius: 16px;
   cursor: pointer;
+  box-shadow: 0 8px 24px rgba(0,71,255,0.35);
 }
 
 .generate-program-btn {

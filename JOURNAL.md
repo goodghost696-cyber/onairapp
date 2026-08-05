@@ -6,6 +6,20 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo, branche `claude/charming-mendel-dj1GQ`, et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-08-05 — Session 18 (suite 8) : style visuel étendu à toute l'app (pas juste le Dashboard)
+
+L'utilisateur a signalé, à raison, que la suite 7 n'avait touché que le Dashboard alors que la demande était d'appliquer le style à toute l'application.
+
+### ✅ Traitement "glow + icônes" étendu partout
+- **`global.css` `.btn-accent`** : classe de bouton principal **partagée par la quasi-totalité de l'app** (Nutrition, Settings, MemberDetail, sheet d'ajout rapide, ResetPassword) — un seul changement ici propage le même glow radial (même logique de contraste vérifiée que sur le Dashboard) à tous les boutons d'action principaux de l'app d'un coup, plutôt que de dupliquer le style écran par écran.
+- **`Workout.css` `.today-session-btn`** : ombre portée bleue assortie.
+- **Icônes emoji ajoutées sur les en-têtes** de tous les écrans restants : Nutrition (🍽️), Workout (🏋️), Weekly (📊), Hydration (💧), Sleep (😴), Settings membre (⚙️), et côté coach : Dashboard (📋), Clients (👥), Messages (💬), Réglages (⚙️).
+
+### 🔍 Recherche tendances 2026 (à la demande de l'utilisateur)
+Recherche web sur les tendances actuelles de design d'app fitness : dark-mode natif + accents néon, dashboard en tuiles avec blocs de couleur, minimalisme, micro-interactions/animations de progression, personnalisation IA. ON AIR est déjà globalement aligné avec ces tendances (thème sombre + accent citron, cartes animées, Coach IA) — le travail de cette session (icônes + CTA plus affirmés) va dans le même sens. Rien d'autre appliqué depuis cette recherche, juste confirmation que la direction actuelle est cohérente.
+
+---
+
 ## 2026-08-05 — Session 18 (suite 7) : Dashboard — inspiration visuelle d'une app référence, scopée à un ajustement contenu
 
 L'utilisateur a partagé des captures Behance d'une app référence ("Athlevo" — une marketplace pour réserver coach/salle) en demandant ce que j'en pense côté style visuel. Précisé de ne pas copier tel quel : Athlevo utilise de grandes cartes CTA avec **photos** (coach, salle) — ON AIR n'a pas cet inventaire de photos (c'est du suivi personnel, pas une marketplace à parcourir), donc copier le pattern brut aurait laissé des cartes vides. Traduit l'énergie du style (cartes plus affirmées, glow, icônes) sans les photos :

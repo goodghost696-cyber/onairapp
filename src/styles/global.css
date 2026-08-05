@@ -167,8 +167,17 @@ button {
   font-family: inherit;
 }
 
+/* Bolder glow treatment, app-wide (not just Dashboard) — .btn-accent is the
+   shared "main action" button used across Nutrition, Settings, MemberDetail,
+   the quick-add sheet, ResetPassword, etc., so this one change reaches
+   every primary CTA in the app at once. Same corner-glow approach as
+   Dashboard's hero card (background stays solid --accent under the text,
+   glow only bleeds in from a corner) for the same contrast reason: full
+   --accent-secondary blend under --accent-ink text falls under WCAG AA. */
 .btn-accent {
-  background: var(--accent);
+  background:
+    radial-gradient(140% 200% at 100% 0%, var(--accent-secondary) 0%, transparent 50%),
+    var(--accent);
   color: var(--accent-ink);
   font-weight: 700;
   font-size: 13px;
@@ -179,7 +188,7 @@ button {
   display: block;
   transition: background 150ms;
   border-radius: var(--radius-btn);
-  box-shadow: 0 8px 32px rgba(212,255,0,0.18);
+  box-shadow: 0 8px 32px rgba(212,255,0,0.25);
 }
 .btn-accent:hover { background: var(--accent-hover); }
 
