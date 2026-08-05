@@ -59,7 +59,10 @@ export default function ClientsList() {
           <span className="text-xs text-muted">{loading ? '...' : `${members.length} membres`}</span>
         </div>
 
-        <div style={{ position: 'relative', marginBottom: 12 }}>
+        {/* .coach-toolbar caps this at a sane width on desktop — left
+            unwrapped, the search input (width:100%) would stretch into a
+            giant, mostly-empty text box on the wider shell. */}
+        <div className="coach-toolbar" style={{ position: 'relative', marginBottom: 12 }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="1.5" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
             <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
           </svg>
