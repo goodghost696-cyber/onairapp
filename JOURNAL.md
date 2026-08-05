@@ -6,6 +6,24 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo, branche `claude/charming-mendel-dj1GQ`, et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 📍 État au 2026-08-05 (fin de session 18) — à lire en premier
+
+Tout ce qui suit dans cette entrée et les deux d'en dessous a été fait aujourd'hui et est **mergé sur `claude/charming-mendel-dj1GQ`** (vérifié avant de clore la session — plus de PR en attente, working tree propre).
+
+**Fait aujourd'hui, dans l'ordre :**
+1. Résolu le bug de scroll intempestif sur Nutrition (root cause : `autoFocus` sur un input toujours monté dans le DOM).
+2. Ajouté les notifications push côté coach (symétrique du côté membre) + corrigé le toggle factice dans `CoachSettings.jsx`.
+3. Décidé avec l'utilisateur de **ne pas** faire une bibliothèque d'exercices 100% IA pour l'instant (voir détail plus bas).
+4. Fait un premier passage responsive desktop pour la partie coach uniquement (le membre reste inchangé).
+
+**À faire en priorité à la prochaine session :**
+- **Demander à l'utilisateur une capture d'écran du rendu desktop côté coach** (dashboard, clients, messages, fiche membre) avant d'aller plus loin — ce travail n'a jamais pu être vérifié visuellement dans ce sandbox et a un vrai risque de détails cassés (voir entrée détaillée ci-dessous).
+- Une fois validé : décider si la nav coach doit devenir une sidebar sur grand écran (volontairement pas touchée cette session).
+- 4 toggles de rappel factices restants, sans effet réel : "hydratation"/"séance"/"récap hebdo" dans `Settings.jsx` (membre) + "Alertes membres" dans `CoachSettings.jsx` (coach). À corriger ou supprimer.
+- `prevent_self_role_escalation()` : nettoyage GRANT RPC, sécurité, faible risque, différé depuis plusieurs sessions.
+
+---
+
 ## 2026-08-05 — Session 18 (suite) : premier passage responsive desktop, côté coach uniquement
 
 ### ✅ Layout desktop pour la partie coach — première passe, à valider visuellement
