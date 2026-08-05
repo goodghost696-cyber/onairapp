@@ -7,12 +7,12 @@ const MemberLayout = () => {
   const [showFAB, setShowFAB] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
-  // Hidden on /messages* — the FAB's own position (bottom:96px, right:16px,
-  // z-index:95) sits directly on top of Conversation.jsx's send button
-  // (bottom:100px, z-index:90), blocking it entirely. Also redundant there:
-  // you're already inside the conversation the FAB's "Mon Coach" entry
-  // would open.
-  const hideFAB = location.pathname.startsWith('/messages')
+  // Hidden on /messages* and /ai-coach — the FAB's own position
+  // (bottom:96px, right:16px, z-index:95) sits directly on top of both
+  // screens' send button (bottom:100px, z-index:90), blocking it entirely.
+  // Also redundant there: you're already inside the conversation the
+  // FAB's "Mon Coach"/"Coach IA" entry would open.
+  const hideFAB = location.pathname.startsWith('/messages') || location.pathname.startsWith('/ai-coach')
 
   return (
     <div className="member-layout">

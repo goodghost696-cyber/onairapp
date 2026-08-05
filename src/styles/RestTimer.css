@@ -13,7 +13,13 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  z-index: 90;
+  /* 96, not 90 like Conversation/AICoach — this one isn't hidden by route
+     (workout/session isn't excluded from MemberLayout's FAB, and hiding
+     the FAB mid-workout doesn't make the same sense it does mid-chat), so
+     it needs to sit above the FAB (z-index:95, fab.css) itself rather
+     than relying on the FAB being suppressed. Same underlying collision
+     as the other two — bottom:100/96px, same right-side zone. */
+  z-index: 96;
   animation: slideUp 250ms cubic-bezier(0.34,1.56,0.64,1);
 }
 

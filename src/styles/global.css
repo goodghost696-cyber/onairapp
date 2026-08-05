@@ -246,7 +246,7 @@ button {
 
 .progress-bar {
   height: 2px;
-  background: rgba(255,255,255,0.1);
+  background: var(--surface-2);
   border-radius: 2px;
   overflow: hidden;
   margin-top: 8px;
@@ -301,11 +301,22 @@ button {
 .scan-btn-sub {
   display: block;
   font-size: 11px;
-  color: rgba(255,255,255,0.6);
   margin-top: 2px;
   font-weight: 400;
   letter-spacing: 0;
   text-transform: none;
+}
+/* Was a bare white-at-60%-opacity default, uncaught by the Session 12
+   text-on-accent contrast audit (that grepped for color:#fff/white, which
+   this rgba() form didn't match) — under .primary specifically, that's
+   near-white text on the lime button, the exact contrast bug that audit
+   was meant to catch everywhere else. Split per-variant instead of one
+   shared default: .primary sits on --accent (lime, needs --accent-ink,
+   which itself flips per theme), .secondary/.tertiary sit on --surface
+   (needs --text-muted). */
+.scan-btn.primary .scan-btn-sub {
+  color: var(--accent-ink);
+  opacity: 0.7;
 }
 .scan-btn.secondary .scan-btn-sub,
 .scan-btn.tertiary .scan-btn-sub {

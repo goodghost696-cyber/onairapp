@@ -6,6 +6,44 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo, branche `claude/charming-mendel-dj1GQ`, et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-08-05 — Session 17 : audit complet demandé par l'utilisateur, plusieurs vrais bugs trouvés
+
+L'utilisateur a signalé 3 problèmes précis et demandé explicitement d'inspecter tout le reste du code pour trouver quoi améliorer. Trois bugs confirmés et corrigés, un quatrième (scroll intempestif sur Nutrition) pas encore identifié avec certitude.
+
+### 🐛 1. FAB "Coach IA/Mon Coach" en collision avec d'autres boutons — 3 endroits
+Le FAB global (`MemberLayout.jsx`, `fab.css` : `bottom:96px, right:16px, z-index:95`) se superposait à d'autres boutons fixes utilisant presque exactement la même zone :
+- **`Nutrition.jsx`** — le bouton "+" (Ajouter un repas) était à `bottom:90, right:16, zIndex:95`, quasi identique au FAB. C'est le bug signalé par l'utilisateur ("modifier les boutons messages et ajouter un repas"). Déplacé à gauche (`left:16` au lieu de `right:16`).
+- **`AICoach.jsx`** — le bouton d'envoi du chat IA (`bottom:100, zIndex:90`) avait exactement le même souci que celui déjà corrigé sur `Conversation.jsx` en Session 16, mais jamais étendu à cet écran. `/ai-coach` ajouté à la liste des routes qui masquent le FAB dans `MemberLayout.jsx`.
+- **`RestTimer.css`** (timer de repos pendant une séance) — même zone (`bottom:100px, z-index:90`). Comme `/workout/session` n'a pas de raison de masquer complètement le FAB, remonté son z-index à 96 (au-dessus du FAB) plutôt que d'exclure la route.
+
+### 🐛 2. Bibliothèques d'exercices trop courtes + fiches détail cassées pour tout exercice venant de l'API
+Deux problèmes cumulés qui expliquent le ressenti "pas assez d'exercices" :
+- **`ExerciseModal.jsx`** ne connaissait que les 24 exercices locaux codés en dur (`EXERCISE_DATA[id]`) — pour n'importe quel exercice venant de l'API (`api/exercises.js`, API Ninjas), la fiche détail retournait `null` **silencieusement** : aucune erreur, la fiche ne s'ouvrait juste jamais. Concrètement, même quand l'API renvoyait plein d'exercices, cliquer dessus pour voir les instructions ne faisait rien. Corrigé : repli sur les champs propres de l'exercice (`muscles`/`instructions`/`equipment` fournis par `useExercises.js`) quand il n'y a pas de fiche française curatée.
+- **`WorkoutLibrary.jsx`** : bibliothèque locale (utilisée si l'API est indisponible/lente/limitée) doublée de 8 à 16 exercices par section (Maison/Salle/Dehors), avec fiches détaillées françaises complètes ajoutées dans `ExerciseModal.jsx` pour chacun des 24 nouveaux.
+
+### 🐛 3. Cinq couleurs codées en dur cassaient le thème clair — trouvées en auditant le reste des écrans
+Même famille de bug que ceux déjà corrigés plusieurs fois cette session (Landing, nav coach, CoachDashboard) : des valeurs `rgba(255,255,255,...)` ou hex codées en dur au lieu des tokens `--surface-2`/`--text-muted`/`--accent-ink`, invisibles ou à contraste cassé en thème clair.
+- `Dashboard.jsx` : label + piste de la barre des macros (`#8A8A8A`/`#232323`), piste de la barre "Séances cette semaine" (`rgba(255,255,255,0.1)`).
+- `CalorieRing.jsx` : piste de fond de l'anneau de calories (`rgba(255,255,255,0.08)`) — l'anneau est affiché en gros sur tout le Dashboard, donc bien visible dès qu'on est en thème clair.
+- `global.css` : `.progress-bar` (classe **partagée** par Hydratation/Bilan/liste clients coach/etc.) avait sa piste en blanc dur.
+- `global.css` : `.scan-btn-sub` — bug à deux niveaux dans la même ligne : cassé en thème clair (comme les autres) **et** contraste texte-sur-accent jamais attrapé par l'audit de Session 12 (ce dernier cherchait `color:#fff`/`white`, pas la forme `rgba(255,255,255,0.6)`) — le sous-titre du bouton "Appareil photo" (fond citron) était en blanc translucide au lieu de `--accent-ink`. Séparé en 3 règles par variante (primary/secondary/tertiary) au lieu d'un défaut partagé ambigu.
+
+### ⚠️ Bug non résolu — scroll intempestif sur Nutrition (précisions obtenues, à corriger en priorité la prochaine session)
+L'utilisateur rapporte : "quand je clique dessus la page descend toute seule" sur la page Nutrition. Cherché `autoFocus`/`scrollIntoView`/`window.scrollTo` dans tout le composant et ses dépendances directes (`SwipeableRow`, `NutriscoreBadge`, `BottomNav`) — rien trouvé qui expliquerait un scroll automatique vers le bas avec certitude. **Pas corrigé** dans cette session, faute de budget pour creuser davantage.
+
+**Précisions données par l'utilisateur, à exploiter dès le début de la prochaine session** :
+- Ça arrive **systématiquement**, pas seulement parfois.
+- Ça se déclenche **juste après avoir tapé sur le bouton/onglet Nutrition** (donc au moment de la navigation vers la page, pas après un clic sur un élément précis à l'intérieur — carte, bouton scanner, etc. écartés).
+
+Pistes pas encore explorées à checker en premier : le comportement de `BottomNav.jsx` au changement d'onglet (son listener de scroll utilise une ref `lastScrollY` qui n'est jamais réinitialisée entre deux navigations, seulement l'effet qui se réattache — possible incohérence au premier scroll event après un changement de page) ; l'animation `headerIn` sur `.screen-header` (translateY(-10px)→0, rejouée à chaque montage) ; et surtout comparer avec les autres écrans à onglet (Dashboard/Workout/Weekly) pour voir si le bug est spécifique à Nutrition ou généralisé mais seulement remarqué là.
+
+### 💡 Idée produit à trancher — la bibliothèque d'exercices devrait-elle être 100% IA ?
+Question posée par l'utilisateur : plutôt que la bibliothèque actuelle (locale + API Ninjas tierce, qu'on vient de doubler et de déboguer), est-ce que ce ne serait pas mieux de ne garder **que de l'IA** pour proposer des exercices sur cette page — tout en gardant la possibilité de logger les exercices réellement faits dans la journée (le flux "séance"/`WorkoutSession.jsx` resterait inchangé, c'est bien la bibliothèque de découverte qui serait concernée). Pas tranché, pas commencé — juste évoqué en fin de session, à creuser avec l'utilisateur avant de coder quoi que ce soit (impact : remplacerait potentiellement tout le travail qu'on vient de faire sur `WorkoutLibrary.jsx`/`ExerciseModal.jsx`/`api/exercises.js`, donc à valider clairement avant de s'y lancer).
+
+Build validé après chaque lot. Comme toujours, aucune vérification visuelle possible dans ce sandbox. **Session arrêtée ici faute de budget tokens restant** — PR #18 poussée et déployée sur preview, toujours en draft, pas mergée.
+
+---
+
 ## 2026-08-04 — Session 16 (suite 6) : push notifications, côté membre uniquement
 
 ### ✅ Variables VAPID ajoutées par l'utilisateur dans Vercel
