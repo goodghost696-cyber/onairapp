@@ -6,6 +6,22 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo, branche `claude/charming-mendel-dj1GQ`, et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-08-05 — Session 18 (suite 9) : capture d'écran Nutrition — "aucun changement", 2 vrais problèmes trouvés
+
+L'utilisateur a envoyé une capture de la page Nutrition en disant "aucun changement". Deux causes réelles :
+
+### 🐛 Le changement app-wide de la suite 8 était réel mais invisible sur cet écran précis
+`.btn-accent` (le bouton qui a reçu le glow) n'apparaît nulle part sur l'écran Nutrition visible par défaut — il est caché dans la feuille "Ajouter un repas", fermée par défaut. Seule l'icône 🍽️ dans l'en-tête était visible, donc l'impression de "rien n'a changé" était légitime pour cet écran précis.
+
+### 🐛 `nutrition.css` n'était jamais importé nulle part dans le code — trouvé en essayant d'ajouter du style à cet écran
+Fichier existant depuis longtemps (`.macro-row`, `.meal-card`) mais **jamais chargé** — aucun écran ne l'importait. Mort depuis le début, aucune de ses règles n'avait jamais eu d'effet. Corrigé : import ajouté dans `Nutrition.jsx`.
+
+### ✅ Traitement visible ajouté sur la carte calories + "Idée recette"
+- Carte calories : glow radial subtil en coin (même langage que les CTA, mais discret — c'est une carte de données dense, pas un bouton), coins plus arrondis, chiffre principal agrandi (36px → 44px).
+- "Idée recette" : icône dans un badge circulaire coloré (au lieu d'un simple emoji flottant), ombre portée, padding plus généreux.
+
+---
+
 ## 2026-08-05 — Session 18 (suite 8) : style visuel étendu à toute l'app (pas juste le Dashboard)
 
 L'utilisateur a signalé, à raison, que la suite 7 n'avait touché que le Dashboard alors que la demande était d'appliquer le style à toute l'application.
