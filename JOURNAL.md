@@ -16,12 +16,26 @@ Tout ce qui suit dans cette entrée et les entrées d'en dessous a été fait au
 3. Décidé avec l'utilisateur de **ne pas** faire une bibliothèque d'exercices 100% IA pour l'instant.
 4. Fait un premier passage responsive desktop pour la partie coach uniquement (le membre reste inchangé) — **non vérifié visuellement, à confirmer par capture d'écran**.
 5. Supprimé les 4 toggles de rappel factices (3 dans `Settings.jsx`, 1 dans `CoachSettings.jsx`) qui ne faisaient rien.
-6. Nettoyage sécurité : `prevent_self_role_escalation()` n'est plus appelable en RPC public (voir détail plus bas).
+6. Nettoyage sécurité : `prevent_self_role_escalation()` n'est plus appelable en RPC public.
+7. Trouvé et réparé un compte membre réel (la mère de l'utilisateur) inscrit mais sans fiche profil (invisible côté coach) + ajouté une auto-réparation dans `AuthContext.jsx` pour que ça ne puisse plus arriver à personne d'autre sans intervention manuelle (voir détail plus bas).
 
 **À faire en priorité à la prochaine session :**
 - **Demander à l'utilisateur une capture d'écran du rendu desktop côté coach** (dashboard, clients, messages, fiche membre) avant d'aller plus loin — ce travail n'a jamais pu être vérifié visuellement dans ce sandbox et a un vrai risque de détails cassés.
 - Une fois validé : décider si la nav coach doit devenir une sidebar sur grand écran (volontairement pas touchée cette session).
 - Si un vrai système de rappels programmés (hydratation/séance/récap hebdo) est voulu un jour, c'est à reconstruire de zéro — les toggles factices ont été retirés plutôt que laissés à mentir sur leur effet.
+
+---
+
+## 2026-08-05 — Session 18 (suite 3) : compte membre orphelin (mère de l'utilisateur) réparé + self-healing ajouté
+
+### 🐛 Un compte inscrit n'avait aucune fiche profil — trouvé en checkant le compte de la mère de l'utilisateur
+L'utilisateur a demandé de vérifier le compte de sa mère (email `gmatondo354@gmail.com`, inscrite la veille sur son téléphone). Trouvé : le compte existait bien dans `auth.users` (créé, email confirmé, une connexion réussie) mais **aucune ligne dans `profiles`** — invisible pour le coach (`ClientsList`/`CoachDashboard` filtrent sur `profiles.role='member'`), sans nom, sans rien.
+
+Vérifié que ce n'est **pas** un bug systémique : sur les 4 comptes existants, elle est la seule dans ce cas. Cause la plus probable : `register()` (`AuthContext.jsx`) fait `signUp()` puis, dans un second `await` séparé, l'upsert du profil — si la connexion coupe ou l'app est mise en arrière-plan pile entre les deux (plausible sur téléphone juste après avoir tapé "S'inscrire"), le compte auth existe mais le profil n'est jamais créé, et rien ne le retente jamais après coup.
+
+**Réparé immédiatement** : ligne `profiles` créée à la main pour ce compte (prénom "Gisèle" récupéré depuis `user_metadata`), elle est maintenant visible côté coach.
+
+**Corrigé pour que ça n'arrive plus à personne** : `resolveRole()` dans `AuthContext.jsx` — appelée à chaque restauration de session et à chaque connexion — vérifie maintenant l'existence du profil (`.maybeSingle()` au lieu de `.single()`, pour distinguer proprement "aucune ligne" d'une vraie erreur) et **recrée le profil manquant à la volée** si besoin, à partir des infos déjà connues (`user_metadata`). Auto-réparation silencieuse, sans action utilisateur.
 
 ---
 
