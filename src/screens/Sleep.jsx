@@ -26,7 +26,7 @@ export default function Sleep() {
           <span className="text-xs bold" style={{ color: 'var(--accent-secondary)' }}>😴 SOMMEIL</span>
         </div>
 
-        <div className="card card-animated" style={{ textAlign: 'center', padding: 32, '--delay': '50ms' }}>
+        <div className="card card-hero card-animated" style={{ textAlign: 'center', padding: 32, '--delay': '50ms' }}>
           <div className="text-2xl bold" style={{ fontSize: 48, lineHeight: 1 }}>
             {appData.sleep.hours}h{String(appData.sleep.minutes).padStart(2,'0')}
           </div>

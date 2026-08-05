@@ -25,7 +25,7 @@ export default function Hydration() {
           <span className="text-xs bold" style={{ color: 'var(--accent-secondary)' }}>💧 HYDRATATION</span>
         </div>
 
-        <div className="card card-animated" style={{ textAlign: 'center', padding: 40, '--delay': '50ms' }}>
+        <div className="card card-hero card-animated" style={{ textAlign: 'center', padding: 40, '--delay': '50ms' }}>
           <div className="text-2xl bold" style={{ fontSize: 48, lineHeight: 1 }}>{appData.water}</div>
           <div className="text-xs text-muted" style={{ marginTop: 4 }}>ML / {appData.waterGoal}ML</div>
           <div className="progress-bar" style={{ height: 8, marginTop: 24 }}>

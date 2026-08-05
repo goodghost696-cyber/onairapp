@@ -6,6 +6,20 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo, branche `claude/charming-mendel-dj1GQ`, et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-08-05 — Session 18 (suite 12) : traitement "carte héro" étendu à tous les écrans membre restants
+
+L'utilisateur a insisté, à raison, que le style devait couvrir toute l'app, pas être découvert incrément par incrément à chaque capture d'écran.
+
+### ✅ `.card.card-hero` — nouvelle classe utilitaire globale (`global.css`)
+Centralise le glow radial déjà utilisé sur Nutrition dans **une seule** règle réutilisable partout, plutôt que dupliquée par écran — avec la leçon de la suite 11 appliquée dès l'écriture (sélecteur `.card.card-hero`, spécificité garantie supérieure à `.card` seul, peu importe l'ordre du bundle). **Vérifié directement dans le CSS compilé** (`dist/assets/*.css`) avant de livrer, cette fois — plus question de se fier au seul fait que le build passe.
+
+Appliquée sur la carte principale ("héro") de chaque écran membre qui en a une :
+- `Hydration.jsx` (carte eau), `Sleep.jsx` (carte sommeil), `Weekly.jsx` (carte calories/graphique), `Workout.jsx` (carte séances de la semaine), `Nutrition.jsx` (consolidée sur la classe globale, remplace l'ancienne `.nutrition-hero-card` locale devenue redondante).
+
+Dashboard avait déjà son propre traitement équivalent (session précédente) — non retouché. Écrans à grille de petites cartes (stats coach, fiche membre) volontairement laissés tels quels : un glow sur chaque petite tuile individuelle aurait l'air répétitif/criard plutôt que "héro".
+
+---
+
 ## 2026-08-05 — Session 18 (suite 11) : le vrai bug — pas le cache, un écrasement CSS silencieux
 
 L'utilisateur a vidé son cache complètement (suite au correctif précédent) et voyait **toujours exactement la même chose** sur Nutrition. Ça éliminait le cache comme cause — remis en question l'hypothèse et vérifié directement le CSS **compilé** (`dist/assets/*.css`) plutôt que de deviner encore.

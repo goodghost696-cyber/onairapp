@@ -97,7 +97,7 @@ Donne exactement 4-5 exercices adaptés à l'objectif.`
 
         <h1 style={{ fontSize: 30, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 24 }}>{t('workout')}</h1>
 
-        <div className="card card-animated" style={{ '--delay': '0ms', marginBottom: 14 }}>
+        <div className="card card-hero card-animated" style={{ '--delay': '0ms', marginBottom: 14 }}>
           <div className="flex justify-between items-center">
             <span className="text-sm text-muted">{t('sessions_week')}</span>
             <span style={{ fontSize: 22, fontWeight: 800, color: 'var(--accent)' }}>{appData.weeklyWorkouts}<span style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 400 }}>/{appData.weeklyGoal}</span></span>

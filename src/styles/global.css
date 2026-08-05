@@ -230,6 +230,24 @@ button {
   overflow: hidden;
 }
 
+/* Reusable "hero" glow treatment — one global class instead of duplicating
+   it per screen, so it's applied consistently everywhere and only needs
+   maintaining in one place. `.card.card-hero`, not `.card-hero` alone, is
+   deliberate: a single-class version of this exact rule was silently
+   overridden by plain .card earlier today (equal specificity, .card landed
+   later in the bundled CSS, so it won every shared property) — confirmed
+   by inspecting the actual compiled CSS output, not just a passing build.
+   Combining two classes on the selector gives this strictly higher
+   specificity than plain .card, so it always wins regardless of import/
+   bundle order, this time verified against the compiled output before
+   shipping. */
+.card.card-hero {
+  border-radius: 24px;
+  background:
+    radial-gradient(120% 140% at 100% 0%, rgba(212,255,0,0.12) 0%, transparent 55%),
+    var(--surface);
+}
+
 .ai-program-badge {
   background: transparent;
   border: none;
