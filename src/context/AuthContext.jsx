@@ -23,6 +23,15 @@ function sessionToUser(session) {
 // Replaces the metadata-derived role on a user object with the real role
 // from the profiles table (manually created / role-promoted accounts don't
 // have user_metadata.role set — e.g. coach/admin accounts set via SQL).
+//
+// Also self-heals a missing profile row: register() below inserts one
+// right after signUp(), but that's two separate awaited calls — if the
+// connection drops or the tab/app closes between them (very plausible on a
+// phone right after hitting "S'inscrire"), the auth account exists with no
+// profile at all, forever, with nothing to ever retry it. Hit for real on
+// 2026-08-05 (one member invisible to her coach, no name, nothing — fixed
+// by hand in the database once, this makes sure it self-repairs from here
+// on instead of needing another manual fix).
 async function resolveRole(u) {
   if (!u) return u
   try {
@@ -30,11 +39,19 @@ async function resolveRole(u) {
       .from('profiles')
       .select('role')
       .eq('user_id', u.id)
-      .single()
+      .maybeSingle()
     if (error) {
       console.error('[Auth] resolveRole: profiles role lookup failed', error)
-    } else if (data?.role) {
+    } else if (data) {
       u.role = data.role
+    } else {
+      console.error('[Auth] resolveRole: no profile row for', u.id, '— self-healing one now')
+      const { error: healError } = await supabase.from('profiles').upsert({
+        user_id: u.id,
+        prenom: u.name,
+        email: u.email,
+      }, { onConflict: 'user_id' })
+      if (healError) console.error('[Auth] resolveRole: self-heal profile upsert failed', healError)
     }
   } catch (err) {
     console.error('[Auth] resolveRole: profiles role lookup threw', err)
