@@ -154,7 +154,12 @@ export default function Onboarding() {
     localStorage.setItem('onair_user', JSON.stringify(profile))
     localStorage.setItem('onair_calorieGoal', profile.calorieGoal)
     if (updateUserProfile) updateUserProfile(profile)
-    navigate('/dashboard')
+    // Straight to a short app tour instead of Dashboard directly — a brand
+    // new member otherwise lands there with zero explanation of what
+    // anything does. Consumed once (see AppTour.jsx), same one-shot
+    // pattern as onair_just_registered above.
+    localStorage.setItem('onair_show_tour', 'true')
+    navigate('/welcome')
   }
 
   function setAnswer(key, value) {
