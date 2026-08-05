@@ -1,12 +1,21 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useLocation, Outlet } from 'react-router-dom'
 import BottomNav from '../components/BottomNav'
 import '../styles/fab.css'
+import '../styles/member.css'
 
 const MemberLayout = () => {
   const [showFAB, setShowFAB] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
+
+  // Scopes the desktop-responsive rules in member.css to member routes only
+  // — same "toggle a class while mounted" mechanism as CoachLayout.jsx.
+  useEffect(() => {
+    const root = document.getElementById('root')
+    root?.classList.add('member-shell')
+    return () => root?.classList.remove('member-shell')
+  }, [])
   // Hidden on /messages* and /ai-coach — the FAB's own position
   // (bottom:96px, right:16px, z-index:95) sits directly on top of both
   // screens' send button (bottom:100px, z-index:90), blocking it entirely.

@@ -27,9 +27,9 @@
     max-width: 100%;
   }
 
-  #root.coach-shell::before {
-    max-width: 100%;
-  }
+  /* No ::before override needed anymore — it's `position: absolute` now
+     (global.css) so it automatically tracks #root's real box, whatever
+     width that currently is, without a separate rule duplicating it here. */
 
   #root.coach-shell .screen {
     max-width: 1600px;

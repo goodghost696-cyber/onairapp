@@ -1,0 +1,29 @@
+/* Desktop layout for the member side — same approach as coach.css, applied
+ * to the other half of the app now that the coach side has been through
+ * two rounds of fixes on this exact pattern (background vs content width
+ * are separate concerns; use a fluid cap, not a fixed one; verify against
+ * the actual compiled CSS, not just a passing build).
+ *
+ * MemberLayout.jsx toggles `member-shell` on #root for exactly as long as
+ * a member route is mounted, so the coach side and, more importantly,
+ * every member screen on an actual phone are byte-for-byte unaffected.
+ *
+ * Member screens don't have list/grid content the way the coach's client
+ * list or messages inbox do — it's a vertical stack of "hero" cards
+ * (Dashboard, Nutrition, Workout, Weekly, Hydration, Sleep all follow this
+ * shape). So unlike coach.css there's no grid reflow needed here: just cap
+ * .app-wrapper (present at the root of every member screen) at a
+ * comfortable width and center it — .screen and everything inside it
+ * inherits that width automatically since it's a normal block child.
+ */
+@media (min-width: 900px) {
+  #root.member-shell {
+    max-width: 100%;
+  }
+
+  #root.member-shell .app-wrapper {
+    max-width: 560px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}

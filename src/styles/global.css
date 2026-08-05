@@ -32,16 +32,26 @@ body {
   background: var(--bg);
 }
 
+/* Was `position: fixed` — fixed positioning is relative to the VIEWPORT,
+   not to #root, so `inset:0` + `max-width:390px` together pinned this to
+   the viewport's literal left edge (an over-constrained left/right/width
+   combo resolves by keeping left:0 and dropping right, per the CSS spec)
+   regardless of where #root itself was actually centered by body's flex.
+   On any screen wider than 390px the glow visibly detached from the real
+   (centered) content and sat stranded on the left — reported by a user on
+   a wide screen, 2026-08-06. `position: absolute` makes this track #root
+   (the nearest positioned ancestor, already `position: relative`) instead,
+   so it always exactly matches #root's real box, at any width, on any
+   screen — including the member-side responsive width added below. */
 #root::before {
   content: '';
-  position: fixed;
+  position: absolute;
   inset: 0;
   pointer-events: none;
   z-index: 0;
   background:
     radial-gradient(ellipse 90% 55% at 18% 25%, rgba(212,255,0,0.10) 0%, transparent 62%),
     radial-gradient(ellipse 60% 40% at 85% 80%, rgba(0,71,255,0.14) 0%, transparent 55%);
-  max-width: 390px;
 }
 
 #root > * {
