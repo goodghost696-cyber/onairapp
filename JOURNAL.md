@@ -6,6 +6,21 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo, branche `claude/charming-mendel-dj1GQ`, et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-08-05 — Session 18 (suite 11) : le vrai bug — pas le cache, un écrasement CSS silencieux
+
+L'utilisateur a vidé son cache complètement (suite au correctif précédent) et voyait **toujours exactement la même chose** sur Nutrition. Ça éliminait le cache comme cause — remis en question l'hypothèse et vérifié directement le CSS **compilé** (`dist/assets/*.css`) plutôt que de deviner encore.
+
+### 🐛 `.nutrition-hero-card` et `.nutrition-recipe-card` étaient silencieusement écrasées par `.card`
+Root cause confirmée en comparant la position des règles dans le fichier CSS final buildé : `.nutrition-hero-card` (une seule classe, spécificité 0-1-0) apparaissait **avant** `.card` (aussi 0-1-0) dans le bundle — à spécificité égale, la règle la **plus tardive dans le fichier gagne**, donc `.card` (background/border/border-radius) écrasait systématiquement mon style, sur chaque rendu, cache ou pas cache. La classe personnalisée était donc appliquée dans le HTML (`className="card nutrition-hero-card"`) mais n'avait **strictement aucun effet visuel** — d'où "aucun changement" vrai et reproductible, peu importe combien de fois le cache était vidé.
+
+**Corrigé** : sélecteurs changés en `.card.nutrition-hero-card` / `.card.nutrition-recipe-card` (deux classes combinées = spécificité 0-2-0), qui bat `.card` seul **quel que soit l'ordre** dans le bundle — plus jamais dépendant de l'ordre d'import des fichiers CSS. Vérifié directement dans `dist/assets/*.css` après correction que la règle avec la bonne spécificité est bien celle qui s'applique.
+
+**Balayé le reste du code** pour le même piège (une classe perso combinée à `.card` sur le même élément) — c'était le seul endroit concerné, tous les autres combos (`card card-animated`, etc.) n'ont pas de propriétés qui se chevauchent donc pas de conflit.
+
+**Leçon** : la prochaine fois qu'un changement CSS semble "ne pas s'appliquer" malgré un build qui passe, vérifier le CSS **compilé** directement (`dist/assets/*.css`, position des règles, spécificité) avant de soupçonner le cache — le cache était une piste plausible et le correctif de la suite 10 reste légitime, mais ce n'était pas *ce* bug-ci.
+
+---
+
 ## 2026-08-05 — Session 18 (suite 10) : root cause probable du "aucun changement" — cache HTTP de index.html jamais configuré
 
 Après plusieurs rounds où l'utilisateur ne voyait aucun changement malgré des PR mergées et vérifiées par build, remis en question l'hypothèse "mes changements sont ratés" pour plutôt chercher pourquoi il ne verrait **rien du tout**, changement ou pas.
