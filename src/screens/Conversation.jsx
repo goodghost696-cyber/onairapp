@@ -86,7 +86,7 @@ export default function Conversation({ isCoach = false }) {
     const text = input.trim()
     if (!text || !user?.id || !otherUserId) return
     setInput('')
-    const { success, message, error } = await sendMessage(user.id, otherUserId, text)
+    const { success, message, error } = await sendMessage(user.id, otherUserId, text, { senderIsCoach: isCoach, senderName: user?.name })
     if (success) {
       setMessages(prev => prev.some(m => m.id === message.id) ? prev : [...prev, message])
     } else {

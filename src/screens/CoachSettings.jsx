@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import CoachNav from '../components/CoachNav'
 import { authHeader } from '../lib/supabase'
+import { isPushSupported, getPushSubscriptionState, subscribeToPush, unsubscribeFromPush } from '../utils/push'
 
 function Toggle({ on, onToggle }) {
   return (
@@ -15,8 +16,12 @@ function Toggle({ on, onToggle }) {
 export default function CoachSettings() {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
-  const [notifs, setNotifs] = useState({ alerts: true, messages: true })
+  // "Alertes membres" stays a local-state placeholder (no scheduling logic
+  // built yet) — "Nouveaux messages" used to be one too, now replaced below
+  // by a real push subscription (same mechanism as the member side).
+  const [notifs, setNotifs] = useState({ alerts: true })
   const [inviteCode, setInviteCode] = useState('...')
+  const [pushState, setPushState] = useState('loading')
 
   useEffect(() => {
     let cancelled = false
@@ -29,6 +34,24 @@ export default function CoachSettings() {
     })
     return () => { cancelled = true }
   }, [])
+
+  useEffect(() => {
+    if (!isPushSupported()) { setPushState('unsupported'); return }
+    getPushSubscriptionState().then(setPushState)
+  }, [])
+
+  async function handleTogglePush() {
+    if (pushState === 'loading') return
+    if (pushState === 'subscribed') {
+      setPushState('loading')
+      await unsubscribeFromPush()
+      setPushState('unsubscribed')
+    } else {
+      setPushState('loading')
+      const result = await subscribeToPush(user?.id)
+      setPushState(result.success ? 'subscribed' : (result.error === 'permission-denied' ? 'denied' : 'unsubscribed'))
+    }
+  }
 
   return (
     <div className="app-wrapper">
@@ -59,7 +82,16 @@ export default function CoachSettings() {
 
         <div className="section-label">NOTIFICATIONS</div>
         <div className="card">
-          {[{ key: 'alerts', label: 'Alertes membres' }, { key: 'messages', label: 'Nouveaux messages' }].map(n => (
+          {pushState !== 'unsupported' && (
+            <div className="flex justify-between items-center" style={{ padding: '14px 0', borderBottom: '2px solid var(--border)' }}>
+              <div>
+                <div className="text-sm text-secondary">Nouveaux messages</div>
+                {pushState === 'denied' && <div className="text-xs" style={{ color: 'var(--danger)', marginTop: 2 }}>Bloquées dans les réglages du navigateur</div>}
+              </div>
+              <Toggle on={pushState === 'subscribed'} onToggle={handleTogglePush} />
+            </div>
+          )}
+          {[{ key: 'alerts', label: 'Alertes membres' }].map(n => (
             <div key={n.key} className="flex justify-between items-center" style={{ padding: '14px 0', borderBottom: '2px solid var(--border)' }}>
               <span className="text-sm text-secondary">{n.label}</span>
               <Toggle on={notifs[n.key]} onToggle={() => setNotifs(p => ({...p, [n.key]: !p[n.key]}))} />

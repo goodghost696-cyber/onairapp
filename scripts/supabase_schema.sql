@@ -391,4 +391,26 @@ create policy "Coaches can view member push subscriptions"
 create policy "Coaches can delete stale member push subscriptions"
   on push_subscriptions for delete using (is_coach());
 
+-- Mirrors the two policies above, other direction — lets api/send-push.js
+-- read/prune a coach's subscriptions using a member's own bearer token, so
+-- a member sending a message can notify their coach (coach-side push).
+create policy "Members can view coach push subscriptions"
+  on push_subscriptions for select
+  using (
+    exists (
+      select 1 from profiles p
+      where p.user_id = push_subscriptions.user_id
+        and p.role in ('coach', 'admin')
+    )
+  );
+create policy "Members can delete stale coach push subscriptions"
+  on push_subscriptions for delete
+  using (
+    exists (
+      select 1 from profiles p
+      where p.user_id = push_subscriptions.user_id
+        and p.role in ('coach', 'admin')
+    )
+  );
+
 create index if not exists push_subscriptions_user_idx on push_subscriptions (user_id);

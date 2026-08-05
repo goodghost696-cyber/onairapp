@@ -16,11 +16,21 @@ Corrigé : `autoFocus` retiré, remplacé par un `useEffect` qui appelle `.focus
 ### 📌 Rappel process — toujours merger avant de considérer une session terminée
 La PR #18 (Session 17) était restée en **draft, jamais mergée**, ce qui fait qu'une nouvelle session ouverte juste après ne voyait aucun des changements/entrées de journal de la Session 17 en lisant `claude/charming-mendel-dj1GQ` (la branche de reprise). Corrigé en mergeant la PR #18. **Règle à appliquer systématiquement désormais : merger la PR avant de considérer un lot de travail comme terminé, pas seulement la pousser en draft.**
 
+### ✅ Décision produit — bibliothèque d'exercices 100% IA : NON, pas pour l'instant
+Discuté avec l'utilisateur. Décision : on garde la bibliothèque statique actuelle (48 exercices + API Ninjas en complément) telle quelle. Remplacer par une génération IA à la volée introduirait de la latence, un coût par appel, un risque de fiabilité (bibliothèque inutilisable si l'IA est lente/en panne) et surtout un risque de consignes de forme d'exécution erronées (plus sensible que pour une recette, risque de blessure). Une option intermédiaire (section "Suggestions IA" en haut de la bibliothèque, générée une fois et mise en cache, liste statique conservée en dessous) a été évoquée mais pas retenue pour l'instant faute de demande réelle des membres — à revisiter si le besoin se confirme en usage réel.
+
+### ✅ Push notifications côté coach — fait (symétrique du côté membre)
+Un membre qui écrit à son coach déclenche maintenant une vraie notif push côté coach, comme l'inverse existant depuis la session précédente.
+- **RLS** (migration `member_can_view_coach_push_subscriptions`) : ajout de "Members can view coach push subscriptions" et "Members can delete stale coach push subscriptions", miroir exact des policies coach→membre déjà en place. `scripts/supabase_schema.sql` synchronisé.
+- **`api/send-push.js`** : commentaires mis à jour (n'était plus "membre seulement", fonctionne dans les deux sens via les policies RLS ci-dessus — aucun changement de code nécessaire, l'endpoint était déjà générique).
+- **`src/utils/messages.js`** : `sendMessage()` accepte désormais un 4ᵉ paramètre `meta = { senderIsCoach, senderName }`. `notifyReceiver()` construit le bon titre ("Ton coach t'a écrit" vs "`{prénom}` t'a écrit") et la bonne URL de destination selon le sens : `/messages/coach` pour un membre notifié, `/coach/messages/{memberProfileId}` pour un coach notifié — cette dernière nécessite une résolution `profiles.user_id → profiles.id` (la route coach est indexée sur l'id de profil, pas l'auth user_id), faite en lecture sur sa propre ligne donc sans souci RLS.
+- **`src/screens/Conversation.jsx`** : `send()` passe désormais `{ senderIsCoach: isCoach, senderName: user?.name }` à `sendMessage()`.
+- **`src/screens/CoachSettings.jsx`** : le toggle "Nouveaux messages" était **factice** (state local, ne faisait rien) — sans ça, le coach n'aurait eu aucun moyen de s'abonner au push malgré le reste fonctionnel. Remplacé par le même mécanisme réel que côté membre (`src/utils/push.js` : `isPushSupported`/`getPushSubscriptionState`/`subscribeToPush`/`unsubscribeFromPush`), générique et déjà compatible coach (RLS "Users can insert own push subscriptions" scope juste `auth.uid()`, sans notion de rôle).
+
 ### Reste à trancher
-- Idée produit : bibliothèque d'exercices 100% IA (voir entrée Session 17 ci-dessous) — toujours pas tranché avec l'utilisateur.
 - `prevent_self_role_escalation()` : nettoyage GRANT RPC, sécurité, faible risque, toujours différé.
-- Push notifications côté coach (membre → coach) : symétrique de ce qui existe déjà côté membre, pas commencé.
-- 3 toggles de rappel factices dans `Settings.jsx` (hydratation/séance/récap hebdo) à côté du vrai toggle push — incohérent visuellement, pas corrigé.
+- 3 toggles de rappel factices dans `Settings.jsx` (hydratation/séance/récap hebdo) + 1 dans `CoachSettings.jsx` ("Alertes membres") à côté des vrais toggles push — incohérent visuellement, pas corrigé.
+- **Question ouverte de l'utilisateur** : l'app fonctionne déjà comme "webapp" sur ordinateur (même URL Vercel, accessible dans n'importe quel navigateur desktop, pas besoin d'installer d'app native) — mais la mise en page n'est **pas responsive** : c'est une copie de la version téléphone, centrée dans une colonne étroite (`#root { max-width: 390px }`) avec de grandes marges vides de chaque côté sur un écran large. Ce n'est pas un vrai layout desktop. À discuter/trancher : faut-il un vrai responsive desktop (surtout pour la partie coach, plus susceptible d'être utilisée sur ordinateur) ?
 
 ---
 
