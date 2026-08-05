@@ -2,9 +2,12 @@ import webpush from 'web-push';
 import { createClient } from '@supabase/supabase-js';
 import { applyCors, requireUser } from './_lib/auth.js';
 
-// Member-side only for this iteration: a coach sends a message, the member
-// gets a real push. Coach-side push (member -> coach) isn't built yet — see
-// JOURNAL.md.
+// Works both directions: a coach messaging a member, or a member messaging
+// their coach. Which one it is doesn't matter here — the caller's own
+// bearer token is used to read `receiverId`'s subscriptions, and RLS
+// ("Coaches can view member push subscriptions" / "Members can view coach
+// push subscriptions") decides whether that's allowed, so a caller who is
+// neither just gets zero rows back instead of an error.
 export default async function handler(req, res) {
   applyCors(req, res, 'POST');
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -27,10 +30,10 @@ export default async function handler(req, res) {
   }
   webpush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey);
 
-  // Scoped with the CALLER's own token (the coach sending the message) —
-  // relies on the "Coaches can view member push subscriptions" RLS policy
-  // rather than a service_role key, so a non-coach caller simply gets zero
-  // rows back instead of an error (fails closed, no special-casing needed).
+  // Scoped with the CALLER's own token (whoever just sent the message) —
+  // relies on the RLS policies above rather than a service_role key, so a
+  // caller with no relationship to `receiverId` simply gets zero rows back
+  // instead of an error (fails closed, no special-casing needed here).
   const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '').trim();
   const supabase = createClient(process.env.VITE_SUPABASE_URL, process.env.VITE_SUPABASE_ANON_KEY, {
     global: { headers: { Authorization: `Bearer ${token}` } },
@@ -57,8 +60,8 @@ export default async function handler(req, res) {
       payload
     ).catch(async err => {
       // 404/410 = the subscription is gone (browser data cleared, app
-      // uninstalled) — clean it up so we stop trying, using the coach's own
-      // token same as the read above (covered by the same RLS policy).
+      // uninstalled) — clean it up so we stop trying, using the caller's own
+      // token same as the read above (covered by the same RLS policies).
       if (err.statusCode === 404 || err.statusCode === 410) {
         await supabase.from('push_subscriptions').delete().eq('id', sub.id);
       }

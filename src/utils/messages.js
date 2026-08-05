@@ -34,7 +34,10 @@ export async function fetchConversation(currentUserId, otherUserId) {
   return data
 }
 
-export async function sendMessage(senderId, receiverId, content) {
+// `meta.senderIsCoach` + `meta.senderName` let the push notification say the
+// right thing and deep-link to the right screen without an extra round trip
+// in the common case — see notifyReceiver below.
+export async function sendMessage(senderId, receiverId, content, meta = {}) {
   const trimmed = content.trim()
   if (!trimmed || !senderId || !receiverId) return { success: false }
   const { data, error } = await supabase
@@ -47,27 +50,43 @@ export async function sendMessage(senderId, receiverId, content) {
     return { success: false, error }
   }
 
-  // Best-effort push, member-side only for now — the endpoint reads the
-  // receiver's subscriptions using OUR (the sender's) token, gated by a
-  // "coach can view member subscriptions" RLS policy, so this silently
-  // no-ops (0 sent) when a member messages a coach rather than needing a
-  // role check here. Never blocks or fails the send itself.
-  notifyReceiver(receiverId, trimmed).catch(err => console.error('[messages] push notify failed', err))
+  // Best-effort push, both directions — the endpoint reads the receiver's
+  // subscriptions using OUR (the sender's) token, gated by the "Coaches can
+  // view member push subscriptions" / "Members can view coach push
+  // subscriptions" RLS policies, so this silently no-ops (0 sent) for
+  // anyone without that relationship rather than needing a role check here.
+  // Never blocks or fails the send itself.
+  notifyReceiver(receiverId, trimmed, senderId, meta).catch(err => console.error('[messages] push notify failed', err))
 
   return { success: true, message: data }
 }
 
-async function notifyReceiver(receiverId, content) {
+async function notifyReceiver(receiverId, content, senderId, { senderIsCoach, senderName } = {}) {
   const headers = await authHeader()
   if (!headers.Authorization) return
+
+  let title, url
+  if (senderIsCoach) {
+    title = 'Ton coach t’a écrit'
+    url = '/messages/coach'
+  } else {
+    title = `${senderName || 'Un membre'} t’a écrit`
+    // The coach's conversation route is keyed by the member's *profile* id
+    // (/coach/messages/:memberId), not their auth user_id — resolve it here
+    // rather than plumbing it through every call site. Self-row lookup
+    // (senderId is always the caller), so RLS allows it unconditionally.
+    const { data: profile } = await supabase.from('profiles').select('id').eq('user_id', senderId).maybeSingle()
+    url = profile ? `/coach/messages/${profile.id}` : '/coach/messages'
+  }
+
   await fetch('/api/send-push', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...headers },
     body: JSON.stringify({
       receiverId,
-      title: 'Ton coach t’a écrit',
+      title,
       body: content.length > 100 ? `${content.slice(0, 100)}…` : content,
-      url: '/messages/coach',
+      url,
     }),
   })
 }
