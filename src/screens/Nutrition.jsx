@@ -304,7 +304,7 @@ Réponds en français.`
           </button>
         </div>
 
-        <div className="card nutrition-hero-card" style={{ marginBottom: 16 }}>
+        <div className="card card-hero" style={{ marginBottom: 16 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 4 }}>
             <div>
               <span style={{ fontSize: 44, fontWeight: 800, fontVariantNumeric: 'tabular-nums', lineHeight: 1, letterSpacing: '-1.5px' }}>{appData.calories}</span>

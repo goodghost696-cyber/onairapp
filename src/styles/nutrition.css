@@ -4,27 +4,10 @@
 }
 .meal-card { cursor: default; }
 
-/* Bolder "hero" treatment for the main calorie card — same corner-glow
-   language as Dashboard's CTA card and the app-wide .btn-accent, but at low
-   opacity here since this is a dense data card (numbers/bars), not a CTA —
-   it needs to stay readable, not grab attention the way a button should.
-   Selector is `.card.nutrition-hero-card`, not just `.nutrition-hero-card`,
-   on purpose: this was silently overridden by global.css's plain `.card`
-   for real — same specificity (one class each), and .card happened to land
-   later in the final bundled CSS regardless of which file imports first,
-   so it always won every property both of them set (background, border,
-   border-radius). Confirmed by inspecting the actual built CSS output
-   (2026-08-05) — none of this treatment ever rendered, cache or no cache.
-   Doubling the selector to two classes gives this a strictly higher
-   specificity than plain `.card`, so it wins regardless of bundle order. */
-.card.nutrition-hero-card {
-  border-radius: 24px;
-  background:
-    radial-gradient(120% 140% at 100% 0%, rgba(212,255,0,0.12) 0%, transparent 55%),
-    var(--surface);
-  border: 2px solid var(--border);
-}
-
+/* The calorie card now uses the global .card-hero utility (global.css) —
+   same treatment, but defined once and reused everywhere instead of
+   duplicated per screen. Kept .nutrition-recipe-card local since it's a
+   different shape of card (icon-left layout) specific to this screen. */
 .card.nutrition-recipe-card {
   border-radius: 20px;
   padding: 18px;

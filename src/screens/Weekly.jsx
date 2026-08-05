@@ -102,7 +102,7 @@ export default function Weekly() {
           <span>{t('daily_calories')}</span>
           <span style={{ color: 'var(--text-muted)' }}>{t('goal')} : {appData.calorieGoal.toLocaleString('fr-FR')} kcal</span>
         </div>
-        <div className="card" style={{ marginBottom: 16 }}>
+        <div className="card card-hero" style={{ marginBottom: 16 }}>
           <div style={{ display: 'flex', gap: 6, alignItems: 'flex-end', height: 80 }}>
             {weeklyData.map((d, i) => {
               const barH = d.calories > 0 ? Math.max(4, Math.round((d.calories / maxCalories) * BAR_MAX_HEIGHT)) : 4
