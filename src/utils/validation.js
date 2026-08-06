@@ -13,6 +13,13 @@ export const BOUNDS = {
   kmRun: { min: 0, max: 500 },
   sleepHours: { min: 0, max: 24 },
   grams: { min: 1, max: 5000 },
+  // Guards addMeal's own write boundary (AppContext.jsx) — every path that
+  // logs a meal (manual add, scan, AI recipe, AI Coach tool calls) funnels
+  // through it, so clamping there is the one place that actually stops a
+  // bad value from ever reaching `repas`, whatever screen or future entry
+  // point produced it. Added after a report of a 222002656161 kcal meal.
+  mealKcal: { min: 0, max: 5000 },
+  mealMacroG: { min: 0, max: 500 },
 }
 
 export function inBounds(value, bound) {

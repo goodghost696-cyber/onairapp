@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation, Outlet } from 'react-router-dom'
 import BottomNav from '../components/BottomNav'
+import OnboardingTour from '../components/OnboardingTour'
 import '../styles/fab.css'
 import '../styles/member.css'
 
@@ -27,6 +28,7 @@ const MemberLayout = () => {
     <div className="member-layout">
       <Outlet />
       <BottomNav />
+      <OnboardingTour variant="member" />
 
       {showFAB && !hideFAB && (
         <div className="fab-overlay" onClick={() => setShowFAB(false)} />
