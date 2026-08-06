@@ -6,6 +6,20 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo (le nom de la branche de travail change à chaque session — vérifie celle en cours plutôt que de te fier à un nom figé ici), et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-08-06 — Session 18 (suite 34) : logo coupé (vrai bug), splash trop rapide, recettes "hasardeuses"
+
+Retour utilisateur avec capture d'écran de l'icône iPhone : le petit carré doré (le "point" de la flèche) était visiblement rogné sur son coin. Root cause confirmée : `viewBox="0 0 24 24"` mais le `<rect>` du mark va jusqu'à x=24.3 — 0.3 unité hors du cadre, invisible en dev à l'œil nu sur un rendu 40-70px mais flagrant sur l'icône iPhone en grand. Corrigé partout où le mark apparaît (`public/logo-volta.svg`, `Logo.jsx`, `SplashIntro.jsx`) en élargissant le viewBox à `-1 -1 26 26` (marge symétrique de 1 unité, aucune coordonnée déplacée) — puis régénéré `icon-192.png`/`icon-512.png` avec le mockup HTML corrigé (les PNG utilisaient le même SVG rogné).
+
+**Animation d'intro trop rapide** : la demande initiale ("présence et autorité") avait été traduite en ~1.5-2s, jugé "archi rapide" à l'usage réel. Ralenti significativement : mot VOLTA visible à 200ms (fondu 700ms), tracé de la flèche démarre à 1000ms et dure 1800ms (easing "expo-out" `cubic-bezier(.16,1,.3,1)`, plus posé qu'un ease symétrique), carré doré qui pop à 1500ms dans le tracé, fondu de sortie à 3200ms/420ms. Total ressenti ~3.6s.
+
+**Recettes "hasardeuses" (ex. œufs brouillés + épinards en petit-déj)** : pas un bug au sens strict — nutritionnellement cohérent avec un budget protéiné/léger pour ce moment de la journée — mais le prompt ne donnait au modèle que calories/macros/type de repas, rien d'autre. Sans signal de variété ni de préférence, Haiku converge systématiquement vers la réponse "sûre". Deux corrections sans migration DB :
+- Rotation aléatoire d'un `styleHint` (méditerranéen / asiatique / healthy US / rapide minimaliste / etc.) injecté dans le prompt de génération auto, avec consigne explicite d'éviter de retomber sur les mêmes plats.
+- Nouveau champ `why` dans la réponse JSON (les 3 chemins : auto/photo/lien) — une phrase expliquant pourquoi cette recette précise colle aux besoins réels, affichée sous le titre dans l'UI. Rend le raisonnement visible au lieu de juste balancer un résultat.
+
+**Pas fait, à discuter avec Arnaud si le problème persiste** : la vraie personnalisation profonde demanderait un champ "préférences alimentaires / allergies / plats détestés" dans le profil (Réglages), câblé dans le prompt — ça implique une migration DB + UI, pas fait ici en autonome vu l'ampleur.
+
+**Vérifié dans le build compilé** : `grep viewBox:"-1 -1 26 26"` trouve le mark corrigé dans le JS ; icône PNG relue visuellement (Read tool) — carré entier, plus rogné ; règles CSS `1.8s cubic-bezier(.16,1,.3,1)` et le texte `inspiration méditerranéenne` / `why": "Une phrase courte` confirmés dans le build. Pas de navigateur réel dans ce bac à sable pour vérifier le timing perçu ni le rendu recette en conditions réelles — à confirmer par toi.
+
 ## 2026-08-06 — Session 18 (suite 33) : animation d'intro VOLTA sur Landing
 
 Demande : "Volta apparait en premier puis on voit le tracé de la flèche qui vers le haut" — un écran de démarrage animé, avant l'accueil. Questions posées d'abord (portée, durée, skip), réponses retenues : uniquement sur Landing, ~1.5-2s, skippable au tap.

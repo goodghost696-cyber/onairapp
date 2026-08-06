@@ -14,7 +14,7 @@
   gap: 16px;
   cursor: pointer;
   opacity: 1;
-  transition: opacity 260ms ease-out;
+  transition: opacity 420ms ease-out;
 }
 .splash-overlay.fading {
   opacity: 0;
@@ -37,11 +37,15 @@
   transform-origin: 22.7px 5.7px;
 }
 @media (prefers-reduced-motion: no-preference) {
+  /* Slow, decelerating draw — "présence et autorité", not a quick flash.
+     Timings here are keyed to SplashIntro.jsx's setTimeout schedule:
+     'drawing' class lands at t=1000ms, so the delays below are relative
+     to that, not to page load. */
   .splash-mark polyline {
-    transition: stroke-dashoffset 1000ms cubic-bezier(0.65, 0, 0.35, 1);
+    transition: stroke-dashoffset 1800ms cubic-bezier(0.16, 1, 0.3, 1);
   }
   .splash-mark rect {
-    transition: opacity 200ms ease-out 780ms, transform 320ms cubic-bezier(0.34, 1.56, 0.64, 1) 780ms;
+    transition: opacity 220ms ease-out 1500ms, transform 380ms cubic-bezier(0.34, 1.56, 0.64, 1) 1500ms;
   }
 }
 .splash-mark.drawing polyline {
@@ -60,7 +64,7 @@
   color: #fff;
   opacity: 0;
   transform: translateY(8px);
-  transition: opacity 400ms ease-out, transform 400ms ease-out;
+  transition: opacity 700ms ease-out, transform 700ms ease-out;
 }
 .splash-word.visible {
   opacity: 1;

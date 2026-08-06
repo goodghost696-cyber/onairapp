@@ -18,6 +18,23 @@ const RECIPE_LOADING_MESSAGES = [
   'Presque prêt...',
 ]
 
+// Left with nothing but a calorie/macro budget and a meal type, the model
+// converges on the same "safe" answer every time (protéiné + léger →
+// systématiquement œufs/épinards) — nutritionally fine, but it reads as
+// generic rather than tailored, which is exactly what got reported.
+// Rotating a style hint through the prompt is a cheap fix that doesn't
+// need a schema change: it forces real variety without touching what the
+// budget math actually optimizes for.
+const RECIPE_STYLE_HINTS = [
+  'inspiration méditerranéenne',
+  'inspiration asiatique',
+  'classique français simple',
+  'healthy à l\'américaine (façon bowl ou brunch)',
+  'rapide et minimaliste, peu d\'ingrédients',
+  'réconfortant type "comfort food" allégé',
+  'sans féculent, très riche en légumes',
+]
+
 // Manual food-search entries encode their grams in the name ("Skyr (100g)")
 // — extracted so "Modifier" can rescale calories/macros proportionally.
 // Meals without it (scan results, AI recipes) aren't gram-based, so editing
@@ -246,6 +263,7 @@ export default function Nutrition() {
     setRecipeSourceLabel('')
 
     const { remainingKcal, remainingProtein, remainingCarbs, remainingFat } = getMealBudget(type)
+    const styleHint = RECIPE_STYLE_HINTS[Math.floor(Math.random() * RECIPE_STYLE_HINTS.length)]
 
     const prompt = `Tu es un nutritionniste expert. Propose UNE recette adaptée à ces besoins nutritionnels restants pour aujourd'hui :
 - Repas concerné : ${type} — la recette doit être typique et adaptée à ce moment du repas (pas un plat de dîner proposé pour un petit-déjeuner, par exemple).
@@ -254,8 +272,9 @@ export default function Nutrition() {
 - Glucides restants : ${remainingCarbs}g
 - Lipides restants : ${remainingFat}g
 - Objectif de la personne : ${user?.goal || 'forme générale'}
+- Style pour cette proposition : ${styleHint}
 
-La recette doit se rapprocher au mieux de ces valeurs sans les dépasser significativement. Donne une recette réaliste, simple à préparer, avec des ingrédients courants.
+La recette doit se rapprocher au mieux de ces valeurs sans les dépasser significativement. Donne une recette réaliste, simple à préparer, avec des ingrédients courants. Varie vraiment les propositions d'une génération à l'autre — évite de retomber systématiquement sur les mêmes plats "sûrs" (ex. œufs brouillés + épinards à chaque fois), le style demandé ci-dessus doit se sentir dans le résultat.
 Reply ONLY in valid JSON, no text before or after:
 {
   "recipe_name": "...",
@@ -264,7 +283,8 @@ Reply ONLY in valid JSON, no text before or after:
   "kcal": 0,
   "proteins": 0,
   "carbs": 0,
-  "fats": 0
+  "fats": 0,
+  "why": "Une phrase courte expliquant en quoi cette recette précise colle aux besoins ci-dessus (ex: pourquoi ces macros, pourquoi ce style à ce moment de la journée)."
 }
 Réponds en français.`
 
@@ -336,6 +356,7 @@ Reply ONLY in valid JSON, no text before or after:
   "proteins": 0,
   "carbs": 0,
   "fats": 0,
+  "why": "Une phrase courte expliquant pourquoi cette recette précise, avec ces ingrédients de la photo, colle aux besoins ci-dessus.",
   "error": null
 }
 Réponds en français.`
@@ -430,6 +451,7 @@ Reply ONLY in valid JSON, no text before or after:
   "proteins": 0,
   "carbs": 0,
   "fats": 0,
+  "why": "Une phrase courte expliquant comment cette recette a été adaptée (quantités) à ces besoins.",
   "error": null
 }
 Réponds en français.`
@@ -959,7 +981,10 @@ Réponds en français.`
                 <p className="text-xs text-muted" style={{ marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                   {recipeMealType}{recipeSourceLabel ? ` · ${recipeSourceLabel}` : ''}
                 </p>
-                <h3 className="text-base bold text-primary" style={{ marginBottom: 12 }}>{recipe.recipe_name}</h3>
+                <h3 className="text-base bold text-primary" style={{ marginBottom: recipe.why ? 6 : 12 }}>{recipe.recipe_name}</h3>
+                {recipe.why && (
+                  <p className="text-xs text-secondary" style={{ marginBottom: 14, lineHeight: 1.5, fontStyle: 'italic' }}>{recipe.why}</p>
+                )}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 8, marginBottom: 16, padding: '14px', background: 'var(--surface-2)', borderRadius: 12 }}>
                   {[
                     { label: 'kcal', val: recipe.kcal },
