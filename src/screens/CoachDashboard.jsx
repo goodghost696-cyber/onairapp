@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
-import { fetchMemberActivitySummaries, lastSeenLabel } from '../utils/coachStats'
+import { fetchMemberActivitySummaries, fetchGymWeeklyActivity, lastSeenLabel } from '../utils/coachStats'
 import CoachNav from '../components/CoachNav'
 
 const STATUS_COLORS = { 'ON TRACK': 'var(--success)', 'AT RISK': 'var(--warning)', 'INACTIVE': 'var(--danger)' }
@@ -11,6 +11,7 @@ export default function CoachDashboard() {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
   const [members, setMembers] = useState([])
+  const [weeklyActivity, setWeeklyActivity] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -24,9 +25,14 @@ export default function CoachDashboard() {
       if (cancelled) return
       if (error || !data) { setLoading(false); return }
 
-      const summaries = await fetchMemberActivitySummaries(data.map(m => m.user_id))
+      const userIds = data.map(m => m.user_id)
+      const [summaries, weekly] = await Promise.all([
+        fetchMemberActivitySummaries(userIds),
+        fetchGymWeeklyActivity(userIds),
+      ])
       if (cancelled) return
       setMembers(data.map(m => ({ ...m, ...summaries[m.user_id] })))
+      setWeeklyActivity(weekly)
       setLoading(false)
     }
     fetchMembers()
@@ -42,6 +48,13 @@ export default function CoachDashboard() {
   const recentFallback = activeToday.length === 0
     ? [...members].filter(m => m.lastActiveDate).sort((a, b) => (b.lastActiveDate || '').localeCompare(a.lastActiveDate || '')).slice(0, 5)
     : []
+
+  const maxSessions = Math.max(...weeklyActivity.map(d => d.sessions), 1)
+  const statusCounts = {
+    'ON TRACK': members.filter(m => m.status === 'ON TRACK').length,
+    'AT RISK': members.filter(m => m.status === 'AT RISK').length,
+    'INACTIVE': members.filter(m => !m.status || m.status === 'INACTIVE').length,
+  }
 
   return (
     <div className="app-wrapper">
@@ -80,6 +93,63 @@ export default function CoachDashboard() {
           <button className="btn-ghost" onClick={() => navigate('/coach/clients')} style={{ marginBottom: 20 }}>
             VOIR TOUS MES CLIENTS →
           </button>
+
+          {/* Activity trend — the dashboard used to be 4 numbers + lists,
+              no actual chart anywhere, which read as a spreadsheet rather
+              than a coaching tool. Gym-wide (not per-member — that detail
+              already exists on MemberDetail's own charts), violet to match
+              the coach side's own accent language vs the member side's gold. */}
+          <div className="section-label">ACTIVITÉ DE LA SALLE — 7 JOURS</div>
+          <div className="card card-animated" style={{ marginBottom: 16, '--delay': '160ms' }}>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end', height: 90 }}>
+              {weeklyActivity.map((d, i) => {
+                const barH = d.sessions > 0 ? Math.max(4, Math.round((d.sessions / maxSessions) * 70)) : 3
+                return (
+                  <div key={d.date} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, justifyContent: 'flex-end', height: '100%' }}>
+                    <span className="text-xs bold" style={{ color: d.sessions > 0 ? 'var(--accent-secondary)' : 'var(--text-muted)' }}>{d.sessions || ''}</span>
+                    <div style={{
+                      width: '100%', height: barH, borderRadius: '3px 3px 0 0',
+                      background: d.sessions > 0 ? 'var(--accent-secondary)' : 'var(--surface-2)',
+                      transition: `height 500ms ease-out ${i * 40}ms`,
+                    }} />
+                    <span className="text-xs text-muted" style={{ textTransform: 'capitalize' }}>{d.label}</span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Status distribution — same ON TRACK / AT RISK / INACTIVE the
+              tiles and "Nécessite attention" already use below, just given
+              a shape instead of buried in a plain number. */}
+          {!loading && members.length > 0 && (
+            <>
+              <div className="section-label">RÉPARTITION DES MEMBRES</div>
+              <div className="card card-animated" style={{ marginBottom: 20, '--delay': '200ms' }}>
+                <div style={{ display: 'flex', height: 10, borderRadius: 6, overflow: 'hidden', marginBottom: 12 }}>
+                  {[
+                    { key: 'ON TRACK', color: 'var(--success)' },
+                    { key: 'AT RISK', color: 'var(--warning)' },
+                    { key: 'INACTIVE', color: 'var(--danger)' },
+                  ].map(s => statusCounts[s.key] > 0 && (
+                    <div key={s.key} style={{ width: `${(statusCounts[s.key] / members.length) * 100}%`, background: s.color, transition: 'width 500ms ease-out' }} />
+                  ))}
+                </div>
+                <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                  {[
+                    { key: 'ON TRACK', label: 'Sur la bonne voie', color: 'var(--success)' },
+                    { key: 'AT RISK', label: 'À risque', color: 'var(--warning)' },
+                    { key: 'INACTIVE', label: 'Inactifs', color: 'var(--danger)' },
+                  ].map(s => (
+                    <div key={s.key} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ width: 8, height: 8, borderRadius: '50%', background: s.color, flexShrink: 0 }} />
+                      <span className="text-xs text-muted">{s.label} <strong className="text-primary">{statusCounts[s.key]}</strong></span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
         {alerts.length > 0 && (

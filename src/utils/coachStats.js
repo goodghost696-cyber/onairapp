@@ -58,6 +58,48 @@ export async function fetchMemberActivitySummaries(userIds) {
   return summaries
 }
 
+// Gym-wide day-by-day trend for CoachDashboard's activity chart — distinct
+// from fetchMemberActivitySummaries above, which only returns one rolled-up
+// number per member (no day breakdown). 2 queries total regardless of
+// roster size, same batching approach as that function.
+export async function fetchGymWeeklyActivity(userIds) {
+  const days = []
+  for (let i = 6; i >= 0; i--) {
+    days.push(new Date(Date.now() - i * 86400000).toISOString().slice(0, 10))
+  }
+  const skeleton = days.map(date => ({
+    date,
+    label: new Date(`${date}T00:00:00`).toLocaleDateString('fr-FR', { weekday: 'short' }).replace('.', ''),
+    sessions: 0,
+    activeMembers: 0,
+  }))
+  if (userIds.length === 0) return skeleton
+
+  const [{ data: seances, error: e1 }, { data: activite, error: e2 }] = await Promise.all([
+    supabase.from('seances').select('user_id, date').in('user_id', userIds).gte('date', days[0]),
+    supabase.from('activite_jour').select('user_id, date').in('user_id', userIds).gte('date', days[0]),
+  ])
+  if (e1) console.error('[coachStats] fetchGymWeeklyActivity: seances fetch failed', e1)
+  if (e2) console.error('[coachStats] fetchGymWeeklyActivity: activite fetch failed', e2)
+
+  const byDate = {}
+  for (const d of days) byDate[d] = { sessions: 0, activeUsers: new Set() }
+  for (const row of seances || []) {
+    if (!byDate[row.date]) continue
+    byDate[row.date].sessions += 1
+    byDate[row.date].activeUsers.add(row.user_id)
+  }
+  for (const row of activite || []) {
+    if (byDate[row.date]) byDate[row.date].activeUsers.add(row.user_id)
+  }
+
+  return skeleton.map(d => ({
+    ...d,
+    sessions: byDate[d.date].sessions,
+    activeMembers: byDate[d.date].activeUsers.size,
+  }))
+}
+
 export function lastSeenLabel(lastActiveDate) {
   if (!lastActiveDate) return 'Jamais actif'
   const age = daysSince(lastActiveDate)
