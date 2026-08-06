@@ -4,7 +4,7 @@
 // real "I never see any change" report from a user (2026-08-05) was most
 // likely index.html having no explicit Cache-Control header — fixed in
 // vercel.json — but bumping this too is cheap, harmless defense in depth.
-const CACHE = 'onair-v2';
+const CACHE = 'volta-v1';
 const ASSETS = ['/', '/index.html'];
 
 self.addEventListener('install', e => {
@@ -21,7 +21,7 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('push', e => {
-  let data = { title: 'ON AIR', body: 'Nouvelle notification', url: '/messages' };
+  let data = { title: 'VOLTA', body: 'Nouvelle notification', url: '/messages' };
   try {
     if (e.data) data = { ...data, ...e.data.json() };
   } catch { /* keep defaults if the payload isn't JSON */ }

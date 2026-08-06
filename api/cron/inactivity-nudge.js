@@ -80,7 +80,7 @@ export default async function handler(req, res) {
   }
 
   const payload = JSON.stringify({
-    title: 'Coach IA ON AIR',
+    title: 'Coach IA VOLTA',
     body: 'Ça fait quelques jours qu\'on ne t\'a pas vu — une petite séance aujourd\'hui ?',
     url: '/dashboard',
   });

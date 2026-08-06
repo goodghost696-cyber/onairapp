@@ -193,7 +193,7 @@ export default function Onboarding() {
       </div>
 
       <div className="onboarding-content">
-        <p className="onboarding-step-count">ON AIR — {currentStep + 1} / {STEPS.length}</p>
+        <p className="onboarding-step-count">VOLTA — {currentStep + 1} / {STEPS.length}</p>
         <h1 className="onboarding-title">{step.title}</h1>
         <p className="onboarding-subtitle">{step.subtitle}</p>
 

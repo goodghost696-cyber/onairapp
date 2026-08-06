@@ -1,0 +1,42 @@
+/* VOLTA brand mark — shared by Logo.jsx wherever the app shows its own
+   identity (as opposed to useGymConfig()'s per-gym name, a separate
+   white-label concept). Unbounded is the wordmark's typeface — deliberately
+   scoped to .brand-wordmark only, not applied app-wide. */
+
+.brand-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+.brand-icon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.brand-wordmark {
+  font-family: 'Unbounded', 'Space Grotesk', sans-serif;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  color: #fff;
+  line-height: 1;
+  display: inline-block;
+}
+
+.brand-mark {
+  display: inline-flex;
+  align-items: center;
+}
+
+.brand-lockup {
+  display: inline-flex;
+}
+.brand-lockup-column {
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.brand-lockup-row {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+}

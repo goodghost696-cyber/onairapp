@@ -6,6 +6,7 @@ import { authHeader } from '../lib/supabase'
 import { isPushSupported, getPushSubscriptionState, subscribeToPush, unsubscribeFromPush } from '../utils/push'
 import DeleteAccountButton from '../components/DeleteAccountButton'
 import { storageKey } from '../components/OnboardingTour'
+import { useGymConfig } from '../hooks/useGymConfig'
 
 function Toggle({ on, onToggle }) {
   return (
@@ -18,6 +19,7 @@ function Toggle({ on, onToggle }) {
 export default function CoachSettings() {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
+  const gym = useGymConfig()
   const [inviteCode, setInviteCode] = useState('...')
   const [pushState, setPushState] = useState('loading')
 
@@ -78,7 +80,7 @@ export default function CoachSettings() {
         <div className="section-label">SALLE</div>
         <div className="card card-animated" style={{ '--delay': '60ms' }}>
           <div style={{ padding: '14px 0', borderBottom: '2px solid var(--border)', display: 'flex', justifyContent: 'space-between' }}>
-            <span className="text-sm text-secondary">Salle</span><span className="text-sm">ON AIR Clichy</span>
+            <span className="text-sm text-secondary">Salle</span><span className="text-sm">{gym.name}{gym.city ? ` ${gym.city}` : ''}</span>
           </div>
           <div style={{ padding: '14px 0', display: 'flex', justifyContent: 'space-between' }}>
             <span className="text-sm text-secondary">Code accès</span><span className="text-sm text-accent bold">{inviteCode}</span>

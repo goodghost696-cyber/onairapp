@@ -14,7 +14,7 @@ export function storageKey(userId, variant) {
 
 const SLIDES = {
   member: [
-    { icon: '🏠', title: 'Bienvenue sur ON AIR', text: "Ton tableau de bord réunit calories, eau, pas, sommeil et séances — tout en un coup d'œil, chaque jour." },
+    { icon: '🏠', title: 'Bienvenue sur VOLTA', text: "Ton tableau de bord réunit calories, eau, pas, sommeil et séances — tout en un coup d'œil, chaque jour." },
     { icon: '🍽️', title: 'Nutrition', text: "Ajoute un repas en cherchant un aliment, en scannant une photo, ou laisse l'IA te proposer une recette adaptée à ce qu'il te reste aujourd'hui." },
     { icon: '💪', title: 'Entraînement', text: 'Lance une séance, ajoute tes exercices et séries, et retrouve tout ton historique.' },
     { icon: '🎙️', title: 'Coach IA', text: "La sphère dorée au centre de la barre du bas t'ouvre ton coach IA — pose tes questions à l'écrit ou à l'oral avec la dictée." },

@@ -1,4 +1,4 @@
-# ON AIR App
+# VOLTA App
 
 ## Setup
 1. cp .env.example .env

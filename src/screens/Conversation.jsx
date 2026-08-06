@@ -48,7 +48,7 @@ export default function Conversation({ isCoach = false }) {
     return () => { cancelled = true }
   }, [isCoach, memberId])
 
-  const title = isCoach ? (member?.prenom || 'Membre') : (member?.prenom ? `${member.prenom} · Coach ON AIR` : 'Coach ON AIR')
+  const title = isCoach ? (member?.prenom || 'Membre') : (member?.prenom ? `${member.prenom} · Coach VOLTA` : 'Coach VOLTA')
 
   // Load history + mark it read once we know both participants.
   useEffect(() => {

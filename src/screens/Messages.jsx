@@ -60,7 +60,7 @@ export default function Messages() {
                 {(coach.prenom?.[0] || 'C').toUpperCase()}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div className="text-base bold">{coach.prenom || 'Coach'} · Coach ON AIR</div>
+                <div className="text-base bold">{coach.prenom || 'Coach'} · Coach VOLTA</div>
                 <div className="text-sm text-muted" style={{ marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {summary?.lastMessage ? summary.lastMessage.content : "Aucune conversation pour l'instant"}
                 </div>

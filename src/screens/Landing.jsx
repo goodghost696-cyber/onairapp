@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useGymConfig } from '../hooks/useGymConfig'
+import Logo from '../components/Logo'
 import '../styles/landing.css'
 
 export default function Landing() {
@@ -38,9 +39,7 @@ export default function Landing() {
       <div className="landing-hero">
         <div className={`landing-content${visible ? ' visible' : ''}`}>
           <span className="landing-kicker">REPOUSSE TES LIMITES</span>
-          <h1 className="landing-title">
-            ON <span className="landing-title-accent">AIR</span>
-          </h1>
+          <Logo variant="lockup" orientation="row" size={44} className="landing-logo" />
           <p className="landing-subtitle">
             Suis ta nutrition, tes séances, ta progression. Ton coach dans ta poche.
           </p>

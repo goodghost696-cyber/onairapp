@@ -103,7 +103,7 @@ export default function MemberDetail() {
         body: JSON.stringify({
           model: 'claude-haiku-4-5-20251001',
           max_tokens: 400,
-          system: `Tu es Thomas, coach chez ON AIR Fitness Clichy. Bilan court sur ${member.prenom}. Données réelles des 7 derniers jours : ${stats.sessionsThisWeek} séances, calories moyennes ${stats.avgCalories} kcal/jour, sommeil moyen ${stats.avgSleepH}h, pas moyens ${stats.avgSteps}/jour, statut ${stats.status}, dernière activité ${lastSeenLabel(stats.lastActiveDate)}. 3 phrases max. Direct, pro, actionnable. Termine par une reco concrète. Pas de bullet points. Pas de titre.`,
+          system: `Tu es Thomas, coach chez VOLTA Fitness Clichy. Bilan court sur ${member.prenom}. Données réelles des 7 derniers jours : ${stats.sessionsThisWeek} séances, calories moyennes ${stats.avgCalories} kcal/jour, sommeil moyen ${stats.avgSleepH}h, pas moyens ${stats.avgSteps}/jour, statut ${stats.status}, dernière activité ${lastSeenLabel(stats.lastActiveDate)}. 3 phrases max. Direct, pro, actionnable. Termine par une reco concrète. Pas de bullet points. Pas de titre.`,
           messages: [{ role: 'user', content: `Bilan pour ${member.prenom}` }],
         }),
       })
@@ -240,7 +240,7 @@ export default function MemberDetail() {
         {analysis && (
           <div className="card" style={{ marginTop: 12, animation: 'fadeIn 400ms ease-out' }}>
             <p className="text-base" style={{ lineHeight: '24px' }}>{analysis}</p>
-            <p className="text-xs text-muted" style={{ marginTop: 10 }}>Généré par AI Coach ON AIR</p>
+            <p className="text-xs text-muted" style={{ marginTop: 10 }}>Généré par AI Coach VOLTA</p>
           </div>
         )}
         <style>{`@keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }`}</style>

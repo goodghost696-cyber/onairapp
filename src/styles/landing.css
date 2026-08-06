@@ -1,4 +1,4 @@
-/* Landing screen — ON AIR Neon identity (dark, lime accent, Space Grotesk) */
+/* Landing screen — VOLTA identity (dark, gold accent, Unbounded wordmark) */
 .landing {
   display: flex;
   flex-direction: column;
@@ -79,17 +79,11 @@
   margin-bottom: 14px;
 }
 
-.landing-title {
-  font-size: 56px;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  line-height: 1;
-  color: #fff;
+.landing-logo {
   margin: 0 0 16px;
 }
-
-.landing-title-accent {
-  color: #F0C14B;
+.landing-logo .brand-wordmark {
+  font-size: 40px !important;
 }
 
 .landing-subtitle {
