@@ -36,9 +36,16 @@ const SLIDES = [
     subtitle: "Des bibliothèques d'exercices (maison, salle, dehors) pour construire ta séance, avec un minuteur de repos intégré.",
   },
   {
+    // Was describing the old single FAB that opened both AI + messaging —
+    // stale since Coach IA moved into the nav bar's center sphere and the
+    // FAB became messaging-only. A real new member (Myriam) followed this
+    // exact instruction, tapped the bottom-right button expecting the AI,
+    // landed in the human-coach thread instead (which obviously doesn't
+    // auto-reply), and reported "Coach IA ne répond pas" — this was almost
+    // certainly the actual cause, not a broken AI Coach.
     icon: '💬',
     title: 'Ton coach à portée de main',
-    subtitle: "Le bouton en bas à droite ouvre le Coach IA (des questions, 24/7) ou la messagerie avec ton vrai coach.",
+    subtitle: "La sphère dorée au centre de la barre du bas ouvre le Coach IA (des questions, 24/7). Le bouton en bas à droite ouvre la messagerie avec ton vrai coach.",
   },
 ]
 

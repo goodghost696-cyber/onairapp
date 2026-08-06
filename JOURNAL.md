@@ -6,6 +6,37 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo (le nom de la branche de travail change à chaque session — vérifie celle en cours plutôt que de te fier à un nom figé ici), et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-08-06 — Session 18 (suite 27) : traitement de la liste de Myriam — 6 points sur 9 faits
+
+"On commence let's go" — attaque de la liste consignée en suite 26, dans l'ordre annoncé. Les 2 fonctionnalités les plus lourdes (photo frigo, import TikTok/Reel) sont délibérément laissées pour une prochaine session dédiée plutôt que bâclées ici.
+
+### ✅ Coach IA "ne répond pas" — root cause trouvée (logs Vercel)
+`get_runtime_logs` : seulement 4 appels à `/api/claude` sur 7 jours, tous 200 — pas de panne serveur. En creusant le texte du tour d'inscription (`AppTour.jsx`), trouvé la vraie cause : la 5e slide décrivait encore l'ancien FAB unique ("le bouton en bas à droite ouvre le Coach IA ou la messagerie"), périmée depuis que Coach IA a été déplacé dans la sphère de la nav (suite 20) — le FAB restant n'ouvre plus QUE la messagerie humaine. Myriam a très probablement suivi cette instruction, tapé le bouton en bas à droite en s'attendant à l'IA, atterri dans la conversation avec le coach humain (qui ne répond évidemment pas en temps réel). Corrigé le texte du tour + celui d'`OnboardingTour.jsx` pour pointer vers la bonne sphère.
+
+### ✅ Réglages n'affichait pas le vrai profil (bug confirmé, corrigé)
+`Settings.jsx` initialisait `weight:'78', height:'180'` en dur et ne chargeait jamais `profiles.poids/taille`. Corrigé : chargement réel au montage + **ajout d'un bouton "Enregistrer" qui n'existait pas du tout** pour la carte Profil (elle avait des champs éditables qui ne sauvegardaient jamais rien, même bug de fond que les objectifs avant leur propre correctif).
+
+### ✅ Refonte du budget calorique — BMR + activité réelle (façon Yazio)
+Le point le plus gros de la liste. Nouveau `src/utils/metabolism.js`, centralisant ce qui était avant un calcul à usage unique dans `Onboarding.jsx` :
+- **BMR (Mifflin-St Jeor)** à partir de poids/taille/âge réels — l'âge n'était jamais collecté avant (colonne `profiles.age` existait déjà en base, jamais utilisée) : ajouté comme 3e champ à l'étape "Ton corps" de l'inscription.
+- **Objectifs multiples** : l'étape objectif passe de choix unique à sélection multiple ; le multiplicateur calorique moyenne les objectifs sélectionnés au lieu de n'en retenir qu'un.
+- **Budget quotidien réellement dynamique** : `dailyRemainingCalories()` ajoute maintenant les calories brûlées par l'activité *réelle* du jour (pas + course, ~0.045 kcal/pas et ~1 kcal/kg/km couru) au budget de base, avant de soustraire ce qui a été mangé — recalculé en direct, pas figé à l'inscription. Affiché sur les cartes calories de Dashboard et Nutrition ("dont +XXX activité" quand pertinent), et la barre de progression suit le même dénominateur.
+- **Corrige aussi le bug des idées recette à ~1000 kcal pour un snack** (root cause déjà identifiée en suite 26) : `generateRecipe()` utilise maintenant ce vrai budget restant, plafonné/planchonné **par type de repas** (collation : 100-300 kcal, repas complet : 250-700 kcal) au lieu d'une fourchette 300-1000 identique pour tout.
+- Musculation pas encore incluse dans le calcul de dépense (pas de signal fiable durée/intensité par séance dans `appData` aujourd'hui) — steps + course couvrent l'exemple concret demandé ("2h de marche = 600 kcal").
+
+### ✅ Contraste — deux correctifs
+- "Idée recette" (carte teaser + contenu généré) : classes `.text-primary` explicites ajoutées partout où le texte reposait uniquement sur l'héritage CSS plutôt qu'une règle scoped garantie — pas pu reproduire le "noir sur noir" exact avec certitude depuis le code seul (pas de capture de cet écran précis), donc correctif défensif plutôt qu'un diagnostic confirmé à 100%. À reconfirmer si toujours cassé après ce correctif.
+- `--surface` (dark) : `#1A1A1A` → `#232120`, trop proche de `--bg` (#0A0A0A) pour se distinguer ("ton sur ton" sur les cartes du Bilan, capture réelle à l'appui) — impact large intentionnel : ce token est utilisé par `.card` partout dans l'app (Réglages, tuiles CoachDashboard, lignes de messages...), pas seulement Bilan. `--border`/`--border-strong` légèrement renforcées en même temps.
+
+### ⏳ Pas fait cette fois — pour une prochaine session dédiée
+- **Recette à partir d'une photo du frigo** : faisable en réutilisant le pipeline vision déjà utilisé par `Scan.jsx`, mais mérite sa propre session plutôt qu'être casée en fin de batch.
+- **Recette à partir d'un lien TikTok/Reel** : nettement plus dur — pas de pipeline de transcription vidéo dans l'app aujourd'hui. Piste réaliste : récupérer la légende/description de la vidéo (souvent la recette y est déjà écrite) plutôt qu'une vraie analyse vidéo/audio, à valider avec l'utilisateur avant de se lancer vu la complexité.
+- Direction visuelle futuriste premium — explicitement pour après, non prioritaire.
+
+⚠️ Comme toujours, rien de tout ça n'a été vérifié à l'écran (pas d'outil de rendu ici) — le changement `--surface` en particulier a un rayon d'impact large (tout l'app en thème sombre), à confirmer en priorité au prochain retour.
+
+---
+
 ## 2026-08-06 — Session 18 (suite 26) : retour d'un vrai premier utilisateur (Myriam, amie du coach, vient de s'inscrire) — liste à traiter
 
 ⚠️ **Pas encore traité — étape 1 demandée explicitement : consigner ici avant de toucher au code.** La liste ci-dessous vient d'un vrai nouveau membre qui vient de s'inscrire, pas d'une capture générique. À reprendre dans l'ordre à la prochaine session, en commençant par les bugs confirmés (root cause déjà identifiée en relisant le code pendant qu'on consignait) puis les demandes de fond.
