@@ -25,7 +25,16 @@ body {
 
 #root {
   width: 100%;
-  max-width: 390px;
+  /* Was a hard 390px, unconditionally, on every viewport — including real
+     phones. Plenty of current phones have a logical CSS viewport WIDER
+     than that (iPhone Pro Max/Plus models ~428-430px, many Android
+     flagships 400-480px), so on those exact devices the app was leaving
+     an unused margin on both sides even natively on mobile, not just on
+     desktop — reported as "toujours le même problème" (still too narrow)
+     on an actual phone screenshot, 2026-08-06. 480px comfortably covers
+     current phone sizes; the >=900px rules in member.css/coach.css take
+     over from there for actual desktop widths. */
+  max-width: 480px;
   min-height: 100vh;
   position: relative;
   overflow-x: hidden;

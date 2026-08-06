@@ -5,7 +5,7 @@
   transform: translateX(-50%) translateY(0);
   z-index: 100;
   width: 100%;
-  max-width: 390px;
+  max-width: 480px;
   transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   padding: 14px 14px 26px;
   /* Was var(--bg) — a solid flat rectangle, same color as the page

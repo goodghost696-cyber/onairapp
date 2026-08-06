@@ -427,7 +427,7 @@ Réponds en français.`
           <div onClick={() => setEditingMeal(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 199 }} />
           <div style={{
             position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)',
-            width: '100%', maxWidth: 390, background: 'var(--surface-solid)',
+            width: '100%', maxWidth: 480, background: 'var(--surface-solid)',
             backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)',
             borderRadius: '20px 20px 0 0', borderTop: '1px solid var(--glass-border)',
             padding: '24px 20px 40px', zIndex: 200,
@@ -472,7 +472,7 @@ Réponds en français.`
       <div style={{
         position: 'fixed', bottom: 0, left: '50%',
         transform: `translateX(-50%) translateY(${sheetOpen ? '0' : '100%'})`,
-        width: '100%', maxWidth: 390,
+        width: '100%', maxWidth: 480,
         background: 'var(--surface-solid)', backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)',
         borderRadius: '20px 20px 0 0',
         borderTop: '1px solid var(--glass-border)',
@@ -559,7 +559,7 @@ Réponds en français.`
       <div style={{
         position: 'fixed', bottom: 0, left: '50%',
         transform: `translateX(-50%) translateY(${recipeSheetOpen ? '0' : '100%'})`,
-        width: '100%', maxWidth: 390,
+        width: '100%', maxWidth: 480,
         background: 'var(--surface-solid)', backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)',
         borderRadius: '20px 20px 0 0',
         borderTop: '1px solid var(--glass-border)',

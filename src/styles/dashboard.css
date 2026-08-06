@@ -219,7 +219,7 @@
   left: 50%;
   transform: translateX(-50%);
   width: 100%;
-  max-width: 390px;
+  max-width: 480px;
   background: #141414;
   border-radius: 20px 20px 0 0;
   border-top: 1px solid var(--border);
