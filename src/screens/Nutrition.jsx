@@ -10,7 +10,6 @@ import { dailyRemainingCalories } from '../utils/metabolism'
 import { resizeImage } from '../utils/image'
 import NutriscoreBadge from '../components/NutriscoreBadge'
 import SwipeableRow from '../components/SwipeableRow'
-import Icon from '../components/Icon'
 import '../styles/nutrition.css'
 
 const RECIPE_LOADING_MESSAGES = [
@@ -616,12 +615,15 @@ Réponds en français.`
       <div className="screen" style={{ paddingBottom: 110 }}>
         <div className="screen-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingTop: 56, paddingBottom: 20 }}>
           <div>
-            <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--accent-secondary)', marginBottom: 7, display: 'flex', alignItems: 'center', gap: 6 }}><Icon name="utensils" size={13} /> NUTRITION</p>
-            <span className="text-sm text-secondary" style={{ textTransform: 'capitalize' }}>{new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'short' })}</span>
+            {/* Direction corail — sits directly on the coral bg, forces
+                light color explicitly (the text tokens are tuned for text
+                inside white cards now, see global.css). */}
+            <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.85)', marginBottom: 7 }}>🍽️ NUTRITION</p>
+            <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)', textTransform: 'capitalize' }}>{new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'short' })}</span>
           </div>
           <button
             onClick={() => navigate('/scan')}
-            style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--surface)', border: '2px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, cursor: 'pointer', color: 'var(--accent)' }}
+            style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--surface)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, cursor: 'pointer', color: 'var(--accent)', boxShadow: '0 4px 12px rgba(120,40,10,0.18)' }}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h.01M18 14h.01M14 18h.01M18 18h.01M14 14v4h4v-4z" strokeLinejoin="round"/></svg>
           </button>
@@ -689,7 +691,7 @@ Réponds en français.`
             marginBottom: 16, cursor: 'pointer', textAlign: 'left', '--delay': '60ms',
           }}
         >
-          <span className="nutrition-recipe-icon"><Icon name="sparkle" size={20} /></span>
+          <span className="nutrition-recipe-icon">💡</span>
           <div>
             {/* Explicit .text-primary rather than relying on inherited
                 color — .card.card-violet .text-primary is the only rule
@@ -710,10 +712,10 @@ Réponds en français.`
             un repas" with that type pre-selected instead of the default. */}
         <div style={{ display: 'flex', gap: 16, marginBottom: 20 }}>
           {[
-            { type: MEAL_TYPES[0], icon: 'sun', label: 'Matin' },
-            { type: MEAL_TYPES[1], icon: 'salad', label: 'Midi' },
-            { type: MEAL_TYPES[2], icon: 'utensils', label: 'Soir' },
-            { type: MEAL_TYPES[3], icon: 'apple', label: 'Snack' },
+            { type: MEAL_TYPES[0], icon: '🍳', tint: '#FDEAD8', label: 'Matin' },
+            { type: MEAL_TYPES[1], icon: '🥗', tint: '#E6F6EE', label: 'Midi' },
+            { type: MEAL_TYPES[2], icon: '🍽️', tint: '#E3F0FF', label: 'Soir' },
+            { type: MEAL_TYPES[3], icon: '🍎', tint: '#FDE7E9', label: 'Snack' },
           ].map((m, i) => (
             <button
               key={m.label}
@@ -721,14 +723,14 @@ Réponds en français.`
               className="card-animated"
               style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', flex: 1, '--delay': `${120 + i * 40}ms` }}
             >
-              <span style={{ width: 50, height: 50, borderRadius: '50%', background: 'var(--surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-primary)' }}><Icon name={m.icon} size={20} /></span>
-              <span className="text-xs text-muted" style={{ letterSpacing: 0 }}>{m.label}</span>
+              <span style={{ width: 50, height: 50, borderRadius: '50%', background: m.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>{m.icon}</span>
+              <span className="text-xs" style={{ letterSpacing: 0, color: 'rgba(255,255,255,0.85)' }}>{m.label}</span>
             </button>
           ))}
         </div>
 
         <div className="section-label">{t('today_meals')}</div>
-        <p className="text-xs text-muted" style={{ marginTop: -4, marginBottom: 10 }}>Glisse un repas vers la gauche pour le modifier ou le supprimer.</p>
+        <p className="text-xs" style={{ marginTop: -4, marginBottom: 10, color: 'rgba(255,255,255,0.7)' }}>Glisse un repas vers la gauche pour le modifier ou le supprimer.</p>
         {appData.meals.map((meal, i) => (
           <SwipeableRow
             key={meal.id}
@@ -910,7 +912,7 @@ Réponds en français.`
         transition: 'transform 320ms cubic-bezier(0.34,1.56,0.64,1)',
         zIndex: 200, maxHeight: '80vh', overflowY: 'auto',
       }}>
-        <h2 className="text-lg bold" style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}><Icon name="sparkle" size={18} /> Idée recette</h2>
+        <h2 className="text-lg bold" style={{ marginBottom: 16 }}>💡 Idée recette</h2>
 
         {recipeStep === 1 && (
           <>
@@ -942,7 +944,7 @@ Réponds en français.`
                 textAlign: 'left', cursor: 'pointer', padding: '16px', display: 'flex',
                 alignItems: 'center', gap: 14,
               }}>
-                <span style={{ color: 'var(--accent)' }}><Icon name="sparkle" size={22} /></span>
+                <span style={{ fontSize: 22 }}>✨</span>
                 <div>
                   <div className="text-base bold text-primary">Suggestion automatique</div>
                   <div className="text-xs text-muted">L'IA propose une recette adaptée à tes objectifs</div>
@@ -952,7 +954,7 @@ Réponds en français.`
                 textAlign: 'left', cursor: 'pointer', padding: '16px', display: 'flex',
                 alignItems: 'center', gap: 14,
               }}>
-                <span style={{ color: 'var(--accent)' }}><Icon name="camera" size={22} /></span>
+                <span style={{ fontSize: 22 }}>📸</span>
                 <div>
                   <div className="text-base bold text-primary">Depuis une photo</div>
                   <div className="text-xs text-muted">Prends en photo ton frigo ou tes ingrédients disponibles</div>
@@ -972,7 +974,7 @@ Réponds en français.`
                   textAlign: 'left', cursor: 'pointer', padding: '16px', display: 'flex',
                   alignItems: 'center', gap: 14,
                 }}>
-                  <span style={{ color: 'var(--accent)' }}><Icon name="link" size={22} /></span>
+                  <span style={{ fontSize: 22 }}>🔗</span>
                   <div>
                     <div className="text-base bold text-primary">Depuis un lien</div>
                     <div className="text-xs text-muted">Colle un lien TikTok ou Reel Instagram</div>

@@ -18,10 +18,12 @@
   width: 44px;
   height: 44px;
   border-radius: 14px;
-  /* Translucent white, not gold — this badge now sits on the violet
-     .card-violet gradient (matches the mockup's icon badge on its own
-     "Idée recette" card exactly). */
-  background: rgba(255,255,255,0.5);
+  /* Direction corail (2026-08-06) — was translucent white for the violet
+     .card-violet gradient background; .card-violet is now plain white
+     like every other card (see global.css), so a translucent-white badge
+     on a white card was going invisible. Warm tint instead, same family
+     as Dashboard's activity badges. */
+  background: #FDEAD8;
   display: flex;
   align-items: center;
   justify-content: center;

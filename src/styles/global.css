@@ -13,6 +13,9 @@ body {
   overflow-x: hidden;
   width: 100%;
   min-height: 100vh;
+  /* Solid fallback matching the gradient's dominant hue — this shows in
+     the letterboxed margins on wide screens either side of #root, which
+     carries the real gradient below. */
   background: var(--bg);
   display: flex;
   justify-content: center;
@@ -38,7 +41,14 @@ body {
   min-height: 100vh;
   position: relative;
   overflow-x: hidden;
-  background: var(--bg);
+  /* Direction corail (2026-08-06) — was a flat var(--bg). The coral
+     identity's base IS this gradient, not a solid fill with a glow
+     layered on top like the old dark theme; --bg still exists as the
+     token other rules read, but the actual visible surface is set here
+     directly since a multi-stop gradient doesn't need to be a custom
+     property to be reused (nothing else in the app needs this exact
+     value — #root is the one true "page background" element). */
+  background: radial-gradient(140% 70% at 18% -8%, #FF8355 0%, #E8552B 45%, #C6371E 82%, #9C2A22 100%);
 }
 
 /* Was `position: fixed` — fixed positioning is relative to the VIEWPORT,
@@ -67,11 +77,15 @@ body {
   pointer-events: none;
   z-index: 0;
 }
+/* Direction corail (2026-08-06) — recolored from gold/violet to the same
+   jaune→rose→violet→bleu family as the ring accent (Dashboard's
+   .home-ring and the nav sphere), so the ambient drift and the literal
+   ring motif read as one signature instead of two unrelated palettes. */
 #root::before {
-  background: radial-gradient(ellipse 90% 55% at 18% 25%, rgba(240,193,75,0.12) 0%, transparent 62%);
+  background: radial-gradient(ellipse 80% 50% at 85% -5%, rgba(255,209,102,0.22) 0%, transparent 60%);
 }
 #root::after {
-  background: radial-gradient(ellipse 60% 40% at 85% 80%, rgba(139,147,232,0.16) 0%, transparent 55%);
+  background: radial-gradient(ellipse 65% 42% at 90% 30%, rgba(164,92,240,0.2) 0%, transparent 55%);
 }
 @media (prefers-reduced-motion: no-preference) {
   #root::before { animation: bgGlowDriftGold 24s ease-in-out infinite; }
@@ -96,28 +110,33 @@ body {
   position: relative;
 }
 
+/* Direction corail (2026-08-06) — replaces the "sombre premium" gold/violet
+   identity with a warm coral/multicolor-ring one (Behance "Noom" reference
+   the user asked to match). --text-primary/secondary/muted default to DARK
+   ink now, not light — an audit of every var(--surface)/var(--surface-solid)
+   usage across the app (bottom sheets, modals, badges — Settings, Messages,
+   AICoach, ResetPassword, DeleteAccountButton, Login, OnboardingTour, on
+   top of every .card) found that the overwhelming majority of body text
+   sits INSIDE a white surface, not directly on the coral background — the
+   opposite was tried first and broke nearly every sheet/modal in the app
+   (white text on white surfaces) before this build even shipped. The
+   inverse case — text sitting directly on the coral bg (screen headers,
+   kickers, greetings) — is the smaller, enumerable set; those force an
+   explicit light color inline rather than relying on this token, screen by
+   screen (see Dashboard.jsx's header for the pattern to follow elsewhere). */
 :root {
-  --bg: #0A0A0A;
-  /* Was #1A1A1A — too close to --bg's #0A0A0A to read as a separate layer
-     ("ton sur ton", plain .card rows like Weekly's summary/Réglages/
-     CoachDashboard tiles all use this token), reported on a real screenshot.
-     Bumped enough to be clearly a distinct surface without going light. */
-  --surface: #232120;
-  --surface-solid: #232120;
-  --surface-2: rgba(255,255,255,0.06);
-  --border: rgba(255,255,255,0.16);
-  --border-strong: rgba(255,255,255,0.2);
-  --text-primary: #FFFFFF;
-  --text-secondary: rgba(255,255,255,0.55);
-  --text-muted: rgba(255,255,255,0.35);
-  /* Rebrand 2026-08-06: gold + blue-violet, from a "Style Athlevo" design
-     export (Behance reference the user asked to match). Was lime (#D4FF00)
-     + royal blue (#0047FF). --accent-ink/--accent-secondary-ink pair with
-     these for text placed directly on a SOLID fill of that color (nav
-     center button, small badges) — the new GRADIENT cards (.card-gold /
-     .card-violet below) use their own fixed dark text colors instead,
-     since a light pastel-to-white gradient surface reads the same
-     regardless of app theme, unlike a flat theme-reactive fill. */
+  --bg: #E8552B;
+  --surface: #FFFFFF;
+  --surface-solid: #FFFFFF;
+  --surface-2: #FBF3ED;
+  --border: rgba(0,0,0,0.08);
+  --border-strong: rgba(0,0,0,0.14);
+  --text-primary: #1B1710;
+  --text-secondary: rgba(27,23,16,0.62);
+  --text-muted: rgba(27,23,16,0.42);
+  /* Gold stays as the "brand number" accent (Unbounded hero numbers,
+     small labels) — it's what ties this palette back to the VOLTA mark
+     itself, which didn't change. */
   --accent: #F0C14B;
   --accent-hover: #E6B13A;
   --accent-ink: #1A1608;
@@ -126,35 +145,34 @@ body {
   --success: #1FD66B;
   --warning: #F5A623;
   --danger: #FF3B3B;
-  --shadow: rgba(0,0,0,0.5);
+  --shadow: rgba(120,40,10,0.18);
   --radius: 16px;
   --radius-card: 16px;
   --radius-pill: 100px;
   --radius-btn: 18px;
-  /* Glass system */
-  --glass: rgba(255,255,255,0.042);
-  --glass-border: rgba(255,255,255,0.08);
-  --glass-highlight: rgba(255,255,255,0.12);
-  --glass-shadow: 0 8px 32px rgba(0,0,0,0.45);
-  --nav-glass: rgba(10,10,10,0.9);
-  --nav-border: rgba(255,255,255,0.1);
-  --nav-inset: rgba(255,255,255,0.06);
+  /* Glass system — was tuned for a dark app background (light-on-dark
+     translucency); inverted for cards/inputs that now sit on a light
+     surface, and a bit stronger since the coral bg behind is much busier
+     than the old near-black. */
+  --glass: rgba(255,255,255,0.55);
+  --glass-border: rgba(255,255,255,0.4);
+  --glass-highlight: rgba(255,255,255,0.7);
+  --glass-shadow: 0 8px 32px rgba(120,40,10,0.2);
+  --nav-glass: rgba(255,255,255,0.92);
+  --nav-border: rgba(0,0,0,0.06);
+  --nav-inset: rgba(0,0,0,0.03);
 }
 
 :root[data-theme="dark"] {
-  --bg: #0A0A0A;
-  /* Was #1A1A1A — too close to --bg's #0A0A0A to read as a separate layer
-     ("ton sur ton", plain .card rows like Weekly's summary/Réglages/
-     CoachDashboard tiles all use this token), reported on a real screenshot.
-     Bumped enough to be clearly a distinct surface without going light. */
-  --surface: #232120;
-  --surface-solid: #232120;
-  --surface-2: rgba(255,255,255,0.06);
-  --border: rgba(255,255,255,0.16);
-  --border-strong: rgba(255,255,255,0.2);
-  --text-primary: #FFFFFF;
-  --text-secondary: rgba(255,255,255,0.55);
-  --text-muted: rgba(255,255,255,0.35);
+  --bg: #E8552B;
+  --surface: #FFFFFF;
+  --surface-solid: #FFFFFF;
+  --surface-2: #FBF3ED;
+  --border: rgba(0,0,0,0.08);
+  --border-strong: rgba(0,0,0,0.14);
+  --text-primary: #1B1710;
+  --text-secondary: rgba(27,23,16,0.62);
+  --text-muted: rgba(27,23,16,0.42);
   --accent: #F0C14B;
   --accent-ink: #1A1608;
   --accent-secondary: #8B93E8;
@@ -162,7 +180,14 @@ body {
   --success: #1FD66B;
   --warning: #F5A623;
   --danger: #FF3B3B;
-  --shadow: rgba(0,0,0,0.5);
+  --shadow: rgba(120,40,10,0.18);
+  --glass: rgba(255,255,255,0.55);
+  --glass-border: rgba(255,255,255,0.4);
+  --glass-highlight: rgba(255,255,255,0.7);
+  --glass-shadow: 0 8px 32px rgba(120,40,10,0.2);
+  --nav-glass: rgba(255,255,255,0.92);
+  --nav-border: rgba(0,0,0,0.06);
+  --nav-inset: rgba(0,0,0,0.03);
 }
 
 :root[data-theme="light"] {
@@ -231,18 +256,17 @@ button {
   font-family: inherit;
 }
 
-/* Bolder glow treatment, app-wide (not just Dashboard) — .btn-accent is the
-   shared "main action" button used across Nutrition, Settings, MemberDetail,
-   the quick-add sheet, ResetPassword, etc., so this one change reaches
-   every primary CTA in the app at once. Same corner-glow approach as
-   Dashboard's hero card (background stays solid --accent under the text,
-   glow only bleeds in from a corner) for the same contrast reason: full
-   --accent-secondary blend under --accent-ink text falls under WCAG AA. */
+/* Direction corail (2026-08-06) — was a gold/violet gradient fill. Against
+   an already-colorful coral background, a bright gold button competes
+   with the page instead of standing out from it. A near-black button is
+   the one deliberately restrained, un-colorful element in the whole
+   screen — reads as confident/premium precisely because it doesn't join
+   in the warmth everything else has, the same role .card.card-hero's
+   dark ink text plays inside a light card. Shared across every primary
+   CTA in the app (Nutrition, Settings, MemberDetail, ResetPassword...). */
 .btn-accent {
-  background:
-    radial-gradient(140% 200% at 100% 0%, var(--accent-secondary) 0%, transparent 50%),
-    var(--accent);
-  color: var(--accent-ink);
+  background: #1B1710;
+  color: #FFFFFF;
   font-weight: 700;
   font-size: 13px;
   letter-spacing: 0.1em;
@@ -252,9 +276,9 @@ button {
   display: block;
   transition: background 150ms, transform 120ms ease;
   border-radius: var(--radius-btn);
-  box-shadow: 0 8px 32px rgba(240,193,75,0.3);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.25);
 }
-.btn-accent:hover { background: var(--accent-hover); }
+.btn-accent:hover { background: #2A241C; }
 .btn-accent:active { transform: scale(0.97); }
 
 .btn-ghost {
@@ -300,14 +324,26 @@ button {
 
 .card {
   background: var(--surface);
-  border: 2px solid var(--border);
+  border: 1px solid var(--border);
+  /* Coral direction: every card is now the light/white surface (was only
+     .card-hero/.card-violet before) — a flat border barely reads against
+     the coral bg the way it did against the old near-black, so cards need
+     to visually lift off the page instead. */
+  box-shadow: 0 8px 20px rgba(120,40,10,0.12);
   padding: 16px;
   margin-bottom: 12px;
   border-radius: var(--radius-card);
   position: relative;
   overflow: hidden;
   transition: transform 120ms ease;
+  /* Every card is now a light surface — same "card sets its own text
+     tokens" pattern .card-hero/.card-violet already used, generalized to
+     all of them instead of two special cases. */
+  color: #1B1710;
 }
+.card .text-primary { color: #1B1710; }
+.card .text-secondary { color: rgba(27,23,16,0.62); }
+.card .text-muted { color: rgba(27,23,16,0.42); }
 /* Fires on any touch/press, not just genuinely clickable cards — harmless
    on a static card (the scale reverts the instant the finger/press lifts),
    and gives every tappable card (there are many, spread across screens)
@@ -325,55 +361,23 @@ button {
    specificity than plain .card, so it always wins regardless of import/
    bundle order, this time verified against the compiled output before
    shipping. */
-/* Rebrand 2026-08-06 — was a subtle lime corner-glow on the app's normal
-   dark --surface. Style Athlevo mockup calls for a full light gold
-   gradient card instead (matches the mockup's "Calories du jour" card
-   exactly). This is a real background-lightness change, not just a hue
-   swap, so every screen using .card-hero needs its child text re-checked
-   for contrast — `color` set here so any child that doesn't set its own
-   color (plain/inherited text) automatically gets the correct dark warm
-   ink via inheritance, and the .text-* utility overrides below catch the
-   rest. Inline-styled elements (progress bar tracks using
-   `background:'var(--surface-2)'`, an inline style CSS classes can't
-   override) still needed fixing screen-by-screen — see each screen's own
-   diff from this session for the specific inline-color adjustments. */
+/* Direction corail (2026-08-06) — was a gold gradient fill (before that, a
+   lime corner-glow). Now that EVERY .card is already the light/white
+   surface (see .card above), a second gradient card on top of an already
+   colorful coral background reads as clutter, not hierarchy — matches the
+   Behance reference, where the "hero" distinction comes from a colored
+   label + the Unbounded number, not a colored card fill. Kept as a
+   near-empty modifier (bigger radius/shadow only) rather than deleted
+   outright: screens already apply `.card.card-hero`/`.card.card-violet`
+   for the emphasis, no need to touch every call site to drop the class. */
 .card.card-hero {
-  border-radius: 24px;
-  background: linear-gradient(120deg, #F0C14B 0%, #F7DD8E 55%, #FFFFFF 130%);
-  border: none;
-  color: #1A1608;
+  border-radius: 22px;
+  box-shadow: 0 12px 28px rgba(120,40,10,0.16);
 }
-.card.card-hero .text-primary { color: #1A1608; }
-.card.card-hero .text-secondary { color: rgba(26,22,8,0.6); }
-.card.card-hero .text-muted { color: rgba(26,22,8,0.45); }
-
-/* Violet variant — secondary CTA cards (matches the mockup's "Course du
-   jour" / "Idée recette" cards). Same reasoning as .card-hero above for
-   the color/text-* overrides, just the other half of the new palette. */
 .card.card-violet {
-  border-radius: 20px;
-  background: linear-gradient(120deg, #8B93E8 0%, #C9CDF5 65%, #FFFFFF 140%);
-  border: none;
-  color: #1C2050;
+  border-radius: 22px;
+  box-shadow: 0 12px 28px rgba(120,40,10,0.16);
 }
-.card.card-violet .text-primary { color: #1C2050; }
-.card.card-violet .text-secondary { color: rgba(28,32,80,0.65); }
-.card.card-violet .text-muted { color: rgba(28,32,80,0.5); }
-
-/* .progress-bar/.progress-fill (Hydration, Sleep, and anywhere else that
-   uses the shared class instead of an inline-styled bar) assume a dark
-   card: translucent-white track, --accent or --success fill. Both break on
-   the new light gradient cards — the white track goes near-invisible, and
-   --success (bright green, ~1.1:1 against gold) nearly disappears. Scoped
-   overrides here fix every current AND future .progress-bar inside a hero
-   card automatically, no per-screen fix needed like Nutrition's inline
-   bars required. */
-.card-hero .progress-bar, .card-violet .progress-bar { background: rgba(26,22,8,0.15); }
-.card-hero .progress-fill { background: #1A1608; }
-.card-hero .progress-fill.success { background: #14532D; }
-.card-violet .progress-bar { background: rgba(28,32,80,0.15); }
-.card-violet .progress-fill { background: #1C2050; }
-.card-violet .progress-fill.success { background: #14532D; }
 
 .ai-program-badge {
   background: transparent;
@@ -388,12 +392,18 @@ button {
   padding: 20px 20px 120px;
 }
 
+/* Direction corail (2026-08-06) — used across many screens (Settings,
+   CoachSettings, Weekly, Nutrition...) as a standalone section header
+   sitting directly on the coral background, between card groups rather
+   than inside one — forced light explicitly rather than the (now dark)
+   --text-muted token, same reasoning as every other "on background" text
+   spot in this rebrand. */
 .section-label {
   font-size: 11px;
   line-height: 14px;
   text-transform: uppercase;
   letter-spacing: 0.15em;
-  color: var(--text-muted);
+  color: rgba(255,255,255,0.75);
   margin-bottom: 12px;
   margin-top: 24px;
 }
