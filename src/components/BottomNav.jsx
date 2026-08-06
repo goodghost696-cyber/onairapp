@@ -98,19 +98,13 @@ export default function BottomNav() {
       <div className="nav-pill">
         {leftTabs.map(renderTab)}
 
+        {/* No icon on purpose — the sphere itself is the AI indicator,
+            same language as VoiceMode's orb (see nav.css .nav-btn-elevated). */}
         <button
           className={`nav-btn nav-btn-elevated${aiActive ? ' active' : ''}`}
           onClick={() => { navigator.vibrate && navigator.vibrate(6); navigate('/ai-coach') }}
           aria-label="Coach IA"
-        >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="5" y="9" width="14" height="10" rx="3"/>
-            <path d="M12 9V5"/>
-            <circle cx="12" cy="4" r="1.3" fill="currentColor" stroke="none"/>
-            <circle cx="9" cy="14" r="1.3" fill="currentColor" stroke="none"/>
-            <circle cx="15" cy="14" r="1.3" fill="currentColor" stroke="none"/>
-          </svg>
-        </button>
+        />
 
         {rightTabs.map(renderTab)}
       </div>

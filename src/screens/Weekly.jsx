@@ -99,7 +99,7 @@ export default function Weekly() {
   return (
     <div className="app-wrapper">
       <div className="screen" style={{ paddingBottom: 110, padding: '0 24px 110px' }}>
-        <div style={{ paddingTop: 56, paddingBottom: 20 }}>
+        <div className="screen-header" style={{ paddingTop: 56, paddingBottom: 20 }}>
           <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--accent-secondary)', marginBottom: 4 }}>📊 BILAN</p>
           <h1 style={{ fontSize: 26, fontWeight: 800, color: 'var(--text-primary)' }}>{t('weekly_recap')}</h1>
         </div>
@@ -108,7 +108,7 @@ export default function Weekly() {
           <span>{t('daily_calories')}</span>
           <span style={{ color: 'var(--text-muted)' }}>{t('goal')} : {appData.calorieGoal.toLocaleString('fr-FR')} kcal</span>
         </div>
-        <div className="card card-hero" style={{ marginBottom: 16 }}>
+        <div className="card card-hero card-animated" style={{ marginBottom: 16, '--delay': '0ms' }}>
           <div style={{ display: 'flex', gap: 6, alignItems: 'flex-end', height: 80 }}>
             {weeklyData.map((d, i) => {
               const barH = d.calories > 0 ? Math.max(4, Math.round((d.calories / maxCalories) * BAR_MAX_HEIGHT)) : 4

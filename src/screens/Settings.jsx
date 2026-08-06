@@ -117,7 +117,7 @@ export default function Settings() {
         </div>
 
         <div className="section-label">{t('profile_section')}</div>
-        <div className="card">
+        <div className="card card-animated" style={{ '--delay': '0ms' }}>
           <Field label={t('first_name')} value={profile.name} onChange={v => setProfile(p => ({...p, name: v}))} />
           <Field label={t('email')} value={profile.email} onChange={v => setProfile(p => ({...p, email: v}))} type="email" />
           <Field label={t('weight')} value={profile.weight} onChange={v => setProfile(p => ({...p, weight: v}))} type="number" />
@@ -125,7 +125,7 @@ export default function Settings() {
         </div>
 
         <div className="section-label">{t('goals_section')}</div>
-        <div className="card">
+        <div className="card card-animated" style={{ '--delay': '60ms' }}>
           <Field label={t('calories_day')} value={goals.calories} onChange={v => setGoals(g => ({...g, calories: v}))} type="number" />
           <Field label={t('proteins')} value={goals.protein} onChange={v => setGoals(g => ({...g, protein: v}))} type="number" />
           <Field label={t('water_goal')} value={goals.water} onChange={v => setGoals(g => ({...g, water: v}))} type="number" />
@@ -134,7 +134,7 @@ export default function Settings() {
         <button className="btn-ghost" onClick={saveGoals} style={{ marginBottom: 8 }}>{t('save_goals')}</button>
 
         <div className="section-label">{t('notifications_section')}</div>
-        <div className="card">
+        <div className="card card-animated" style={{ '--delay': '120ms' }}>
           {pushState !== 'unsupported' && (
             <div className="flex justify-between items-center" style={{ padding: '14px 0', borderBottom: '0.5px solid var(--border)' }}>
               <div>
@@ -154,7 +154,7 @@ export default function Settings() {
         </div>
 
         <div className="section-label">Apparence</div>
-        <div className="card">
+        <div className="card card-animated" style={{ '--delay': '180ms' }}>
           <div className="flex justify-between items-center" style={{ padding: '14px 0' }}>
             <div>
               <p className="text-sm text-secondary">Thème</p>
@@ -165,7 +165,7 @@ export default function Settings() {
         </div>
 
         <div className="section-label">{t('language_section')}</div>
-        <div className="lang-selector">
+        <div className="lang-selector card-animated" style={{ '--delay': '240ms' }}>
           {[
             { code: 'fr', label: 'Français', flag: '🇫🇷' },
             { code: 'en', label: 'English', flag: '🇬🇧' },
@@ -182,7 +182,7 @@ export default function Settings() {
         </div>
 
         <div className="section-label">SANTÉ & CAPTEURS</div>
-        <div className="card">
+        <div className="card card-animated" style={{ '--delay': '300ms' }}>
           <div className="flex justify-between items-center" style={{ padding: '14px 0', cursor: 'pointer' }} onClick={() => setShowHealthSync(true)}>
             <div>
               <p className="text-sm text-secondary">Synchroniser mes données</p>

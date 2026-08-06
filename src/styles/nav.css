@@ -78,29 +78,24 @@
 
 .nav-label { display: none; }
 
-/* Elevated middle action (BottomNav's "+" quick-add toggle) — raised lime
-   circle, matches the reference nav. CoachNav briefly reused this for its
-   Board tab but reverted (see CoachNav.jsx) — 4 tabs can't be split 2+1+2
-   like the member nav's 5, so the button always ended up off-center or
-   unevenly spaced no matter how it was arranged. */
+/* Elevated middle action — now the Coach IA shortcut (was a "+" quick-add
+   toggle). Styled as a direct sphere/orb, same radial-gradient formula as
+   VoiceMode's orb (voicemode.css .voice-mode-orb) instead of a flat
+   gradient circle with a line-icon on top — a stroke-icon robot here read
+   as "basique" against the rest of the app's glow/gradient language, per
+   feedback comparing it directly to the voice orb. No icon at all: the
+   sphere itself IS the AI indicator, exactly like the voice mode entry point. */
 .nav-btn-elevated {
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  /* Solid --accent -> gold gradient, matching the mockup's nav center
-     button exactly. */
-  background: linear-gradient(135deg, var(--accent), #FBE08A);
+  background: radial-gradient(circle at 35% 30%, #FBE08A 0%, #F0C14B 45%, #8B93E8 100%);
   margin-top: -26px;
   /* Matches .nav-pill's background (not --bg) so this reads as a ring cut
      through the pill's surface, not a mismatched dark halo now that the
      pill itself is no longer the same flat color as the page. */
   border: 3px solid var(--surface);
-  box-shadow: 0 8px 20px rgba(240,193,75,0.4);
-}
-
-.nav-btn-elevated svg {
-  color: var(--accent-ink);
-  stroke-width: 2;
+  box-shadow: 0 0 16px rgba(240,193,75,0.5), 0 0 32px rgba(139,147,232,0.3), 0 8px 20px rgba(0,0,0,0.35);
 }
 
 /* Was rotate(135deg) — made sense for a "+" spinning into an "×" when a

@@ -312,7 +312,7 @@ Réponds en français.`
           </button>
         </div>
 
-        <div className="card card-hero" style={{ marginBottom: 16 }}>
+        <div className="card card-hero card-animated" style={{ marginBottom: 16, '--delay': '0ms' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 4 }}>
             <div>
               <span style={{ fontSize: 44, fontWeight: 800, fontVariantNumeric: 'tabular-nums', lineHeight: 1, letterSpacing: '-1.5px' }}>{appData.calories}</span>
@@ -362,10 +362,10 @@ Réponds en français.`
 
         <button
           onClick={openRecipeSheet}
-          className="card card-violet nutrition-recipe-card"
+          className="card card-violet nutrition-recipe-card card-animated"
           style={{
             display: 'flex', alignItems: 'center', gap: 14, width: '100%',
-            marginBottom: 16, cursor: 'pointer', textAlign: 'left',
+            marginBottom: 16, cursor: 'pointer', textAlign: 'left', '--delay': '60ms',
           }}
         >
           <span className="nutrition-recipe-icon">💡</span>
@@ -385,11 +385,12 @@ Réponds en français.`
             { type: MEAL_TYPES[1], icon: '🥗', label: 'Midi' },
             { type: MEAL_TYPES[2], icon: '🍽️', label: 'Soir' },
             { type: MEAL_TYPES[3], icon: '🍎', label: 'Snack' },
-          ].map(m => (
+          ].map((m, i) => (
             <button
               key={m.label}
               onClick={() => openSheet(m.type)}
-              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', flex: 1 }}
+              className="card-animated"
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', flex: 1, '--delay': `${120 + i * 40}ms` }}
             >
               <span style={{ width: 50, height: 50, borderRadius: '50%', background: 'var(--surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>{m.icon}</span>
               <span className="text-xs text-muted" style={{ letterSpacing: 0 }}>{m.label}</span>
@@ -399,7 +400,7 @@ Réponds en français.`
 
         <div className="section-label">{t('today_meals')}</div>
         <p className="text-xs text-muted" style={{ marginTop: -4, marginBottom: 10 }}>Glisse un repas vers la gauche pour le modifier ou le supprimer.</p>
-        {appData.meals.map(meal => (
+        {appData.meals.map((meal, i) => (
           <SwipeableRow
             key={meal.id}
             actions={[
@@ -407,7 +408,7 @@ Réponds en français.`
               { label: 'Supprimer', color: 'var(--danger)', onClick: () => deleteMeal(meal.id) },
             ]}
           >
-            <div className="card" style={{ marginBottom: 0 }}>
+            <div className="card card-animated" style={{ marginBottom: 0, '--delay': `${160 + Math.min(i, 6) * 40}ms` }}>
               <div className="flex justify-between items-center">
                 <div style={{ flex: 1 }}>
                   <div className="flex items-center gap-8" style={{ marginBottom: 4 }}>
@@ -586,10 +587,10 @@ Réponds en français.`
           <>
             <p className="text-sm text-muted" style={{ marginBottom: 16 }}>Pour quel repas ?</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {MEAL_TYPES.map(mt => (
-                <button key={mt} onClick={() => generateRecipe(mt)} className="card" style={{
+              {MEAL_TYPES.map((mt, i) => (
+                <button key={mt} onClick={() => generateRecipe(mt)} className="card card-animated" style={{
                   textAlign: 'left', cursor: 'pointer', padding: '16px', display: 'flex',
-                  justifyContent: 'space-between', alignItems: 'center',
+                  justifyContent: 'space-between', alignItems: 'center', '--delay': `${i * 40}ms`,
                 }}>
                   <span className="text-base bold">{mt}</span>
                   <span style={{ color: 'var(--accent)' }}>→</span>

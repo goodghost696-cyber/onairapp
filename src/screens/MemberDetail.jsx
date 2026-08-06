@@ -146,7 +146,7 @@ export default function MemberDetail() {
 
         {/* Weekly sessions chart */}
         <div className="section-label">SÉANCES CETTE SEMAINE</div>
-        <div className="card" style={{ marginBottom: 8 }}>
+        <div className="card card-animated" style={{ marginBottom: 8, '--delay': '60ms' }}>
           <div style={{ width: '100%' }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
               {sessionDays.map((d, i) => (
@@ -161,7 +161,7 @@ export default function MemberDetail() {
 
         {/* Objectives — real numeric goals from the objectifs table */}
         <div className="section-label">OBJECTIFS</div>
-        <div className="card" style={{ marginBottom: 8 }}>
+        <div className="card card-animated" style={{ marginBottom: 8, '--delay': '120ms' }}>
           {stats.objectifs ? [
             `${stats.objectifs.calories_jour} kcal/jour`,
             `${stats.objectifs.proteines}g de protéines/jour`,
@@ -180,7 +180,7 @@ export default function MemberDetail() {
             spotting a specific problem (a bad meal, a skipped session)
             needs the actual entries. */}
         <div className="section-label">DERNIERS REPAS</div>
-        <div className="card" style={{ marginBottom: 8 }}>
+        <div className="card card-animated" style={{ marginBottom: 8, '--delay': '180ms' }}>
           {recent.recentMeals.length > 0 ? recent.recentMeals.map((r, i) => (
             <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: i < recent.recentMeals.length - 1 ? '2px solid var(--border)' : 'none' }}>
               <div>
@@ -195,7 +195,7 @@ export default function MemberDetail() {
         </div>
 
         <div className="section-label">DERNIÈRES SÉANCES</div>
-        <div className="card" style={{ marginBottom: 8 }}>
+        <div className="card card-animated" style={{ marginBottom: 8, '--delay': '240ms' }}>
           {recent.recentSessions.length > 0 ? recent.recentSessions.map((s, i) => (
             <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: i < recent.recentSessions.length - 1 ? '2px solid var(--border)' : 'none' }}>
               <div>
@@ -213,7 +213,7 @@ export default function MemberDetail() {
             member (RLS scoped to auth.uid() = coach_id, no member policy
             exists at all). */}
         <div className="section-label">NOTES COACH</div>
-        <div className="card" style={{ marginBottom: 8 }}>
+        <div className="card card-animated" style={{ marginBottom: 8, '--delay': '300ms' }}>
           <textarea
             value={note}
             onChange={e => setNote(e.target.value)}

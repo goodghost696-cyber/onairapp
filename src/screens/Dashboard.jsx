@@ -83,7 +83,7 @@ export default function Dashboard() {
     <div className="app-wrapper">
       <div className="screen dashboard-screen" style={{ paddingBottom: 110, padding: '0 24px 110px' }}>
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingTop: 56, paddingBottom: 28 }}>
+        <div className="screen-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingTop: 56, paddingBottom: 28 }}>
           <div>
             <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--accent-secondary)', marginBottom: 7 }}>ON AIR</p>
             <h1 style={{ fontSize: 28, fontWeight: 800, lineHeight: 1.15, color: 'var(--text-primary)' }}>{greeting}, {user?.name}.</h1>
@@ -110,7 +110,7 @@ export default function Dashboard() {
             jour" card and keeping the two calorie displays in the app
             visually consistent with each other. CalorieRing.jsx itself is
             untouched/still available, just not used here anymore. */}
-        <div className="card card-hero" style={{ marginBottom: 16 }}>
+        <div className="card card-hero card-animated" style={{ marginBottom: 16, '--delay': '0ms' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 4 }}>
             <div>
               <span style={{ fontSize: 44, fontWeight: 800, fontVariantNumeric: 'tabular-nums', lineHeight: 1, letterSpacing: '-1.5px' }}>{appData.calories}</span>
@@ -153,10 +153,11 @@ export default function Dashboard() {
             the mockup's icon-circle language without losing the numbers. */}
         <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: 12 }}>{t('activity')}</p>
         <div className="activity-grid">
-          {CARDS.map(card => (
+          {CARDS.map((card, i) => (
             <div
               key={card.key}
-              className={`activity-card-compact${card.key === 'water' ? ' activity-card-accent' : ''}`}
+              className={`activity-card-compact card-animated${card.key === 'water' ? ' activity-card-accent' : ''}`}
+              style={{ '--delay': `${80 + i * 40}ms` }}
               onClick={() => { setEditingCard(card.key); setInputVal('') }}
             >
               <span className="activity-card-icon-badge">{card.icon}</span>
@@ -178,13 +179,13 @@ export default function Dashboard() {
         </div>
 
         {/* CTA to today's workout */}
-        <button onClick={() => navigate('/workout')} className="dashboard-cta-btn">
+        <button onClick={() => navigate('/workout')} className="dashboard-cta-btn card-animated" style={{ '--delay': '260ms' }}>
           <span>Voir mon entraînement du jour</span>
           <span className="dashboard-cta-icon">🔥</span>
         </button>
 
         {/* Weekly sessions card */}
-        <div style={{ background: 'var(--surface)', border: '2px solid var(--border)', borderRadius: 16, padding: 20, marginTop: 16, marginBottom: 40 }}>
+        <div className="card-animated" style={{ background: 'var(--surface)', border: '2px solid var(--border)', borderRadius: 16, padding: 20, marginTop: 16, marginBottom: 40, '--delay': '320ms' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
             <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)' }}>Séances cette semaine</span>
             <span style={{ fontSize: 22, fontWeight: 800, color: 'var(--accent)', letterSpacing: '-0.5px' }}>

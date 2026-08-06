@@ -20,10 +20,14 @@ const MemberLayout = () => {
   // Used to open a 2-item menu (Coach IA / Mon Coach) — now a single direct
   // shortcut to messages, since Coach IA moved into the bottom nav itself
   // (replacing the "+" — see BottomNav.jsx) and no longer needs this floating
-  // button at all. Still hidden on /messages: its position (bottom:96px,
-  // right:16px, z-index:95) sits on top of that screen's own send button,
-  // and it's redundant there anyway — you're already in the conversation it opens.
-  const hideFAB = location.pathname.startsWith('/messages')
+  // button at all. Still hidden on /messages AND /ai-coach: this is a pure
+  // position collision, not about relevance — its fixed spot (bottom:96px,
+  // right:16px, z-index:95) sits directly on top of both screens' own
+  // input row (mic/send buttons), regardless of what the FAB itself links
+  // to. Confirmed by a real screenshot after dropping /ai-coach from this
+  // list on the assumption it "wasn't needed anymore" — it still visually
+  // overlapped the mic button there.
+  const hideFAB = location.pathname.startsWith('/messages') || location.pathname.startsWith('/ai-coach')
 
   return (
     <div className="member-layout">

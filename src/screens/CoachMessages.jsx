@@ -59,11 +59,11 @@ export default function CoachMessages() {
         {loading && <p className="text-sm text-muted">Chargement...</p>}
         {!loading && sorted.length === 0 && <p className="text-sm text-muted">Aucun client pour l'instant.</p>}
         <div className="coach-grid">
-          {sorted.map(m => {
+          {sorted.map((m, i) => {
             const summary = summaries[m.user_id]
             const unread = summary?.unreadCount > 0
             return (
-              <div key={m.id} className="card" style={{ cursor: 'pointer', marginBottom: 8 }} onClick={() => navigate(`/coach/messages/${m.id}`)}>
+              <div key={m.id} className="card card-animated" style={{ cursor: 'pointer', marginBottom: 8, '--delay': `${Math.min(i, 6) * 40}ms` }} onClick={() => navigate(`/coach/messages/${m.id}`)}>
                 <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                   <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: 'var(--accent-ink)', flexShrink: 0 }}>{m.prenom?.[0] || '?'}</div>
                   <div style={{ flex: 1, minWidth: 0 }}>
