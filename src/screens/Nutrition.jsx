@@ -12,6 +12,12 @@ import NutriscoreBadge from '../components/NutriscoreBadge'
 import SwipeableRow from '../components/SwipeableRow'
 import '../styles/nutrition.css'
 
+const RECIPE_LOADING_MESSAGES = [
+  'Analyse en cours...',
+  'Calcul des quantités...',
+  'Presque prêt...',
+]
+
 // Manual food-search entries encode their grams in the name ("Skyr (100g)")
 // — extracted so "Modifier" can rescale calories/macros proportionally.
 // Meals without it (scan results, AI recipes) aren't gram-based, so editing
@@ -65,10 +71,23 @@ export default function Nutrition() {
   const [recipeLinkOpen, setRecipeLinkOpen] = useState(false)
   const [recipeLinkInput, setRecipeLinkInput] = useState('')
   const [recipeSourceLabel, setRecipeSourceLabel] = useState('')
+  const [recipeLoadingMsgIndex, setRecipeLoadingMsgIndex] = useState(0)
   const foodSearchInputRef = useRef(null)
   const recipePhotoInputRef = useRef(null)
 
   useEffect(() => { window.scrollTo(0, 0) }, [])
+
+  // Rotates the loading caption while a recipe is generating — the link
+  // path in particular does two sequential network calls (fetch transcript,
+  // then generate the recipe) and can take a while; a single static
+  // "Génération en cours..." read as frozen/broken during that wait.
+  useEffect(() => {
+    if (!recipeLoading) { setRecipeLoadingMsgIndex(0); return }
+    const interval = setInterval(() => {
+      setRecipeLoadingMsgIndex(i => (i + 1) % RECIPE_LOADING_MESSAGES.length)
+    }, 1800)
+    return () => clearInterval(interval)
+  }, [recipeLoading])
 
   // The "add meal" sheet below stays mounted at all times (only slid
   // off-screen via CSS transform) so its opening animation can play — it's
@@ -923,7 +942,10 @@ Réponds en français.`
         {recipeStep === 3 && (
           <>
             {recipeLoading && (
-              <p style={{ fontSize: 13, color: 'var(--text-muted)', padding: '20px 0', textAlign: 'center' }}>Génération en cours...</p>
+              <div style={{ padding: '32px 0', textAlign: 'center' }}>
+                <div className="recipe-loading-orb" />
+                <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 20 }}>{RECIPE_LOADING_MESSAGES[recipeLoadingMsgIndex]}</p>
+              </div>
             )}
 
             {recipeError && (
