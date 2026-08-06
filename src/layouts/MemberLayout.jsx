@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { useNavigate, useLocation, Outlet } from 'react-router-dom'
 import BottomNav from '../components/BottomNav'
 import OnboardingTour from '../components/OnboardingTour'
@@ -6,7 +6,6 @@ import '../styles/fab.css'
 import '../styles/member.css'
 
 const MemberLayout = () => {
-  const [showFAB, setShowFAB] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -17,12 +16,14 @@ const MemberLayout = () => {
     root?.classList.add('member-shell')
     return () => root?.classList.remove('member-shell')
   }, [])
-  // Hidden on /messages* and /ai-coach — the FAB's own position
-  // (bottom:96px, right:16px, z-index:95) sits directly on top of both
-  // screens' send button (bottom:100px, z-index:90), blocking it entirely.
-  // Also redundant there: you're already inside the conversation the
-  // FAB's "Mon Coach"/"Coach IA" entry would open.
-  const hideFAB = location.pathname.startsWith('/messages') || location.pathname.startsWith('/ai-coach')
+
+  // Used to open a 2-item menu (Coach IA / Mon Coach) — now a single direct
+  // shortcut to messages, since Coach IA moved into the bottom nav itself
+  // (replacing the "+" — see BottomNav.jsx) and no longer needs this floating
+  // button at all. Still hidden on /messages: its position (bottom:96px,
+  // right:16px, z-index:95) sits on top of that screen's own send button,
+  // and it's redundant there anyway — you're already in the conversation it opens.
+  const hideFAB = location.pathname.startsWith('/messages')
 
   return (
     <div className="member-layout">
@@ -30,42 +31,15 @@ const MemberLayout = () => {
       <BottomNav />
       <OnboardingTour variant="member" />
 
-      {showFAB && !hideFAB && (
-        <div className="fab-overlay" onClick={() => setShowFAB(false)} />
+      {!hideFAB && (
+        <div className="fab-container">
+          <button className="fab-btn" onClick={() => navigate('/messages')} aria-label="Mon Coach">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 4h12a1 1 0 011 1v7a1 1 0 01-1 1H6l-3 3V5a1 1 0 011-1z"/>
+            </svg>
+          </button>
+        </div>
       )}
-
-      {!hideFAB && <div className="fab-container">
-        {showFAB && (
-          <div className="fab-menu">
-            <button className="fab-menu-item" onClick={() => { setShowFAB(false); navigate('/ai-coach') }}>
-              <span className="fab-menu-icon">
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-                  <circle cx="7" cy="4" r="2"/>
-                  <path d="M3 12c0-2.2 1.8-4 4-4s4 1.8 4 4"/>
-                  <path d="M10 6l1.5-1.5M11.5 6L10 4.5"/>
-                </svg>
-              </span>
-              Coach IA
-            </button>
-            <button className="fab-menu-item" onClick={() => { setShowFAB(false); navigate('/messages') }}>
-              <span className="fab-menu-icon">
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-                  <path d="M2 2h10a1 1 0 011 1v6a1 1 0 01-1 1H5l-3 2.5V3a1 1 0 011-1z"/>
-                </svg>
-              </span>
-              Mon Coach
-            </button>
-          </div>
-        )}
-        <button
-          className={`fab-btn${showFAB ? ' open' : ''}`}
-          onClick={() => setShowFAB(prev => !prev)}
-        >
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M4 4h12a1 1 0 011 1v7a1 1 0 01-1 1H6l-3 3V5a1 1 0 011-1z"/>
-          </svg>
-        </button>
-      </div>}
     </div>
   )
 }

@@ -5,6 +5,7 @@ import CoachNav from '../components/CoachNav'
 import { authHeader } from '../lib/supabase'
 import { isPushSupported, getPushSubscriptionState, subscribeToPush, unsubscribeFromPush } from '../utils/push'
 import DeleteAccountButton from '../components/DeleteAccountButton'
+import { storageKey } from '../components/OnboardingTour'
 
 function Toggle({ on, onToggle }) {
   return (
@@ -36,6 +37,13 @@ export default function CoachSettings() {
     if (!isPushSupported()) { setPushState('unsupported'); return }
     getPushSubscriptionState().then(setPushState)
   }, [])
+
+  // See Settings.jsx's replayTour for why this is a hard navigation rather
+  // than react-router's navigate().
+  function replayTour() {
+    if (user?.id) localStorage.removeItem(storageKey(user.id, 'coach'))
+    window.location.href = '/coach'
+  }
 
   async function handleTogglePush() {
     if (pushState === 'loading') return
@@ -96,6 +104,9 @@ export default function CoachSettings() {
         </div>
 
         <div className="section-label">COMPTE</div>
+        <button className="btn-ghost" onClick={replayTour} style={{ marginBottom: 8 }}>
+          Revoir le didacticiel
+        </button>
         <button onClick={() => { logout(); navigate('/') }} style={{ width: '100%', padding: 16, background: 'transparent', border: '2px solid var(--danger)', color: 'var(--danger)', fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', borderRadius: 12, cursor: 'pointer', marginBottom: 12 }}>
           SE DÉCONNECTER
         </button>

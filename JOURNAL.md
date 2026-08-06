@@ -6,6 +6,20 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo (le nom de la branche de travail change à chaque session — vérifie celle en cours plutôt que de te fier à un nom figé ici), et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-08-06 — Session 18 (suite 20) : Coach IA déplacé dans la nav, "Revoir le didacticiel"
+
+Juste après la suite 19 : l'utilisateur trouve que le bouton flottant Coach IA prend trop de place côté membre, et veut checker le nouveau didacticiel sur son propre compte.
+
+### ✅ Coach IA déplacé dans la nav bar, à la place du "+"
+Le bouton flottant latéral (`fab-container` de `MemberLayout.jsx`) proposait "Coach IA" + "Mon Coach" dans un petit menu. Retiré : "Coach IA" est maintenant directement le bouton central élevé de la nav (à la place du "+", icône robot), "Mon Coach" reste seul sur le FAB latéral simplifié (un seul bouton direct, plus de menu à déplier). Le "+" ouvrait aussi un mini-menu "Nouveau repas"/"Nouvel exercice" — retiré sans perte réelle : "Nouveau repas" reste à un tap via le propre FAB de Nutrition, et un exercice isolé peut maintenant être loggé en le disant simplement au Coach IA (outil `log_quick_exercise` ajouté en suite 19).
+
+### ✅ "Revoir le didacticiel" dans Réglages (membre + coach)
+Impossible de réinitialiser le flag `ob_seen_*` du navigateur d'un utilisateur à distance — ajouté un bouton dans Réglages qui l'efface pour son propre compte et relance le tour immédiatement (navigation forcée en dur, nécessaire car `OnboardingTour` reste monté dans le layout et ne se remonte pas sur un simple changement de route react-router).
+
+⚠️ Pas vérifié visuellement — l'icône robot dans la nav et le tour relancé via Réglages sont à confirmer en priorité au prochain retour.
+
+---
+
 ## 2026-08-06 — Session 18 (suite 19) : bug de saisie nutrition, garde-fous anti-valeurs aberrantes, suppression de compte, didacticiel d'accueil, et premières actions concrètes de l'IA
 
 L'utilisateur signale 4 choses en une fois sur une capture AI Coach : la barre du bas toujours étroite, veut démarrer le chantier des actions IA, veut un didacticiel d'accueil + suppression de compte, et signale une valeur de calories aberrante + un bug de saisie sur la quantité en Nutrition. Demande de prioriser.

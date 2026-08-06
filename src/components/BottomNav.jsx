@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { useApp } from '../context/AppContext'
 import '../styles/nav.css'
 
 const leftTabs = [
@@ -51,74 +50,10 @@ const rightTabs = [
   },
 ]
 
-function QuickExerciseSheet({ onClose }) {
-  const { logQuickExercise } = useApp()
-  const [name, setName] = useState('')
-  const [setsCount, setSetsCount] = useState('3')
-  const [reps, setReps] = useState('10')
-  const [kg, setKg] = useState('')
-  const [saving, setSaving] = useState(false)
-
-  async function handleSave() {
-    if (!name.trim()) return
-    setSaving(true)
-    await logQuickExercise({
-      name: name.trim(),
-      setsCount: Math.max(1, parseInt(setsCount) || 1),
-      reps: parseInt(reps) || 0,
-      kg: parseFloat(kg) || 0,
-    })
-    setSaving(false)
-    onClose()
-  }
-
-  return (
-    <>
-      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 199 }} />
-      <div style={{
-        position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)',
-        width: '100%', maxWidth: 480, background: 'var(--surface-solid)',
-        borderRadius: '20px 20px 0 0', borderTop: '1px solid var(--border)',
-        padding: '24px 20px 40px', zIndex: 200,
-      }}>
-        <h2 className="text-lg bold" style={{ marginBottom: 16 }}>Ajouter un exercice</h2>
-        <label className="text-xs text-muted" style={{ display: 'block', marginBottom: 8 }}>NOM DE L'EXERCICE</label>
-        <input
-          type="text"
-          value={name}
-          onChange={e => setName(e.target.value)}
-          placeholder="Ex. Développé couché"
-          autoFocus
-          style={{ marginBottom: 16 }}
-        />
-        <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
-          <div style={{ flex: 1 }}>
-            <label className="text-xs text-muted" style={{ display: 'block', marginBottom: 8 }}>SÉRIES</label>
-            <input type="number" inputMode="numeric" value={setsCount} onChange={e => setSetsCount(e.target.value)} style={{ textAlign: 'center' }} />
-          </div>
-          <div style={{ flex: 1 }}>
-            <label className="text-xs text-muted" style={{ display: 'block', marginBottom: 8 }}>RÉPS</label>
-            <input type="number" inputMode="numeric" value={reps} onChange={e => setReps(e.target.value)} style={{ textAlign: 'center' }} />
-          </div>
-          <div style={{ flex: 1 }}>
-            <label className="text-xs text-muted" style={{ display: 'block', marginBottom: 8 }}>KG</label>
-            <input type="number" inputMode="decimal" value={kg} onChange={e => setKg(e.target.value)} placeholder="0" style={{ textAlign: 'center' }} />
-          </div>
-        </div>
-        <button className="btn-accent" onClick={handleSave} disabled={saving || !name.trim()} style={{ opacity: saving || !name.trim() ? 0.6 : 1 }}>
-          {saving ? '...' : 'ENREGISTRER'}
-        </button>
-      </div>
-    </>
-  )
-}
-
 export default function BottomNav() {
   const navigate = useNavigate()
   const location = useLocation()
   const [hidden, setHidden] = useState(false)
-  const [menuOpen, setMenuOpen] = useState(false)
-  const [exerciseSheetOpen, setExerciseSheetOpen] = useState(false)
   const lastScrollY = useRef(0)
 
   useEffect(() => {
@@ -149,45 +84,36 @@ export default function BottomNav() {
     )
   }
 
+  // Coach IA now lives in the elevated center slot instead of a "+" that
+  // opened a quick-add menu (Nouveau repas / Nouvel exercice) — the AI
+  // floating button on the side was taking up too much visual space on top
+  // of content, per user feedback. Not a functional loss: "Nouveau repas"
+  // is still one tap away from Nutrition's own FAB, and a quick exercise can
+  // now be logged by just telling the AI Coach directly (log_quick_exercise
+  // tool) instead of filling a separate form.
+  const aiActive = location.pathname.startsWith('/ai-coach')
+
   return (
-    <>
-      <nav className={`bottom-nav${hidden ? ' hidden' : ''}`}>
-        {menuOpen && <div className="nav-add-overlay" onClick={() => setMenuOpen(false)} />}
+    <nav className={`bottom-nav${hidden ? ' hidden' : ''}`}>
+      <div className="nav-pill">
+        {leftTabs.map(renderTab)}
 
-        {menuOpen && (
-          <div className="nav-add-menu">
-            <button
-              className="nav-add-menu-item"
-              onClick={() => { setMenuOpen(false); navigate('/nutrition', { state: { openAddMeal: true } }) }}
-            >
-              🍽️ Nouveau repas
-            </button>
-            <button
-              className="nav-add-menu-item"
-              onClick={() => { setMenuOpen(false); setExerciseSheetOpen(true) }}
-            >
-              🏋️ Nouvel exercice
-            </button>
-          </div>
-        )}
+        <button
+          className={`nav-btn nav-btn-elevated${aiActive ? ' active' : ''}`}
+          onClick={() => { navigator.vibrate && navigator.vibrate(6); navigate('/ai-coach') }}
+          aria-label="Coach IA"
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="5" y="9" width="14" height="10" rx="3"/>
+            <path d="M12 9V5"/>
+            <circle cx="12" cy="4" r="1.3" fill="currentColor" stroke="none"/>
+            <circle cx="9" cy="14" r="1.3" fill="currentColor" stroke="none"/>
+            <circle cx="15" cy="14" r="1.3" fill="currentColor" stroke="none"/>
+          </svg>
+        </button>
 
-        <div className="nav-pill">
-          {leftTabs.map(renderTab)}
-
-          <button
-            className={`nav-btn nav-btn-elevated${menuOpen ? ' active' : ''}`}
-            onClick={() => { navigator.vibrate && navigator.vibrate(6); setMenuOpen(o => !o) }}
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
-              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-            </svg>
-          </button>
-
-          {rightTabs.map(renderTab)}
-        </div>
-      </nav>
-
-      {exerciseSheetOpen && <QuickExerciseSheet onClose={() => setExerciseSheetOpen(false)} />}
-    </>
+        {rightTabs.map(renderTab)}
+      </div>
+    </nav>
   )
 }

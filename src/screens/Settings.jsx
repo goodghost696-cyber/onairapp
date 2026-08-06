@@ -7,6 +7,7 @@ import { useTheme } from '../context/ThemeContext'
 import { BOUNDS, clamp } from '../utils/validation'
 import { isPushSupported, getPushSubscriptionState, subscribeToPush, unsubscribeFromPush } from '../utils/push'
 import DeleteAccountButton from '../components/DeleteAccountButton'
+import { storageKey } from '../components/OnboardingTour'
 
 function Toggle({ on, onToggle }) {
   return (
@@ -74,6 +75,16 @@ export default function Settings() {
     setHealthData({ steps: '', sleep_hours: '', sleep_minutes: '' })
     setSyncToast(true)
     setTimeout(() => setSyncToast(false), 2000)
+  }
+
+  // Clears this account's "tour seen" flag then does a hard navigation
+  // (not just navigate() from react-router) so OnboardingTour's mount
+  // effect actually re-runs — it lives in MemberLayout, which stays
+  // mounted across route changes within it, so a soft navigation here
+  // wouldn't re-trigger the check.
+  function replayTour() {
+    if (user?.id) localStorage.removeItem(storageKey(user.id, 'member'))
+    window.location.href = '/dashboard'
   }
 
   function saveGoals() {
@@ -220,6 +231,9 @@ export default function Settings() {
         )}
 
         <div className="section-label">{t('account_section')}</div>
+        <button className="btn-ghost" onClick={replayTour} style={{ marginBottom: 8 }}>
+          Revoir le didacticiel
+        </button>
         <button onClick={() => { logout(); navigate('/') }} style={{ width: '100%', padding: 16, background: 'transparent', border: '2px solid var(--danger)', color: 'var(--danger)', fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', borderRadius: 12, cursor: 'pointer', marginBottom: 12 }}>
           {t('logout')}
         </button>
