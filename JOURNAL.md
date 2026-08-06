@@ -6,6 +6,25 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo, branche `claude/charming-mendel-dj1GQ`, et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-08-06 — Session 18 (suite 18) : root cause "toujours trop étroit" trouvée (vrai téléphone cette fois) + ton de l'IA corrigé
+
+Capture d'écran d'un vrai téléphone (statusbar iOS, batterie/réseau) sur AI Coach : l'utilisateur signale que c'est "toujours le même problème" — trop étroit.
+
+### 🐛 `#root` plafonné à 390px, sans condition, même sur mobile
+Root cause enfin trouvée : `#root { max-width: 390px }` dans `global.css` était un plafond **fixe et inconditionnel**, appliqué à absolument toutes les tailles d'écran — y compris les vrais téléphones. Beaucoup de téléphones actuels ont une largeur logique **supérieure** à 390px (iPhone Pro Max/Plus ~428-430px, pas mal d'Android 400-480px) : sur ces appareils précis, l'app perdait de la place des deux côtés **nativement sur mobile**, pas seulement en desktop — ce qui explique le "toujours le même problème" alors que les correctifs précédents ne visaient que le desktop (`>=900px`).
+
+**Corrigé** : plafond remonté à `480px` (couvre confortablement les téléphones actuels). Harmonisé sur toutes les feuilles modales qui utilisaient la même valeur en dur (`nav.css`, `dashboard.css`, `ExerciseModal.css`, `Settings.jsx`, `Nutrition.jsx` ×3, `BottomNav.jsx`) pour rester cohérent avec le contenu.
+
+⚠️ Changement plus large que les précédents (touche `#root` sans condition, donc chaque écran à chaque taille) — à confirmer en priorité sur le prochain retour visuel.
+
+### ✅ Ton de l'IA corrigé — trop familier avant
+Le prompt système de `AICoach.jsx` demandait explicitement "parle comme un pote", donnait des exemples avec "mec" et "mode beast", encourageait les blagues — exactement ce que montrait la capture ("Ah mec, j'aimerais bien..."). Remplacé par des instructions de ton professionnel : direct, motivant, chaleureux mais sans familiarité ni surnoms.
+
+### 💡 Demandé mais pas fait — actions concrètes de l'IA (remplir nutrition/entraînement à l'oral)
+L'utilisateur veut que l'IA puisse **agir** sur les données de l'app (ajouter un repas, logger une séance) à partir de ce qui est dit à l'oral/à l'écrit, pas seulement suggérer. Nécessite du function calling côté `api/claude.js` (schémas d'outils, exécution des écritures Supabase réelles, confirmation à l'utilisateur) — un vrai chantier, pas une correction rapide. Volontairement pas commencé cette session : l'utilisateur a explicitement priorisé le problème d'écran et le ton de l'IA avant ("mais arrange en prio..."). À reprendre et cadrer avec l'utilisateur à la prochaine session.
+
+---
+
 ## 2026-08-06 — Session 18 (suite 17) : dictée vocale pour le Coach IA
 
 L'utilisateur a demandé de pouvoir dicter les messages au Coach IA, avec une référence visuelle (app santé "Docuverse" : écran plein écran, orbe animée, transcript en direct, bouton d'enregistrement).

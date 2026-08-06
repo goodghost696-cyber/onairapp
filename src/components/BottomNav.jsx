@@ -77,7 +77,7 @@ function QuickExerciseSheet({ onClose }) {
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 199 }} />
       <div style={{
         position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)',
-        width: '100%', maxWidth: 390, background: 'var(--surface-solid)',
+        width: '100%', maxWidth: 480, background: 'var(--surface-solid)',
         borderRadius: '20px 20px 0 0', borderTop: '1px solid var(--border)',
         padding: '24px 20px 40px', zIndex: 200,
       }}>
