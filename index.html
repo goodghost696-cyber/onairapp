@@ -17,7 +17,20 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="VOLTA">
     <link rel="apple-touch-icon" href="/icon-192.png">
-    <meta name="theme-color" content="#0A0A0A">
+    <!-- Direction corail (2026-08-06): was #0A0A0A (leftover from the old
+         dark identity, never updated in the coral pivot). This is the flat
+         color Safari paints in any gap between actual rendered content and
+         the true device viewport — scroll rubber-band overshoot, or a
+         viewport-height mismatch like the one caused by the in-call status
+         bar (the black pill with the phone icon showing at the top of a
+         screenshot) temporarily resizing the visible web viewport. Left as
+         #0A0A0A, every such gap read as a solid black "hole" at the bottom
+         of an otherwise coral screen — reported directly. #C6371E is the
+         gradient's 82% stop (see global.css body), the tone that covers
+         most of the screen once past the lighter top-left origin, so a
+         flat fallback color blends acceptably regardless of where the gap
+         lands. -->
+    <meta name="theme-color" content="#C6371E">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Unbounded:wght@600;700;800;900&display=swap" rel="stylesheet">
