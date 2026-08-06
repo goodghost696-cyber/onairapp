@@ -5,7 +5,10 @@ import { useAuth } from '../context/AuthContext'
 // localStorage key starting with that prefix, which would make the tour
 // reappear on every single login instead of just the first one ever, for
 // every account that shares this device.
-function storageKey(userId, variant) {
+// Exported so Settings.jsx / CoachSettings.jsx's "Revoir le didacticiel"
+// can clear the exact same key rather than duplicating the format and
+// risking it drifting out of sync.
+export function storageKey(userId, variant) {
   return `ob_seen_${variant}_${userId}`
 }
 
