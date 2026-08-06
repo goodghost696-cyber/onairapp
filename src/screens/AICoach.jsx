@@ -297,7 +297,7 @@ ACTIONS CONCRÈTES :
   }
 
   return (
-    <div className="app-wrapper" style={{ position: 'relative', height: '100vh', overflow: 'hidden' }}>
+    <div className="app-wrapper" style={{ position: 'relative', height: '100vh', minHeight: '100dvh', maxHeight: '100dvh', overflow: 'hidden' }}>
       {/* Header */}
       <div className="screen-header" style={{
         padding: '20px 16px 12px',

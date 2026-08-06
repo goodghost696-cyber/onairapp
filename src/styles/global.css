@@ -4,38 +4,42 @@
   padding: 0;
 }
 
+/* Scroll model (2026-08-06, 2nd pass) — first attempt kept the document
+   itself (body) as the scrolling element and only swapped 100vh for 100dvh
+   to track iOS Safari's address-bar-driven viewport changes. That's the
+   right fix for "the toolbar hides/shows and 100vh briefly disagrees with
+   the real viewport", but it does NOT fix the issue actually reported
+   ("elle bloque soit en haut soit en bas" — persisted after that fix
+   shipped): iOS's WKWebView (both plain Safari tabs and, worse, apps added
+   to the home screen — this is `display:standalone` in manifest.json) has
+   a long-documented separate bug where letting the real `body`/`html`
+   document itself be the scroll container causes momentum scrolling to
+   randomly freeze right at the top/bottom edge, needing a second swipe to
+   "unstick". The standard fix is to stop scrolling the document at all —
+   html/body are pinned to exactly the viewport height and never scroll —
+   and hand scrolling to a single dedicated element (#root) with its own
+   `overflow-y: auto` + `-webkit-overflow-scrolling: touch`, which iOS
+   handles far more reliably than document-level scroll. */
 html {
-  overflow-x: hidden;
+  height: 100%;
+  overflow: hidden;
   width: 100%;
 }
 
 body {
-  overflow-x: hidden;
+  height: 100%;
+  height: 100dvh;
+  overflow: hidden;
   width: 100%;
-  /* 100vh, then 100dvh as an override for browsers that support it (the
-     second declaration wins in browsers that understand it, ignored
-     otherwise) — 100vh on iOS Safari is measured against the LARGEST
-     possible viewport (address bar hidden), not the actual visible one,
-     so on a long page the real bottom of "100vh" content sits partly
-     behind the address bar until it collapses, which reads as the page
-     "getting stuck" a bit before the real top/bottom on scroll — reported
-     directly ("elle bloque soit en haut soit en bas"). 100dvh tracks the
-     real visible viewport as the address bar shows/hides instead. */
-  min-height: 100vh;
-  min-height: 100dvh;
   /* Direction corail (2026-08-06) — was a flat var(--bg) here, with the
-     actual gradient on #root. Moved to body with a fixed attachment: a
-     radial-gradient recalculated across #root's full scrollable height
-     (which can run to several thousand px on a long exercise list) is
-     real repaint cost on scroll on a phone; pinning it to the viewport via
-     `background-attachment: fixed` computes it once, at viewport size,
-     regardless of how tall the page's content grows — cheaper AND doubles
-     as a fix for the color-banding a multi-stop gradient gets when
-     stretched over a very tall box. #root's own background is transparent
-     now so this shows through it. */
+     actual gradient on #root. Moved to body: since body no longer scrolls
+     at all (see above), this paints once and never needs to be repainted
+     or recalculated as content height changes — cheaper than either the
+     old #root placement or the previous fixed-attachment workaround, and
+     avoids the color-banding a multi-stop gradient gets when stretched
+     over a very tall scrolling box. #root's own background is transparent
+     so this shows through it. */
   background: radial-gradient(140% 70% at 18% -8%, #FF8355 0%, #E8552B 45%, #C6371E 82%, #9C2A22 100%);
-  background-attachment: fixed;
-  background-repeat: no-repeat;
   display: flex;
   justify-content: center;
   color: var(--text-primary);
@@ -57,12 +61,18 @@ body {
      current phone sizes; the >=900px rules in member.css/coach.css take
      over from there for actual desktop widths. */
   max-width: 480px;
-  min-height: 100vh;
-  min-height: 100dvh;
+  height: 100%;
+  height: 100dvh;
+  /* The one true scroll container — see the comment above body. Also
+     targeted directly by BottomNav.jsx's scroll listener (by id="root")
+     and by the couple of screens that used to call window.scrollTo(0,0)
+     on mount, both updated alongside this. */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   position: relative;
   overflow-x: hidden;
-  /* The real gradient now lives on body (see above, fixed-attachment) —
-     transparent lets it show through unchanged. */
+  /* The real gradient now lives on body (see above) — transparent lets it
+     show through unchanged. */
   background: transparent;
 }
 

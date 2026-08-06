@@ -5,7 +5,9 @@ import { useApp } from '../context/AppContext'
 export default function Hydration() {
   const navigate = useNavigate()
   const { appData, updateData } = useApp()
-  useEffect(() => { window.scrollTo(0, 0) }, [])
+  // window no longer scrolls — #root is the app's real scroll container
+  // (see global.css) since the standalone-iOS scroll-stuck fix.
+  useEffect(() => { document.getElementById('root')?.scrollTo(0, 0) }, [])
   const pct = Math.min(appData.water / appData.waterGoal * 100, 100)
   const [filledKey, setFilledKey] = useState(null)
 

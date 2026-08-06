@@ -63,7 +63,7 @@ export default function ResetPassword() {
 
   return (
     <div className="app-wrapper">
-      <div style={{ padding: '0 28px 48px', display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      <div style={{ padding: '0 28px 48px', display: 'flex', flexDirection: 'column', minHeight: '100dvh' }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 80, paddingBottom: 48 }}>
           <Logo variant="lockup" size={72} style={{ marginBottom: 14 }} />
           <p style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{t('reset_password_title')}</p>

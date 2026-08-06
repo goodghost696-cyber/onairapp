@@ -6,6 +6,21 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo (le nom de la branche de travail change à chaque session — vérifie celle en cours plutôt que de te fier à un nom figé ici), et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-08-06 — Session 18 (suite 43) : scroll bloqué, prise 2 — changement d'architecture de scroll (body → #root)
+
+"Toujours le même problème le scroll bloque, t'as appliqué la solution à toutes les pages ?" — le fix de la suite 41 (`100vh` → `100dvh`) était bien appliqué partout, mais ne réglait pas le vrai problème : il traite l'écart entre le viewport "le plus grand possible" et le viewport visible (Safari qui cache/montre sa barre d'adresse), pas le bug indépendant, bien documenté, de **iOS qui fige le scroll du document lui-même** (`body`/`html` en scroll natif) pile au bord haut/bas — surtout marqué en mode "ajouté à l'écran d'accueil" (le manifest a `"display": "standalone"`), où il n'y a même plus de barre d'adresse à cacher, donc le fix précédent ne pouvait rien changer dans ce mode précis.
+
+**Changement d'architecture** : au lieu de laisser le document (`body`) défiler, `html`/`body` sont maintenant figés exactement à la hauteur du viewport (`height:100%; height:100dvh; overflow:hidden`) et ne défilent plus jamais. `#root` devient le seul et unique conteneur de scroll de toute l'app (`overflow-y:auto; -webkit-overflow-scrolling:touch`) — c'est le correctif standard documenté pour ce bug iOS précis (WKWebView gère beaucoup mieux le scroll d'un élément dédié que le scroll du document natif).
+
+Effets de bord corrigés dans la foulée :
+- Le dégradé corail passe de `background-attachment:fixed` (nécessaire quand body scrollait) à un simple fond fixe sur `body` — plus simple, plus léger, puisque body ne bouge plus du tout.
+- `BottomNav.jsx` : le listener de scroll (masque la nav en scrollant vers le bas) ciblait un `id="oa-scroll"` qui n'a jamais existé nulle part dans le code — retombait toujours sur `window`, qui ne défile plus maintenant. Recâblé sur `#root` (le vrai conteneur).
+- `Hydration.jsx` / `Nutrition.jsx` : leur `window.scrollTo(0, 0)` au montage ne faisait plus rien pour la même raison — remplacé par un scroll de `#root`.
+- `AICoach.jsx` / `Conversation.jsx` (écrans de chat plein écran, scroll interne à eux) : leur wrapper avait encore un `height: '100vh'` en dur, jamais corrigé lors de la suite 41 (c'est du style inline React, pas du CSS — le grep de l'époque cherchait dans les fichiers `.css`). Passé en cascade `100vh` + `minHeight`/`maxHeight: '100dvh'` (l'équivalent de la cascade CSS `100vh; 100dvh;`, mais en inline React où on ne peut pas déclarer deux fois la même clé).
+- `Login.jsx` / `ResetPassword.jsx` : même oubli (`minHeight: '100vh'` en inline, jamais touché) — passés en `100dvh` directement (pas de `overflow:hidden` dessus donc pas besoin de la cascade, juste le remplacement).
+
+**Vérifié dans le build compilé** : `npm run build` passe, `html{height:100%;overflow:hidden...}`, `body{height:100dvh;overflow:hidden...}`, `#root{height:100dvh;overflow-y:auto;-webkit-overflow-scrolling:touch...}` bien présents. Toujours aucune vérification visuelle/interaction réelle possible dans ce sandbox (pas d'outil browser tactile) — c'est le point faible de tout ce chantier scroll : je ne peux tester que "le CSS calculé correspond à l'intention", jamais "ça défile vraiment sans accroc sur un vrai iPhone". À confirmer sur le lien de prod, en testant si possible à la fois en Safari normal ET en app ajoutée à l'écran d'accueil (les deux modes ont des comportements de scroll différents sur iOS).
+
 ## 2026-08-06 — Session 18 (suite 42) : bibliothèques d'exercices — bug de fond trouvé (API remplaçait le socle local au lieu de le compléter) + ajout du cardio machine manquant
 
 Suite directe de la suite 41 : "Note déjà dans le journal qu'on doit regarder attentivement la partie exercice il y en a pas assez et je trouve ça bizarre dans les exercice 'Maison' je ne retrouve pas le tapis de marche ou le vélo d'appartement, Analyse toutes les bibliothèque et rends les cohérente".
