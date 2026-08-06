@@ -290,6 +290,30 @@ const EXERCISE_DATA = {
     steps: ["Sac au sol, pieds de chaque côté, dos plat.", "Tire le sac vers le haut en poussant avec les jambes.", "Réceptionne à l'épaule ou repose au sol, contrôlé."],
     muscle_group: 'fullbody'
   },
+  m17: {
+    muscles_primary: ['Cardio', 'Jambes'],
+    muscles_secondary: [],
+    steps: ["Démarre à allure de marche pour t'échauffer 3-5 min.", "Augmente progressivement l'allure ou l'inclinaison.", "Termine par 3-5 min de retour au calme."],
+    muscle_group: 'cardio'
+  },
+  m18: {
+    muscles_primary: ['Cardio', 'Quadriceps'],
+    muscles_secondary: ['Mollets'],
+    steps: ["Règle la selle à hauteur de hanche, genou légèrement fléchi en bas de course.", "Pédale à allure régulière, dos droit.", "Varie la résistance pour alterner endurance et intensité."],
+    muscle_group: 'cardio'
+  },
+  s17: {
+    muscles_primary: ['Cardio', 'Jambes'],
+    muscles_secondary: [],
+    steps: ["Démarre à allure de marche pour t'échauffer 3-5 min.", "Augmente progressivement l'allure ou l'inclinaison.", "Termine par 3-5 min de retour au calme."],
+    muscle_group: 'cardio'
+  },
+  s18: {
+    muscles_primary: ['Cardio', 'Dos'],
+    muscles_secondary: ['Jambes', 'Bras'],
+    steps: ["Pousse avec les jambes, buste droit, avant de tirer avec les bras.", "Tire la poignée vers le bas des côtes, coudes près du corps.", "Reviens en inversant l'ordre : bras, buste, jambes."],
+    muscle_group: 'cardio'
+  },
 };
 
 

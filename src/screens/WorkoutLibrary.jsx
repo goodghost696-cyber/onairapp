@@ -6,9 +6,14 @@ import { ExerciseModal } from '../components/ExerciseModal'
 import { useExercises } from '../hooks/useExercises'
 
 // Doubled from 8 to 16 per section (was too thin — "pas assez d'exercices
-// proposés") and used as the guaranteed baseline regardless of whether
-// api/exercises.js (API Ninjas, third-party, can be slow/rate-limited/down)
-// returns anything for a given session.
+// proposés"), then +2 per section (maison/salle) to cover cardio machine
+// equipment ("je ne retrouve pas le tapis de marche ou le vélo
+// d'appartement" — Maison had zero cardio-machine entries despite most
+// home setups owning one, and Salle mirrored the same gap even though a
+// real gym's cardio zone is one of its most-used areas). Merged with (not
+// replaced by, see baseList below) whatever api/exercises.js returns, so
+// this is the true guaranteed baseline for every session regardless of API
+// availability.
 const LOCAL_EXERCISES = {
   maison: [
     { id: 'm1', name: 'Push-up',          muscles: 'Pectoraux · Triceps · Épaules' },
@@ -27,6 +32,8 @@ const LOCAL_EXERCISES = {
     { id: 'm14', name: 'Squat Sauté',      muscles: 'Quadriceps · Fessiers · Explosivité' },
     { id: 'm15', name: 'Gainage Latéral',  muscles: 'Obliques · Core' },
     { id: 'm16', name: 'Pompes Pike',      muscles: 'Épaules · Triceps' },
+    { id: 'm17', name: 'Tapis de Marche/Course', muscles: 'Cardio · Jambes' },
+    { id: 'm18', name: "Vélo d'Appartement", muscles: 'Cardio · Quadriceps' },
   ],
   salle: [
     { id: 's1', name: 'Bench Press',              muscles: 'Pectoraux · Triceps · Épaules' },
@@ -45,6 +52,8 @@ const LOCAL_EXERCISES = {
     { id: 's14', name: 'Extension Triceps Poulie', muscles: 'Triceps' },
     { id: 's15', name: 'Hip Thrust',               muscles: 'Fessiers · Ischio' },
     { id: 's16', name: 'Front Squat',              muscles: 'Quadriceps · Core' },
+    { id: 's17', name: 'Tapis de Course',          muscles: 'Cardio · Jambes' },
+    { id: 's18', name: 'Rameur',                   muscles: 'Cardio · Dos · Full body' },
   ],
   dehors: [
     { id: 'd1', name: 'Sprint 100m',   muscles: 'Full body · Cardio intense' },
@@ -79,10 +88,23 @@ export default function WorkoutLibrary({ section }) {
 
   const { exercises: apiExercises, loading, error } = useExercises(section)
 
-  // Use API exercises when available, fall back to local
-  const baseList = (!loading && !error && apiExercises.length > 0)
-    ? apiExercises
-    : LOCAL_EXERCISES[section] || []
+  // Was: API exercises *replaced* LOCAL_EXERCISES outright whenever the
+  // API succeeded, despite the comment above claiming the local list was
+  // "the guaranteed baseline regardless of API availability" — it wasn't.
+  // In practice this meant the curated baseline (and anything added to it,
+  // like the cardio-machine entries above) could silently vanish on any
+  // session where api/exercises.js happened to return >0 results for that
+  // category, which is also a likely cause of the library feeling
+  // inconsistently thin from one visit to the next. Now always merged,
+  // local first (so the curated set — the ones with a proper ExerciseModal
+  // entry — appear first), deduped by name so the API can't double up an
+  // exercise already covered locally.
+  const local = LOCAL_EXERCISES[section] || []
+  const seenNames = new Set(local.map(e => e.name.toLowerCase()))
+  const apiExtra = (!loading && !error)
+    ? apiExercises.filter(e => !seenNames.has(e.name.toLowerCase()))
+    : []
+  const baseList = [...local, ...apiExtra]
 
   const filtered = baseList.filter(e =>
     e.name.toLowerCase().includes(search.toLowerCase()) ||

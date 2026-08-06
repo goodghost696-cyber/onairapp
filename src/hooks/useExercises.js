@@ -4,11 +4,17 @@ import { authHeader } from '../lib/supabase';
 const CACHE_KEY = 'onair_exercises_cache';
 const CACHE_TTL = 24 * 60 * 60 * 1000; // 24h
 
+// maison/salle both got a { type: 'cardio' } param — before this, neither
+// ever queried the API for cardio at all (only "dehors" did), so on top of
+// LOCAL_EXERCISES lacking cardio-machine entries, the API-sourced portion
+// of the list couldn't surface any either — no way for a home/gym cardio
+// exercise to ever appear, from either source.
 const CATEGORY_PARAMS = {
   maison: [
     { type: 'strength', difficulty: 'beginner' },
     { type: 'plyometrics' },
     { type: 'stretching' },
+    { type: 'cardio' },
   ],
   salle: [
     { muscle: 'chest' },
@@ -17,6 +23,7 @@ const CATEGORY_PARAMS = {
     { muscle: 'shoulders' },
     { muscle: 'biceps' },
     { muscle: 'triceps' },
+    { type: 'cardio' },
   ],
   dehors: [
     { type: 'cardio' },
