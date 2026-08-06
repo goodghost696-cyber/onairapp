@@ -1,5 +1,11 @@
 .tour-icon {
-  font-size: 56px;
-  line-height: 1;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(240,193,75,0.12);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin-bottom: 20px;
 }

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { useAuth } from '../context/AuthContext'
 import { fetchWeeklyStats } from '../utils/weeklyStats'
+import Icon from '../components/Icon'
 
 export default function Sleep() {
   const navigate = useNavigate()
@@ -23,7 +24,7 @@ export default function Sleep() {
           <button style={{ background: 'none', border: 'none', cursor: 'pointer' }} onClick={() => navigate('/dashboard')}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" strokeWidth="1.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
           </button>
-          <span className="text-xs bold" style={{ color: 'var(--accent-secondary)' }}>😴 SOMMEIL</span>
+          <span className="text-xs bold" style={{ color: 'var(--accent-secondary)', display: 'inline-flex', alignItems: 'center', gap: 6 }}><Icon name="moon" size={14} /> SOMMEIL</span>
         </div>
 
         <div className="card card-hero card-animated" style={{ textAlign: 'center', padding: 32, '--delay': '50ms' }}>

@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { fetchConversationSummaries } from '../utils/messages'
 import CoachNav from '../components/CoachNav'
+import Icon from '../components/Icon'
 
 function formatTime(iso) {
   const d = new Date(iso)
@@ -54,7 +55,7 @@ export default function CoachMessages() {
     <div className="app-wrapper">
       <div className="screen" style={{ paddingBottom: 110 }}>
         <div className="screen-header" style={{ padding: '20px 0 12px' }}>
-          <h1 className="text-xl bold">💬 Messages</h1>
+          <h1 className="text-xl bold" style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Icon name="message-circle" size={20} /> Messages</h1>
         </div>
         {loading && <p className="text-sm text-muted">Chargement...</p>}
         {!loading && sorted.length === 0 && <p className="text-sm text-muted">Aucun client pour l'instant.</p>}

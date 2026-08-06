@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import CoachNav from '../components/CoachNav'
 import { supabase } from '../lib/supabase'
 import { fetchMemberActivitySummaries, lastSeenLabel } from '../utils/coachStats'
+import Icon from '../components/Icon'
 
 const STATUS_COLORS = { 'ON TRACK': 'var(--success)', 'AT RISK': 'var(--warning)', 'INACTIVE': 'var(--danger)' }
 // Keys match the exact values Onboarding.jsx's goal step writes to
@@ -55,7 +56,7 @@ export default function ClientsList() {
     <div className="app-wrapper">
       <div className="screen" style={{ paddingBottom: 110 }}>
         <div className="screen-header" style={{ padding: '20px 0 8px' }}>
-          <h1 className="text-xl bold">👥 Mes Clients</h1>
+          <h1 className="text-xl bold" style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Icon name="users" size={20} /> Mes Clients</h1>
           <span className="text-xs text-muted">{loading ? '...' : `${members.length} membres`}</span>
         </div>
 

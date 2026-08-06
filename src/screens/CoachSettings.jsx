@@ -7,6 +7,7 @@ import { isPushSupported, getPushSubscriptionState, subscribeToPush, unsubscribe
 import DeleteAccountButton from '../components/DeleteAccountButton'
 import { storageKey } from '../components/OnboardingTour'
 import { useGymConfig } from '../hooks/useGymConfig'
+import Icon from '../components/Icon'
 
 function Toggle({ on, onToggle }) {
   return (
@@ -64,7 +65,7 @@ export default function CoachSettings() {
     <div className="app-wrapper">
       <div className="screen coach-narrow" style={{ paddingBottom: 110 }}>
         <div className="screen-header" style={{ padding: '20px 0 12px' }}>
-          <h1 className="text-xl bold">⚙️ Paramètres</h1>
+          <h1 className="text-xl bold" style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Icon name="settings" size={20} /> Paramètres</h1>
         </div>
 
         <div className="section-label">PROFIL COACH</div>

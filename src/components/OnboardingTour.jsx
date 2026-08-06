@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
+import Icon from './Icon'
 
 // Deliberately NOT prefixed "onair_" — AuthContext.logout() wipes every
 // localStorage key starting with that prefix, which would make the tour
@@ -14,17 +15,17 @@ export function storageKey(userId, variant) {
 
 const SLIDES = {
   member: [
-    { icon: '🏠', title: 'Bienvenue sur VOLTA', text: "Ton tableau de bord réunit calories, eau, pas, sommeil et séances — tout en un coup d'œil, chaque jour." },
-    { icon: '🍽️', title: 'Nutrition', text: "Ajoute un repas en cherchant un aliment, en scannant une photo, ou laisse l'IA te proposer une recette adaptée à ce qu'il te reste aujourd'hui." },
-    { icon: '💪', title: 'Entraînement', text: 'Lance une séance, ajoute tes exercices et séries, et retrouve tout ton historique.' },
-    { icon: '🎙️', title: 'Coach IA', text: "La sphère dorée au centre de la barre du bas t'ouvre ton coach IA — pose tes questions à l'écrit ou à l'oral avec la dictée." },
-    { icon: '💬', title: 'Ton coach', text: 'Le bouton en bas à droite ouvre la messagerie avec ton vrai coach, qui voit ta progression en temps réel.' },
+    { icon: 'home', title: 'Bienvenue sur VOLTA', text: "Ton tableau de bord réunit calories, eau, pas, sommeil et séances — tout en un coup d'œil, chaque jour." },
+    { icon: 'utensils', title: 'Nutrition', text: "Ajoute un repas en cherchant un aliment, en scannant une photo, ou laisse l'IA te proposer une recette adaptée à ce qu'il te reste aujourd'hui." },
+    { icon: 'dumbbell', title: 'Entraînement', text: 'Lance une séance, ajoute tes exercices et séries, et retrouve tout ton historique.' },
+    { icon: 'mic', title: 'Coach IA', text: "La sphère dorée au centre de la barre du bas t'ouvre ton coach IA — pose tes questions à l'écrit ou à l'oral avec la dictée." },
+    { icon: 'message-circle', title: 'Ton coach', text: 'Le bouton en bas à droite ouvre la messagerie avec ton vrai coach, qui voit ta progression en temps réel.' },
   ],
   coach: [
-    { icon: '🧑‍🏫', title: 'Bienvenue', text: "Retrouve tous tes membres et l'activité de chacun en un coup d'œil." },
-    { icon: '📋', title: 'Mes clients', text: 'Suis la progression, les séances et la nutrition de chaque membre individuellement.' },
-    { icon: '💬', title: 'Messages', text: 'Communique directement avec tes membres depuis l\'app.' },
-    { icon: '🔑', title: "Code d'accès", text: "Partage ton code d'invitation (dans Réglages) pour qu'un nouveau membre rejoigne ta salle." },
+    { icon: 'users', title: 'Bienvenue', text: "Retrouve tous tes membres et l'activité de chacun en un coup d'œil." },
+    { icon: 'clipboard', title: 'Mes clients', text: 'Suis la progression, les séances et la nutrition de chaque membre individuellement.' },
+    { icon: 'message-circle', title: 'Messages', text: 'Communique directement avec tes membres depuis l\'app.' },
+    { icon: 'key', title: "Code d'accès", text: "Partage ton code d'invitation (dans Réglages) pour qu'un nouveau membre rejoigne ta salle." },
   ],
 }
 
@@ -76,9 +77,9 @@ export default function OnboardingTour({ variant }) {
           width: 64, height: 64, borderRadius: '50%',
           background: 'linear-gradient(135deg, var(--accent), var(--accent-secondary))',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 28, margin: '0 auto 20px',
+          color: '#fff', margin: '0 auto 20px',
         }}>
-          {slide.icon}
+          <Icon name={slide.icon} size={28} />
         </div>
 
         <h2 className="text-lg bold" style={{ textAlign: 'center', marginBottom: 10 }}>{slide.title}</h2>

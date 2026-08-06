@@ -6,6 +6,7 @@ import { useLanguage } from '../context/LanguageContext'
 import { save } from '../utils/storage'
 import { BOUNDS, clamp } from '../utils/validation'
 import { dailyRemainingCalories } from '../utils/metabolism'
+import Icon from '../components/Icon'
 import '../styles/dashboard.css'
 
 const QUOTES = [
@@ -56,10 +57,10 @@ export default function Dashboard() {
   const greeting = hour < 12 ? t('greeting_morning') : hour < 18 ? t('greeting_afternoon') : t('greeting_evening')
 
   const CARDS = [
-    { key: 'steps', label: 'PAS', icon: '👟', value: appData.steps, unit: 'pas', target: 10000 },
-    { key: 'kmRun', label: 'COURSE', icon: '🏃', value: appData.kmRun, unit: 'km', target: null },
-    { key: 'water', label: 'EAU', icon: '💧', value: appData.water, unit: 'ml', target: 2500 },
-    { key: 'sleep', label: 'SOMMEIL', icon: '😴', value: appData.sleep?.hours || 0, unit: 'h', target: 8 },
+    { key: 'steps', label: 'PAS', icon: 'footprints', value: appData.steps, unit: 'pas', target: 10000 },
+    { key: 'kmRun', label: 'COURSE', icon: 'activity', value: appData.kmRun, unit: 'km', target: null },
+    { key: 'water', label: 'EAU', icon: 'droplet', value: appData.water, unit: 'ml', target: 2500 },
+    { key: 'sleep', label: 'SOMMEIL', icon: 'moon', value: appData.sleep?.hours || 0, unit: 'h', target: 8 },
   ]
 
   const handleSave = () => {
@@ -123,7 +124,7 @@ export default function Dashboard() {
         <div className="card card-hero card-animated" style={{ marginBottom: 16, '--delay': '0ms' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 4 }}>
             <div>
-              <span style={{ fontSize: 44, fontWeight: 800, fontVariantNumeric: 'tabular-nums', lineHeight: 1, letterSpacing: '-1.5px' }}>{appData.calories}</span>
+              <span className="hero-number" style={{ fontSize: 44, fontWeight: 800, fontVariantNumeric: 'tabular-nums', lineHeight: 1, letterSpacing: '-1.5px' }}>{appData.calories}</span>
               <span className="text-sm text-muted" style={{ marginLeft: 6 }}>kcal</span>
             </div>
             <div style={{ textAlign: 'right' }}>
@@ -173,7 +174,7 @@ export default function Dashboard() {
               style={{ '--delay': `${80 + i * 40}ms` }}
               onClick={() => { setEditingCard(card.key); setInputVal('') }}
             >
-              <span className="activity-card-icon-badge">{card.icon}</span>
+              <span className="activity-card-icon-badge"><Icon name={card.icon} size={18} /></span>
               <p className="activity-card-label">{card.label}</p>
               <p className="activity-card-value">
                 {card.key === 'steps' ? appData.steps.toLocaleString('fr-FR') : card.value}
@@ -194,7 +195,7 @@ export default function Dashboard() {
         {/* CTA to today's workout */}
         <button onClick={() => navigate('/workout')} className="dashboard-cta-btn card-animated" style={{ '--delay': '260ms' }}>
           <span>Voir mon entraînement du jour</span>
-          <span className="dashboard-cta-icon">🔥</span>
+          <span className="dashboard-cta-icon"><Icon name="flame" size={20} /></span>
         </button>
 
         {/* Weekly sessions card */}

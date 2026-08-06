@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { BOUNDS, inBounds } from '../utils/validation'
 import { calculateCalorieGoal } from '../utils/metabolism'
+import Icon from '../components/Icon'
 import '../styles/Onboarding.css'
 
 const STEPS = [
@@ -25,10 +26,10 @@ const STEPS = [
     type: 'multi_choice',
     key: 'goal',
     options: [
-      { label: 'Perdre du poids',   icon: '⚡', value: 'Perte de poids' },
-      { label: 'Prendre du muscle', icon: '💪', value: 'Prise de masse' },
-      { label: 'Mieux manger',      icon: '🥗', value: 'Nutrition' },
-      { label: 'Performance',       icon: '🏆', value: 'Performance' },
+      { label: 'Perdre du poids',   icon: 'zap', value: 'Perte de poids' },
+      { label: 'Prendre du muscle', icon: 'dumbbell', value: 'Prise de masse' },
+      { label: 'Mieux manger',      icon: 'salad', value: 'Nutrition' },
+      { label: 'Performance',       icon: 'award', value: 'Performance' },
     ],
   },
   {
@@ -219,7 +220,7 @@ export default function Onboarding() {
                   onClick={() => setAnswer(step.key, opt.value)}
                 >
                   <div className="onboarding-option-left">
-                    {opt.icon && <span className="onboarding-option-icon">{opt.icon}</span>}
+                    {opt.icon && <span className="onboarding-option-icon"><Icon name={opt.icon} size={18} /></span>}
                     <div>
                       <p className="onboarding-option-label">{opt.label}</p>
                       {opt.subtitle && <p className="onboarding-option-sub">{opt.subtitle}</p>}
@@ -250,7 +251,7 @@ export default function Onboarding() {
                   onClick={() => setAnswer(step.key, selected ? current.filter(v => v !== opt.value) : [...current, opt.value])}
                 >
                   <div className="onboarding-option-left">
-                    {opt.icon && <span className="onboarding-option-icon">{opt.icon}</span>}
+                    {opt.icon && <span className="onboarding-option-icon"><Icon name={opt.icon} size={18} /></span>}
                     <div>
                       <p className="onboarding-option-label">{opt.label}</p>
                       {opt.subtitle && <p className="onboarding-option-sub">{opt.subtitle}</p>}
