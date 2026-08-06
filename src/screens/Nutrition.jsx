@@ -10,6 +10,7 @@ import { dailyRemainingCalories } from '../utils/metabolism'
 import { resizeImage } from '../utils/image'
 import NutriscoreBadge from '../components/NutriscoreBadge'
 import SwipeableRow from '../components/SwipeableRow'
+import Icon from '../components/Icon'
 import '../styles/nutrition.css'
 
 const RECIPE_LOADING_MESSAGES = [
@@ -615,7 +616,7 @@ Réponds en français.`
       <div className="screen" style={{ paddingBottom: 110 }}>
         <div className="screen-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingTop: 56, paddingBottom: 20 }}>
           <div>
-            <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--accent-secondary)', marginBottom: 7 }}>🍽️ NUTRITION</p>
+            <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--accent-secondary)', marginBottom: 7, display: 'flex', alignItems: 'center', gap: 6 }}><Icon name="utensils" size={13} /> NUTRITION</p>
             <span className="text-sm text-secondary" style={{ textTransform: 'capitalize' }}>{new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'short' })}</span>
           </div>
           <button
@@ -629,7 +630,7 @@ Réponds en français.`
         <div className="card card-hero card-animated" style={{ marginBottom: 16, '--delay': '0ms' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 4 }}>
             <div>
-              <span style={{ fontSize: 44, fontWeight: 800, fontVariantNumeric: 'tabular-nums', lineHeight: 1, letterSpacing: '-1.5px' }}>{appData.calories}</span>
+              <span className="hero-number" style={{ fontSize: 44, fontWeight: 800, fontVariantNumeric: 'tabular-nums', lineHeight: 1, letterSpacing: '-1.5px' }}>{appData.calories}</span>
               <span className="text-sm text-muted" style={{ marginLeft: 6 }}>kcal</span>
             </div>
             <div style={{ textAlign: 'right' }}>
@@ -688,7 +689,7 @@ Réponds en français.`
             marginBottom: 16, cursor: 'pointer', textAlign: 'left', '--delay': '60ms',
           }}
         >
-          <span className="nutrition-recipe-icon">💡</span>
+          <span className="nutrition-recipe-icon"><Icon name="sparkle" size={20} /></span>
           <div>
             {/* Explicit .text-primary rather than relying on inherited
                 color — .card.card-violet .text-primary is the only rule
@@ -709,10 +710,10 @@ Réponds en français.`
             un repas" with that type pre-selected instead of the default. */}
         <div style={{ display: 'flex', gap: 16, marginBottom: 20 }}>
           {[
-            { type: MEAL_TYPES[0], icon: '🍳', label: 'Matin' },
-            { type: MEAL_TYPES[1], icon: '🥗', label: 'Midi' },
-            { type: MEAL_TYPES[2], icon: '🍽️', label: 'Soir' },
-            { type: MEAL_TYPES[3], icon: '🍎', label: 'Snack' },
+            { type: MEAL_TYPES[0], icon: 'sun', label: 'Matin' },
+            { type: MEAL_TYPES[1], icon: 'salad', label: 'Midi' },
+            { type: MEAL_TYPES[2], icon: 'utensils', label: 'Soir' },
+            { type: MEAL_TYPES[3], icon: 'apple', label: 'Snack' },
           ].map((m, i) => (
             <button
               key={m.label}
@@ -720,7 +721,7 @@ Réponds en français.`
               className="card-animated"
               style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', flex: 1, '--delay': `${120 + i * 40}ms` }}
             >
-              <span style={{ width: 50, height: 50, borderRadius: '50%', background: 'var(--surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>{m.icon}</span>
+              <span style={{ width: 50, height: 50, borderRadius: '50%', background: 'var(--surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-primary)' }}><Icon name={m.icon} size={20} /></span>
               <span className="text-xs text-muted" style={{ letterSpacing: 0 }}>{m.label}</span>
             </button>
           ))}
@@ -909,7 +910,7 @@ Réponds en français.`
         transition: 'transform 320ms cubic-bezier(0.34,1.56,0.64,1)',
         zIndex: 200, maxHeight: '80vh', overflowY: 'auto',
       }}>
-        <h2 className="text-lg bold" style={{ marginBottom: 16 }}>💡 Idée recette</h2>
+        <h2 className="text-lg bold" style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}><Icon name="sparkle" size={18} /> Idée recette</h2>
 
         {recipeStep === 1 && (
           <>
@@ -941,7 +942,7 @@ Réponds en français.`
                 textAlign: 'left', cursor: 'pointer', padding: '16px', display: 'flex',
                 alignItems: 'center', gap: 14,
               }}>
-                <span style={{ fontSize: 22 }}>✨</span>
+                <span style={{ color: 'var(--accent)' }}><Icon name="sparkle" size={22} /></span>
                 <div>
                   <div className="text-base bold text-primary">Suggestion automatique</div>
                   <div className="text-xs text-muted">L'IA propose une recette adaptée à tes objectifs</div>
@@ -951,7 +952,7 @@ Réponds en français.`
                 textAlign: 'left', cursor: 'pointer', padding: '16px', display: 'flex',
                 alignItems: 'center', gap: 14,
               }}>
-                <span style={{ fontSize: 22 }}>📸</span>
+                <span style={{ color: 'var(--accent)' }}><Icon name="camera" size={22} /></span>
                 <div>
                   <div className="text-base bold text-primary">Depuis une photo</div>
                   <div className="text-xs text-muted">Prends en photo ton frigo ou tes ingrédients disponibles</div>
@@ -971,7 +972,7 @@ Réponds en français.`
                   textAlign: 'left', cursor: 'pointer', padding: '16px', display: 'flex',
                   alignItems: 'center', gap: 14,
                 }}>
-                  <span style={{ fontSize: 22 }}>🔗</span>
+                  <span style={{ color: 'var(--accent)' }}><Icon name="link" size={22} /></span>
                   <div>
                     <div className="text-base bold text-primary">Depuis un lien</div>
                     <div className="text-xs text-muted">Colle un lien TikTok ou Reel Instagram</div>

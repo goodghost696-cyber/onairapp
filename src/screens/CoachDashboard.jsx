@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import { fetchMemberActivitySummaries, fetchGymWeeklyActivity, lastSeenLabel } from '../utils/coachStats'
 import CoachNav from '../components/CoachNav'
+import Icon from '../components/Icon'
 
 const STATUS_COLORS = { 'ON TRACK': 'var(--success)', 'AT RISK': 'var(--warning)', 'INACTIVE': 'var(--danger)' }
 
@@ -69,7 +70,7 @@ export default function CoachDashboard() {
           </button>
         </div>
 
-        <h1 className="text-xl bold" style={{ marginBottom: 20 }}>📋 Tableau de bord</h1>
+        <h1 className="text-xl bold" style={{ marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8 }}><Icon name="clipboard" size={20} /> Tableau de bord</h1>
 
         {/* .coach-stats caps this at a sane width on desktop — left
             unwrapped, these 4 tiles would stretch to the full ~1600px

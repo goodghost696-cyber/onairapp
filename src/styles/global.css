@@ -250,11 +250,12 @@ button {
   padding: 19px 16px;
   width: 100%;
   display: block;
-  transition: background 150ms;
+  transition: background 150ms, transform 120ms ease;
   border-radius: var(--radius-btn);
   box-shadow: 0 8px 32px rgba(240,193,75,0.3);
 }
 .btn-accent:hover { background: var(--accent-hover); }
+.btn-accent:active { transform: scale(0.97); }
 
 .btn-ghost {
   background: var(--surface);
@@ -267,7 +268,9 @@ button {
   width: 100%;
   display: block;
   border-radius: var(--radius-btn);
+  transition: transform 120ms ease, border-color 150ms ease;
 }
+.btn-ghost:active { transform: scale(0.97); }
 
 .text-xs { font-size: 11px; line-height: 14px; text-transform: uppercase; letter-spacing: 0.1em; }
 .text-sm { font-size: 13px; line-height: 18px; }
@@ -275,6 +278,17 @@ button {
 .text-lg { font-size: 18px; line-height: 26px; }
 .text-xl { font-size: 22px; line-height: 28px; }
 .text-2xl { font-size: 28px; line-height: 32px; font-variant-numeric: tabular-nums; }
+
+/* Unbounded is deliberately scoped to the brand wordmark (Logo.jsx) plus
+   this one other spot: the app's "big number" moments (calories restantes,
+   sommeil/hydratation du jour) — the numbers a member actually glances at
+   first on each screen. NOT applied to body text/every heading, that would
+   just be a font swap, not the "autorité" the premium pass was asked for.
+   `.hero-number` covers the two calorie displays that don't go through
+   `.text-2xl` (custom font-size in Dashboard/Nutrition's inline styles). */
+.text-2xl, .hero-number {
+  font-family: 'Unbounded', 'Space Grotesk', sans-serif;
+}
 
 .text-primary { color: var(--text-primary); }
 .text-secondary { color: var(--text-secondary); }
@@ -292,7 +306,13 @@ button {
   border-radius: var(--radius-card);
   position: relative;
   overflow: hidden;
+  transition: transform 120ms ease;
 }
+/* Fires on any touch/press, not just genuinely clickable cards — harmless
+   on a static card (the scale reverts the instant the finger/press lifts),
+   and gives every tappable card (there are many, spread across screens)
+   real tactile feedback without hunting down each one individually. */
+.card:active { transform: scale(0.985); }
 
 /* Reusable "hero" glow treatment — one global class instead of duplicating
    it per screen, so it's applied consistently everywhere and only needs

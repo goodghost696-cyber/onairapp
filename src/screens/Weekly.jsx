@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { useLanguage } from '../context/LanguageContext'
 import { fetchWeeklyStats } from '../utils/weeklyStats'
 import { fetchLiftProgress } from '../utils/liftProgress'
+import Icon from '../components/Icon'
 import '../styles/Weekly.css'
 
 const BAR_MAX_HEIGHT = 60
@@ -100,7 +101,7 @@ export default function Weekly() {
     <div className="app-wrapper">
       <div className="screen" style={{ paddingBottom: 110, padding: '0 24px 110px' }}>
         <div className="screen-header" style={{ paddingTop: 56, paddingBottom: 20 }}>
-          <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--accent-secondary)', marginBottom: 4 }}>📊 BILAN</p>
+          <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--accent-secondary)', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 6 }}><Icon name="bar-chart" size={13} /> BILAN</p>
           <h1 style={{ fontSize: 26, fontWeight: 800, color: 'var(--text-primary)' }}>{t('weekly_recap')}</h1>
         </div>
 

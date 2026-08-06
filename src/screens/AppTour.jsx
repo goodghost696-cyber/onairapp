@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { storageKey } from '../components/OnboardingTour'
+import Icon from '../components/Icon'
 import '../styles/Onboarding.css'
 import '../styles/AppTour.css'
 
@@ -16,22 +17,22 @@ import '../styles/AppTour.css'
 // continuation of the flow the member was just in, not a different UI.
 const SLIDES = [
   {
-    icon: '👋',
+    icon: 'sparkle',
     title: 'Bienvenue sur VOLTA.',
     subtitle: "Un tour rapide en 5 écrans pour savoir où trouver quoi. Tu peux passer à tout moment.",
   },
   {
-    icon: '🏠',
+    icon: 'home',
     title: 'Ton tableau de bord',
     subtitle: "Pas, eau, sommeil, calories du jour — tape sur une carte pour la mettre à jour. C'est ton point de départ à chaque connexion.",
   },
   {
-    icon: '🍽️',
+    icon: 'utensils',
     title: 'Nutrition',
     subtitle: "Ajoute un repas en le cherchant, en le scannant, ou laisse l'IA te proposer une recette selon ce qu'il te reste pour la journée.",
   },
   {
-    icon: '🏋️',
+    icon: 'dumbbell',
     title: 'Entraînement',
     subtitle: "Des bibliothèques d'exercices (maison, salle, dehors) pour construire ta séance, avec un minuteur de repos intégré.",
   },
@@ -43,7 +44,7 @@ const SLIDES = [
     // landed in the human-coach thread instead (which obviously doesn't
     // auto-reply), and reported "Coach IA ne répond pas" — this was almost
     // certainly the actual cause, not a broken AI Coach.
-    icon: '💬',
+    icon: 'message-circle',
     title: 'Ton coach à portée de main',
     subtitle: "La sphère dorée au centre de la barre du bas ouvre le Coach IA (des questions, 24/7). Le bouton en bas à droite ouvre la messagerie avec ton vrai coach.",
   },
@@ -83,7 +84,7 @@ export default function AppTour() {
 
       <div className="onboarding-content">
         <p className="onboarding-step-count">DÉCOUVERTE — {step + 1} / {SLIDES.length}</p>
-        <div className="tour-icon">{slide.icon}</div>
+        <div className="tour-icon"><Icon name={slide.icon} size={32} /></div>
         <h1 className="onboarding-title">{slide.title}</h1>
         <p className="onboarding-subtitle">{slide.subtitle}</p>
 
