@@ -6,6 +6,16 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo (le nom de la branche de travail change à chaque session — vérifie celle en cours plutôt que de te fier à un nom figé ici), et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-08-06 — Session 18 (suite 36) : le vrai bug des icônes — outil de génération cassé, pas le SVG
+
+Retour : "Le logo est toujours cassé sur l'écran d'accueil de l'iPhone" malgré le fix de la suite 34 (viewBox). Le viewBox était bien corrigé, mais **l'outil de génération des PNG lui-même produisait un fichier cassé** à 192×192 sans que je m'en aperçoive : `chrome --headless --window-size=192,192 --screenshot=...` régénérait un fichier qui *rapporte* 192×192 via `file`, mais dont le contenu réel ne remplit que le haut ~55% du canevas (le reste est un aplat de la couleur de fond, invisible à l'œil sur un fond uni mais qui coupe la moitié basse du mark). Confirmé par un test de diagnostic (rectangle plein rouge 192×192 → correct ; gradient radial seul 192×192 → même artefact ; testé à 192×600 → contenu complet dans les 192 premiers px). Root cause probable : ce build de Chromium headless réserve un espace interne minimum pour la fenêtre, invisible aux flags `--window-size` standards, qui rogne le viewport réel en dessous d'une certaine hauteur — indépendant de mon SVG, indépendant de `--headless=new` vs legacy.
+
+**Fix réel** : abandon du flag CLI `--screenshot`, bascule sur la lib **Playwright** (`playwright@1.56.1`, déjà installée globalement dans l'environnement sous `/opt/node22/lib/node_modules`, pointée vers le Chromium pré-installé via `executablePath`) qui gère son propre viewport via CDP sans passer par la fenêtre OS — plus de bug. Icônes 192 et 512 régénérées ainsi, relues visuellement (Read tool) : les deux sont maintenant complètes et identiques visuellement, juste à des résolutions différentes.
+
+**Point important pour Arnaud** : même après ce fix déployé, le raccourci déjà présent sur son écran d'accueil iPhone ne se mettra PAS à jour tout seul — iOS capture l'icône au moment du "Sur l'écran d'accueil" et ne la re-télécharge jamais après. Il doit **supprimer le raccourci existant et le ré-ajouter** depuis Safari une fois le déploiement propagé.
+
+**Vérifié dans le build compilé** : `npm run build` OK. Icônes relues visuellement, complètes cette fois. Note technique laissée pour la suite : si on doit régénérer des icônes/mockups HTML→PNG plus tard, utiliser `NODE_PATH=/opt/node22/lib/node_modules node` + `require('playwright')` avec `executablePath` vers `/opt/pw-browsers/chromium-1194/chrome-linux/chrome`, PAS le flag CLI `--screenshot` en direct (bug de rendu en dessous d'une certaine taille de fenêtre).
+
 ## 2026-08-06 — Session 18 (suite 35) : 2-3 choix de recette au lieu d'une seule proposition
 
 Suite directe de la suite 34 : "Pourquoi ne pas proposer 2/3 plats différents à l'utilisateur ? [...] le but c'est pas d'avoir des infos approximative." Bonne remarque — donner le choix règle la perception "hasardeux" à la racine (c'est l'utilisateur qui choisit, pas l'IA qui décide seule) sans qu'il faille sacrifier la précision.
