@@ -6,6 +6,44 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo (le nom de la branche de travail change à chaque session — vérifie celle en cours plutôt que de te fier à un nom figé ici), et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-08-06 — Session 18 (suite 26) : retour d'un vrai premier utilisateur (Myriam, amie du coach, vient de s'inscrire) — liste à traiter
+
+⚠️ **Pas encore traité — étape 1 demandée explicitement : consigner ici avant de toucher au code.** La liste ci-dessous vient d'un vrai nouveau membre qui vient de s'inscrire, pas d'une capture générique. À reprendre dans l'ordre à la prochaine session, en commençant par les bugs confirmés (root cause déjà identifiée en relisant le code pendant qu'on consignait) puis les demandes de fond.
+
+### 🐛 Bugs confirmés (root cause déjà trouvée dans le code)
+
+1. **Le profil saisi à l'inscription n'est pas repris dans Réglages.** Myriam a entré 65kg / 1m60 à l'inscription, Réglages affiche 78kg / 1m80. Root cause trouvée : `Settings.jsx` initialise `profile` avec des valeurs **en dur** (`weight: '78', height: '180'`) au lieu de charger `profiles.poids`/`profiles.taille` depuis Supabase — les vraies valeurs saisies existent bien en base (l'onboarding les enregistre), Réglages ne les lit juste jamais.
+
+2. **Les idées recette se calent systématiquement près de 1000 kcal, même pour une collation.** Root cause trouvée dans `Nutrition.jsx generateRecipe()` : `remainingKcal = Math.min(1000, Math.max(300, calorieGoal - calories))` — cette formule est **identique quel que soit le type de repas choisi** (Petit-déjeuner/Déjeuner/Dîner/Collation n'ont aucune incidence). Testé tôt dans la journée avec peu de calories déjà consommées → le calcul retombe quasi toujours sur le plafond de 1000, y compris quand on demande explicitement un snack. Il faut un budget par type de repas (une collation ne devrait jamais monter à 1000 kcal par définition).
+
+### 🐛 Bugs à investiguer (pas encore de root cause)
+
+3. **Coach IA qui ne répond pas.** Myriam a essayé de lui parler, aucune réponse. À vérifier en priorité — potentiellement lié aux changements récents (tool-use ajouté en suite 19), à une question de rôle/accès, ou à autre chose. Pas assez d'info pour diagnostiquer sans repro.
+
+### 🎨 Lisibilité / contraste
+
+4. **"Idée recette" — texte noir sur fond noir**, illisible (écran séparé du bug #2, celui-ci purement visuel).
+5. **Écran Bilan (capture "Photo 1") — trop sombre, ton sur ton.** Les cartes SOMMEIL MOY./KM COURUS/PAS et la carte "Mes charges" (placeholder "pas assez de séances") sont en `.card` standard (`--surface` #1A1A1A sur `--bg` #0A0A0A) — un contraste très faible entre carte et fond, aggravé visuellement par le nouveau fond animé (suite 25) qui reste discret par design. À revoir : soit remonter `--surface`, soit ajouter une bordure plus visible sur ces cartes secondaires.
+
+### 🍽️ Nutrition — refonte demandée (fond, pas juste un patch)
+
+6. **Objectif multiple à l'inscription.** Le questionnaire ne permet qu'un seul choix (Perte de poids / Prise de masse / Nutrition / Performance) alors qu'un membre peut cumuler plusieurs objectifs à la fois → passer en sélection multiple.
+
+7. **Calcul calorique bien plus précis et personnalisé, sur le modèle Yazio :**
+   - Calculer le **métabolisme de base (BMR)** à partir des vraies métriques (poids/taille — déjà collectées à l'inscription, âge/sexe à ajouter si besoin pour une formule correcte type Mifflin-St Jeor) → donne le minimum calorique du membre au repos total (exemple donné : 1400 kcal pour Myriam).
+   - Faire remonter les calories dépensées par l'activité réelle du jour (pas, course, séance) pour **ajouter** dynamiquement au budget calorique restant du jour — aujourd'hui `calorieGoal` est un chiffre fixe saisi une fois, jamais recalculé selon l'activité réelle.
+   - Relier ce vrai "reste calorique du jour" (BMR + dépense d'activité − déjà mangé) à la génération de recette IA, à la place du calcul actuel — directement lié au bug #2 ci-dessus : avec un vrai budget par repas, l'IA arrêterait de proposer des collations à 1000 kcal.
+
+8. **Idée — recette à partir d'une photo du frigo/des ingrédients disponibles.** Prendre en photo ce qu'on a sous la main (ex: blanc de poulet + sauce tomate + oignons + riz) → l'IA propose une recette avec exactement ça, quantités adaptées aux objectifs. Évite l'friction "il faut aller acheter des ingrédients qu'on n'a pas".
+
+9. **Idée — lien TikTok/Reel Instagram → recette décodée.** Coller un lien de vidéo recette, l'IA en extrait les ingrédients/quantités et les adapte aux objectifs du membre.
+
+### 🎨 Direction visuelle (après stabilisation des fonctionnalités)
+
+10. Une fois les points ci-dessus traités et vérifiés : explorer une direction plus **futuriste, univers sport sombre mais premium** — explicitement noté comme secondaire par l'utilisateur ("faut d'abord stabiliser les features"), pas à faire avant le reste.
+
+---
+
 ## 2026-08-06 — Session 18 (suite 25) : fond animé (motion manquant retrouvé) + première proposition d'ondes IA
 
 L'utilisateur n'a pas l'image de référence "ondes/fréquence" sous la main — proposition d'un premier essai en attendant. Il rappelle aussi avoir demandé un fond animé ("motion dynamic") jamais vu.
