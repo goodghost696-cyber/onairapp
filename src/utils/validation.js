@@ -4,6 +4,7 @@
 export const BOUNDS = {
   weightKg: { min: 30, max: 300 },
   heightCm: { min: 100, max: 250 },
+  age: { min: 10, max: 100 },
   calorieGoal: { min: 800, max: 6000 },
   proteinGoal: { min: 20, max: 400 },
   waterGoal: { min: 500, max: 10000 },

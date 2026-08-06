@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { useApp } from '../context/AppContext'
 import { useLanguage } from '../context/LanguageContext'
 import { useTheme } from '../context/ThemeContext'
+import { supabase } from '../lib/supabase'
 import { BOUNDS, clamp } from '../utils/validation'
 import { isPushSupported, getPushSubscriptionState, subscribeToPush, unsubscribeFromPush } from '../utils/push'
 import DeleteAccountButton from '../components/DeleteAccountButton'
@@ -29,7 +30,7 @@ function Field({ label, value, onChange, type = 'text' }) {
 
 export default function Settings() {
   const navigate = useNavigate()
-  const { user, logout } = useAuth()
+  const { user, logout, updateUserProfile } = useAuth()
   const { appData, updateData } = useApp()
   const { lang, setLanguage, t } = useLanguage()
   const { theme, toggleTheme } = useTheme()
@@ -59,8 +60,54 @@ export default function Settings() {
     }
   }
 
-  const [profile, setProfile] = useState({ name: user?.name || '', email: user?.email || '', weight: '78', height: '180' })
+  // Was seeded with hard-coded weight:'78'/height:'180' and never actually
+  // loaded from Supabase — a real member (Myriam) entered 65kg/160cm at
+  // registration, Réglages kept showing 78/180 regardless, because these
+  // two lines were the entire "load". The onboarding wizard does persist
+  // the real values (profiles.poids/taille via updateUserProfile), this
+  // screen just never read them back.
+  const [profile, setProfile] = useState({ name: user?.name || '', email: user?.email || '', weight: '', height: '' })
+  const [profileSaving, setProfileSaving] = useState(false)
+  const [profileSaved, setProfileSaved] = useState(false)
   const [goals, setGoals] = useState({ calories: String(appData.calorieGoal), protein: String(appData.proteinGoal), water: String(appData.waterGoal), steps: String(appData.stepsGoal) })
+
+  useEffect(() => {
+    if (!user?.id) return
+    let cancelled = false
+    supabase.from('profiles').select('prenom, email, poids, taille').eq('user_id', user.id).maybeSingle()
+      .then(({ data, error }) => {
+        if (cancelled) return
+        if (error) { console.error('[Settings] profile fetch failed', error); return }
+        if (data) {
+          setProfile(p => ({
+            name: data.prenom || p.name,
+            email: data.email || p.email,
+            weight: data.poids != null ? String(data.poids) : p.weight,
+            height: data.taille != null ? String(data.taille) : p.height,
+          }))
+        }
+      })
+    return () => { cancelled = true }
+  }, [user?.id])
+
+  // "Profil" card had inputs but no save button at all — editing name/
+  // weight/height did nothing beyond local component state, same class of
+  // bug as the goals-that-never-persisted issue this app has already been
+  // through once. updateUserProfile already existed (used by Onboarding)
+  // and upserts both auth user_metadata and profiles.poids/taille — just
+  // never wired up here.
+  async function saveProfile() {
+    setProfileSaving(true)
+    await updateUserProfile({
+      name: profile.name,
+      email: profile.email,
+      weight: profile.weight,
+      height: profile.height,
+    })
+    setProfileSaving(false)
+    setProfileSaved(true)
+    setTimeout(() => setProfileSaved(false), 2000)
+  }
 
   function handleHealthSync() {
     const steps = parseInt(healthData.steps)
@@ -123,6 +170,9 @@ export default function Settings() {
           <Field label={t('weight')} value={profile.weight} onChange={v => setProfile(p => ({...p, weight: v}))} type="number" />
           <Field label={t('height')} value={profile.height} onChange={v => setProfile(p => ({...p, height: v}))} type="number" />
         </div>
+        <button className="btn-ghost" onClick={saveProfile} disabled={profileSaving} style={{ marginBottom: 8, opacity: profileSaving ? 0.6 : 1 }}>
+          {profileSaving ? '...' : profileSaved ? '✓ ENREGISTRÉ' : 'ENREGISTRER LE PROFIL'}
+        </button>
 
         <div className="section-label">{t('goals_section')}</div>
         <div className="card card-animated" style={{ '--delay': '60ms' }}>

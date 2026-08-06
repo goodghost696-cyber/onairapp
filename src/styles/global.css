@@ -98,11 +98,15 @@ body {
 
 :root {
   --bg: #0A0A0A;
-  --surface: #1A1A1A;
-  --surface-solid: #1A1A1A;
+  /* Was #1A1A1A — too close to --bg's #0A0A0A to read as a separate layer
+     ("ton sur ton", plain .card rows like Weekly's summary/Réglages/
+     CoachDashboard tiles all use this token), reported on a real screenshot.
+     Bumped enough to be clearly a distinct surface without going light. */
+  --surface: #232120;
+  --surface-solid: #232120;
   --surface-2: rgba(255,255,255,0.06);
-  --border: rgba(255,255,255,0.12);
-  --border-strong: rgba(255,255,255,0.15);
+  --border: rgba(255,255,255,0.16);
+  --border-strong: rgba(255,255,255,0.2);
   --text-primary: #FFFFFF;
   --text-secondary: rgba(255,255,255,0.55);
   --text-muted: rgba(255,255,255,0.35);
@@ -139,11 +143,15 @@ body {
 
 :root[data-theme="dark"] {
   --bg: #0A0A0A;
-  --surface: #1A1A1A;
-  --surface-solid: #1A1A1A;
+  /* Was #1A1A1A — too close to --bg's #0A0A0A to read as a separate layer
+     ("ton sur ton", plain .card rows like Weekly's summary/Réglages/
+     CoachDashboard tiles all use this token), reported on a real screenshot.
+     Bumped enough to be clearly a distinct surface without going light. */
+  --surface: #232120;
+  --surface-solid: #232120;
   --surface-2: rgba(255,255,255,0.06);
-  --border: rgba(255,255,255,0.12);
-  --border-strong: rgba(255,255,255,0.15);
+  --border: rgba(255,255,255,0.16);
+  --border-strong: rgba(255,255,255,0.2);
   --text-primary: #FFFFFF;
   --text-secondary: rgba(255,255,255,0.55);
   --text-muted: rgba(255,255,255,0.35);

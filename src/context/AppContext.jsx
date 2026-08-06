@@ -130,6 +130,9 @@ export function AppProvider({ children }) {
       steps: load('steps', 0),
       stepsGoal: 10000,
       kmRun: load('kmRun', 0),
+      // Used only for the running-calorie-burn estimate (utils/metabolism.js)
+      // — a reasonable adult default until the real profile loads below.
+      weightKg: 75,
       water: load('water', 0),
       waterGoal: 2500,
       sleep: load('sleep', { hours: 7, minutes: 23, quality: 'Bonne' }),
@@ -204,6 +207,19 @@ export function AppProvider({ children }) {
           waterGoal: data.eau_ml ?? prev.waterGoal,
           stepsGoal: data.pas_jour ?? prev.stepsGoal,
         }))
+      })
+
+    // Real body weight, used only for the running-calorie-burn estimate in
+    // utils/metabolism.js — everything else calorie-related already goes
+    // through objectifs/repas above.
+    supabase
+      .from('profiles')
+      .select('poids')
+      .eq('user_id', user.id)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (error) { console.error('[App] fetch profile weight failed', error); return }
+        if (data?.poids != null) setAppData(prev => ({ ...prev, weightKg: data.poids }))
       })
   }, [user?.id])
 

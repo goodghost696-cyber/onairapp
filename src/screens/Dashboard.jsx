@@ -5,6 +5,7 @@ import { useApp } from '../context/AppContext'
 import { useLanguage } from '../context/LanguageContext'
 import { save } from '../utils/storage'
 import { BOUNDS, clamp } from '../utils/validation'
+import { dailyRemainingCalories } from '../utils/metabolism'
 import '../styles/dashboard.css'
 
 const QUOTES = [
@@ -77,7 +78,16 @@ export default function Dashboard() {
     setInputVal('')
   }
 
-  const calsRemaining = Math.max(0, (appData.calorieGoal || 2400) - appData.calories)
+  // Same fix as Nutrition.jsx's hero card: folds in today's logged
+  // steps/course instead of a flat calorieGoal - calories, so activity
+  // actually shows up in what's left to eat (see utils/metabolism.js).
+  const { remaining: calsRemaining, activityBurn } = dailyRemainingCalories({
+    calorieGoal: appData.calorieGoal || 2400,
+    calories: appData.calories,
+    steps: appData.steps,
+    kmRun: appData.kmRun,
+    weightKg: appData.weightKg,
+  })
 
   return (
     <div className="app-wrapper">
@@ -119,10 +129,13 @@ export default function Dashboard() {
             <div style={{ textAlign: 'right' }}>
               <div className="text-xs text-muted">Restant</div>
               <div className="text-base bold">{calsRemaining} kcal</div>
+              {activityBurn > 0 && (
+                <div className="text-xs" style={{ opacity: 0.65 }}>dont +{activityBurn} activité</div>
+              )}
             </div>
           </div>
           <div style={{ position: 'relative', height: 8, background: 'rgba(26,22,8,0.15)', borderRadius: 4, marginBottom: 16, marginTop: 12, overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${Math.min(appData.calories / appData.calorieGoal * 100, 100)}%`, background: '#1A1608', borderRadius: 4, transition: 'width 500ms ease-out' }} />
+            <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${Math.min(appData.calories / (appData.calorieGoal + activityBurn) * 100, 100)}%`, background: '#1A1608', borderRadius: 4, transition: 'width 500ms ease-out' }} />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {[

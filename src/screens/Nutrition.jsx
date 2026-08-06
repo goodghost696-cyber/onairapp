@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext'
 import { useLanguage } from '../context/LanguageContext'
 import { authHeader } from '../lib/supabase'
 import { BOUNDS, clamp } from '../utils/validation'
+import { dailyRemainingCalories } from '../utils/metabolism'
 import NutriscoreBadge from '../components/NutriscoreBadge'
 import SwipeableRow from '../components/SwipeableRow'
 import '../styles/nutrition.css'
@@ -142,6 +143,18 @@ export default function Nutrition() {
 
   const preview = selectedFood ? calcNutrition(selectedFood, grams) : null
 
+  // "Restant" used to be a flat calorieGoal - calories, so a member who'd
+  // walked for 2h saw no reflection of that in what they could still eat —
+  // reported directly ("s'il a marché 2h, il a perdu 600 kcal et c'est
+  // affiché dans son reste"). Now folds in today's logged steps/course.
+  const { remaining: caloriesRemaining, activityBurn } = dailyRemainingCalories({
+    calorieGoal: appData.calorieGoal,
+    calories: appData.calories,
+    steps: appData.steps,
+    kmRun: appData.kmRun,
+    weightKg: appData.weightKg,
+  })
+
   function openSheet(presetMealType) {
     setSheetOpen(true); setStep(1); setFoodSearch(''); setSelectedFood(null); setGramsInput('100')
     if (presetMealType) setMealType(presetMealType)
@@ -165,12 +178,30 @@ export default function Nutrition() {
     setRecipeError('')
     setRecipe(null)
 
-    // Bounded to a single-meal-sized range so a bad/unrealistic daily goal
-    // (e.g. leftover test data) can't push the AI into proposing an absurd recipe.
-    const remainingKcal = Math.min(1000, Math.max(300, Math.round(appData.calorieGoal - appData.calories) || 500))
-    const remainingProtein = Math.min(60, Math.max(15, Math.round(appData.proteinGoal - appData.protein) || 25))
-    const remainingCarbs = Math.min(100, Math.max(20, Math.round(appData.carbsGoal - appData.carbs) || 40))
-    const remainingFat = Math.min(40, Math.max(5, Math.round(appData.fatGoal - appData.fat) || 15))
+    // Was a single 300-1000 kcal range applied identically no matter which
+    // meal type was picked — a snack (by definition low-calorie) got
+    // proposed at ~1000 kcal just as often as a full meal, reported by a
+    // real member. Two fixes combined:
+    // 1. A per-meal-type cap/floor (a snack tops out far below a full meal).
+    // 2. The actual remaining budget now accounts for today's logged
+    //    activity (steps/course), not just calorieGoal - calories eaten —
+    //    see utils/metabolism.js.
+    const mealIndex = MEAL_TYPES.indexOf(type)
+    const mealCap = [500, 700, 700, 300][mealIndex] ?? 700
+    const mealFloor = [250, 350, 350, 100][mealIndex] ?? 250
+    const mealScale = mealCap / 700
+
+    const { remaining } = dailyRemainingCalories({
+      calorieGoal: appData.calorieGoal,
+      calories: appData.calories,
+      steps: appData.steps,
+      kmRun: appData.kmRun,
+      weightKg: appData.weightKg,
+    })
+    const remainingKcal = Math.min(mealCap, Math.max(mealFloor, remaining || mealFloor))
+    const remainingProtein = Math.min(Math.round(60 * mealScale), Math.max(Math.round(15 * mealScale), Math.round(appData.proteinGoal - appData.protein) || Math.round(25 * mealScale)))
+    const remainingCarbs = Math.min(Math.round(100 * mealScale), Math.max(Math.round(20 * mealScale), Math.round(appData.carbsGoal - appData.carbs) || Math.round(40 * mealScale)))
+    const remainingFat = Math.min(Math.round(40 * mealScale), Math.max(Math.round(5 * mealScale), Math.round(appData.fatGoal - appData.fat) || Math.round(15 * mealScale)))
 
     const prompt = `Tu es un nutritionniste expert. Propose UNE recette adaptée à ces besoins nutritionnels restants pour aujourd'hui :
 - Repas concerné : ${type} — la recette doit être typique et adaptée à ce moment du repas (pas un plat de dîner proposé pour un petit-déjeuner, par exemple).
@@ -325,7 +356,10 @@ Réponds en français.`
                   (checked the luminance numbers). The mockup itself doesn't
                   use a colored highlight here either — plain dark ink,
                   inherited from .card-hero's own color, matches it exactly. */}
-              <div className="text-base bold">{appData.calorieGoal - appData.calories}</div>
+              <div className="text-base bold">{caloriesRemaining}</div>
+              {activityBurn > 0 && (
+                <div className="text-xs" style={{ opacity: 0.65 }}>dont +{activityBurn} activité</div>
+              )}
             </div>
           </div>
           {/* Track/fill colors below were var(--surface-2)/var(--accent) —
@@ -334,7 +368,10 @@ Réponds en français.`
               gold-on-gold, same problem. Dark, translucent-ink track (matches
               the mockup's own calorie card exactly) + solid ink fill instead. */}
           <div style={{ position: 'relative', height: 8, background: 'rgba(26,22,8,0.15)', borderRadius: 4, marginBottom: 16, overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${Math.min(appData.calories/appData.calorieGoal*100,100)}%`, background: '#1A1608', borderRadius: 4, transition: 'width 500ms ease-out' }} />
+            {/* Denominator now includes activityBurn too, matching "Restant"
+                above — otherwise the bar could read as nearly full while
+                Restant still shows plenty of room left (earned by activity). */}
+            <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${Math.min(appData.calories/(appData.calorieGoal+activityBurn)*100,100)}%`, background: '#1A1608', borderRadius: 4, transition: 'width 500ms ease-out' }} />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {[
@@ -370,7 +407,15 @@ Réponds en français.`
         >
           <span className="nutrition-recipe-icon">💡</span>
           <div>
-            <div className="text-base bold">Idée recette</div>
+            {/* Explicit .text-primary rather than relying on inherited
+                color — .card.card-violet .text-primary is the only rule
+                that guarantees dark-navy-on-light-violet here; without it
+                this depends on whatever color happens to cascade down,
+                which is exactly the kind of thing that broke silently
+                once already on this card type (see .card-hero/.card-violet
+                comments above). Reported as unreadable ("noir sur noir")
+                by a real member. */}
+            <div className="text-base bold text-primary">Idée recette</div>
             <div className="text-xs text-muted">Suggestion IA basée sur ce qu'il te reste aujourd'hui</div>
           </div>
         </button>
@@ -615,7 +660,7 @@ Réponds en français.`
             {recipe && !recipeLoading && (
               <>
                 <p className="text-xs text-muted" style={{ marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{recipeMealType}</p>
-                <h3 className="text-base bold" style={{ marginBottom: 12 }}>{recipe.recipe_name}</h3>
+                <h3 className="text-base bold text-primary" style={{ marginBottom: 12 }}>{recipe.recipe_name}</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 8, marginBottom: 16, padding: '14px', background: 'var(--surface-2)', borderRadius: 12 }}>
                   {[
                     { label: 'kcal', val: recipe.kcal },
@@ -633,13 +678,13 @@ Réponds en français.`
                   <div className="text-xs text-muted" style={{ marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Ingrédients</div>
                   <ul style={{ margin: 0, paddingLeft: 18 }}>
                     {(recipe.ingredients || []).map((ing, i) => (
-                      <li key={i} className="text-sm" style={{ marginBottom: 4 }}>{ing}</li>
+                      <li key={i} className="text-sm text-primary" style={{ marginBottom: 4 }}>{ing}</li>
                     ))}
                   </ul>
                 </div>
                 <div style={{ marginBottom: 20 }}>
                   <div className="text-xs text-muted" style={{ marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Préparation</div>
-                  <p className="text-sm" style={{ margin: 0, lineHeight: 1.5 }}>{recipe.instructions}</p>
+                  <p className="text-sm text-primary" style={{ margin: 0, lineHeight: 1.5 }}>{recipe.instructions}</p>
                 </div>
                 <button className="btn-accent" onClick={addRecipeAsMeal} style={{ marginBottom: 8 }}>Ajouter ce repas</button>
                 <button className="scan-retry-btn" onClick={() => generateRecipe()}>Une autre idée</button>
