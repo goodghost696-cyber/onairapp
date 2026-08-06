@@ -257,7 +257,7 @@ export default function Scan() {
     <div className="app-wrapper">
       <div className="screen" style={{ paddingBottom: 110 }}>
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '20px 0 24px' }}>
+        <div className="screen-header" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '20px 0 24px' }}>
           <button
             style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
             onClick={() => navigate('/nutrition')}

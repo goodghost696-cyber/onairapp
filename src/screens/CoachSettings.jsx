@@ -66,7 +66,7 @@ export default function CoachSettings() {
         </div>
 
         <div className="section-label">PROFIL COACH</div>
-        <div className="card">
+        <div className="card card-animated" style={{ '--delay': '0ms' }}>
           <div style={{ padding: '14px 0', borderBottom: '2px solid var(--border)', display: 'flex', justifyContent: 'space-between' }}>
             <span className="text-sm text-secondary">Nom</span><span className="text-sm">{user?.name}</span>
           </div>
@@ -76,7 +76,7 @@ export default function CoachSettings() {
         </div>
 
         <div className="section-label">SALLE</div>
-        <div className="card">
+        <div className="card card-animated" style={{ '--delay': '60ms' }}>
           <div style={{ padding: '14px 0', borderBottom: '2px solid var(--border)', display: 'flex', justifyContent: 'space-between' }}>
             <span className="text-sm text-secondary">Salle</span><span className="text-sm">ON AIR Clichy</span>
           </div>
@@ -86,7 +86,7 @@ export default function CoachSettings() {
         </div>
 
         <div className="section-label">NOTIFICATIONS</div>
-        <div className="card">
+        <div className="card card-animated" style={{ '--delay': '120ms' }}>
           {pushState !== 'unsupported' && (
             <div className="flex justify-between items-center" style={{ padding: '14px 0', borderBottom: '2px solid var(--border)' }}>
               <div>

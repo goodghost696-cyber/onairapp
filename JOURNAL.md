@@ -6,6 +6,21 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo (le nom de la branche de travail change à chaque session — vérifie celle en cours plutôt que de te fier à un nom figé ici), et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-08-06 — Session 18 (suite 21) : animation d'entrée sur toutes les pages, sphère IA, bug de chevauchement FAB/mic
+
+### 🐛 Régression immédiate : bouton "Mon Coach" chevauchant le micro sur AI Coach
+En simplifiant le FAB (suite 20), j'ai retiré `/ai-coach` de la liste des routes où il se cache, en supposant à tort que ce n'était plus nécessaire puisque Coach IA n'y menait plus. Faux : c'est une collision de **position** (le FAB est en `bottom:96px, right:16px`, exactement sur la zone du micro/envoi d'AICoach), pas de pertinence — screenshot réel à l'appui. Remis `/ai-coach` dans `hideFAB`.
+
+### ✅ Animation d'entrée appliquée à toutes les pages
+`.card-animated`/`.screen-header` (fade+slide au montage, `src/styles/animations.css`) existaient déjà mais seulement sur Workout/Sleep/Hydration/ClientsList/WorkoutLibrary/Weekly/MemberDetail (partiellement). Étendu à Dashboard, Nutrition (carte calories, idée recette, ligne repas, sheets), Settings, CoachSettings, CoachDashboard (stats/alertes/liste membres), CoachMessages, Messages, et le reste de MemberDetail — avec un stagger cohérent (`--delay` croissant), plafonné sur les listes longues pour éviter un dernier élément qui apparaît plusieurs secondes après. `screen-header` (déjà une classe générique animée) ajoutée aux 4 écrans qui ne l'utilisaient pas encore (Dashboard, Weekly, Workout, Scan).
+
+### ✅ Icône IA remplacée par une sphère (comme le mode vocal)
+Le robot en ligne (stroke-icon) ajouté en suite 20 jugé "horrible"/"trop basique" par comparaison directe avec l'orbe du mode vocal. Remplacé : le bouton central de la nav utilise maintenant exactement le même dégradé radial que `.voice-mode-orb` (voicemode.css), sans aucune icône dessus — la sphère elle-même est l'indicateur IA, pas un pictogramme sur un fond doré plat.
+
+Vérifié dans le CSS compilé (`grep` sur `dist/assets/*.css`) avant de livrer, comme d'habitude — mais rien de tout ça n'a été vu à l'écran, à confirmer au prochain retour.
+
+---
+
 ## 2026-08-06 — Session 18 (suite 20) : Coach IA déplacé dans la nav, "Revoir le didacticiel"
 
 Juste après la suite 19 : l'utilisateur trouve que le bouton flottant Coach IA prend trop de place côté membre, et veut checker le nouveau didacticiel sur son propre compte.

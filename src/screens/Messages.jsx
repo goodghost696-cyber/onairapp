@@ -54,7 +54,7 @@ export default function Messages() {
         {loading && <p className="text-sm text-muted">Chargement...</p>}
         {!loading && !coach && <p className="text-sm text-muted">Aucun coach disponible pour l'instant.</p>}
         {!loading && coach && (
-          <div className="card" style={{ cursor: 'pointer' }} onClick={() => navigate('/messages/coach')}>
+          <div className="card card-animated" style={{ cursor: 'pointer', '--delay': '0ms' }} onClick={() => navigate('/messages/coach')}>
             <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
               <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: 'var(--accent-ink)', flexShrink: 0 }}>
                 {(coach.prenom?.[0] || 'C').toUpperCase()}
