@@ -6,6 +6,18 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo (le nom de la branche de travail change à chaque session — vérifie celle en cours plutôt que de te fier à un nom figé ici), et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-08-06 — Session 18 (suite 33) : animation d'intro VOLTA sur Landing
+
+Demande : "Volta apparait en premier puis on voit le tracé de la flèche qui vers le haut" — un écran de démarrage animé, avant l'accueil. Questions posées d'abord (portée, durée, skip), réponses retenues : uniquement sur Landing, ~1.5-2s, skippable au tap.
+
+**Ce qui a été fait :**
+- Nouveau `src/components/SplashIntro.jsx` + `src/styles/splash.css` : overlay plein écran fond `#0A0A0A`, séquence VOLTA (fondu, ~0.4s) → trait de la flèche qui se dessine (`stroke-dashoffset` sur le `<polyline>`, `pathLength="1"` pour un calcul de durée indépendant de la géométrie réelle) → petit carré doré qui pop en fin de trait → fondu de sortie de tout l'overlay (~1.75s au total, tap n'importe où = passage immédiat à la suite).
+- Respecte `prefers-reduced-motion` : saute directement au logo complet, tenu ~300ms, pas de tracé animé.
+- Intégré dans `Landing.jsx` uniquement (`showSplash` state, `SplashIntro` monté par-dessus le contenu réel qui, lui, continue de se monter et lancer ses propres timers d'entrée en dessous — pas de délai supplémentaire une fois l'overlay disparu).
+- Rejoue à chaque arrivée sur Landing (pas de flag "vu une fois" en localStorage) — cohérent avec "quand on entre sur l'app", pas un splash unique au premier lancement seulement.
+
+**Vérifié dans le build compilé** : `grep splash-overlay/splash-mark.drawing` trouve bien les règles CSS attendues dans le CSS compilé, le composant est bien bundlé dans le JS. Comme toujours, pas de navigateur dans ce bac à sable pour confirmer le rendu/timing réel — à valider par toi sur le lien de prod.
+
 ## 2026-08-06 — Session 18 (suite 32) : rebranding complet ON AIR → VOLTA
 
 Nouveau nom, nouveau logo. Demande explicite : "Nouveau Logo et nouveau nom pour l'application. Maintenant c'est : VOLTA !", avec la charte Figma "Style Athlevo application" — mark zigzag ascendant + terminal carré doré, typo Unbounded extra-bold pour le wordmark, trois déclinaisons (icône seule / lockup icône+texte / wordmark seul).

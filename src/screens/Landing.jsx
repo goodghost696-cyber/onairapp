@@ -2,12 +2,18 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useGymConfig } from '../hooks/useGymConfig'
 import Logo from '../components/Logo'
+import SplashIntro from '../components/SplashIntro'
 import '../styles/landing.css'
 
 export default function Landing() {
   const navigate = useNavigate()
   const gym = useGymConfig()
   const [visible, setVisible] = useState(false)
+  // Plays every time someone lands here (not a one-time-ever flag) — the
+  // real Landing content below mounts and starts its own entrance timers
+  // immediately too, it's just sitting under an opaque overlay until this
+  // resolves, so there's no extra wait once the splash clears.
+  const [showSplash, setShowSplash] = useState(true)
 
   useEffect(() => {
     const t = setTimeout(() => setVisible(true), 60)
@@ -31,6 +37,7 @@ export default function Landing() {
 
   return (
     <div className="landing">
+      {showSplash && <SplashIntro onDone={() => setShowSplash(false)} />}
       <div className="landing-topbar">
         <span className="landing-brand">{gym.name}</span>
         {gym.city && <span className="landing-city">{gym.city}</span>}
