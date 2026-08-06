@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { Outlet } from 'react-router-dom'
+import OnboardingTour from '../components/OnboardingTour'
 import '../styles/coach.css'
 
 // Scopes the desktop-responsive rules in coach.css to the /coach/* routes
@@ -16,5 +17,10 @@ export default function CoachLayout() {
     return () => root?.classList.remove('coach-shell')
   }, [])
 
-  return <Outlet />
+  return (
+    <>
+      <Outlet />
+      <OnboardingTour variant="coach" />
+    </>
+  )
 }

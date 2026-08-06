@@ -42,7 +42,14 @@ export default function Nutrition() {
   const [foodResults, setFoodResults] = useState([])
   const [searching, setSearching] = useState(false)
   const [selectedFood, setSelectedFood] = useState(null)
-  const [grams, setGrams] = useState(100)
+  // Raw text, not a clamped number — clamping this on every keystroke (the
+  // old behaviour) meant clearing the field to retype (e.g. "100" -> "200")
+  // snapped straight back to 1 on the empty intermediate state, so typing a
+  // custom value was effectively impossible. Clamp is only applied where the
+  // number is actually used below (preview/addFood) and on blur to normalize
+  // what's displayed — same pattern already used for editGrams.
+  const [gramsInput, setGramsInput] = useState('100')
+  const grams = clamp(parseInt(gramsInput), BOUNDS.grams, 100)
   const [mealType, setMealType] = useState('Déjeuner')
   const [toast, setToast] = useState('')
 
@@ -136,7 +143,7 @@ export default function Nutrition() {
   const preview = selectedFood ? calcNutrition(selectedFood, grams) : null
 
   function openSheet(presetMealType) {
-    setSheetOpen(true); setStep(1); setFoodSearch(''); setSelectedFood(null); setGrams(100)
+    setSheetOpen(true); setStep(1); setFoodSearch(''); setSelectedFood(null); setGramsInput('100')
     if (presetMealType) setMealType(presetMealType)
   }
 
@@ -521,7 +528,13 @@ Réponds en français.`
             </div>
             <div style={{ marginBottom: 16 }}>
               <label className="text-xs text-muted" style={{ display: 'block', marginBottom: 8 }}>{t('quantity').toUpperCase()}</label>
-              <input type="number" value={grams} onChange={e => setGrams(clamp(parseInt(e.target.value), BOUNDS.grams, 1))} style={{ fontSize: 24, fontWeight: 700, textAlign: 'center', fontVariantNumeric: 'tabular-nums' }} />
+              <input
+                type="number"
+                value={gramsInput}
+                onChange={e => setGramsInput(e.target.value)}
+                onBlur={() => setGramsInput(String(grams))}
+                style={{ fontSize: 24, fontWeight: 700, textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}
+              />
             </div>
             {preview && (
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 8, marginBottom: 20, padding: '14px', background: 'var(--surface-2)', borderRadius: 12 }}>

@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect } from 'react'
 import { save, load, clearDay } from '../utils/storage'
 import { supabase } from '../lib/supabase'
 import { useAuth } from './AuthContext'
+import { BOUNDS, clamp } from '../utils/validation'
 
 function todayStr() {
   return new Date().toISOString().slice(0, 10)
@@ -265,10 +266,15 @@ export function AppProvider({ children }) {
   // Persist water/steps/sleep/run to activite_jour whenever they change —
   // gated on activiteLoaded so we never write back the pre-fetch defaults
   // over a real row that hasn't loaded yet.
+  // clamp() below is a second line of defense, not the primary guard — the
+  // UI inputs (Dashboard, AI Coach tool calls) already clamp before calling
+  // updateData. This just guarantees nothing absurd can reach the DB even
+  // from a future caller that forgets to, since every write to these
+  // columns funnels through these four effects.
   useEffect(() => {
     if (!user?.id || !activiteLoaded) return
     supabase.from('activite_jour').upsert({
-      user_id: user.id, date: todayStr(), eau_ml: appData.water,
+      user_id: user.id, date: todayStr(), eau_ml: clamp(appData.water, BOUNDS.water),
     }, { onConflict: 'user_id,date' }).then(({ error }) => {
       if (error) console.error('[App] persist water to activite_jour failed', error)
     })
@@ -277,7 +283,7 @@ export function AppProvider({ children }) {
   useEffect(() => {
     if (!user?.id || !activiteLoaded) return
     supabase.from('activite_jour').upsert({
-      user_id: user.id, date: todayStr(), pas: appData.steps,
+      user_id: user.id, date: todayStr(), pas: clamp(appData.steps, BOUNDS.steps),
     }, { onConflict: 'user_id,date' }).then(({ error }) => {
       if (error) console.error('[App] persist steps to activite_jour failed', error)
     })
@@ -286,7 +292,7 @@ export function AppProvider({ children }) {
   useEffect(() => {
     if (!user?.id || !activiteLoaded) return
     supabase.from('activite_jour').upsert({
-      user_id: user.id, date: todayStr(), km_courus: appData.kmRun,
+      user_id: user.id, date: todayStr(), km_courus: clamp(appData.kmRun, BOUNDS.kmRun),
     }, { onConflict: 'user_id,date' }).then(({ error }) => {
       if (error) console.error('[App] persist kmRun to activite_jour failed', error)
     })
@@ -294,7 +300,7 @@ export function AppProvider({ children }) {
 
   useEffect(() => {
     if (!user?.id || !activiteLoaded) return
-    const hours = (appData.sleep?.hours || 0) + (appData.sleep?.minutes || 0) / 60
+    const hours = clamp((appData.sleep?.hours || 0) + (appData.sleep?.minutes || 0) / 60, BOUNDS.sleepHours)
     supabase.from('activite_jour').upsert({
       user_id: user.id, date: todayStr(), sommeil_h: hours,
     }, { onConflict: 'user_id,date' }).then(({ error }) => {
@@ -467,6 +473,15 @@ export function AppProvider({ children }) {
   // Falls back to a local-only add if the write fails, so the UI never blocks
   // on network — the console error is there for us to catch during testing.
   async function addMeal({ name, calories, protein, carbs, fat, nutriscore, mealType }) {
+    // Write-boundary clamp — every caller (manual add, Scan, AI recipe, AI
+    // Coach tool calls) goes through this one function, so this is the
+    // single place that guarantees a bad value (typo, scan glitch, bad AI
+    // output) never reaches `repas`. Reported case: a 222002656161 kcal meal.
+    calories = clamp(calories, BOUNDS.mealKcal)
+    protein = clamp(protein, BOUNDS.mealMacroG)
+    carbs = clamp(carbs, BOUNDS.mealMacroG)
+    fat = clamp(fat, BOUNDS.mealMacroG)
+
     let meal = {
       id: Date.now(),
       name, calories, protein, carbs, fat,

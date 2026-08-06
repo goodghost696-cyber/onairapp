@@ -4,7 +4,34 @@ Journal tenu à la fin de chaque session de travail avec Claude. Sert de context
 
 Entrées les plus récentes en haut.
 
-**Pour reprendre dans une nouvelle session** : ouvre une session sur le repo, branche `claude/charming-mendel-dj1GQ`, et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
+**Pour reprendre dans une nouvelle session** : ouvre une session sur le repo (le nom de la branche de travail change à chaque session — vérifie celle en cours plutôt que de te fier à un nom figé ici), et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
+
+## 2026-08-06 — Session 18 (suite 19) : bug de saisie nutrition, garde-fous anti-valeurs aberrantes, suppression de compte, didacticiel d'accueil, et premières actions concrètes de l'IA
+
+L'utilisateur signale 4 choses en une fois sur une capture AI Coach : la barre du bas toujours étroite, veut démarrer le chantier des actions IA, veut un didacticiel d'accueil + suppression de compte, et signale une valeur de calories aberrante + un bug de saisie sur la quantité en Nutrition. Demande de prioriser.
+
+### 🐛 Barre de saisie du Coach IA toujours étroite — résidu du 390px
+`maxWidth: 358` codé en dur dans `AICoach.jsx` (= ancien plafond `#root` 390px − 32px de marge), jamais mis à jour quand le plafond global est passé à 480px la session précédente — c'était le seul endroit qui restait visiblement plus étroit que le reste de l'écran. Corrigé : `448` (= 480 − 32).
+
+### 🐛 Bug de saisie confirmé — quantité (grammage) en Nutrition
+Root cause trouvée : le champ grammage de l'étape 2 clampait la valeur à **chaque frappe**. Effacer "100" pour taper "200" passe par un état intermédiaire vide → `parseInt('')` → NaN → clamp retombe direct sur 1g, ce qui casse la saisie à chaque fois qu'on essaie de retaper une valeur perso. Corrigé en état texte libre, clampé seulement au calcul de l'aperçu et à la sauvegarde (`onBlur`) — même schéma que le champ grammage de "Modifier un repas", qui lui n'avait jamais eu ce problème.
+
+### 🛡️ Garde-fou anti-valeurs aberrantes (ex: 222002656161 kcal)
+Impossible de reproduire l'origine exacte dans le code actuel — les points de saisie existants (Scan, quantité Nutrition) étaient déjà bornés. Plutôt que de chasser un symptôme non reproductible, ajouté un verrou au point d'écriture central : `addMeal()` dans `AppContext.jsx` clampe désormais calories/macros avant tout insert, quel que soit l'écran ou la fonctionnalité qui l'appelle (ajout manuel, scan, recette IA, ou les nouvelles actions IA ci-dessous) — un seul endroit à garder juste au lieu de chaque champ. Même filet de sécurité ajouté sur les writes eau/pas/course/sommeil (`activite_jour`).
+
+### ✅ Suppression de compte (Réglages, membre + coach)
+Nouveau composant partagé `DeleteAccountButton.jsx` + endpoint `/api/delete-account` (clé service role, ne peut supprimer QUE le compte de l'appelant — identité résolue depuis son propre token, jamais un id passé en paramètre). Confirmation par saisie du mot "SUPPRIMER" avant tout appel, vu le caractère irréversible. La suppression du compte `auth.users` cascade automatiquement sur toutes les tables (déjà `on delete cascade` dans le schéma) — profils, repas, séances, objectifs, etc. effacés en un seul appel.
+
+### ✅ Didacticiel d'accueil
+`OnboardingTour.jsx` — overlay en bas d'écran, 4-5 slides, contenu différent membre/coach, affiché une seule fois **par compte réel** (pas par appareil — utile sur une tablette de salle partagée) au premier login, "Passer" toujours disponible.
+
+### 🚀 Premier chantier des actions concrètes de l'IA — démarré
+Tool-use Anthropic ajouté au Coach IA (`AICoach.jsx` + `api/claude.js`, qui proxyait déjà le body tel quel donc aucun changement serveur nécessaire). 6 outils pour une v1 utile plutôt qu'exhaustive : `log_water`, `log_steps`, `log_km_run`, `log_sleep`, `add_meal`, `log_quick_exercise`. L'IA peut maintenant écrire réellement dans les données à partir d'une phrase orale ou écrite ("j'ai bu 500ml", "ajoute une salade de 400 kcal au déjeuner", "j'ai fait 8000 pas") et confirme en une phrase avec le chiffre exact enregistré. Boucle de résolution d'outils côté client (jusqu'à 4 allers-retours), chaque écriture repasse par les fonctions AppContext existantes (donc par les mêmes garde-fous anti-valeurs aberrantes ci-dessus).
+Volontairement pas dans cette v1 : séance complète, modification des objectifs, suppression de données — à étendre selon l'usage réel plutôt que de tout construire d'un coup.
+
+⚠️ Rien de tout ça n'a été vérifié visuellement (pas d'outil de rendu dans cet environnement) — à tester en priorité : la saisie de grammage en Nutrition (le bug initial), la suppression de compte (tester avec un compte de test, pas un vrai), et une action vocale/texte à l'IA (ex: "j'ai bu 500ml").
+
+---
 
 ## 2026-08-06 — Session 18 (suite 18) : root cause "toujours trop étroit" trouvée (vrai téléphone cette fois) + ton de l'IA corrigé
 
