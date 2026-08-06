@@ -26,6 +26,7 @@ import Onboarding from './screens/Onboarding'
 import AppTour from './screens/AppTour'
 import MemberLayout from './layouts/MemberLayout'
 import CoachLayout from './layouts/CoachLayout'
+import PublicLayout from './layouts/PublicLayout'
 
 function ProtectedRoute({ children, requiredRole }) {
   const { user } = useAuth()
@@ -42,19 +43,27 @@ export default function App() {
   if (loading) return null
   return (
     <Routes>
-        <Route path="/onboarding" element={
-          localStorage.getItem('onair_just_registered') && user && user.role === 'member' ? <Onboarding /> : <Navigate to="/login" replace />
-        } />
-        {/* Same one-shot pattern as /onboarding above — reachable only right
-            after Onboarding sets the flag, so it can't be replayed by
-            revisiting the URL or seen by a member who never went through
-            onboarding (e.g. one created directly by SQL). */}
-        <Route path="/welcome" element={
-          localStorage.getItem('onair_show_tour') && user && user.role === 'member' ? <AppTour /> : <Navigate to="/dashboard" replace />
-        } />
-        <Route path="/" element={<Landing />} />
-        <Route path="/login" element={user ? <Navigate to={user.role === 'coach' || user.role === 'admin' ? '/coach' : '/dashboard'} replace /> : <Login />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
+        {/* Landing/Login/ResetPassword/Onboarding/AppTour — the only 5
+            routes that sit outside MemberLayout/CoachLayout, so they never
+            got either shell's desktop-responsive #root treatment. Real
+            screenshot showed Landing stuck at the mobile 480px cap with a
+            huge black void on a wide screen — same class of bug the member
+            side went through before member.css existed. */}
+        <Route element={<PublicLayout />}>
+          <Route path="/onboarding" element={
+            localStorage.getItem('onair_just_registered') && user && user.role === 'member' ? <Onboarding /> : <Navigate to="/login" replace />
+          } />
+          {/* Same one-shot pattern as /onboarding above — reachable only right
+              after Onboarding sets the flag, so it can't be replayed by
+              revisiting the URL or seen by a member who never went through
+              onboarding (e.g. one created directly by SQL). */}
+          <Route path="/welcome" element={
+            localStorage.getItem('onair_show_tour') && user && user.role === 'member' ? <AppTour /> : <Navigate to="/dashboard" replace />
+          } />
+          <Route path="/" element={<Landing />} />
+          <Route path="/login" element={user ? <Navigate to={user.role === 'coach' || user.role === 'admin' ? '/coach' : '/dashboard'} replace /> : <Login />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+        </Route>
 
         {/* Member routes wrapped in MemberLayout (BottomNav + FAB) */}
         <Route element={<ProtectedRoute requiredRole="member"><MemberLayout /></ProtectedRoute>}>

@@ -5,6 +5,7 @@ import { useLanguage } from '../context/LanguageContext'
 import NutriscoreBadge from '../components/NutriscoreBadge'
 import { authHeader } from '../lib/supabase'
 import { BOUNDS, clamp } from '../utils/validation'
+import { resizeImage } from '../utils/image'
 
 const LANG_NAMES = { fr: 'français', en: 'English', es: 'español' }
 
@@ -73,21 +74,6 @@ function computeTotal(items) {
     acc.fats += it.fat100 * factor
     return acc
   }, { kcal: 0, proteins: 0, carbs: 0, fats: 0 })
-}
-
-const resizeImage = (file, maxWidth = 800) => {
-  return new Promise((resolve) => {
-    const img = new Image()
-    const canvas = document.createElement('canvas')
-    img.onload = () => {
-      const ratio = Math.min(maxWidth / img.width, maxWidth / img.height, 1)
-      canvas.width = img.width * ratio
-      canvas.height = img.height * ratio
-      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height)
-      resolve(canvas.toDataURL('image/jpeg', 0.75))
-    }
-    img.src = URL.createObjectURL(file)
-  })
 }
 
 export default function Scan() {

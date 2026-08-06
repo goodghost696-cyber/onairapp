@@ -7,6 +7,7 @@ import { useLanguage } from '../context/LanguageContext'
 import { authHeader } from '../lib/supabase'
 import { BOUNDS, clamp } from '../utils/validation'
 import { dailyRemainingCalories } from '../utils/metabolism'
+import { resizeImage } from '../utils/image'
 import NutriscoreBadge from '../components/NutriscoreBadge'
 import SwipeableRow from '../components/SwipeableRow'
 import '../styles/nutrition.css'
@@ -55,12 +56,15 @@ export default function Nutrition() {
   const [toast, setToast] = useState('')
 
   const [recipeSheetOpen, setRecipeSheetOpen] = useState(false)
+  // 1 = choix du repas, 2 = choix de la source (auto / photo), 3 = résultat.
   const [recipeStep, setRecipeStep] = useState(1)
   const [recipeMealType, setRecipeMealType] = useState('')
   const [recipeLoading, setRecipeLoading] = useState(false)
   const [recipe, setRecipe] = useState(null)
   const [recipeError, setRecipeError] = useState('')
+  const [recipePhotoName, setRecipePhotoName] = useState('')
   const foodSearchInputRef = useRef(null)
+  const recipePhotoInputRef = useRef(null)
 
   useEffect(() => { window.scrollTo(0, 0) }, [])
 
@@ -168,24 +172,18 @@ export default function Nutrition() {
     setRecipeMealType('')
     setRecipe(null)
     setRecipeError('')
+    setRecipePhotoName('')
   }
 
-  async function generateRecipe(chosenMealType) {
-    const type = chosenMealType || recipeMealType
-    setRecipeMealType(type)
-    setRecipeStep(2)
-    setRecipeLoading(true)
-    setRecipeError('')
-    setRecipe(null)
-
-    // Was a single 300-1000 kcal range applied identically no matter which
-    // meal type was picked — a snack (by definition low-calorie) got
-    // proposed at ~1000 kcal just as often as a full meal, reported by a
-    // real member. Two fixes combined:
-    // 1. A per-meal-type cap/floor (a snack tops out far below a full meal).
-    // 2. The actual remaining budget now accounts for today's logged
-    //    activity (steps/course), not just calorieGoal - calories eaten —
-    //    see utils/metabolism.js.
+  // Was a single 300-1000 kcal range applied identically no matter which
+  // meal type was picked — a snack (by definition low-calorie) got
+  // proposed at ~1000 kcal just as often as a full meal, reported by a
+  // real member. Two fixes combined, shared by both recipe sources below:
+  // 1. A per-meal-type cap/floor (a snack tops out far below a full meal).
+  // 2. The actual remaining budget now accounts for today's logged
+  //    activity (steps/course), not just calorieGoal - calories eaten —
+  //    see utils/metabolism.js.
+  function getMealBudget(type) {
     const mealIndex = MEAL_TYPES.indexOf(type)
     const mealCap = [500, 700, 700, 300][mealIndex] ?? 700
     const mealFloor = [250, 350, 350, 100][mealIndex] ?? 250
@@ -198,10 +196,30 @@ export default function Nutrition() {
       kmRun: appData.kmRun,
       weightKg: appData.weightKg,
     })
-    const remainingKcal = Math.min(mealCap, Math.max(mealFloor, remaining || mealFloor))
-    const remainingProtein = Math.min(Math.round(60 * mealScale), Math.max(Math.round(15 * mealScale), Math.round(appData.proteinGoal - appData.protein) || Math.round(25 * mealScale)))
-    const remainingCarbs = Math.min(Math.round(100 * mealScale), Math.max(Math.round(20 * mealScale), Math.round(appData.carbsGoal - appData.carbs) || Math.round(40 * mealScale)))
-    const remainingFat = Math.min(Math.round(40 * mealScale), Math.max(Math.round(5 * mealScale), Math.round(appData.fatGoal - appData.fat) || Math.round(15 * mealScale)))
+    return {
+      remainingKcal: Math.min(mealCap, Math.max(mealFloor, remaining || mealFloor)),
+      remainingProtein: Math.min(Math.round(60 * mealScale), Math.max(Math.round(15 * mealScale), Math.round(appData.proteinGoal - appData.protein) || Math.round(25 * mealScale))),
+      remainingCarbs: Math.min(Math.round(100 * mealScale), Math.max(Math.round(20 * mealScale), Math.round(appData.carbsGoal - appData.carbs) || Math.round(40 * mealScale))),
+      remainingFat: Math.min(Math.round(40 * mealScale), Math.max(Math.round(5 * mealScale), Math.round(appData.fatGoal - appData.fat) || Math.round(15 * mealScale))),
+    }
+  }
+
+  // Picking a meal type used to jump straight into generating a recipe —
+  // now it just records the type and moves to a source choice (auto vs
+  // photo of ingredients), added below.
+  function chooseMealType(type) {
+    setRecipeMealType(type)
+    setRecipeStep(2)
+  }
+
+  async function generateRecipe() {
+    const type = recipeMealType
+    setRecipeStep(3)
+    setRecipeLoading(true)
+    setRecipeError('')
+    setRecipe(null)
+
+    const { remainingKcal, remainingProtein, remainingCarbs, remainingFat } = getMealBudget(type)
 
     const prompt = `Tu es un nutritionniste expert. Propose UNE recette adaptée à ces besoins nutritionnels restants pour aujourd'hui :
 - Repas concerné : ${type} — la recette doit être typique et adaptée à ce moment du repas (pas un plat de dîner proposé pour un petit-déjeuner, par exemple).
@@ -247,6 +265,86 @@ Réponds en français.`
         console.error('[Nutrition] generateRecipe: failed to parse recipe JSON', parseErr, raw)
         throw new Error('Réponse incomplète, réessaie')
       }
+    } catch (err) {
+      setRecipeError(`Erreur : ${err.message}`)
+    }
+    setRecipeLoading(false)
+  }
+
+  // Same budget/prompt logic as generateRecipe, but grounded in whatever
+  // the member actually has on hand (a photo of their fridge/counter)
+  // instead of a free-form AI suggestion — avoids proposing recipes that
+  // need a grocery run first.
+  async function generateRecipeFromPhoto(file) {
+    if (!file) return
+    setRecipePhotoName(file.name || 'photo')
+    const type = recipeMealType
+    setRecipeStep(3)
+    setRecipeLoading(true)
+    setRecipeError('')
+    setRecipe(null)
+
+    const { remainingKcal, remainingProtein, remainingCarbs, remainingFat } = getMealBudget(type)
+
+    try {
+      const resized = await resizeImage(file)
+      const base64 = resized.split(',')[1]
+
+      const prompt = `Tu es un nutritionniste expert. Cette photo montre des ingrédients disponibles (frigo, placard, plan de travail).
+Identifie les ingrédients visibles et propose UNE recette réalisable UNIQUEMENT avec ce que tu vois sur la photo (+ des basiques courants comme sel, poivre, huile si besoin) — n'ajoute pas d'ingrédient qui nécessiterait d'aller faire des courses.
+La recette doit viser ces besoins nutritionnels restants pour aujourd'hui, sans les dépasser significativement :
+- Repas concerné : ${type}
+- Calories restantes : ${remainingKcal} kcal
+- Protéines restantes : ${remainingProtein}g
+- Glucides restants : ${remainingCarbs}g
+- Lipides restants : ${remainingFat}g
+- Objectif de la personne : ${user?.goal || 'forme générale'}
+
+Si la photo ne montre pas assez d'ingrédients exploitables pour un repas cohérent, utilise le champ "error" pour l'expliquer plutôt que d'inventer une recette avec des ingrédients absents de la photo.
+Reply ONLY in valid JSON, no text before or after:
+{
+  "recipe_name": "...",
+  "ingredients": ["...", "..."],
+  "instructions": "...",
+  "kcal": 0,
+  "proteins": 0,
+  "carbs": 0,
+  "fats": 0,
+  "error": null
+}
+Réponds en français.`
+
+      const res = await fetch('/api/claude', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 1200,
+          messages: [{
+            role: 'user',
+            content: [
+              { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: base64 } },
+              { type: 'text', text: prompt },
+            ],
+          }],
+        }),
+      })
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error || `HTTP ${res.status}`)
+      }
+      const data = await res.json()
+      const raw = data.content?.[0]?.text || ''
+      const clean = raw.replace(/```json|```/g, '').trim()
+      let parsed
+      try {
+        parsed = JSON.parse(clean)
+      } catch (parseErr) {
+        console.error('[Nutrition] generateRecipeFromPhoto: failed to parse recipe JSON', parseErr, raw)
+        throw new Error('Réponse incomplète, réessaie')
+      }
+      if (parsed.error) throw new Error(parsed.error)
+      setRecipe(parsed)
     } catch (err) {
       setRecipeError(`Erreur : ${err.message}`)
     }
@@ -633,11 +731,11 @@ Réponds en français.`
             <p className="text-sm text-muted" style={{ marginBottom: 16 }}>Pour quel repas ?</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {MEAL_TYPES.map((mt, i) => (
-                <button key={mt} onClick={() => generateRecipe(mt)} className="card card-animated" style={{
+                <button key={mt} onClick={() => chooseMealType(mt)} className="card card-animated" style={{
                   textAlign: 'left', cursor: 'pointer', padding: '16px', display: 'flex',
                   justifyContent: 'space-between', alignItems: 'center', '--delay': `${i * 40}ms`,
                 }}>
-                  <span className="text-base bold">{mt}</span>
+                  <span className="text-base bold text-primary">{mt}</span>
                   <span style={{ color: 'var(--accent)' }}>→</span>
                 </button>
               ))}
@@ -646,6 +744,47 @@ Réponds en français.`
         )}
 
         {recipeStep === 2 && (
+          <>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+              <button onClick={() => setRecipeStep(1)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" strokeWidth="1.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+              </button>
+              <p className="text-sm text-muted" style={{ margin: 0 }}>{recipeMealType} — comment veux-tu la recette ?</p>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <button onClick={generateRecipe} className="card" style={{
+                textAlign: 'left', cursor: 'pointer', padding: '16px', display: 'flex',
+                alignItems: 'center', gap: 14,
+              }}>
+                <span style={{ fontSize: 22 }}>✨</span>
+                <div>
+                  <div className="text-base bold text-primary">Suggestion automatique</div>
+                  <div className="text-xs text-muted">L'IA propose une recette adaptée à tes objectifs</div>
+                </div>
+              </button>
+              <button onClick={() => recipePhotoInputRef.current?.click()} className="card" style={{
+                textAlign: 'left', cursor: 'pointer', padding: '16px', display: 'flex',
+                alignItems: 'center', gap: 14,
+              }}>
+                <span style={{ fontSize: 22 }}>📸</span>
+                <div>
+                  <div className="text-base bold text-primary">Depuis une photo</div>
+                  <div className="text-xs text-muted">Prends en photo ton frigo ou tes ingrédients disponibles</div>
+                </div>
+              </button>
+              <input
+                ref={recipePhotoInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                style={{ display: 'none' }}
+                onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) generateRecipeFromPhoto(f) }}
+              />
+            </div>
+          </>
+        )}
+
+        {recipeStep === 3 && (
           <>
             {recipeLoading && (
               <p style={{ fontSize: 13, color: 'var(--text-muted)', padding: '20px 0', textAlign: 'center' }}>Génération en cours...</p>
@@ -659,7 +798,9 @@ Réponds en français.`
 
             {recipe && !recipeLoading && (
               <>
-                <p className="text-xs text-muted" style={{ marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{recipeMealType}</p>
+                <p className="text-xs text-muted" style={{ marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  {recipeMealType}{recipePhotoName ? ' · à partir de ta photo' : ''}
+                </p>
                 <h3 className="text-base bold text-primary" style={{ marginBottom: 12 }}>{recipe.recipe_name}</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 8, marginBottom: 16, padding: '14px', background: 'var(--surface-2)', borderRadius: 12 }}>
                   {[
@@ -669,7 +810,7 @@ Réponds en français.`
                     { label: 'L', val: `${recipe.fats}g` },
                   ].map(m => (
                     <div key={m.label} style={{ textAlign: 'center' }}>
-                      <div className="text-base bold">{m.val}</div>
+                      <div className="text-base bold text-primary">{m.val}</div>
                       <div className="text-xs text-muted">{m.label}</div>
                     </div>
                   ))}

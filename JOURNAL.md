@@ -6,6 +6,20 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo (le nom de la branche de travail change à chaque session — vérifie celle en cours plutôt que de te fier à un nom figé ici), et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-08-06 — Session 18 (suite 28) : recette photo du frigo + 5 pages jamais rendues responsive
+
+"On continue let's go" — recette à partir d'une photo, puis interruption avec une capture Landing sur grand écran : "pourquoi ce n'est pas responsive, quoi de compliqué à l'appliquer à toutes les pages ?"
+
+### ✅ Recette à partir d'une photo du frigo/ingrédients
+Le flux "Idée recette" a maintenant une étape intermédiaire après le choix du repas : suggestion automatique (comme avant) ou **depuis une photo**. Réutilise le pipeline vision déjà en place pour `Scan.jsx` (redécoupé en `utils/image.js` partagé) — la photo est envoyée à Claude avec le même budget calorique par repas que la suggestion auto (voir suite 27), et le prompt interdit explicitement d'inventer des ingrédients absents de la photo (renvoie une erreur claire plutôt qu'une recette qui nécessiterait d'aller faire des courses).
+
+### 🐛 5 écrans jamais passés en responsive desktop — root cause trouvée
+Landing, Login, ResetPassword, Onboarding et AppTour sont les seules routes de `App.jsx` qui ne passent ni par `MemberLayout` ni par `CoachLayout` — elles n'ont donc jamais reçu le traitement desktop que ces deux layouts appliquent (`member-shell`/`coach-shell` sur `#root`). Résultat visible sur une vraie capture : Landing plafonnée à 480px avec un immense vide noir de chaque côté sur grand écran, alors que le reste de l'app a été corrigé sur ce point plusieurs fois cette session. Corrigé avec exactement le même mécanisme : nouveau `PublicLayout.jsx` (classe `public-shell` sur `#root`), et `public.css` qui élargit et centre le bon conteneur pour chacun des 3 wrappers différents utilisés par ces 5 écrans (`.app-wrapper`, `.onboarding-screen`, `.landing`).
+
+Vérifié dans le CSS compilé avant de livrer — rendu réel toujours non vérifiable dans cet environnement, ce changement touche les toutes premières pages qu'un visiteur voit donc à confirmer en priorité.
+
+---
+
 ## 2026-08-06 — Session 18 (suite 27) : traitement de la liste de Myriam — 6 points sur 9 faits
 
 "On commence let's go" — attaque de la liste consignée en suite 26, dans l'ordre annoncé. Les 2 fonctionnalités les plus lourdes (photo frigo, import TikTok/Reel) sont délibérément laissées pour une prochaine session dédiée plutôt que bâclées ici.
