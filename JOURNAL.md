@@ -6,6 +6,22 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo (le nom de la branche de travail change à chaque session — vérifie celle en cours plutôt que de te fier à un nom figé ici), et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-08-06 — Session 18 (suite 39) : onglet Course de Workout — diagnostic sévère + petit fix météo
+
+Capture d'écran de l'onglet "Course" de Workout, question directe : "je sais pas si elle est encore utile en vrai ?". Lecture complète de `RunContent.jsx` a révélé que **la quasi-totalité de cet écran est un prototype jamais branché sur de vraies données** :
+- Le graphique "Allure par km" (7 barres) : tableau `paceData` codé en dur, jamais alimenté par une vraie course.
+- "142 bpm" : valeur fixe, aucun capteur cardio connecté nulle part dans l'app.
+- "32.6 km · 5 sorties · Avg 5:18/km" (bloc "Cette semaine") : codé en dur — d'où l'incohérence visible à l'écran avec le "0/6 séances" du hero card juste au-dessus.
+- Les valeurs par défaut avant de lancer une course (5:12/km, 27:18, 5.24km) : placeholders, pas de vraies stats.
+- Le bouton START ne fait pas de vrai tracking GPS : la distance s'incrémente de +0.0032km/seconde par un minuteur, indépendamment de la position réelle (`watchPosition` jamais utilisé).
+- Au STOP : rien n'est sauvegardé nulle part — la course "disparaît".
+
+Seule la météo (vraie géoloc + Open-Meteo) était réelle. Avis donné : ce n'est pas un problème de polish visuel, c'est une coquille qui peut induire un membre en erreur en lui laissant croire que ce sont ses vraies stats. Recommandation faite (à trancher avec Arnaud) : remplacer par un simple formulaire manuel qui écrit dans le vrai pipeline `kmRun` déjà utilisé ailleurs (Coach IA, Dashboard), plutôt que construire un vrai tracker GPS live (chantier bien plus lourd : précision GPS mobile web, tracking en arrière-plan limité par les navigateurs, batterie) — décision produit **pas encore prise**, à reprendre.
+
+**Petit fix fait entre-temps** : la carte météo affichait température/condition mais jamais le lieu ("ça me dit pas où je suis"). Ajout d'un géocodage inverse (BigDataCloud, endpoint client-side, pas de clé API — fait justement pour cet usage) qui résout les coordonnées GPS en nom de ville, affiché à côté de la météo. Best-effort : si l'appel échoue, la carte météo s'affiche quand même normalement, juste sans le nom de lieu.
+
+**Vérifié dans le build compilé** : `npm run build` OK, `grep bigdatacloud.net/data/reverse-geocode-client` trouvé dans le JS compilé. Pas de vérification visuelle réelle (pas de navigateur ici) — à confirmer sur le lien de prod, et surtout **la vraie question (formulaire manuel vs vrai GPS vs suppression de l'onglet) reste ouverte**, à trancher avant de retoucher le reste de cet écran.
+
 ## 2026-08-06 — Session 18 (suite 38) : icônes cassées → bascule sur lucide-react
 
 Retour direct : "Les icônes en svg [...] certaines sont cassées ça ne donne pas." Root cause honnête : les tracés SVG d'`Icon.jsx` (suite 37) avaient été dessinés à la main, de mémoire, sans aucun moyen de les vérifier visuellement dans ce sandbox (pas de navigateur) — plusieurs étaient effectivement mal formés. Question posée en retour ("est-ce que je peux mettre une clé API") : non, pas de clé API nécessaire ici — ce n'est pas un service génératif, juste un set d'icônes statique.
