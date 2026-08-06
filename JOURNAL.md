@@ -6,6 +6,21 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo, branche `claude/charming-mendel-dj1GQ`, et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-08-06 — Session 18 (suite 17) : dictée vocale pour le Coach IA
+
+L'utilisateur a demandé de pouvoir dicter les messages au Coach IA, avec une référence visuelle (app santé "Docuverse" : écran plein écran, orbe animée, transcript en direct, bouton d'enregistrement).
+
+### ✅ Mode vocal — nouveau, `VoiceMode.jsx`
+Overlay plein écran déclenché par un bouton micro à côté du champ de saisie sur `AICoach.jsx` (bouton **non affiché** si le navigateur ne supporte pas la reconnaissance vocale — `src/utils/speech.js`, Web Speech API, non polyfillable, absente sur Firefox et inégale sur Safari iOS — pour ne jamais proposer un bouton qui ne ferait rien).
+- Orbe animée en dégradé or/violet (pulsation pendant l'écoute), transcript en direct (texte final + interim en gris), bouton clavier pour revenir à la saisie texte, bouton d'envoi central.
+- **Style adapté, pas copié** : la référence est une app santé en thème clair menthe/blanc — repris le langage d'interaction (orbe + transcript + gros bouton d'envoi) avec la palette sombre or/violet propre à ON AIR, même raisonnement que le rebrand Athlevo plus tôt (adapter l'esprit, pas copier une marque tierce).
+- Gestion d'erreur : micro refusé, reconnaissance indisponible, échec de démarrage — chacun avec un message clair plutôt qu'un échec silencieux.
+- Au clic sur "Envoyer" : arrête la reconnaissance et envoie directement le texte transcrit comme message au Coach IA (pas de repassage par le champ texte, envoi direct).
+
+Pas encore vérifié visuellement — l'orbe et l'animation en particulier mériteraient un retour utilisateur.
+
+---
+
 ## 2026-08-06 — Session 18 (suite 16) : nav bar — bloc noir derrière + reste trop petite sur grand écran
 
 Nouvelle capture d'écran (Bilan, desktop) : le contenu remplit bien mieux l'écran maintenant. Deux problèmes distincts sur la nav repérés par l'utilisateur.
