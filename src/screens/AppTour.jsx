@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
+import { storageKey } from '../components/OnboardingTour'
 import '../styles/Onboarding.css'
 import '../styles/AppTour.css'
 
@@ -42,11 +44,20 @@ const SLIDES = [
 
 export default function AppTour() {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [step, setStep] = useState(0)
   const slide = SLIDES[step]
 
   function finish() {
     localStorage.removeItem('onair_show_tour')
+    // Also marks OnboardingTour (components/OnboardingTour.jsx) as seen —
+    // that overlay was added later to retroactively give existing members
+    // a tutorial, gated on its own "seen" flag per account. Without this,
+    // a brand new registration would see this 5-slide tour AND then that
+    // overlay again the instant it lands on Dashboard — two tutorials
+    // back to back. Existing members (who never went through this
+    // registration flow) still get OnboardingTour normally.
+    if (user?.id) localStorage.setItem(storageKey(user.id, 'member'), '1')
     navigate('/dashboard')
   }
 

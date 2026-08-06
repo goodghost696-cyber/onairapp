@@ -6,6 +6,12 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo (le nom de la branche de travail change à chaque session — vérifie celle en cours plutôt que de te fier à un nom figé ici), et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-08-06 — Session 18 (suite 22) : double didacticiel corrigé, doc complète demandée
+
+En préparant la documentation demandée par l'utilisateur, découvert en relisant `App.jsx` qu'un tunnel d'onboarding existait déjà avant mon `OnboardingTour.jsx` (suite 19) : `/onboarding` (questionnaire profil à l'inscription) puis `/welcome` → `AppTour.jsx` (tour en 5 écrans), déclenchés une fois via les flags `onair_just_registered`/`onair_show_tour`. Je n'avais pas vu ces deux écrans en construisant le didacticiel — un nouveau membre aurait donc vu **les deux** tours à la suite (AppTour puis, en arrivant sur Dashboard, mon overlay). Corrigé : `AppTour.finish()` marque maintenant aussi le flag `ob_seen_member_<userId>` d'`OnboardingTour`, donc un nouveau membre ne voit que le tour d'inscription (le plus adapté, avec le nom/objectif déjà renseignés) ; les membres existants qui n'ont jamais eu de tour continuent de voir `OnboardingTour` normalement.
+
+---
+
 ## 2026-08-06 — Session 18 (suite 21) : animation d'entrée sur toutes les pages, sphère IA, bug de chevauchement FAB/mic
 
 ### 🐛 Régression immédiate : bouton "Mon Coach" chevauchant le micro sur AI Coach
