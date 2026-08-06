@@ -22,7 +22,7 @@ export default function SplashIntro({ onDone }) {
     setFading(true)
     // Matches the overlay's own fade-out transition (splash.css) — unmount
     // only after it's visually gone, not before, so there's no flash cut.
-    setTimeout(() => onDone?.(), 260)
+    setTimeout(() => onDone?.(), 420)
   }
 
   useEffect(() => {
@@ -32,13 +32,17 @@ export default function SplashIntro({ onDone }) {
       // mark so it doesn't feel like a broken flash, then move on.
       setWordVisible(true)
       setDrawing(true)
-      timers.current.push(setTimeout(finish, 300))
+      timers.current.push(setTimeout(finish, 400))
       return () => timers.current.forEach(clearTimeout)
     }
 
-    timers.current.push(setTimeout(() => setWordVisible(true), 100))
-    timers.current.push(setTimeout(() => setDrawing(true), 550))
-    timers.current.push(setTimeout(finish, 1750))
+    // Deliberately slow — "présence et autorité" was the ask, not a quick
+    // flash. Word settles first, a beat of stillness, then the arrow draws
+    // itself in over a long, decelerating stroke (timings mirrored in
+    // splash.css's transition durations/delays — keep both in sync).
+    timers.current.push(setTimeout(() => setWordVisible(true), 200))
+    timers.current.push(setTimeout(() => setDrawing(true), 1000))
+    timers.current.push(setTimeout(finish, 3200))
     return () => timers.current.forEach(clearTimeout)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -46,7 +50,7 @@ export default function SplashIntro({ onDone }) {
   return (
     <div className={`splash-overlay${fading ? ' fading' : ''}`} onClick={finish} role="presentation">
       <span className={`splash-mark${drawing ? ' drawing' : ''}`}>
-        <svg viewBox="0 0 24 24" fill="none" stroke="#F0C14B" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+        <svg viewBox="-1 -1 26 26" fill="none" stroke="#F0C14B" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
           <polyline points="1 18 8.5 10.5 13.5 15.5 23 6" pathLength="1" />
           <rect x="21.1" y="4.1" width="3.2" height="3.2" fill="#F0C14B" stroke="none" />
         </svg>
