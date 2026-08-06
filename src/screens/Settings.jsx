@@ -6,6 +6,7 @@ import { useLanguage } from '../context/LanguageContext'
 import { useTheme } from '../context/ThemeContext'
 import { supabase } from '../lib/supabase'
 import { BOUNDS, clamp } from '../utils/validation'
+import { calculateCalorieGoal } from '../utils/metabolism'
 import { isPushSupported, getPushSubscriptionState, subscribeToPush, unsubscribeFromPush } from '../utils/push'
 import DeleteAccountButton from '../components/DeleteAccountButton'
 import { storageKey } from '../components/OnboardingTour'
@@ -17,6 +18,16 @@ function Toggle({ on, onToggle }) {
     </div>
   )
 }
+
+// Same 4 options/values as Onboarding.jsx's "goal" step — the values are
+// the actual keys GOAL_MULTIPLIERS (utils/metabolism.js) matches against,
+// so this list has to stay in sync with that one, not just look similar.
+const GOAL_OPTIONS = [
+  { label: 'Perdre du poids',   value: 'Perte de poids' },
+  { label: 'Prendre du muscle', value: 'Prise de masse' },
+  { label: 'Mieux manger',      value: 'Nutrition' },
+  { label: 'Performance',       value: 'Performance' },
+]
 
 function Field({ label, value, onChange, type = 'text' }) {
   return (
@@ -66,15 +77,25 @@ export default function Settings() {
   // two lines were the entire "load". The onboarding wizard does persist
   // the real values (profiles.poids/taille via updateUserProfile), this
   // screen just never read them back.
-  const [profile, setProfile] = useState({ name: user?.name || '', email: user?.email || '', weight: '', height: '' })
+  const [profile, setProfile] = useState({ name: user?.name || '', email: user?.email || '', weight: '', height: '', age: '' })
   const [profileSaving, setProfileSaving] = useState(false)
   const [profileSaved, setProfileSaved] = useState(false)
   const [goals, setGoals] = useState({ calories: String(appData.calorieGoal), protein: String(appData.proteinGoal), water: String(appData.waterGoal), steps: String(appData.stepsGoal) })
+  const [goalsSaving, setGoalsSaving] = useState(false)
+  const [goalsSaved, setGoalsSaved] = useState(false)
+  // "il faut remettre l'objectif et toujours laisser le choix à
+  // l'utilisateur de redéfinir son objectif" — the goal(s) picked at
+  // onboarding (Perte de poids / Prise de masse / Nutrition / Performance,
+  // multi-select) drove the calorie target but had nowhere to be reviewed
+  // or changed again afterwards. user.goal is the comma-joined string
+  // Onboarding wrote (see its handleComplete) — sessionToUser maps it
+  // reliably from auth metadata even after a fresh reload.
+  const [selectedGoals, setSelectedGoals] = useState(() => user?.goal ? user.goal.split(', ').filter(Boolean) : [])
 
   useEffect(() => {
     if (!user?.id) return
     let cancelled = false
-    supabase.from('profiles').select('prenom, email, poids, taille').eq('user_id', user.id).maybeSingle()
+    supabase.from('profiles').select('prenom, email, poids, taille, age').eq('user_id', user.id).maybeSingle()
       .then(({ data, error }) => {
         if (cancelled) return
         if (error) { console.error('[Settings] profile fetch failed', error); return }
@@ -84,11 +105,38 @@ export default function Settings() {
             email: data.email || p.email,
             weight: data.poids != null ? String(data.poids) : p.weight,
             height: data.taille != null ? String(data.taille) : p.height,
+            age: data.age != null ? String(data.age) : p.age,
           }))
         }
       })
     return () => { cancelled = true }
   }, [user?.id])
+
+  // Recalculates calorie/protein targets from the same formula Onboarding
+  // used (utils/metabolism.js), using whatever weight/height/age/frequency
+  // is on file — called right when a goal chip is toggled so the member
+  // sees the new numbers land in the fields below immediately, still free
+  // to hand-edit them before hitting "ENREGISTRER LES OBJECTIFS" same as
+  // any other goal here.
+  function recalcCalorieGoals(goalsList) {
+    const weightKg = parseFloat(profile.weight) || 75
+    const { calorieGoal } = calculateCalorieGoal({
+      weightKg,
+      heightCm: parseFloat(profile.height) || 175,
+      age: parseFloat(profile.age) || 25,
+      goals: goalsList,
+      frequency: user?.frequency,
+    })
+    setGoals(g => ({ ...g, calories: String(calorieGoal), protein: String(Math.round(weightKg * 2)) }))
+  }
+
+  function toggleGoal(value) {
+    setSelectedGoals(prev => {
+      const next = prev.includes(value) ? prev.filter(g => g !== value) : [...prev, value]
+      recalcCalorieGoals(next)
+      return next
+    })
+  }
 
   // "Profil" card had inputs but no save button at all — editing name/
   // weight/height did nothing beyond local component state, same class of
@@ -134,11 +182,33 @@ export default function Settings() {
     window.location.href = '/dashboard'
   }
 
-  function saveGoals() {
-    updateData('calorieGoal', clamp(parseInt(goals.calories), BOUNDS.calorieGoal, appData.calorieGoal))
-    updateData('proteinGoal', clamp(parseInt(goals.protein), BOUNDS.proteinGoal, appData.proteinGoal))
-    updateData('waterGoal', clamp(parseInt(goals.water), BOUNDS.waterGoal, appData.waterGoal))
-    updateData('stepsGoal', clamp(parseInt(goals.steps), BOUNDS.stepsGoal, appData.stepsGoal))
+  async function saveGoals() {
+    const calorieGoal = clamp(parseInt(goals.calories), BOUNDS.calorieGoal, appData.calorieGoal)
+    const proteinGoal = clamp(parseInt(goals.protein), BOUNDS.proteinGoal, appData.proteinGoal)
+    const waterGoal = clamp(parseInt(goals.water), BOUNDS.waterGoal, appData.waterGoal)
+    const stepsGoal = clamp(parseInt(goals.steps), BOUNDS.stepsGoal, appData.stepsGoal)
+    // Immediate local reflection (Dashboard's ring, Nutrition's bars, etc.
+    // all read appData.*Goal directly).
+    updateData('calorieGoal', calorieGoal)
+    updateData('proteinGoal', proteinGoal)
+    updateData('waterGoal', waterGoal)
+    updateData('stepsGoal', stepsGoal)
+    setGoalsSaving(true)
+    // Was: this whole function only ever called updateData above, which is
+    // in-memory + localStorage only (utils/storage.js) — nothing here ever
+    // reached Supabase's `objectifs` table, so a redefined goal silently
+    // reverted to whatever was last saved server-side on the next login /
+    // different device. Also the only place `objectif` (the goal TYPE, not
+    // the numeric targets) gets persisted, now that it's editable here.
+    await updateUserProfile({
+      goal: selectedGoals.join(', '),
+      calorieGoal, proteinGoal,
+      carbGoal: appData.carbsGoal, fatGoal: appData.fatGoal,
+      waterGoal, stepsGoal,
+    })
+    setGoalsSaving(false)
+    setGoalsSaved(true)
+    setTimeout(() => setGoalsSaved(false), 2000)
   }
 
   return (
@@ -176,12 +246,27 @@ export default function Settings() {
 
         <div className="section-label">{t('goals_section')}</div>
         <div className="card card-animated" style={{ '--delay': '60ms' }}>
+          <p className="text-xs text-muted" style={{ marginBottom: 10 }}>Ton ou tes objectifs — choisir en modifie automatiquement les calories/protéines ci-dessous.</p>
+          <div className="goal-selector">
+            {GOAL_OPTIONS.map(o => (
+              <button
+                key={o.value}
+                type="button"
+                className={`goal-chip${selectedGoals.includes(o.value) ? ' active' : ''}`}
+                onClick={() => toggleGoal(o.value)}
+              >
+                {o.label}
+              </button>
+            ))}
+          </div>
           <Field label={t('calories_day')} value={goals.calories} onChange={v => setGoals(g => ({...g, calories: v}))} type="number" />
           <Field label={t('proteins')} value={goals.protein} onChange={v => setGoals(g => ({...g, protein: v}))} type="number" />
           <Field label={t('water_goal')} value={goals.water} onChange={v => setGoals(g => ({...g, water: v}))} type="number" />
           <Field label={t('steps_goal')} value={goals.steps} onChange={v => setGoals(g => ({...g, steps: v}))} type="number" />
         </div>
-        <button className="btn-ghost" onClick={saveGoals} style={{ marginBottom: 8 }}>{t('save_goals')}</button>
+        <button className="btn-ghost" onClick={saveGoals} disabled={goalsSaving} style={{ marginBottom: 8, opacity: goalsSaving ? 0.6 : 1 }}>
+          {goalsSaving ? '...' : goalsSaved ? '✓ ENREGISTRÉ' : t('save_goals')}
+        </button>
 
         <div className="section-label">{t('notifications_section')}</div>
         <div className="card card-animated" style={{ '--delay': '120ms' }}>
