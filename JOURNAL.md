@@ -6,6 +6,24 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo, branche `claude/charming-mendel-dj1GQ`, et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 📍 État au 2026-08-06 (fin de session 18) — à lire en premier
+
+Tout ce qui suit dans cette entrée et les entrées d'en dessous a été fait et est **mergé sur `claude/charming-mendel-dj1GQ`** (vérifié avant de clore la session — plus de PR en attente, working tree propre).
+
+**Fait dans cette dernière partie de session, dans l'ordre :**
+1. Bug du fond décoratif décentré sur grand écran — trouvé et corrigé (`position: fixed` → `position: absolute` sur `#root::before`).
+2. Responsive desktop étendu à la partie membre (même mécanisme que côté coach — `member.css` + classe `member-shell`).
+3. **Rebrand complet** : nouvelle palette or/bleu-violet ("Style Athlevo", maquette exportée par l'utilisateur depuis Claude Design) appliquée sur toute l'app — cartes en dégradé, badges circulaires, nav recolorée. Détail complet juste en dessous.
+
+**À faire en priorité à la prochaine session :**
+- **Demander une capture d'écran du rendu réel** — tout le travail sur les couleurs/contrastes de cette session (rebrand + responsive) n'a été vérifié que par calcul et lecture du CSS compilé, jamais visuellement. En particulier :
+  - Le rendu du rebrand sur les 3 écrans mockés (Accueil, Nutrition, Entraînement) et sur les écrans non mockés (Bilan, Hydratation, Sommeil, Réglages, côté coach).
+  - Le **thème clair** — jamais couvert par la maquette (fond noir profond partout dans le mockup), adapté par extrapolation, à valider en priorité.
+  - Le responsive desktop côté membre (nouveau, jamais vu).
+- Si le rendu du rebrand ne convient pas sur certains points précis (nav bar, cartes d'activité Dashboard, absence de barre de recherche), voir la section "Décisions prises sans redemander" ci-dessous — ce sont des choix assumés, pas des oublis, mais négociables si l'utilisateur n'est pas d'accord.
+
+---
+
 ## 2026-08-06 — Session 18 (suite 14) : rebrand complet — palette or/bleu-violet ("Style Athlevo")
 
 L'utilisateur a exporté une maquette depuis Claude Design (`Fitness App - Style Athlevo.dc.html`, 3 écrans : Accueil, Nutrition, Entraînement) montrant une nouvelle direction visuelle inspirée d'Athlevo (Behance) : palette or/bleu-violet, cartes en dégradé (au lieu du glow subtil sur fond sombre), badges circulaires, nav flottante avec bouton central doré. Demande explicite : appliquer partout dans l'app, pas juste les 3 écrans montrés.
