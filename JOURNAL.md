@@ -6,6 +6,31 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo (le nom de la branche de travail change à chaque session — vérifie celle en cours plutôt que de te fier à un nom figé ici), et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-08-06 — Session 18 (suite 47) : audit produit + positionnement marché, correction d'une erreur d'audit, et 1er chantier lancé (classement de la salle)
+
+Demande directe : "fait une audit complète de l'app et dis ce qui manque pour toi en explorant les apps déjà présente il faut que cette application comble le manque qu'il y a sur le marché". Publié d'abord en artefact — reproché à raison ("arrête de faire des artefacts pour rien tu gaspille des tokens"), donc repris en texte simple ensuite. Résumé de la démarche et des conclusions ici pour ne pas perdre le travail.
+
+**État réel de l'app (vérifié dans le code, pas supposé)** : le rapport technique du 8 juillet (`ETAT_DES_LIEUX.md`) est daté — nutrition, séances, messagerie sont maintenant réellement persistées dans Supabase (plus du localStorage), le back-office coach n'est plus mocké (`supabase.from('profiles')` réel dans `CoachDashboard.jsx`, pas `MOCK_MEMBERS`). Restent artisanaux : synchro santé (formulaire manuel, pas de vraie connexion Apple Health/Google Fit — nécessiterait de sortir du web pur) et l'onglet Course (saisie manuelle, pas de GPS réel, décision jamais tranchée avec l'utilisateur sur ce qu'il faut en faire — répondu "oui" à "on garde" de façon ambiguë, donc gardé tel quel pour l'instant).
+
+**Recherche marché (5 axes)** — sources complètes citées dans les réponses de session, résumé ici :
+- Trackers grand public (MyFitnessPal, Yazio) : friction de saisie = raison n°1 d'abandon ; refonte MyFitnessPal 2026 a déclenché une vague de désabonnement ; Yazio harcèle avec des upsells.
+- Nouvelle génération IA photo (Cal AI, SnapCalorie, Foodvisor) : log par photo, ~5-10s, 82% de précision jugé largement acceptable vu le gain de temps.
+- Plateformes coach B2B (Trainerize, TrueCoach, PT Distinction, Virtuagym) : chères (IA nutrition +45$/mois chez Trainerize), génériques, notées en dessous de la moyenne (Trainerize 3.4/5, Everfit 2.3/5).
+- Concurrents français directs (Sportigo, Resamania, Liberfit, Deciplus) — **les vrais concurrents de Volta, pas MyFitnessPal** : apps en marque blanche pour salles indépendantes, gamification (points/badges) déjà standard chez eux, +25% de rétention avec une app mobile vs sans.
+- Communauté/gamification : 5x plus de rétention avec fonctionnalités sociales actives (streaks, classements), 75%+ de rétention dans les salles à forte dimension communautaire — le seul terrain où aucun tracker mondial ni plateforme B2B générique ne peut suivre Volta, puisqu'ils n'ont pas de vraie salle derrière.
+- Coaching adaptatif à la récupération (Whoop, Oura, Garmin 2026) : fermer la boucle sommeil/HRV → ajustement automatique de la séance du jour.
+
+**Erreur d'audit trouvée et corrigée en creusant, avant de la répéter à l'utilisateur** : ma priorité n°1 initiale ("Volta ne sait pas logger un repas par photo, seulement générer une recette par photo") était **fausse** — `Scan.jsx` fait déjà exactement ça : photo → Claude vision estime les items/grammages → croisement Open Food Facts pour les vraies valeurs nutritionnelles → portions éditables → ajout réel à un repas (`addMeal`). Fonctionnalité complète, câblée (`/scan` accessible depuis Nutrition.jsx), pas un placeholder. L'erreur venait d'avoir fait confiance à une note obsolète de l'ancien état des lieux ("Scan à valider, probablement mocké") sans relire le code réel avant de formuler la recommandation — leçon : vérifier dans le code avant d'affirmer un manque, pas seulement dans un audit précédent qui peut être daté.
+
+**Chantier lancé maintenant** ("on commence ça maintenant") : classement hebdomadaire de la salle (2e priorité de l'audit, la 1ère s'étant révélée déjà faite).
+- `scripts/supabase_schema.sql` : nouvelle vue `leaderboard_weekly` (prénom + nombre de séances cette semaine par membre). `seances` a un RLS strict (`auth.uid() = user_id`) qui rend un classement impossible en interrogeant la table directement — la vue expose volontairement une tranche étroite et non sensible à tous les membres authentifiés (`security_invoker = false` explicite, pour contourner le RLS sous-jacent délibérément, pas par accident). **Comme tout le schéma de ce projet, ce SQL doit être exécuté à la main dans l'éditeur SQL Supabase — pas encore fait, la fonctionnalité ne marchera pas tant que ce n'est pas exécuté.**
+- `src/utils/leaderboard.js` : `fetchWeeklyLeaderboard()`, lit la vue, exclut les membres à 0 séance (une liste de zéros décourage plus qu'elle ne motive), plafonné à 10.
+- `Weekly.jsx` : nouvelle carte "CLASSEMENT DE LA SALLE — CETTE SEMAINE" juste après les cartes de résumé perso, médailles 🥇🥈🥉 pour le podium, ligne de l'utilisateur courant mise en évidence.
+
+**Vérifié dans le build compilé** : `npm run build` passe, `CLASSEMENT DE LA SALLE` et `leaderboard_weekly` confirmés dans le JS compilé. Pas de vérification visuelle (comme toujours), et surtout **pas de vérification fonctionnelle possible tant que le SQL n'est pas exécuté côté Supabase** — à faire par l'utilisateur, puis à tester avec au moins un membre ayant une séance loggée cette semaine.
+
+**Pas fait dans ce lot, prochaines priorités de l'audit** : coaching IA sensible à la récupération (sommeil → ajustement de séance), réservation de créneaux (conditionnel — dépend si la salle fait des cours collectifs, jamais confirmé), vraie synchro santé (conditionnel — dépend de l'ouverture à sortir du web pur).
+
 ## 2026-08-06 — Session 18 (suite 46) : Réglages > Objectifs — l'objectif (perte de poids/prise de masse/...) était choisi une fois à l'inscription puis invisible et impossible à changer
 
 "Dans cette partie il faut remettre l'objectif et toujours laisser le choix à l'utilisateur de redéfinir son objectif" — capture de la carte "OBJECTIFS" dans Réglages, qui n'affichait que 4 nombres (Calories/jour, Protéines, Eau, Pas/jour) sans jamais montrer NI permettre de changer l'objectif réel choisi à l'inscription (Perte de poids / Prise de masse / Nutrition / Performance, multi-select — voir suite 23).

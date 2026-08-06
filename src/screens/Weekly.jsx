@@ -4,7 +4,10 @@ import { useAuth } from '../context/AuthContext'
 import { useLanguage } from '../context/LanguageContext'
 import { fetchWeeklyStats } from '../utils/weeklyStats'
 import { fetchLiftProgress } from '../utils/liftProgress'
+import { fetchWeeklyLeaderboard } from '../utils/leaderboard'
 import '../styles/Weekly.css'
+
+const MEDALS = ['🥇', '🥈', '🥉']
 
 const BAR_MAX_HEIGHT = 60
 
@@ -80,6 +83,8 @@ export default function Weekly() {
   const [weeklyData, setWeeklyData] = useState([])
   const [sleepData, setSleepData] = useState([])
   const [liftProgress, setLiftProgress] = useState([])
+  const [leaderboard, setLeaderboard] = useState([])
+  const [leaderboardLoaded, setLeaderboardLoaded] = useState(false)
 
   useEffect(() => {
     if (!user?.id) return
@@ -88,6 +93,7 @@ export default function Weekly() {
       setSleepData(sleepData)
     })
     fetchLiftProgress(user.id).then(setLiftProgress)
+    fetchWeeklyLeaderboard().then(rows => { setLeaderboard(rows); setLeaderboardLoaded(true) })
   }, [user?.id])
 
   const maxCalories = Math.max(...weeklyData.map(d => d.calories), 1)
@@ -138,6 +144,44 @@ export default function Weekly() {
             <span className="text-base bold">{r.val}</span>
           </div>
         ))}
+
+        {/* Classement de la salle — audit marché 2026-08-06 (JOURNAL.md
+            suite 47) : c'est le seul terrain où Volta n'a aucun concurrent
+            direct, ni les trackers grand public (pas de vraie salle
+            derrière) ni les plateformes B2B (pensées pour des coachs sans
+            lien entre leurs clients). N'affiche que les membres avec au
+            moins 1 séance cette semaine — voir le commentaire dans
+            utils/leaderboard.js pour pourquoi. */}
+        {leaderboardLoaded && leaderboard.length > 0 && (
+          <>
+            <div className="section-label">CLASSEMENT DE LA SALLE — CETTE SEMAINE</div>
+            <div className="card card-animated" style={{ marginBottom: 16, '--delay': '80ms' }}>
+              {leaderboard.map((row, i) => {
+                const isMe = row.user_id === user?.id
+                return (
+                  <div
+                    key={row.user_id}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 12,
+                      padding: '10px 0',
+                      borderBottom: i < leaderboard.length - 1 ? '0.5px solid var(--border)' : 'none',
+                    }}
+                  >
+                    <span style={{ width: 22, textAlign: 'center', fontSize: i < 3 ? 16 : 13, color: 'var(--text-muted)', flexShrink: 0 }}>
+                      {MEDALS[i] || i + 1}
+                    </span>
+                    <span className={`text-sm ${isMe ? 'bold text-primary' : 'text-secondary'}`} style={{ flex: 1 }}>
+                      {row.prenom || 'Membre'}{isMe ? ' (toi)' : ''}
+                    </span>
+                    <span className={`text-sm ${isMe ? 'bold' : ''}`} style={{ color: isMe ? 'var(--accent)' : 'var(--text-primary)' }}>
+                      {row.seances_semaine} séance{row.seances_semaine > 1 ? 's' : ''}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          </>
+        )}
 
         {/* Section 1 — Progression physique */}
         <div className="progress-section">
