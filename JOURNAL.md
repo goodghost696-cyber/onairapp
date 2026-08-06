@@ -6,6 +6,18 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo (le nom de la branche de travail change à chaque session — vérifie celle en cours plutôt que de te fier à un nom figé ici), et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-08-06 — Session 18 (suite 23) : graphiques ajoutés au tableau de bord coach
+
+Retour après la doc : côté coach, "ça ne ressemble vraiment à un SaaS" — le tableau de bord n'avait que 4 tuiles chiffrées + des listes, aucun vrai graphique.
+
+### ✅ Deux graphiques ajoutés à CoachDashboard
+- **Activité de la salle — 7 jours** : nouveau `fetchGymWeeklyActivity()` dans `coachStats.js` (2 requêtes, agrège séances + activité de tous les membres jour par jour), rendu en barres façon Bilan mais à l'échelle de la salle entière, pas d'un seul membre.
+- **Répartition des membres** : barre segmentée ON TRACK / AT RISK / INACTIVE (statuts déjà calculés, juste jamais visualisés) avec légende et compteurs.
+
+Violet plutôt que or pour ces deux cartes — cohérent avec le reste de l'identité côté coach vs le gold côté membre. MemberDetail avait déjà des vrais graphiques (barres séances + courbes de charges SVG) ; le manque était spécifiquement sur l'écran d'accueil coach.
+
+---
+
 ## 2026-08-06 — Session 18 (suite 22) : double didacticiel corrigé, doc complète demandée
 
 En préparant la documentation demandée par l'utilisateur, découvert en relisant `App.jsx` qu'un tunnel d'onboarding existait déjà avant mon `OnboardingTour.jsx` (suite 19) : `/onboarding` (questionnaire profil à l'inscription) puis `/welcome` → `AppTour.jsx` (tour en 5 écrans), déclenchés une fois via les flags `onair_just_registered`/`onair_show_tour`. Je n'avais pas vu ces deux écrans en construisant le didacticiel — un nouveau membre aurait donc vu **les deux** tours à la suite (AppTour puis, en arrivant sur Dashboard, mon overlay). Corrigé : `AppTour.finish()` marque maintenant aussi le flag `ob_seen_member_<userId>` d'`OnboardingTour`, donc un nouveau membre ne voit que le tour d'inscription (le plus adapté, avec le nom/objectif déjà renseignés) ; les membres existants qui n'ont jamais eu de tour continuent de voir `OnboardingTour` normalement.
