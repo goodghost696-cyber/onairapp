@@ -28,3 +28,24 @@
   font-size: 22px;
   flex-shrink: 0;
 }
+
+/* Recipe generation loading state — was a plain "Génération en cours..."
+   line, felt broken/frozen on the link flow (transcript fetch + recipe
+   generation, two sequential network calls, noticeably slower than the
+   auto/photo paths). Same gradient-orb language as the AI nav sphere and
+   VoiceMode's orb rather than inventing a 4th spinner style. */
+.recipe-loading-orb {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  margin: 0 auto;
+  background: radial-gradient(circle at 35% 30%, #FBE08A 0%, #F0C14B 45%, #8B93E8 100%);
+  box-shadow: 0 0 24px rgba(240,193,75,0.5), 0 0 48px rgba(139,147,232,0.3);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .recipe-loading-orb { animation: recipeOrbPulse 1.8s ease-in-out infinite; }
+}
+@keyframes recipeOrbPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}

@@ -6,6 +6,17 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo (le nom de la branche de travail change à chaque session — vérifie celle en cours plutôt que de te fier à un nom figé ici), et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-08-06 — Session 18 (suite 31) : premier retour positif — Supadata confirmé fonctionnel + animation de chargement
+
+**Confirmation en conditions réelles** : la génération de recette depuis un lien Reel fonctionne. Signalé comme lent (attendu — deux appels réseau séquentiels : transcript Supadata puis génération Claude).
+
+### ✅ Animation de chargement (orbe + messages rotatifs)
+"Génération en cours..." en texte plat remplacé par `.recipe-loading-orb` — même dégradé/pulsation que la sphère IA de la nav et l'orbe du mode vocal (`nutrition.css`), avec 3 messages qui tournent toutes les 1.8s ("Analyse en cours...", "Calcul des quantités...", "Presque prêt...") pour que l'attente plus longue du flux lien ne donne pas l'impression que l'app est figée/plantée.
+
+Vérifié dans le CSS compilé avant de livrer.
+
+---
+
 ## 2026-08-06 — Session 18 (suite 30) : vraie lecture vidéo via Supadata (API tierce)
 
 Question directe : "comment je peux faire pour que la vidéo soit lue ? Le modèle est fiable ?" — expliqué que la version précédente (suite 29) ne lisait que la légende, pas la vidéo, et pourquoi (pas de pipeline téléchargement+audio+transcription dans l'app). Recherché 2-3 options réelles, l'utilisateur a choisi l'**API tierce payante**.
