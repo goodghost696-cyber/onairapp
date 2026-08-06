@@ -77,7 +77,11 @@ Donne exactement 4-5 exercices adaptés à l'objectif.`
 
   const sectionIcons = {
     maison: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
-    salle: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent-secondary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6.5 6.5h11M6.5 17.5h11M6.5 12h11M3 6.5h.01M3 12h.01M3 17.5h.01M21 6.5h-.01M21 12h-.01M21 17.5h-.01"/></svg>,
+    // Was an abstract "checklist" glyph (rows of dashes + dots) that read as
+    // noise at this size — reported as "c'est quoi ça??" on a real screenshot.
+    // A dumbbell silhouette (end caps + plates + bar) is unambiguous for
+    // "Salle" at a glance, unlike Maison's house/Dehors' running figure.
+    salle: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent-secondary)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="9.5" width="2.5" height="5" rx="1"/><rect x="19.5" y="9.5" width="2.5" height="5" rx="1"/><rect x="6" y="7" width="3" height="10" rx="1.2"/><rect x="15" y="7" width="3" height="10" rx="1.2"/><line x1="9" y1="12" x2="15" y2="12"/></svg>,
     dehors: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="5" r="2"/><path d="M8 21l2-8-2-3h8l-2 3 2 8"/><path d="M6 12l-2 2M18 12l2 2"/></svg>,
   }
 
