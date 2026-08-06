@@ -56,13 +56,15 @@ export default function Nutrition() {
   const [toast, setToast] = useState('')
 
   const [recipeSheetOpen, setRecipeSheetOpen] = useState(false)
-  // 1 = choix du repas, 2 = choix de la source (auto / photo), 3 = résultat.
+  // 1 = choix du repas, 2 = choix de la source (auto / photo / lien), 3 = résultat.
   const [recipeStep, setRecipeStep] = useState(1)
   const [recipeMealType, setRecipeMealType] = useState('')
   const [recipeLoading, setRecipeLoading] = useState(false)
   const [recipe, setRecipe] = useState(null)
   const [recipeError, setRecipeError] = useState('')
-  const [recipePhotoName, setRecipePhotoName] = useState('')
+  const [recipeLinkOpen, setRecipeLinkOpen] = useState(false)
+  const [recipeLinkInput, setRecipeLinkInput] = useState('')
+  const [recipeSourceLabel, setRecipeSourceLabel] = useState('')
   const foodSearchInputRef = useRef(null)
   const recipePhotoInputRef = useRef(null)
 
@@ -172,7 +174,9 @@ export default function Nutrition() {
     setRecipeMealType('')
     setRecipe(null)
     setRecipeError('')
-    setRecipePhotoName('')
+    setRecipeSourceLabel('')
+    setRecipeLinkOpen(false)
+    setRecipeLinkInput('')
   }
 
   // Was a single 300-1000 kcal range applied identically no matter which
@@ -206,10 +210,12 @@ export default function Nutrition() {
 
   // Picking a meal type used to jump straight into generating a recipe —
   // now it just records the type and moves to a source choice (auto vs
-  // photo of ingredients), added below.
+  // photo vs link), added below.
   function chooseMealType(type) {
     setRecipeMealType(type)
     setRecipeStep(2)
+    setRecipeLinkOpen(false)
+    setRecipeLinkInput('')
   }
 
   async function generateRecipe() {
@@ -218,6 +224,7 @@ export default function Nutrition() {
     setRecipeLoading(true)
     setRecipeError('')
     setRecipe(null)
+    setRecipeSourceLabel('')
 
     const { remainingKcal, remainingProtein, remainingCarbs, remainingFat } = getMealBudget(type)
 
@@ -277,7 +284,7 @@ Réponds en français.`
   // need a grocery run first.
   async function generateRecipeFromPhoto(file) {
     if (!file) return
-    setRecipePhotoName(file.name || 'photo')
+    setRecipeSourceLabel('à partir de ta photo')
     const type = recipeMealType
     setRecipeStep(3)
     setRecipeLoading(true)
@@ -341,6 +348,91 @@ Réponds en français.`
         parsed = JSON.parse(clean)
       } catch (parseErr) {
         console.error('[Nutrition] generateRecipeFromPhoto: failed to parse recipe JSON', parseErr, raw)
+        throw new Error('Réponse incomplète, réessaie')
+      }
+      if (parsed.error) throw new Error(parsed.error)
+      setRecipe(parsed)
+    } catch (err) {
+      setRecipeError(`Erreur : ${err.message}`)
+    }
+    setRecipeLoading(false)
+  }
+
+  // Same idea as the photo path, grounded in a TikTok/Reel link instead —
+  // but with a real limitation: there's no video/audio transcription here,
+  // so this only works when the recipe is actually written in the post's
+  // caption (api/recipe-from-link.js extracts that, nothing more). Common
+  // for food content, not guaranteed — a video-only recipe with nothing in
+  // the caption will surface as the honest "impossible de lire" error from
+  // that endpoint rather than a fabricated recipe.
+  async function generateRecipeFromLink() {
+    const url = recipeLinkInput.trim()
+    if (!url) return
+    setRecipeSourceLabel('à partir du lien')
+    const type = recipeMealType
+    setRecipeStep(3)
+    setRecipeLoading(true)
+    setRecipeError('')
+    setRecipe(null)
+
+    const { remainingKcal, remainingProtein, remainingCarbs, remainingFat } = getMealBudget(type)
+
+    try {
+      const linkRes = await fetch('/api/recipe-from-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
+        body: JSON.stringify({ url }),
+      })
+      const linkData = await linkRes.json()
+      if (!linkRes.ok) throw new Error(linkData.error || `HTTP ${linkRes.status}`)
+
+      const prompt = `Tu es un nutritionniste expert. Voici la légende d'une vidéo de recette (TikTok/Instagram) :
+"""
+${linkData.caption}
+"""
+Si cette légende contient assez d'information pour identifier une recette réelle (ingrédients, plat), propose-la avec des quantités adaptées à ces besoins nutritionnels restants pour aujourd'hui, sans les dépasser significativement :
+- Repas concerné : ${type}
+- Calories restantes : ${remainingKcal} kcal
+- Protéines restantes : ${remainingProtein}g
+- Glucides restants : ${remainingCarbs}g
+- Lipides restants : ${remainingFat}g
+- Objectif de la personne : ${user?.goal || 'forme générale'}
+
+Si la légende ne contient pas assez d'info pour identifier une vraie recette (pas d'ingrédients, texte générique...), utilise le champ "error" pour l'expliquer plutôt que d'inventer une recette.
+Reply ONLY in valid JSON, no text before or after:
+{
+  "recipe_name": "...",
+  "ingredients": ["...", "..."],
+  "instructions": "...",
+  "kcal": 0,
+  "proteins": 0,
+  "carbs": 0,
+  "fats": 0,
+  "error": null
+}
+Réponds en français.`
+
+      const res = await fetch('/api/claude', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 1200,
+          messages: [{ role: 'user', content: prompt }],
+        }),
+      })
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error || `HTTP ${res.status}`)
+      }
+      const data = await res.json()
+      const raw = data.content?.[0]?.text || ''
+      const clean = raw.replace(/```json|```/g, '').trim()
+      let parsed
+      try {
+        parsed = JSON.parse(clean)
+      } catch (parseErr) {
+        console.error('[Nutrition] generateRecipeFromLink: failed to parse recipe JSON', parseErr, raw)
         throw new Error('Réponse incomplète, réessaie')
       }
       if (parsed.error) throw new Error(parsed.error)
@@ -780,6 +872,43 @@ Réponds en français.`
                 style={{ display: 'none' }}
                 onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) generateRecipeFromPhoto(f) }}
               />
+
+              {!recipeLinkOpen ? (
+                <button onClick={() => setRecipeLinkOpen(true)} className="card" style={{
+                  textAlign: 'left', cursor: 'pointer', padding: '16px', display: 'flex',
+                  alignItems: 'center', gap: 14,
+                }}>
+                  <span style={{ fontSize: 22 }}>🔗</span>
+                  <div>
+                    <div className="text-base bold text-primary">Depuis un lien</div>
+                    <div className="text-xs text-muted">Colle un lien TikTok ou Reel Instagram</div>
+                  </div>
+                </button>
+              ) : (
+                <div className="card" style={{ padding: '16px' }}>
+                  <div className="text-xs text-muted" style={{ marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                    Lien TikTok / Instagram
+                  </div>
+                  <input
+                    type="url"
+                    inputMode="url"
+                    placeholder="https://www.tiktok.com/..."
+                    value={recipeLinkInput}
+                    onChange={e => setRecipeLinkInput(e.target.value)}
+                    autoFocus
+                    style={{ marginBottom: 8 }}
+                  />
+                  {/* Honest expectation-setting up front rather than a
+                      surprise error after a wait — there's no real video
+                      transcription here, only the post's caption text. */}
+                  <p className="text-xs text-muted" style={{ marginBottom: 12, lineHeight: 1.4 }}>
+                    Fonctionne seulement si la recette est écrite dans la légende de la vidéo (pas d'analyse de la vidéo elle-même).
+                  </p>
+                  <button className="btn-accent" onClick={generateRecipeFromLink} disabled={!recipeLinkInput.trim()} style={{ opacity: recipeLinkInput.trim() ? 1 : 0.5 }}>
+                    Générer
+                  </button>
+                </div>
+              )}
             </div>
           </>
         )}
@@ -799,7 +928,7 @@ Réponds en français.`
             {recipe && !recipeLoading && (
               <>
                 <p className="text-xs text-muted" style={{ marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                  {recipeMealType}{recipePhotoName ? ' · à partir de ta photo' : ''}
+                  {recipeMealType}{recipeSourceLabel ? ` · ${recipeSourceLabel}` : ''}
                 </p>
                 <h3 className="text-base bold text-primary" style={{ marginBottom: 12 }}>{recipe.recipe_name}</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 8, marginBottom: 16, padding: '14px', background: 'var(--surface-2)', borderRadius: 12 }}>

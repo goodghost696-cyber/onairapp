@@ -6,6 +6,22 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo (le nom de la branche de travail change à chaque session — vérifie celle en cours plutôt que de te fier à un nom figé ici), et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-08-06 — Session 18 (suite 29) : recette à partir d'un lien TikTok/Reel — dernier point de la liste de Myriam
+
+"Reprend" — dernier point de la liste consignée en suite 26. La liste entière est maintenant traitée (7/9 en correctifs+features livrés, la direction visuelle reste explicitement pour après stabilisation).
+
+### ✅ Recette à partir d'un lien TikTok/Reel — avec une vraie limite assumée
+Nouvel `api/recipe-from-link.js` : extrait la légende de la vidéo (oEmbed public pour TikTok, scrape des meta tags `og:description`/`og:title` en repli, seul chemin possible pour Instagram faute d'un token Meta approuvé côté projet). **Pas de transcription vidéo/audio réelle** — ça ne fonctionne que si la recette est effectivement écrite dans la légende du post, ce qui est fréquent pour du contenu food mais pas garanti. Assumé explicitement plutôt que présenté comme une vraie analyse vidéo :
+- Message d'attente honnête affiché avant même de lancer la génération ("Fonctionne seulement si la recette est écrite dans la légende").
+- Si la légende est introuvable/trop courte, ou si l'IA juge qu'elle ne contient pas assez d'info pour une vraie recette, erreur claire plutôt qu'une recette inventée.
+- Instagram en particulier sert souvent un texte générique ("X likes, Y commentaires") à une requête non connectée — limitation documentée dans le code, pas un bug.
+
+Intégré au même flux que la photo (suite 28) : après le choix du repas, 3 options désormais — suggestion automatique / photo / lien.
+
+Vérifié dans le CSS/build compilé avant de livrer, comme toujours — rendu réel et fiabilité de l'extraction TikTok/Instagram non vérifiables dans cet environnement (pas de vrai lien testé).
+
+---
+
 ## 2026-08-06 — Session 18 (suite 28) : recette photo du frigo + 5 pages jamais rendues responsive
 
 "On continue let's go" — recette à partir d'une photo, puis interruption avec une capture Landing sur grand écran : "pourquoi ce n'est pas responsive, quoi de compliqué à l'appliquer à toutes les pages ?"
