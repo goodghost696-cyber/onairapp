@@ -1,10 +1,20 @@
-/* Landing screen — VOLTA identity (dark, gold accent, Unbounded wordmark) */
+/* Landing screen — VOLTA identity. Direction corail (2026-08-06): was
+   hardcoded #0A0A0A, independent of the app's own theme tokens — made
+   sense when dark WAS the app's real identity, but left Landing looking
+   like a completely different product once the rest of the app moved to
+   the coral/multicolor-ring direction ("la landing n'a rien à voir avec
+   le reste de l'application", reported directly). Same gradient as
+   body/#root in global.css, kept as a literal value here rather than a
+   shared token/class since Landing.jsx already force-sets data-theme
+   itself (see the comment there) and this file is meant to stay a
+   self-contained, always-on-brand screen regardless of app theme state. */
 .landing {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  min-height: 100dvh;
   padding: 0 16px;
-  background: #0A0A0A;
+  background: radial-gradient(140% 70% at 18% -8%, #FF8355 0%, #E8552B 45%, #C6371E 82%, #9C2A22 100%);
   color: #fff;
 }
 
@@ -111,14 +121,17 @@
   transform: scale(0.98);
 }
 
+/* Was gold — matches the restrained-dark-CTA treatment used everywhere
+   else in the coral direction (global.css .btn-accent, Dashboard's CTA):
+   the one deliberately un-colorful element on an otherwise warm screen. */
 .landing-btn-primary {
-  background: #F0C14B;
-  color: #1A1608;
+  background: #1B1710;
+  color: #fff;
   margin-bottom: 12px;
 }
 
 .landing-btn-secondary {
-  background: #1A1A1A;
+  background: rgba(0,0,0,0.15);
   color: #fff;
-  border: 2px solid rgba(255,255,255,0.15);
+  border: 2px solid rgba(255,255,255,0.35);
 }
