@@ -6,6 +6,22 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo (le nom de la branche de travail change à chaque session — vérifie celle en cours plutôt que de te fier à un nom figé ici), et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-08-06 — Session 18 (suite 30) : vraie lecture vidéo via Supadata (API tierce)
+
+Question directe : "comment je peux faire pour que la vidéo soit lue ? Le modèle est fiable ?" — expliqué que la version précédente (suite 29) ne lisait que la légende, pas la vidéo, et pourquoi (pas de pipeline téléchargement+audio+transcription dans l'app). Recherché 2-3 options réelles, l'utilisateur a choisi l'**API tierce payante**.
+
+### ✅ Intégration Supadata (transcript vidéo réel)
+[Supadata](https://supadata.ai) — API unifiée YouTube/TikTok/Instagram/X, transcript réel (parole → texte), free tier 100 requêtes/mois puis payant à l'usage. `api/recipe-from-link.js` l'appelle en priorité (`GET /v1/transcript?url=...&text=true&mode=auto`, header `x-api-key`), avec gestion du mode asynchrone (poll sur `jobId` si la vidéo est longue, borné pour rester dans le temps d'exécution de la fonction). **Repli automatique sur l'ancienne extraction de légende si `SUPADATA_API_KEY` n'est pas configurée** — la fonctionnalité continue de marcher (moins bien) sans configuration supplémentaire.
+
+**⚠️ Action requise côté utilisateur, je ne peux pas la faire moi-même** : créer un compte sur supadata.ai, récupérer une clé API, et l'ajouter comme variable d'environnement `SUPADATA_API_KEY` dans les réglages du projet Vercel. Sans ça, le repli légende-seule reste actif silencieusement (pas d'erreur, juste moins fiable).
+
+### Sur la fiabilité du modèle (réponse donnée, pas un changement de code)
+Claude Haiku est fiable pour structurer un texte propre en JSON avec des garde-fous déjà en place (refuse d'inventer, champ "error" explicite) — mais les calories/macros restent une **estimation IA**, pas une valeur vérifiée en base contrairement à la recherche manuelle d'aliment (Open Food Facts). Positionné comme suggestion, pas comme source fiable à 100%.
+
+Vérifié dans le build compilé avant de livrer — impossible de tester un vrai appel Supadata dans cet environnement (pas de clé API disponible ici), à confirmer une fois la clé configurée côté Vercel.
+
+---
+
 ## 2026-08-06 — Session 18 (suite 29) : recette à partir d'un lien TikTok/Reel — dernier point de la liste de Myriam
 
 "Reprend" — dernier point de la liste consignée en suite 26. La liste entière est maintenant traitée (7/9 en correctifs+features livrés, la direction visuelle reste explicitement pour après stabilisation).
