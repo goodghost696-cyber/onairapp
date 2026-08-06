@@ -1,0 +1,37 @@
+/* Desktop layout for the 5 routes outside both MemberLayout and
+ * CoachLayout (Landing, Login, ResetPassword, Onboarding, AppTour) — same
+ * "unlock #root, cap+center the actual content wrapper" pattern as
+ * member.css/coach.css, applied to whichever wrapper class each of these
+ * screens happens to use (three different ones across five screens).
+ */
+@media (min-width: 900px) {
+  #root.public-shell {
+    max-width: 100%;
+  }
+
+  /* Login.jsx / ResetPassword.jsx */
+  #root.public-shell .app-wrapper {
+    max-width: min(90vw, 720px);
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* Onboarding.jsx / AppTour.jsx — a step wizard reads worse stretched
+     wide than member's hero-card stack does, so this stays narrower. */
+  #root.public-shell .onboarding-screen {
+    max-width: min(90vw, 560px);
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* Landing.jsx — the marketing splash. Buttons/text are width:100% of
+     their container in landing.css, so widening this all the way to
+     member's 720px would stretch a CTA button into something absurd;
+     capped narrower, just enough to stop the huge black void either side
+     on a real wide screen without turning it into a full desktop redesign. */
+  #root.public-shell .landing {
+    max-width: min(90vw, 480px);
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
