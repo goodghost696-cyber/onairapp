@@ -21,12 +21,14 @@ export default function RunContent() {
   const [seconds, setSeconds] = useState(0)
   const [distance, setDistance] = useState(0)
   const [weather, setWeather] = useState(null)
+  const [locationName, setLocationName] = useState(null)
 
   useEffect(() => {
     navigator.geolocation?.getCurrentPosition(async (pos) => {
+      const { latitude, longitude } = pos.coords
       try {
         const res = await fetch(
-          `https://api.open-meteo.com/v1/forecast?latitude=${pos.coords.latitude}&longitude=${pos.coords.longitude}&current_weather=true`
+          `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`
         )
         const data = await res.json()
         const code = data.current_weather?.weathercode
@@ -41,6 +43,22 @@ export default function RunContent() {
           return { label: 'Orageux', emoji: '⛈️', good: false }
         }
         setWeather({ temp, windspeed, ...getCondition(code) })
+      } catch {}
+
+      // Reverse-geocode to a place name — the weather card showed a
+      // temperature and condition but never *where*, reported directly.
+      // BigDataCloud's client-side reverse-geocode endpoint needs no API
+      // key (built for exactly this: browser-side reverse geocoding),
+      // unlike a forward/search geocoder. Best-effort: if it fails or is
+      // slow, the weather card above still renders fine without a place
+      // name — this only ever adds to it, never blocks it.
+      try {
+        const res = await fetch(
+          `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=fr`
+        )
+        const data = await res.json()
+        const place = data.city || data.locality || data.principalSubdivision || null
+        if (place) setLocationName(place)
       } catch {}
     }, () => {})
   }, [])
@@ -85,7 +103,9 @@ export default function RunContent() {
         }}>
           <span style={{ fontSize: 24 }}>{weather.emoji}</span>
           <div style={{ flex: 1 }}>
-            <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>{weather.temp}°C · {weather.label}</p>
+            <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
+              {weather.temp}°C · {weather.label}{locationName ? ` · ${locationName}` : ''}
+            </p>
             <p style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 2 }}>
               {weather.good ? '✓ Bonnes conditions pour courir' : '⚠ Conditions difficiles'}
             </p>
