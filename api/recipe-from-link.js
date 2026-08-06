@@ -1,16 +1,59 @@
 import { applyCors, requireUser } from './_lib/auth.js';
 import { checkRateLimit } from './_lib/rateLimit.js';
 
-// Best-effort extraction of whatever text a TikTok/Instagram Reel link
-// exposes without logging in (caption/description). There's no real
-// video/audio transcription pipeline in this app — this can only work
-// when the recipe is actually written out in the post's caption (common
-// for food content, not universal). Returns null rather than guessing
-// when nothing usable comes back, so the caller can be honest with the
-// user instead of asking Claude to hallucinate a recipe from nothing.
+// Real video transcript (what's actually said in the video) via Supadata —
+// https://docs.supadata.ai — a paid third-party API (per-request credits),
+// picked over building a download+ffmpeg+speech-to-text pipeline ourselves:
+// no extra infra, works across TikTok/Instagram/YouTube/X uniformly. Only
+// used when SUPADATA_API_KEY is configured; short TikTok/Reel clips are
+// expected to resolve synchronously (HTTP 200) almost always, but the API
+// can return a jobId (HTTP 202) for longer content — polled a few times
+// within this function's own time budget rather than left unhandled.
+async function fetchTranscript(url) {
+  const apiKey = process.env.SUPADATA_API_KEY;
+  if (!apiKey) return null;
+
+  try {
+    const res = await fetch(
+      `https://api.supadata.ai/v1/transcript?url=${encodeURIComponent(url)}&text=true&mode=auto`,
+      { headers: { 'x-api-key': apiKey } }
+    );
+
+    if (res.status === 202) {
+      const { jobId } = await res.json();
+      if (!jobId) return null;
+      // Short clips shouldn't need this at all — a handful of quick polls
+      // is a safety net, not the expected path. Bounded so this function
+      // can't run past its own maxDuration (vercel.json).
+      for (let i = 0; i < 6; i++) {
+        await new Promise(r => setTimeout(r, 2000));
+        const poll = await fetch(`https://api.supadata.ai/v1/transcript/${jobId}`, {
+          headers: { 'x-api-key': apiKey },
+        });
+        if (!poll.ok) continue;
+        const data = await poll.json();
+        if (data.status === 'completed' && typeof data.content === 'string') return data.content;
+        if (data.status === 'failed') return null;
+      }
+      return null;
+    }
+
+    if (!res.ok) return null;
+    const data = await res.json();
+    return typeof data.content === 'string' ? data.content : null;
+  } catch (err) {
+    console.error('[recipe-from-link] Supadata transcript fetch failed', err);
+    return null;
+  }
+}
+
+// Fallback when SUPADATA_API_KEY isn't configured (or the transcript call
+// comes back empty) — the original best-effort caption/description
+// extraction: TikTok's public oEmbed, or a raw og:description/og:title
+// scrape for both platforms (the only option for Instagram without an
+// approved Meta app token). Much less reliable than a real transcript —
+// only catches recipes that happen to be written in the post's own text.
 async function extractCaption(url) {
-  // TikTok's oEmbed is public, no token needed — `title` is usually the
-  // post caption.
   if (/tiktok\.com/i.test(url)) {
     try {
       const res = await fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(url)}`);
@@ -21,12 +64,6 @@ async function extractCaption(url) {
     } catch { /* fall through to the generic scrape below */ }
   }
 
-  // Generic fallback — also the only path for Instagram, since their
-  // oEmbed requires an approved Meta app token this project doesn't have.
-  // Instagram in particular often serves a generic "X likes, Y comments"
-  // placeholder instead of the real caption to a logged-out request — a
-  // real platform limitation, not a bug, surfaced honestly to the client
-  // rather than silently producing a bad recipe from it.
   try {
     const res = await fetch(url, {
       headers: { 'User-Agent': 'Mozilla/5.0 (compatible; OnAirBot/1.0; +https://onairapp.vercel.app)' },
@@ -60,12 +97,18 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Seuls les liens TikTok et Instagram sont supportés pour le moment' });
   }
 
-  const caption = await extractCaption(url);
-  if (!caption || caption.trim().length < 15) {
+  let transcript = await fetchTranscript(url);
+  let source = 'transcript';
+  if (!transcript) {
+    transcript = await extractCaption(url);
+    source = 'caption';
+  }
+
+  if (!transcript || transcript.trim().length < 15) {
     return res.status(422).json({
-      error: "Impossible de lire la légende de cette vidéo (introuvable ou trop courte) — essaie une photo de tes ingrédients à la place.",
+      error: "Impossible de lire cette vidéo (transcript et légende introuvables ou trop courts) — essaie une photo de tes ingrédients à la place.",
     });
   }
 
-  return res.status(200).json({ caption: caption.trim() });
+  return res.status(200).json({ transcript: transcript.trim(), source });
 }

@@ -386,11 +386,14 @@ Réponds en français.`
       const linkData = await linkRes.json()
       if (!linkRes.ok) throw new Error(linkData.error || `HTTP ${linkRes.status}`)
 
-      const prompt = `Tu es un nutritionniste expert. Voici la légende d'une vidéo de recette (TikTok/Instagram) :
+      // `source` is "transcript" (ce qui est vraiment dit dans la vidéo, via
+      // Supadata si configuré côté serveur) ou "caption" (repli sur la
+      // légende du post si le transcript n'a pas pu être récupéré).
+      const prompt = `Tu es un nutritionniste expert. Voici le ${linkData.source === 'transcript' ? 'transcript (ce qui est dit)' : 'texte de la légende'} d'une vidéo de recette (TikTok/Instagram) :
 """
-${linkData.caption}
+${linkData.transcript}
 """
-Si cette légende contient assez d'information pour identifier une recette réelle (ingrédients, plat), propose-la avec des quantités adaptées à ces besoins nutritionnels restants pour aujourd'hui, sans les dépasser significativement :
+Si ce contenu contient assez d'information pour identifier une recette réelle (ingrédients, plat), propose-la avec des quantités adaptées à ces besoins nutritionnels restants pour aujourd'hui, sans les dépasser significativement :
 - Repas concerné : ${type}
 - Calories restantes : ${remainingKcal} kcal
 - Protéines restantes : ${remainingProtein}g
@@ -899,10 +902,14 @@ Réponds en français.`
                     style={{ marginBottom: 8 }}
                   />
                   {/* Honest expectation-setting up front rather than a
-                      surprise error after a wait — there's no real video
-                      transcription here, only the post's caption text. */}
+                      surprise error after a wait. Stays accurate whether or
+                      not SUPADATA_API_KEY is configured server-side: with
+                      it, this reads what's actually said in the video
+                      (real transcript); without it, only the post's own
+                      caption/description — the client has no way to know
+                      which one it'll get in advance. */}
                   <p className="text-xs text-muted" style={{ marginBottom: 12, lineHeight: 1.4 }}>
-                    Fonctionne seulement si la recette est écrite dans la légende de la vidéo (pas d'analyse de la vidéo elle-même).
+                    On essaie de lire ce qui est dit dans la vidéo ; si ce n'est pas possible, on se base sur la légende du post.
                   </p>
                   <button className="btn-accent" onClick={generateRecipeFromLink} disabled={!recipeLinkInput.trim()} style={{ opacity: recipeLinkInput.trim() ? 1 : 0.5 }}>
                     Générer
