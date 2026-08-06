@@ -17,6 +17,13 @@ function sessionToUser(session) {
     proteinGoal: meta.proteinGoal || null,
     carbGoal: meta.carbGoal || null,
     fatGoal: meta.fatGoal || null,
+    // Was never mapped — frequency has no column of its own in `profiles`
+    // (only prenom/email/poids/taille/age/objectif are grantable, see
+    // supabase_schema.sql), so auth user_metadata is the only place it's
+    // ever persisted. Needed so Settings.jsx can recalculate calorie
+    // targets when a member redefines their objectif, the same formula
+    // Onboarding.jsx used, without asking them to re-answer this step.
+    frequency: meta.frequency || null,
   }
 }
 
@@ -199,8 +206,12 @@ export function AuthProvider({ children }) {
           proteines: profile.proteinGoal,
           glucides: profile.carbGoal,
           lipides: profile.fatGoal,
-          eau_ml: 2500,
-          pas_jour: 10000,
+          // Was hardcoded to 2500/10000 unconditionally — any caller
+          // passing real waterGoal/stepsGoal (Settings.jsx redefining
+          // objectifs) had those silently discarded and replaced by the
+          // onboarding defaults on every save.
+          eau_ml: profile.waterGoal ?? 2500,
+          pas_jour: profile.stepsGoal ?? 10000,
         }, { onConflict: 'user_id' })
         if (objectifsError) {
           console.error('[Auth] updateUserProfile: objectifs upsert failed', objectifsError)

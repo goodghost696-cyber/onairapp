@@ -684,3 +684,31 @@ button {
   color: var(--accent);
   background: rgba(240,193,75,0.08);
 }
+
+/* Réglages > Objectifs — goal chips, reusing .lang-btn's visual language
+   (pill, active = accent border/tint) but wrapping instead of forcing a
+   fixed number of equal-width columns, since goal labels are longer and
+   there's no fixed count the way there is for 3 languages. */
+.goal-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.goal-chip {
+  padding: 9px 14px;
+  border-radius: 10px;
+  border: 0.5px solid var(--border);
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 150ms ease;
+  font-family: inherit;
+}
+.goal-chip.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(240,193,75,0.08);
+}
