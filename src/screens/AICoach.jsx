@@ -4,6 +4,8 @@ import { useAuth } from '../context/AuthContext'
 import { useApp } from '../context/AppContext'
 import { useLanguage } from '../context/LanguageContext'
 import { authHeader } from '../lib/supabase'
+import { isSpeechRecognitionSupported } from '../utils/speech'
+import VoiceMode from '../components/VoiceMode'
 
 const LANG_NAMES = { fr: 'français', en: 'English', es: 'español' }
 
@@ -41,6 +43,7 @@ export default function AICoach() {
   ])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const [voiceModeOpen, setVoiceModeOpen] = useState(false)
   const bottomRef = useRef(null)
   const messagesRef = useRef(null)
 
@@ -221,6 +224,28 @@ TON STYLE — OBLIGATOIRE :
             placeholder={t('chat_placeholder')}
             style={{ flex: 1, borderRadius: 10 }}
           />
+          {/* Mic only shown when the browser actually supports it (Web
+              Speech API — no Firefox, spotty on iOS Safari) rather than
+              offering a button that would silently do nothing. */}
+          {isSpeechRecognitionSupported() && (
+            <button onClick={() => setVoiceModeOpen(true)} aria-label="Dicter un message" style={{
+              background: 'var(--surface)',
+              border: '1px solid var(--border)',
+              color: 'var(--text-primary)',
+              width: 40,
+              cursor: 'pointer',
+              borderRadius: 10,
+              flexShrink: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/>
+                <path d="M19 10v2a7 7 0 01-14 0v-2"/>
+                <line x1="12" y1="19" x2="12" y2="23"/>
+                <line x1="8" y1="23" x2="16" y2="23"/>
+              </svg>
+            </button>
+          )}
           <button onClick={() => sendMessage(input)} style={{
             background: 'var(--accent)',
             border: 'none',
@@ -237,7 +262,13 @@ TON STYLE — OBLIGATOIRE :
         </div>
       </div>
 
-
+      {voiceModeOpen && (
+        <VoiceMode
+          lang={lang}
+          onClose={() => setVoiceModeOpen(false)}
+          onSend={text => sendMessage(text)}
+        />
+      )}
     </div>
   )
 }
