@@ -6,6 +6,16 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo (le nom de la branche de travail change à chaque session — vérifie celle en cours plutôt que de te fier à un nom figé ici), et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-08-06 — Session 18 (suite 38) : icônes cassées → bascule sur lucide-react
+
+Retour direct : "Les icônes en svg [...] certaines sont cassées ça ne donne pas." Root cause honnête : les tracés SVG d'`Icon.jsx` (suite 37) avaient été dessinés à la main, de mémoire, sans aucun moyen de les vérifier visuellement dans ce sandbox (pas de navigateur) — plusieurs étaient effectivement mal formés. Question posée en retour ("est-ce que je peux mettre une clé API") : non, pas de clé API nécessaire ici — ce n'est pas un service génératif, juste un set d'icônes statique.
+
+**Fix** : `npm install lucide-react` (bibliothèque MIT, très largement utilisée en production — shadcn/ui, Directus, etc. — même famille que Feather Icons). `Icon.jsx` réécrit pour mapper les mêmes noms (`home`, `utensils`, `dumbbell`...) vers les vrais composants Lucide au lieu de tracés SVG maison — **aucun des 15 fichiers appelants n'a eu besoin d'être modifié**, seule l'implémentation interne du composant a changé. Élimine définitivement le risque de path SVG mal formé puisque ce sont des icônes professionnelles déjà vérifiées par des millions d'usages en prod, pas quelque chose que je dessine à l'aveugle.
+
+**Vérifié dans le build compilé** : `npm run build` passe (1923 modules, +10 Ko gzippé — normal pour de vraies icônes). Pas de test de rendu visuel supplémentaire fait ici (pas de navigateur) — mais contrairement à la suite 37, la correction ne dépend plus de mon exactitude à dessiner des paths SVG à la main, donc le risque résiduel est bien plus faible.
+
+**Vulnérabilités npm relevées en passant** (`npm audit`) : esbuild/postcss/react-router/vite, toutes pré-existantes dans les devDependencies (rien à voir avec ce changement) — pas touchées, hors périmètre de cette demande.
+
 ## 2026-08-06 — Session 18 (suite 37) : premier passage "direction visuelle premium" (tâche #27)
 
 Feu vert explicite ("transforme tout") sur la tâche #27, en attente depuis longtemps. Périmètre choisi pour ce premier passage — pas une refonte totale d'un coup, mais trois leviers concrets et vérifiables sans navigateur :
