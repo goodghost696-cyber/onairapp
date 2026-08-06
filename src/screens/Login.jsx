@@ -119,7 +119,7 @@ export default function Login() {
 
   return (
     <div className="app-wrapper">
-      <div style={{ padding: '80px 28px 28px', display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      <div style={{ padding: '80px 28px 28px', display: 'flex', flexDirection: 'column', minHeight: '100dvh' }}>
 
         <h1 style={{ fontSize: 30, fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--text-primary)', margin: '0 0 22px' }}>
           Bienvenue.

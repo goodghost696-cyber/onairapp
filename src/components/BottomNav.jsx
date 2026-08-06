@@ -57,7 +57,13 @@ export default function BottomNav() {
   const lastScrollY = useRef(0)
 
   useEffect(() => {
-    const scrollEl = document.getElementById('oa-scroll') || window
+    // #root is the app's single real scroll container (see global.css) —
+    // was 'oa-scroll', an id nothing in the app ever set, so this always
+    // silently fell back to `window`. Harmless while the document itself
+    // scrolled, but window stopped scrolling entirely once #root became
+    // the dedicated scroll owner, which would have made the nav-hide-on-
+    // scroll behavior below permanently inert.
+    const scrollEl = document.getElementById('root') || window
     const handleScroll = () => {
       const y = scrollEl === window ? scrollEl.scrollY : scrollEl.scrollTop
       if (y > lastScrollY.current + 8) {

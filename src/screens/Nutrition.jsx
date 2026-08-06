@@ -107,7 +107,9 @@ export default function Nutrition() {
   // to know which source is active.
   const recipeRegenerateRef = useRef(null)
 
-  useEffect(() => { window.scrollTo(0, 0) }, [])
+  // window no longer scrolls — #root is the app's real scroll container
+  // (see global.css) since the standalone-iOS scroll-stuck fix.
+  useEffect(() => { document.getElementById('root')?.scrollTo(0, 0) }, [])
 
   // Rotates the loading caption while a recipe is generating — the link
   // path in particular does two sequential network calls (fetch transcript,
