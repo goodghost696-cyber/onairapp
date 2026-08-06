@@ -6,6 +6,34 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo (le nom de la branche de travail change à chaque session — vérifie celle en cours plutôt que de te fier à un nom figé ici), et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-08-06 — Session 18 (suite 40) : bascule vers la "direction corail" — 1er lot (fondations + Dashboard + Nutrition + headers)
+
+Suite à un aller-retour maquettes (comparatif de fonds sombres → jugé "toujours sombre", puis un vrai écran Dashboard recréé dans le style corail/anneau multicolore d'une référence Behance "Noom" fournie par l'utilisateur) : feu vert explicite ("je le veux sur l'app maintenant"). **Gros changement d'identité** — abandon du "sombre premium" (gold/violet sur quasi-noir) construit tout au long de cette session au profit d'un fond corail dégradé, cartes blanches, anneau conique multicolore (jaune→rose→violet→bleu) en accent décoratif.
+
+**Périmètre de ce premier lot** (pas "toute l'app" en un coup — voir pourquoi plus bas) :
+
+1. **Sphère IA de la nav** (`nav.css`) : recolorée du gradient or/violet vers la palette de l'anneau (jaune→rose→violet→bleu), signalée "moche" par l'utilisateur contre le nouveau fond — reprend maintenant la même famille de couleurs que l'anneau plutôt qu'une palette isolée.
+
+2. **Tokens globaux** (`global.css`) — le vrai cœur du changement :
+   - `--bg` : quasi-noir → dégradé corail, posé directement sur `#root` (pas juste une valeur de token, un vrai `radial-gradient` avec plusieurs arrêts).
+   - `--surface`/`--surface-solid` : quasi-noir → blanc. `--surface-2` : blanc cassé chaud.
+   - **Erreur évitée de justesse, découverte en auditant le code plutôt qu'en devinant** : `--text-primary/secondary/muted` ont d'abord été mis en blanc (en supposant "texte sur le fond corail"), ce qui a immédiatement cassé quasiment toutes les feuilles/modales de l'app (Settings, Messages, AICoach, ResetPassword, DeleteAccountButton, Login, OnboardingTour...) qui utilisent `var(--surface-solid)` en fond — texte blanc sur fond blanc, invisible. Un grep systématique de `var(--surface)`/`var(--surface-solid)` dans tout `src/` a montré que la vaste majorité du texte de l'app est **dans** une carte/feuille blanche, pas directement sur le fond corail. **Tokens inversés en conséquence** : `--text-primary/secondary/muted` sont maintenant sombres par défaut (corrige d'un coup la quasi-totalité des feuilles/modales de l'app sans les toucher une par une), et c'est le cas inverse — texte posé directement sur le fond corail (kickers, titres d'écran, greetings) — qui force maintenant une couleur claire explicite, écran par écran.
+   - `.card` génère maintenant sa propre encre sombre par défaut (`color: #1B1710` + overrides locaux `.text-primary/secondary/muted`), généralisant un pattern qui n'existait avant que pour `.card-hero`/`.card-violet`. Ces deux variantes simplifiées : elles étaient un fond dégradé (or/violet) sur fond sombre — sur un fond déjà coloré (corail), un deuxième dégradé par-dessus faisait du bruit visuel plutôt que de la hiérarchie ; elles sont maintenant juste des cartes blanches avec un rayon/ombre un peu plus marqués.
+   - `.btn-accent` (CTA principal partout dans l'app) et `.dashboard-cta-btn` : or → **encre quasi-noire**. Volontaire : sur un écran déjà chaud/coloré, un bouton sombre et retenu se démarque et lit comme "premium" — c'est le seul levier qui garde un peu de l'ADN "sombre exclusif" dans une palette autrement chaude.
+   - `.section-label` (titres de section partagés, utilisés sur Nutrition/Settings/Weekly/CoachSettings...) : forcé clair — corrige plusieurs écrans d'un coup.
+
+3. **Dashboard.jsx** (entièrement audité et refait) : anneau décoratif ajouté (`.dashboard-ring`, positionné en haut à droite, cliché par l'overflow de `#root`), icônes redevenues des emoji avec badge de couleur par carte (👟🏃💧😴 — "tu peux remmetre les emoji ça marche avec ce style"), header/greeting/date forcés en blanc explicite, bug de contraste réel trouvé et corrigé (`.activity-card-value` en `var(--text-primary)` sur `.activity-card-compact` qui ne passe pas par la classe `.card` — blanc sur blanc avant le fix), feuille d'édition (bottom sheet) qui était en dur `#141414` (jamais suivi le thème) alignée sur le nouveau système blanc.
+
+4. **Nutrition.jsx** (entièrement audité) : même traitement — kicker/date forcés blancs, icônes de recette/repas redevenues emoji (💡✨📸🔗🍳🥗🍽️🍎) avec badges colorés, badge "Idée recette" corrigé (fond translucide blanc sur carte maintenant blanche = invisible avant le fix).
+
+5. **Kickers d'écran** (Sleep, Hydration, Settings, Weekly, Workout, CoachDashboard) : même correctif "texte forcé clair" + retour aux emoji, en balayage rapide.
+
+**Pas fait dans ce lot, à reprendre** : l'onglet Course de Workout (RunContent.jsx, toujours le chantier en attente de décision — voir suite 39), les écrans Sleep/Hydration/Weekly/Settings/CoachDashboard au-delà de leur seul kicker (le corps de ces écrans profite déjà de l'inversion des tokens mais n'a pas été audité écran par écran comme Dashboard/Nutrition), AICoach/Messages/Login/ResetPassword/ClientsList/CoachMessages/CoachSettings/AppTour/OnboardingTour/Onboarding (pas touchés du tout — bénéficient automatiquement du fix systémique des tokens pour le texte-dans-carte, mais leurs éventuels headers "sur fond corail" n'ont pas été vérifiés un par un).
+
+**Pourquoi pas tout d'un coup** : l'audit du bug `.activity-card-compact` et la découverte du bug bien plus large des feuilles blanches (`var(--surface-solid)`) confirment qu'un changement aveugle de toute l'app en une fois aurait très probablement shippé des textes invisibles sur plusieurs écrans, exactement le genre de régression déjà vue plusieurs fois cette session ("ton sur ton", "noir sur noir"). Préféré : livrer un socle solide (tokens + 2 écrans complets, vérifiés un par un) plutôt qu'une couverture large mais non fiable.
+
+**Vérifié dans le build compilé** : `npm run build` passe à chaque étape (plusieurs builds intermédiaires, un a attrapé une vraie erreur de syntaxe JSX — `*/ ` littéral dans un commentaire fermait le commentaire prématurément). Pas de vérification visuelle réelle en navigateur (aucun outil de ce type dans ce sandbox) — c'est le point le plus important à confirmer sur le lien de prod avant de continuer sur les écrans restants.
+
 ## 2026-08-06 — Session 18 (suite 39) : onglet Course de Workout — diagnostic sévère + petit fix météo
 
 Capture d'écran de l'onglet "Course" de Workout, question directe : "je sais pas si elle est encore utile en vrai ?". Lecture complète de `RunContent.jsx` a révélé que **la quasi-totalité de cet écran est un prototype jamais branché sur de vraies données** :

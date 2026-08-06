@@ -85,18 +85,24 @@
    as "basique" against the rest of the app's glow/gradient language, per
    feedback comparing it directly to the voice orb. No icon at all: the
    sphere itself IS the AI indicator, exactly like the voice mode entry point. */
+/* Rebrand 2026-08-06 (direction corail) — was a two-tone gold→violet
+   radial. Reported as "moche" against the new coral background, because
+   it no longer matched anything else on screen: the app's new signature
+   accent is the multicolor ring (jaune→rose→violet→bleu) used behind
+   headers and, now, echoed here — the sphere previews the same palette
+   instead of introducing a third, unrelated color pairing. */
 .nav-btn-elevated {
   position: relative; /* anchors the wave rings below, centered on the sphere */
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #FBE08A 0%, #F0C14B 45%, #8B93E8 100%);
+  background: radial-gradient(circle at 32% 28%, #FFE9A8 0%, #FFD166 24%, #FF6B8B 52%, #A45CF0 76%, #4C6FE0 100%);
   margin-top: -26px;
   /* Matches .nav-pill's background (not --bg) so this reads as a ring cut
      through the pill's surface, not a mismatched dark halo now that the
      pill itself is no longer the same flat color as the page. */
   border: 3px solid var(--surface);
-  box-shadow: 0 0 16px rgba(240,193,75,0.5), 0 0 32px rgba(139,147,232,0.3), 0 8px 20px rgba(0,0,0,0.35);
+  box-shadow: 0 0 16px rgba(255,107,139,0.45), 0 0 32px rgba(164,92,240,0.3), 0 8px 20px rgba(120,40,10,0.3);
 }
 
 /* First pass at "ondes/fréquence" mixed into the sphere — two rings pulsing
@@ -111,7 +117,7 @@
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  border: 1.5px solid rgba(240,193,75,0.55);
+  border: 1.5px solid rgba(255,107,139,0.5);
   pointer-events: none;
 }
 @media (prefers-reduced-motion: no-preference) {
@@ -119,8 +125,8 @@
   .nav-btn-elevated::after { animation: aiWavePulse 2.6s ease-out infinite 1.3s; }
 }
 @keyframes aiWavePulse {
-  0%   { transform: scale(1);   opacity: 0.6; border-color: rgba(240,193,75,0.6); }
-  70%  { border-color: rgba(139,147,232,0.45); }
+  0%   { transform: scale(1);   opacity: 0.6; border-color: rgba(255,209,102,0.6); }
+  70%  { border-color: rgba(164,92,240,0.45); }
   100% { transform: scale(1.9); opacity: 0; }
 }
 

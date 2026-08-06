@@ -6,7 +6,6 @@ import { useAuth } from '../context/AuthContext'
 import { useLanguage } from '../context/LanguageContext'
 import '../styles/Workout.css'
 import { authHeader } from '../lib/supabase'
-import Icon from '../components/Icon'
 
 export default function Workout() {
   const navigate = useNavigate()
@@ -96,7 +95,7 @@ Donne exactement 4-5 exercices adaptés à l'objectif.`
     <div className="app-wrapper">
       <div className="screen" style={{ paddingBottom: 110, padding: '0 24px 110px' }}>
         <div className="screen-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 56, paddingBottom: 8 }}>
-          <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--accent-secondary)', display: 'flex', alignItems: 'center', gap: 6 }}><Icon name="dumbbell" size={13} /> WORKOUT</p>
+          <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.85)' }}>🏋️ WORKOUT</p>
           <span style={{ fontSize: 12, color: 'var(--text-secondary)', textTransform: 'capitalize' }}>{new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'short' })}</span>
         </div>
 

@@ -1,3 +1,29 @@
+/* Direction corail (2026-08-06) — the signature ring accent, positioned to
+   bleed off the top-right corner behind the header. Sized in vw-ish fixed
+   px rather than %, matching the reference; #root's own overflow-x:hidden
+   (global.css) clips the horizontal bleed so it never causes side-scroll. */
+.dashboard-ring {
+  position: absolute;
+  top: -90px;
+  right: -110px;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  border: 26px solid transparent;
+  background: conic-gradient(from 210deg, #FFD166, #FF6B8B, #A45CF0, #4C6FE0, #FFD166) border-box;
+  -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0.85;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.dashboard-screen {
+  position: relative;
+  z-index: 1;
+}
+
 .dash-header {
   display: flex;
   justify-content: space-between;
@@ -63,23 +89,31 @@
 
 .activity-card-compact {
   background: var(--surface);
-  border: 2px solid var(--border);
+  border: 1px solid var(--border);
   border-radius: 16px;
   padding: 18px 16px;
   cursor: pointer;
   transition: transform 100ms ease;
   position: relative;
   overflow: hidden;
+  box-shadow: 0 8px 18px rgba(120,40,10,0.1);
+  /* Direction corail (2026-08-06) — this card doesn't use the shared .card
+     class (custom layout needs), so it never picked up .card's new
+     "sets its own dark-ink text tokens" rule. Was silently white-on-white
+     without this: --text-primary is the "text on the coral bg" token now,
+     and this card's own bg is white just like every other card. */
+  color: #1B1710;
 }
 
 .activity-card-compact:active {
   transform: scale(0.97);
 }
 
-.activity-card-accent {
-  background: var(--accent-secondary);
-  border-color: var(--accent-secondary);
-}
+/* Direction corail (2026-08-06) — the violet "accent" treatment on the Eau
+   card was a deliberate outlier for the old dark palette. Every activity
+   card is uniform white now, matching the reference mockup — differentiation
+   comes from the icon badge's own color, not the whole card. */
+.activity-card-accent { background: var(--surface); border-color: var(--border); }
 
 /* Bare emoji (no badge) — kept for anywhere still using the plain version;
    .activity-card-icon-badge below is the upgraded circular version used
@@ -90,50 +124,32 @@
   margin-bottom: 8px;
 }
 
-/* Circular badge — matches the mockup's 50px icon circles (Pas/Course/
-   Muscu/Eau) more closely than a bare floating emoji, while keeping this
-   card's actual data (number + bar) that the mockup's icon-only circles
-   don't show at all. */
+/* Circular badge — each card passes its own background color inline now
+   (see Dashboard.jsx's ACTIVITY_TINTS) so the 4 badges read as distinct
+   accent colors instead of one repeated neutral circle. */
 .activity-card-icon-badge {
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  background: var(--surface-2);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-primary);
+  font-size: 16px;
   margin-bottom: 10px;
-}
-
-.activity-card-accent .activity-card-icon-badge {
-  background: rgba(28,32,80,0.12);
 }
 
 .activity-card-label {
   font-size: 10px;
   letter-spacing: 2px;
   text-transform: uppercase;
-  color: var(--text-muted);
+  color: rgba(27,23,16,0.45);
   margin: 0 0 6px;
-}
-
-/* Was white-on-white(ish) — --accent-secondary is a light violet now (was
-   a dark royal blue, where white text/track had good contrast). Same fix
-   as everywhere else touched by the rebrand: dark navy ink instead. */
-.activity-card-accent .activity-card-label,
-.activity-card-accent .activity-card-unit {
-  color: rgba(28,32,80,0.65);
-}
-
-.activity-card-accent .activity-card-value {
-  color: #1C2050;
 }
 
 .activity-card-value {
   font-size: 26px;
   font-weight: 800;
-  color: var(--text-primary);
+  color: #1B1710;
   font-variant-numeric: tabular-nums;
   margin: 0;
   letter-spacing: -0.5px;
@@ -141,7 +157,7 @@
 
 .activity-card-unit {
   font-size: 12px;
-  color: var(--text-secondary);
+  color: rgba(27,23,16,0.55);
   font-weight: 400;
 }
 
@@ -160,14 +176,6 @@
   transition: width 400ms ease-out;
 }
 
-.activity-card-accent .activity-card-bar-wrap {
-  background: rgba(28,32,80,0.18);
-}
-
-.activity-card-accent .activity-card-bar-fill {
-  background: #1C2050;
-}
-
 /* Bolder "hero card" treatment (glow + bigger type) instead of the previous
    flat single-color bar. Base is solid --accent with --accent-secondary as
    a corner glow, not a full diagonal gradient between the two — kept
@@ -176,12 +184,14 @@
    --accent-ink now (~6:1, better than the old blue's ~3.4:1), but this
    structure still reads clean as a single-accent CTA rather than a mixed
    one, so it stayed as-is — just inherits the new colors via the tokens. */
+/* Direction corail (2026-08-06) — was gold. Same reasoning as .btn-accent
+   in global.css: a near-black CTA is the one restrained element against
+   an otherwise warm/colorful screen, reads as the confident/premium
+   choice rather than one more bright color competing for attention. */
 .dashboard-cta-btn {
   width: 100%;
-  background:
-    radial-gradient(120% 160% at 100% 0%, var(--accent-secondary) 0%, transparent 55%),
-    var(--accent);
-  color: var(--accent-ink);
+  background: #1B1710;
+  color: #FFFFFF;
   border: none;
   border-radius: 22px;
   padding: 26px 24px;
@@ -193,7 +203,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 12px 32px rgba(240,193,75,0.25);
+  box-shadow: 0 12px 28px rgba(0,0,0,0.22);
 }
 
 .dashboard-cta-icon {
@@ -213,6 +223,13 @@
   margin: 4px 0 0;
 }
 
+/* Direction corail (2026-08-06) — was a hardcoded #141414 (never followed
+   the theme tokens at all, dark regardless). Flipped to match every other
+   surface in the app now that the default look is light-on-coral rather
+   than white-on-near-black — an isolated dark modal would be the one
+   inconsistent surface left, and .sheet-input's own light background was
+   already silently unreadable inside it (light input + white --text-primary
+   text = white-on-light) even before this rebrand touched this file. */
 .activity-edit-sheet {
   position: fixed;
   bottom: 0;
@@ -220,26 +237,27 @@
   transform: translateX(-50%);
   width: 100%;
   max-width: 480px;
-  background: #141414;
+  background: var(--surface);
   border-radius: 20px 20px 0 0;
   border-top: 1px solid var(--border);
   padding: 12px 24px 48px;
   z-index: 201;
   animation: slideUp 280ms cubic-bezier(0.34,1.56,0.64,1);
+  box-shadow: 0 -12px 40px rgba(0,0,0,0.25);
 }
 
 .sheet-title {
   font-size: 11px;
   letter-spacing: 2px;
   text-transform: uppercase;
-  color: var(--text-muted);
+  color: rgba(27,23,16,0.5);
   text-align: center;
   margin: 0 0 4px;
 }
 
 .sheet-subtitle {
   font-size: 13px;
-  color: var(--text-secondary);
+  color: rgba(27,23,16,0.65);
   text-align: center;
   margin: 0 0 24px;
 }
@@ -249,7 +267,7 @@
   background: var(--surface-2);
   border: 0.5px solid var(--border);
   border-radius: 12px;
-  color: var(--text-primary);
+  color: #1B1710;
   font-size: 32px;
   font-weight: 700;
   text-align: center;

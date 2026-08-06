@@ -6,7 +6,6 @@ import { useLanguage } from '../context/LanguageContext'
 import { save } from '../utils/storage'
 import { BOUNDS, clamp } from '../utils/validation'
 import { dailyRemainingCalories } from '../utils/metabolism'
-import Icon from '../components/Icon'
 import '../styles/dashboard.css'
 
 const QUOTES = [
@@ -33,9 +32,9 @@ function RotatingQuote() {
   }, [])
 
   return (
-    <div style={{ padding: '12px 0', borderBottom: '0.5px solid var(--border)', marginBottom: 16 }}>
+    <div style={{ padding: '12px 0', borderBottom: '0.5px solid rgba(255,255,255,0.25)', marginBottom: 16 }}>
       <p style={{
-        fontSize: 13, color: 'var(--text-secondary)', fontStyle: 'italic', lineHeight: 1.5,
+        fontSize: 13, color: 'rgba(255,255,255,0.8)', fontStyle: 'italic', lineHeight: 1.5,
         opacity: visible ? 1 : 0,
         transition: 'opacity 300ms ease',
       }}>
@@ -56,11 +55,15 @@ export default function Dashboard() {
   const hour = new Date().getHours()
   const greeting = hour < 12 ? t('greeting_morning') : hour < 18 ? t('greeting_afternoon') : t('greeting_evening')
 
+  // Direction corail (2026-08-06): colored emoji badges instead of
+  // monochrome line icons — a warm/playful palette reads better with real
+  // color per card than a single neutral icon color did, per direct
+  // feedback ("tu peux remmetre les emoji ça marche avec ce style").
   const CARDS = [
-    { key: 'steps', label: 'PAS', icon: 'footprints', value: appData.steps, unit: 'pas', target: 10000 },
-    { key: 'kmRun', label: 'COURSE', icon: 'activity', value: appData.kmRun, unit: 'km', target: null },
-    { key: 'water', label: 'EAU', icon: 'droplet', value: appData.water, unit: 'ml', target: 2500 },
-    { key: 'sleep', label: 'SOMMEIL', icon: 'moon', value: appData.sleep?.hours || 0, unit: 'h', target: 8 },
+    { key: 'steps', label: 'PAS', icon: '👟', tint: '#FDEAD8', value: appData.steps, unit: 'pas', target: 10000 },
+    { key: 'kmRun', label: 'COURSE', icon: '🏃', tint: '#E3F0FF', value: appData.kmRun, unit: 'km', target: null },
+    { key: 'water', label: 'EAU', icon: '💧', tint: '#E6F6EE', value: appData.water, unit: 'ml', target: 2500 },
+    { key: 'sleep', label: 'SOMMEIL', icon: '😴', tint: '#F1EAFB', value: appData.sleep?.hours || 0, unit: 'h', target: 8 },
   ]
 
   const handleSave = () => {
@@ -92,13 +95,25 @@ export default function Dashboard() {
 
   return (
     <div className="app-wrapper">
+      {/* Direction corail (2026-08-06) — the ring accent from the Behance
+          reference, echoed by the AI nav sphere's own gradient (nav.css)
+          so the two read as one signature instead of two unrelated
+          decorations. Purely decorative: aria-hidden, sits behind content
+          (z-index handled by #root > * already putting real content above
+          it), clipped by #root's overflow-x so it never causes horizontal
+          scroll. */}
+      <div className="dashboard-ring" aria-hidden="true" />
       <div className="screen dashboard-screen" style={{ paddingBottom: 110, padding: '0 24px 110px' }}>
         {/* Header */}
         <div className="screen-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingTop: 56, paddingBottom: 28 }}>
           <div>
-            <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--accent-secondary)', marginBottom: 7 }}>VOLTA</p>
-            <h1 style={{ fontSize: 28, fontWeight: 800, lineHeight: 1.15, color: 'var(--text-primary)' }}>{greeting}, {user?.name}.</h1>
-            <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4, textTransform: 'capitalize' }}>
+            {/* --text-primary/secondary are DARK by default now (correct
+                for the common case: text inside a white card/sheet) — this
+                header sits directly on the coral bg, so it needs to force
+                light color explicitly rather than rely on those tokens. */}
+            <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.85)', marginBottom: 7 }}>VOLTA</p>
+            <h1 style={{ fontSize: 28, fontWeight: 800, lineHeight: 1.15, color: '#FFFFFF' }}>{greeting}, {user?.name}.</h1>
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)', marginTop: 4, textTransform: 'capitalize' }}>
               {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
             </p>
           </div>
@@ -165,7 +180,7 @@ export default function Dashboard() {
             instead — the icon now sits in an actual circular badge
             (.activity-card-icon-badge) instead of floating loose, matching
             the mockup's icon-circle language without losing the numbers. */}
-        <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: 12 }}>{t('activity')}</p>
+        <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.85)', marginBottom: 12 }}>{t('activity')}</p>
         <div className="activity-grid">
           {CARDS.map((card, i) => (
             <div
@@ -174,7 +189,7 @@ export default function Dashboard() {
               style={{ '--delay': `${80 + i * 40}ms` }}
               onClick={() => { setEditingCard(card.key); setInputVal('') }}
             >
-              <span className="activity-card-icon-badge"><Icon name={card.icon} size={18} /></span>
+              <span className="activity-card-icon-badge" style={{ background: card.tint }}>{card.icon}</span>
               <p className="activity-card-label">{card.label}</p>
               <p className="activity-card-value">
                 {card.key === 'steps' ? appData.steps.toLocaleString('fr-FR') : card.value}
@@ -195,7 +210,7 @@ export default function Dashboard() {
         {/* CTA to today's workout */}
         <button onClick={() => navigate('/workout')} className="dashboard-cta-btn card-animated" style={{ '--delay': '260ms' }}>
           <span>Voir mon entraînement du jour</span>
-          <span className="dashboard-cta-icon"><Icon name="flame" size={20} /></span>
+          <span className="dashboard-cta-icon">🔥</span>
         </button>
 
         {/* Weekly sessions card */}
