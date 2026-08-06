@@ -425,4 +425,45 @@ create policy "Members can delete stale coach push subscriptions"
     )
   );
 
+-- ── leaderboard_weekly ────────────────────────────────────
+-- Audit du marché 2026-08-06 : les concurrents directs (Sportigo, apps de
+-- salle en marque blanche françaises) ont tous un volet gamification/
+-- classement, et c'est le levier de rétention le plus cité dans la
+-- littérature (5x rétention avec fonctionnalités sociales actives, 75%+
+-- dans les salles à forte dimension communautaire — source dans
+-- JOURNAL.md suite 47). Zéro tracker grand public (MyFitnessPal, Yazio)
+-- ne peut proposer ça de façon crédible puisqu'ils n'ont pas de vraie
+-- salle derrière — c'est le seul terrain où Volta n'a aucun concurrent
+-- direct.
+--
+-- `seances` a RLS strict (auth.uid() = user_id) — un membre ne peut lire
+-- QUE ses propres séances, ce qui est correct pour le tracking perso mais
+-- rend un classement impossible en interrogeant la table directement.
+-- Cette vue expose volontairement une tranche étroite et non sensible
+-- (prénom + nombre de séances cette semaine, rien de nutritionnel/santé)
+-- à tous les membres authentifiés — c'est un choix produit délibéré (un
+-- classement de salle affiché au mur n'est pas différent), pas un
+-- élargissement accidentel des policies RLS existantes.
+--
+-- security_invoker = false (explicite, pas le défaut implicite) : la vue
+-- doit volontairement CONTOURNER le RLS de `seances`/`profiles` pour
+-- pouvoir agréger les séances de tout le monde — avec security_invoker=true
+-- elle n'aurait jamais renvoyé que la ligne de l'utilisateur courant,
+-- vidant le classement de tout son sens.
+create or replace view public.leaderboard_weekly
+  with (security_invoker = false)
+  as
+  select
+    p.user_id,
+    p.prenom,
+    count(s.id) as seances_semaine
+  from profiles p
+  left join seances s
+    on s.user_id = p.user_id
+    and s.date >= (current_date - interval '6 days')
+  where p.role = 'member'
+  group by p.user_id, p.prenom;
+
+grant select on public.leaderboard_weekly to authenticated;
+
 create index if not exists push_subscriptions_user_idx on push_subscriptions (user_id);
