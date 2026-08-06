@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useLanguage } from '../context/LanguageContext'
 import { supabase } from '../lib/supabase'
+import Logo from '../components/Logo'
 
 export default function ResetPassword() {
   const navigate = useNavigate()
@@ -64,11 +65,7 @@ export default function ResetPassword() {
     <div className="app-wrapper">
       <div style={{ padding: '0 28px 48px', display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 80, paddingBottom: 48 }}>
-          <img
-            src="/icon-onair.png"
-            alt="ON AIR"
-            style={{ width: 72, height: 72, mixBlendMode: 'screen', marginBottom: 14 }}
-          />
+          <Logo variant="lockup" size={72} style={{ marginBottom: 14 }} />
           <p style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{t('reset_password_title')}</p>
         </div>
 

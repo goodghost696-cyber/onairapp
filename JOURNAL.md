@@ -1,10 +1,29 @@
-# Journal de bord — ON AIR
+# Journal de bord — VOLTA (ex ON AIR)
 
 Journal tenu à la fin de chaque session de travail avec Claude. Sert de contexte de reprise pour la session suivante : ce qui a été fait, ce qu'il reste à faire, et un état des lieux honnête de l'app.
 
 Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo (le nom de la branche de travail change à chaque session — vérifie celle en cours plutôt que de te fier à un nom figé ici), et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
+
+## 2026-08-06 — Session 18 (suite 32) : rebranding complet ON AIR → VOLTA
+
+Nouveau nom, nouveau logo. Demande explicite : "Nouveau Logo et nouveau nom pour l'application. Maintenant c'est : VOLTA !", avec la charte Figma "Style Athlevo application" — mark zigzag ascendant + terminal carré doré, typo Unbounded extra-bold pour le wordmark, trois déclinaisons (icône seule / lockup icône+texte / wordmark seul).
+
+**Ce qui a été fait :**
+- Nouveau mark SVG (`public/logo-volta.svg`) : ligne brisée ascendante + petit carré plein en bout de trait (première tentative avait un coin en crochet façon icône "trending-up" classique — corrigée après 3 captures de référence plus nettes montrant un carré plein).
+- Icônes PWA régénérées (`icon-192.png`, `icon-512.png`) via Chromium headless (pas de lib de rasterisation SVG dispo dans ce bac à sable) — fond dégradé radial sombre + mark doré centré, vérifié visuellement (Read tool) contre la référence.
+- Nouveau composant `src/components/Logo.jsx` + `src/styles/brand.css` : gère les 3 déclinaisons de la charte (`variant="icon"`, `"wordmark"`, `"lockup"`, avec `orientation="row"|"column"` pour le lockup). Utilisé sur Landing (hero, lockup horizontal) et ResetPassword (lockup vertical, remplace l'ancien `<img src="/icon-onair.png">`).
+- Police Unbounded (Google Fonts, poids 600-900) ajoutée dans `index.html`, appliquée uniquement à `.brand-wordmark` — pas de changement de police globale de l'UI.
+- Renommage texte "ON AIR" → "VOLTA" dans tous les fichiers concernés : `LanguageContext.jsx` (9 chaînes fr/en/es), `AICoach.jsx` (message d'accueil + prompt système), `Onboarding.jsx`, `Dashboard.jsx`, `Messages.jsx`, `MemberDetail.jsx` (×2), `CoachDashboard.jsx`, `AppTour.jsx`, `Conversation.jsx`, `OnboardingTour.jsx`, `useGymConfig.js` (valeur par défaut), `manifest.json` (name/short_name), `index.html` (title, apple-mobile-web-app-title, favicon → `/logo-volta.svg`), `sw.js` (nom du cache + titre de notification push), `api/quote.js`, `api/cron/inactivity-nudge.js`, `package.json`, `README.md`.
+- `CoachSettings.jsx` : le nom de salle affiché était en dur ("ON AIR Clichy") — câblé sur `useGymConfig()` (le hook white-label existant) au lieu d'un renommage bête en "VOLTA Clichy", ce qui règle un vrai bug au passage (le nom affiché ne reflétait jamais la vraie config de la salle).
+- Nettoyage : suppression de `public/icon-onair.png`, `public/logo-onair.png`, `public/vite.svg` (plus référencés nulle part) et de `scripts/gen-icons.mjs` (script mort, dépendait de `canvas` — jamais dans les dépendances du projet — et dessinait encore l'ancien texte "ON AIR").
+
+**Important — distinction conservée** : `useGymConfig()` reste un mécanisme *white-label* séparé (nom de la salle affiché, ex. pour un futur client autre que ce gym) — seul son fallback par défaut est devenu "VOLTA FITNESS". La marque de l'app elle-même (VOLTA, le logo, le titre) est maintenant codée en dur partout où c'était déjà le cas pour "ON AIR" — ce n'est pas passé par ce hook, cohérent avec l'architecture existante.
+
+**Vérifié dans le build compilé** : `grep -o VOLTA dist/assets/*.js` trouve bien la marque ; `grep "ON AIR\|onair-app"` dans le JS compilé ne retourne plus rien ; `dist/index.html` a le bon titre, la bonne favicon et charge Unbounded. Comme d'habitude, je n'ai pas de navigateur dans ce bac à sable donc je n'ai pas pu vérifier visuellement le rendu réel des pages (juste les 2 icônes PNG, relues via le tool Read) — à confirmer par toi sur le lien de prod.
+
+**Reste en attente** : tâche #27 "Direction visuelle futuriste premium" — pas encore confirmé si ce rebranding la couvre ou si c'est encore un chantier à part (à trancher avec Arnaud).
 
 ## 2026-08-06 — Session 18 (suite 31) : premier retour positif — Supadata confirmé fonctionnel + animation de chargement
 

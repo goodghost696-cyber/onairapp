@@ -116,7 +116,7 @@ export default function AICoach() {
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      content: `Salut ${user?.name} ! Je suis ton coach IA ON AIR. J'ai accès à toutes tes données du jour. Qu'est-ce qu'on fait ?`,
+      content: `Salut ${user?.name} ! Je suis ton coach IA VOLTA. J'ai accès à toutes tes données du jour. Qu'est-ce qu'on fait ?`,
       ts: new Date(),
     }
   ])
@@ -199,7 +199,7 @@ export default function AICoach() {
   }
 
   function buildSystemPrompt() {
-    return `T'es le coach IA de ${user?.name} chez ON AIR Fitness.
+    return `T'es le coach IA de ${user?.name} chez VOLTA Fitness.
 
 Tu as accès à toutes ses données :
 - Calories aujourd'hui : ${appData?.calories || 0} / ${appData?.calorieGoal || 2400} kcal

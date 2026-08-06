@@ -17,7 +17,7 @@ import '../styles/AppTour.css'
 const SLIDES = [
   {
     icon: '👋',
-    title: 'Bienvenue sur ON AIR.',
+    title: 'Bienvenue sur VOLTA.',
     subtitle: "Un tour rapide en 5 écrans pour savoir où trouver quoi. Tu peux passer à tout moment.",
   },
   {

@@ -5,7 +5,7 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   const user = await requireUser(req);
-  if (!user) return res.status(200).json({ quote: 'Chaque séance compte.', author: 'ON AIR' });
+  if (!user) return res.status(200).json({ quote: 'Chaque séance compte.', author: 'VOLTA' });
 
   const apiKey = process.env.NINJA_API_KEY;
   const category = req.query.category || 'fitness';
@@ -16,8 +16,8 @@ export default async function handler(req, res) {
       { headers: { 'X-Api-Key': apiKey } }
     );
     const data = await response.json();
-    return res.status(200).json(data[0] || { quote: 'Chaque séance compte.', author: 'ON AIR' });
+    return res.status(200).json(data[0] || { quote: 'Chaque séance compte.', author: 'VOLTA' });
   } catch {
-    return res.status(200).json({ quote: 'Chaque séance compte.', author: 'ON AIR' });
+    return res.status(200).json({ quote: 'Chaque séance compte.', author: 'VOLTA' });
   }
 }
