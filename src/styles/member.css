@@ -36,4 +36,14 @@
     margin-left: auto;
     margin-right: auto;
   }
+
+  /* Nav was left at its mobile 390px width on purpose in the first
+     responsive pass — but once the content column widened, a 390px pill
+     floating under a 720px-wide card just looks stuck at "small" rather
+     than deliberately sized, per a user report. Structure/icons still
+     untouched (same caution as always with this component) — just letting
+     it track the same width as the content above it. */
+  #root.member-shell .bottom-nav {
+    max-width: min(90vw, 720px);
+  }
 }

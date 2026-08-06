@@ -6,6 +6,22 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo, branche `claude/charming-mendel-dj1GQ`, et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-08-06 — Session 18 (suite 16) : nav bar — bloc noir derrière + reste trop petite sur grand écran
+
+Nouvelle capture d'écran (Bilan, desktop) : le contenu remplit bien mieux l'écran maintenant. Deux problèmes distincts sur la nav repérés par l'utilisateur.
+
+### 🐛 Bloc noir visible derrière la nav bar
+`.bottom-nav` avait `background: var(--bg)` — un rectangle plein de 390px de large, même couleur que le fond de la page. Sur mobile, invisible (le rectangle ≈ toute la largeur visible). Sur grand écran, avec le fond de page maintenant un dégradé qui s'étend sur toute la largeur, ce même rectangle plein forme un "trou" plat visible juste derrière la pilule de nav — c'est le "bloc noir" vu par l'utilisateur. La pilule (`.nav-pill`) a déjà son propre fond opaque, ce conteneur extérieur n'avait pas besoin d'en avoir un. Corrigé : `background: transparent`.
+
+### 🐛 La nav restait à 390px alors que le contenu s'est élargi
+Choix volontaire de la suite 13/15 (ne pas toucher à la nav, historique de 3 redesigns ratés) — mais une fois le contenu élargi, une pilule à 390px sous une carte à 720px donne l'impression que la nav est restée "petite" plutôt que délibérément dimensionnée. Élargie pour suivre le contenu, **structure et icônes toujours non touchées** :
+- Membre : `min(90vw, 720px)` (même valeur que le contenu).
+- Coach : `720px` fixe (pas les 1600px du contenu — une pilule à 4-5 icônes étirée sur 1600px aurait l'air complètement vide, pas "responsive").
+
+Vérifié dans le CSS compilé avant de livrer.
+
+---
+
 ## 2026-08-06 — Session 18 (suite 15) : rebrand confirmé bon visuellement + contenu membre trop étroit sur grand écran
 
 Première vraie capture d'écran du rebrand depuis l'utilisateur (Dashboard + Nutrition, desktop et mobile). **Bonne nouvelle : le style or/bleu-violet fonctionne bien** — cartes en dégradé lisibles, icônes circulaires, boutons corrects. Tous les calculs de contraste faits à l'aveugle cette session se confirment à l'œil.
