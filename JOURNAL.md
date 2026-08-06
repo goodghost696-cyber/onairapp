@@ -6,6 +6,20 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo (le nom de la branche de travail change à chaque session — vérifie celle en cours plutôt que de te fier à un nom figé ici), et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-08-06 — Session 18 (suite 25) : fond animé (motion manquant retrouvé) + première proposition d'ondes IA
+
+L'utilisateur n'a pas l'image de référence "ondes/fréquence" sous la main — proposition d'un premier essai en attendant. Il rappelle aussi avoir demandé un fond animé ("motion dynamic") jamais vu.
+
+### 🐛 Root cause du fond jamais animé
+`#root::before` contenait les deux dégradés (or + violet) dans un seul `background` shorthand statique — un `background` combiné comme ça ne peut pas être animé par dégradé individuellement, seule la transformation/opacité de l'élément entier peut l'être. Résultat : la demande de mouvement, faite plus tôt, n'avait tout simplement jamais pu être satisfaite avec cette structure, quel que soit ce qui a été tenté depuis. Corrigé : séparé en `::before` (tache or) + `::after` (tache violette), chacune dérivant lentement et indépendamment (`translate`+`scale`+`opacity`, 24s/29s, `prefers-reduced-motion` respecté).
+
+### 🚀 Première proposition — ondes autour de la sphère IA
+Sans l'image de référence, ajouté deux anneaux qui pulsent et s'estompent en sortant de la sphère de la nav (façon ping sonar/fréquence), décalés d'un demi-cycle. Explicitement un premier jet, à retravailler dès que l'image de référence arrive.
+
+Vérifié dans le CSS compilé avant de livrer — comme toujours, rendu réel non vérifiable dans cet environnement.
+
+---
+
 ## 2026-08-06 — Session 18 (suite 24) : icône Salle méconnaissable + "API indisponible" en boucle sur Entraînement
 
 Deux captures d'écran de la bibliothèque d'exercices : "Pourquoi l'API est indisponible ? L'icône pour la partie salle c'est quoi ça ??"
