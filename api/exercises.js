@@ -28,7 +28,17 @@ export default async function handler(req, res) {
       { headers: { 'X-Api-Key': apiKey } }
     );
     const data = await response.json();
-    return res.status(200).json(data);
+    // Was always `res.status(200)` regardless of what api-ninjas actually
+    // returned — a rate-limit/quota error from them (often shipped as a 200
+    // or 429 with an `{"error": "..."}` body) showed up in our own logs as
+    // a plain success, making "API indisponible" on the client (which does
+    // correctly check for `data.error`) look like a mystery from here.
+    // Forwarding the real status makes future failures visible in
+    // get_runtime_logs instead of hiding behind a false 200.
+    if (!response.ok || data?.error) {
+      console.error('[exercises] api-ninjas returned an error', response.status, data);
+    }
+    return res.status(response.status).json(data);
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }

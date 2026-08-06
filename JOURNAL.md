@@ -6,6 +6,18 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo (le nom de la branche de travail change à chaque session — vérifie celle en cours plutôt que de te fier à un nom figé ici), et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-08-06 — Session 18 (suite 24) : icône Salle méconnaissable + "API indisponible" en boucle sur Entraînement
+
+Deux captures d'écran de la bibliothèque d'exercices : "Pourquoi l'API est indisponible ? L'icône pour la partie salle c'est quoi ça ??"
+
+### 🐛 Icône "Salle" illisible
+C'était une checklist abstraite (barres + points) — illisible à cette taille, contrairement à la maison (Maison) et au personnage qui court (Dehors). Remplacée par une silhouette d'haltère, sans ambiguïté pour une section musculation.
+
+### 🐛 "API indisponible" — root cause trouvée via les logs Vercel
+Vérifié `get_runtime_logs` : toutes les requêtes `/api/exercises` récentes renvoient **200**, donc pas de clé API manquante. Le vrai problème : `api/exercises.js` renvoyait toujours `res.status(200)` **quel que soit le statut réel** de l'API tierce (API Ninjas) — un 429 (quota dépassé) ou une erreur embarquée dans un corps 200 remontait invisible dans nos propres logs, alors que `useExercises.js` détectait bien l'erreur côté client et affichait le message de repli. Corrigé : le vrai statut est maintenant transmis. Cause probable du quota dépassé : jusqu'à **18 requêtes séquentielles** envoyées d'un coup rien que pour "Salle" (6 groupes musculaires × 3 pages) — réduit à 12 (2 pages), et surtout rendu résilient : avant, une seule requête ratée sur 18 jetait tout ce qui avait déjà été récupéré ; maintenant chaque page est indépendante, une page ratée n'enlève que ses ~5 exercices au lieu de vider toute la catégorie.
+
+---
+
 ## 2026-08-06 — Session 18 (suite 23) : graphiques ajoutés au tableau de bord coach
 
 Retour après la doc : côté coach, "ça ne ressemble vraiment à un SaaS" — le tableau de bord n'avait que 4 tuiles chiffrées + des listes, aucun vrai graphique.

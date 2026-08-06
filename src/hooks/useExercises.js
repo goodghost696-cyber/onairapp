@@ -62,16 +62,30 @@ export const useExercises = (category) => {
         const allExercises = [];
         const headers = await authHeader();
 
+        // Was: any single failed request (offset 0..2, so up to 18
+        // sequential calls for "salle" alone) threw and discarded every
+        // exercise already fetched in this category — a free-tier
+        // rate-limit hit on request #15 wiped out the 14 that had already
+        // succeeded, showing "API indisponible" even though most of the
+        // data was there. Now each page is independent: a failure just
+        // skips that one page (and its ~5 exercises) instead of the whole
+        // category. Also cut offset 0..3 -> 0..2 (18 -> 12 requests for
+        // "salle") since that volume is a likely cause of the rate-limit
+        // hits in the first place.
         for (const param of params) {
-          for (let offset = 0; offset < 3; offset++) {
-            const query = new URLSearchParams({ ...param, offset: offset * 5 });
-            const res = await fetch(`/api/exercises?${query}`, { headers });
-            if (!res.ok) throw new Error('API unavailable');
-            const data = await res.json();
-            if (data.error) throw new Error(data.error);
-            if (Array.isArray(data)) allExercises.push(...data);
+          for (let offset = 0; offset < 2; offset++) {
+            try {
+              const query = new URLSearchParams({ ...param, offset: offset * 5 });
+              const res = await fetch(`/api/exercises?${query}`, { headers });
+              const data = await res.json();
+              if (!res.ok || data.error) continue;
+              if (Array.isArray(data)) allExercises.push(...data);
+            } catch {
+              // network hiccup on this one page — move on, don't abort the category
+            }
           }
         }
+        if (allExercises.length === 0) throw new Error('API unavailable');
 
         const seen = new Set();
         const unique = allExercises
