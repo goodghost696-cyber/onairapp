@@ -84,4 +84,14 @@
   #root.coach-shell .coach-toolbar {
     max-width: 480px;
   }
+
+  /* Nav was left at its mobile 390px width in the first responsive pass —
+     reported as looking "stuck small" once the content around it widened
+     (same report, member side). Widened to match .coach-narrow's 720px
+     rather than the full 1600px content width: a nav pill with only 4-5
+     icons stretched to 1600px would look absurdly sparse, not "responsive".
+     Structure/icons still untouched. */
+  #root.coach-shell .bottom-nav {
+    max-width: 720px;
+  }
 }

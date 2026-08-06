@@ -8,7 +8,17 @@
   max-width: 390px;
   transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   padding: 14px 14px 26px;
-  background: var(--bg);
+  /* Was var(--bg) — a solid flat rectangle, same color as the page
+     background so invisible on mobile (where this box ≈ the full viewport
+     width anyway). On a wide desktop screen, with the page background now
+     a gradient/wider shell behind it, this same fixed 390px solid block
+     became a visible flat "hole" punched through that gradient, sitting
+     right behind the nav pill — reported by a user on a wide screen,
+     2026-08-06. The pill itself already has its own opaque --surface
+     background, so this outer wrapper never needed one: transparent lets
+     the actual page scroll underneath it, which is the intended "floating
+     pill over content" look anyway. */
+  background: transparent;
 }
 
 .bottom-nav.hidden {
