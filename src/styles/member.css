@@ -21,8 +21,18 @@
     max-width: 100%;
   }
 
+  /* 560px fixed was too narrow — reported by the user on an actual wide
+     screen ("ça prend pas tout l'écran"), same underlying lesson as the
+     coach side's first attempt: a fixed cap reads as a huge empty void
+     around a small column on anything wider than it. Fluid instead, same
+     approach that fixed it for coach — scales with the viewport up to a
+     comfortable reading-width ceiling (narrower than coach's 1600px on
+     purpose: member screens are single hero-card stacks, not grids of
+     list items, so there's nothing to reflow into extra columns — this
+     just gives that single card more breathing room instead of stretching
+     it into something grid-shaped). */
   #root.member-shell .app-wrapper {
-    max-width: 560px;
+    max-width: min(90vw, 720px);
     margin-left: auto;
     margin-right: auto;
   }

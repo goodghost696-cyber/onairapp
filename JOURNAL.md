@@ -6,6 +6,21 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo, branche `claude/charming-mendel-dj1GQ`, et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-08-06 — Session 18 (suite 15) : rebrand confirmé bon visuellement + contenu membre trop étroit sur grand écran
+
+Première vraie capture d'écran du rebrand depuis l'utilisateur (Dashboard + Nutrition, desktop et mobile). **Bonne nouvelle : le style or/bleu-violet fonctionne bien** — cartes en dégradé lisibles, icônes circulaires, boutons corrects. Tous les calculs de contraste faits à l'aveugle cette session se confirment à l'œil.
+
+### 🐛 `.app-wrapper` plafonné à 560px fixe — trop étroit sur grand écran
+Même symptôme que le premier essai côté coach (une colonne étroite flottant dans un grand vide noir), cause différente cette fois : le fond lui-même remplit bien tout l'écran (le correctif `position:absolute` de la suite 13 fonctionne), c'est le **contenu** qui était plafonné trop bas. Corrigé avec la même leçon déjà payée côté coach : plafond fluide au lieu d'un plafond fixe — `max-width: min(90vw, 720px)` au lieu de `560px` fixe. Volontairement moins large que le coach (1600px) : les écrans membre sont une pile de cartes uniques, pas des grilles de type liste, donc pas besoin d'autant d'espace.
+
+Vérifié dans le CSS compilé avant de livrer.
+
+### Reste à valider
+- Le thème clair (jamais montré dans la maquette d'origine, toujours pas vérifié visuellement).
+- Le rendu du nouveau plafond fluide (720px) sur le prochain retour visuel.
+
+---
+
 ## 📍 État au 2026-08-06 (fin de session 18) — à lire en premier
 
 Tout ce qui suit dans cette entrée et les entrées d'en dessous a été fait et est **mergé sur `claude/charming-mendel-dj1GQ`** (vérifié avant de clore la session — plus de PR en attente, working tree propre).
