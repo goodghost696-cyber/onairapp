@@ -1,5 +1,8 @@
 .onboarding-screen {
+  /* 100dvh override — see global.css's body rule for why (iOS Safari
+     address-bar/100vh scroll-stuck issue). */
   min-height: 100vh;
+  min-height: 100dvh;
   background: var(--bg);
   display: flex;
   flex-direction: column;

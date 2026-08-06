@@ -12,11 +12,30 @@ html {
 body {
   overflow-x: hidden;
   width: 100%;
+  /* 100vh, then 100dvh as an override for browsers that support it (the
+     second declaration wins in browsers that understand it, ignored
+     otherwise) — 100vh on iOS Safari is measured against the LARGEST
+     possible viewport (address bar hidden), not the actual visible one,
+     so on a long page the real bottom of "100vh" content sits partly
+     behind the address bar until it collapses, which reads as the page
+     "getting stuck" a bit before the real top/bottom on scroll — reported
+     directly ("elle bloque soit en haut soit en bas"). 100dvh tracks the
+     real visible viewport as the address bar shows/hides instead. */
   min-height: 100vh;
-  /* Solid fallback matching the gradient's dominant hue — this shows in
-     the letterboxed margins on wide screens either side of #root, which
-     carries the real gradient below. */
-  background: var(--bg);
+  min-height: 100dvh;
+  /* Direction corail (2026-08-06) — was a flat var(--bg) here, with the
+     actual gradient on #root. Moved to body with a fixed attachment: a
+     radial-gradient recalculated across #root's full scrollable height
+     (which can run to several thousand px on a long exercise list) is
+     real repaint cost on scroll on a phone; pinning it to the viewport via
+     `background-attachment: fixed` computes it once, at viewport size,
+     regardless of how tall the page's content grows — cheaper AND doubles
+     as a fix for the color-banding a multi-stop gradient gets when
+     stretched over a very tall box. #root's own background is transparent
+     now so this shows through it. */
+  background: radial-gradient(140% 70% at 18% -8%, #FF8355 0%, #E8552B 45%, #C6371E 82%, #9C2A22 100%);
+  background-attachment: fixed;
+  background-repeat: no-repeat;
   display: flex;
   justify-content: center;
   color: var(--text-primary);
@@ -39,16 +58,12 @@ body {
      over from there for actual desktop widths. */
   max-width: 480px;
   min-height: 100vh;
+  min-height: 100dvh;
   position: relative;
   overflow-x: hidden;
-  /* Direction corail (2026-08-06) — was a flat var(--bg). The coral
-     identity's base IS this gradient, not a solid fill with a glow
-     layered on top like the old dark theme; --bg still exists as the
-     token other rules read, but the actual visible surface is set here
-     directly since a multi-stop gradient doesn't need to be a custom
-     property to be reused (nothing else in the app needs this exact
-     value — #root is the one true "page background" element). */
-  background: radial-gradient(140% 70% at 18% -8%, #FF8355 0%, #E8552B 45%, #C6371E 82%, #9C2A22 100%);
+  /* The real gradient now lives on body (see above, fixed-attachment) —
+     transparent lets it show through unchanged. */
+  background: transparent;
 }
 
 /* Was `position: fixed` — fixed positioning is relative to the VIEWPORT,
