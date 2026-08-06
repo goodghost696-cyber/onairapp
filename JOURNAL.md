@@ -6,6 +6,19 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo (le nom de la branche de travail change à chaque session — vérifie celle en cours plutôt que de te fier à un nom figé ici), et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-08-06 — Session 18 (suite 35) : 2-3 choix de recette au lieu d'une seule proposition
+
+Suite directe de la suite 34 : "Pourquoi ne pas proposer 2/3 plats différents à l'utilisateur ? [...] le but c'est pas d'avoir des infos approximative." Bonne remarque — donner le choix règle la perception "hasardeux" à la racine (c'est l'utilisateur qui choisit, pas l'IA qui décide seule) sans qu'il faille sacrifier la précision.
+
+**Ce qui a été fait :**
+- `generateRecipe()` (auto) et `generateRecipeFromPhoto()` demandent maintenant 3 options (jusqu'à 3 pour la photo — si les ingrédients visibles ne permettent raisonnablement qu'une recette, l'IA n'en renvoie qu'une plutôt que d'en inventer une deuxième). Nouveau state `recipeOptions` (array), `recipe` reste la recette *choisie* (vue détail).
+- Chaque option garde son propre `why` (déjà ajouté en suite 34), affiché dans la carte de sélection.
+- Nouvelle UI : liste de 3 cartes compactes (nom, why, kcal/P/G/L) avant la vue détail complète ; bouton "← Revoir les autres options" dans le détail pour revenir en arrière sans nouvel appel API ; bouton "Voir d'autres idées" pour régénérer un nouveau lot de 3.
+- `recipeRegenerateRef` (useRef) capture la bonne fonction à rappeler (auto vs photo, avec le bon fichier photo en closure) — évite que "voir d'autres idées" déclenche le mauvais chemin de génération.
+- **Chemin lien volontairement inchangé** (une seule recette) : la vidéo/légende contient UNE recette réelle, en proposer 3 reviendrait à en inventer 2 non présentes dans la source — contraire à la demande explicite de ne pas avoir d'infos approximatives. Le bouton "Une autre idée" y est remplacé par "Changer de repas" (regénérer sur le même transcript n'aurait pas beaucoup de valeur).
+
+**Vérifié dans le build compilé** : `grep "choisis une option"`, `"Voir d'autres idées"`, `"Revoir les autres options"`, `"3 recettes DIFFÉRENTES"` tous trouvés dans le JS compilé. Pas de vérification du rendu réel en navigateur — à confirmer sur le lien de prod.
+
 ## 2026-08-06 — Session 18 (suite 34) : logo coupé (vrai bug), splash trop rapide, recettes "hasardeuses"
 
 Retour utilisateur avec capture d'écran de l'icône iPhone : le petit carré doré (le "point" de la flèche) était visiblement rogné sur son coin. Root cause confirmée : `viewBox="0 0 24 24"` mais le `<rect>` du mark va jusqu'à x=24.3 — 0.3 unité hors du cadre, invisible en dev à l'œil nu sur un rendu 40-70px mais flagrant sur l'icône iPhone en grand. Corrigé partout où le mark apparaît (`public/logo-volta.svg`, `Logo.jsx`, `SplashIntro.jsx`) en élargissant le viewBox à `-1 -1 26 26` (marge symétrique de 1 unité, aucune coordonnée déplacée) — puis régénéré `icon-192.png`/`icon-512.png` avec le mockup HTML corrigé (les PNG utilisaient le même SVG rogné).

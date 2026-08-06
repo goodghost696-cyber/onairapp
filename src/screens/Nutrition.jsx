@@ -35,6 +35,11 @@ const RECIPE_STYLE_HINTS = [
   'sans féculent, très riche en légumes',
 ]
 
+function pickStyleHints(n) {
+  const shuffled = [...RECIPE_STYLE_HINTS].sort(() => Math.random() - 0.5)
+  return shuffled.slice(0, n)
+}
+
 // Manual food-search entries encode their grams in the name ("Skyr (100g)")
 // — extracted so "Modifier" can rescale calories/macros proportionally.
 // Meals without it (scan results, AI recipes) aren't gram-based, so editing
@@ -83,7 +88,12 @@ export default function Nutrition() {
   const [recipeStep, setRecipeStep] = useState(1)
   const [recipeMealType, setRecipeMealType] = useState('')
   const [recipeLoading, setRecipeLoading] = useState(false)
+  // `recipe` = la recette choisie (vue détail). `recipeOptions` = les 2-3
+  // propositions parmi lesquelles choisir (auto/photo uniquement — le lien
+  // reste une recette unique, celle réellement trouvée dans la vidéo, pas
+  // question d'en inventer des alternatives pour "faire du choix").
   const [recipe, setRecipe] = useState(null)
+  const [recipeOptions, setRecipeOptions] = useState([])
   const [recipeError, setRecipeError] = useState('')
   const [recipeLinkOpen, setRecipeLinkOpen] = useState(false)
   const [recipeLinkInput, setRecipeLinkInput] = useState('')
@@ -91,6 +101,11 @@ export default function Nutrition() {
   const [recipeLoadingMsgIndex, setRecipeLoadingMsgIndex] = useState(0)
   const foodSearchInputRef = useRef(null)
   const recipePhotoInputRef = useRef(null)
+  // Captures whichever generator produced the current recipeOptions (auto
+  // or photo, closed over its own args — e.g. the same File for photo) so
+  // "voir d'autres idées" can re-run the right one without the UI needing
+  // to know which source is active.
+  const recipeRegenerateRef = useRef(null)
 
   useEffect(() => { window.scrollTo(0, 0) }, [])
 
@@ -209,10 +224,12 @@ export default function Nutrition() {
     setRecipeStep(1)
     setRecipeMealType('')
     setRecipe(null)
+    setRecipeOptions([])
     setRecipeError('')
     setRecipeSourceLabel('')
     setRecipeLinkOpen(false)
     setRecipeLinkInput('')
+    recipeRegenerateRef.current = null
   }
 
   // Was a single 300-1000 kcal range applied identically no matter which
@@ -252,39 +269,53 @@ export default function Nutrition() {
     setRecipeStep(2)
     setRecipeLinkOpen(false)
     setRecipeLinkInput('')
+    setRecipe(null)
+    setRecipeOptions([])
   }
 
   async function generateRecipe() {
+    recipeRegenerateRef.current = () => generateRecipe()
     const type = recipeMealType
     setRecipeStep(3)
     setRecipeLoading(true)
     setRecipeError('')
     setRecipe(null)
+    setRecipeOptions([])
     setRecipeSourceLabel('')
 
     const { remainingKcal, remainingProtein, remainingCarbs, remainingFat } = getMealBudget(type)
-    const styleHint = RECIPE_STYLE_HINTS[Math.floor(Math.random() * RECIPE_STYLE_HINTS.length)]
+    const styleHints = pickStyleHints(3)
 
-    const prompt = `Tu es un nutritionniste expert. Propose UNE recette adaptée à ces besoins nutritionnels restants pour aujourd'hui :
-- Repas concerné : ${type} — la recette doit être typique et adaptée à ce moment du repas (pas un plat de dîner proposé pour un petit-déjeuner, par exemple).
+    // Asking for one recipe made the model converge on the same "safe"
+    // answer every time (protéiné + léger → toujours œufs/épinards) —
+    // nutritionally fine but reads as arbitrary since there's no real
+    // choice involved. Asking for 3 genuinely different options at once
+    // and letting the member pick fixes both: real variety, and the
+    // person decides instead of the AI deciding alone for them.
+    const prompt = `Tu es un nutritionniste expert. Propose 3 recettes DIFFÉRENTES adaptées à ces besoins nutritionnels restants pour aujourd'hui, pour que la personne choisisse celle qui lui plaît :
+- Repas concerné : ${type} — chaque recette doit être typique et adaptée à ce moment du repas (pas un plat de dîner proposé pour un petit-déjeuner, par exemple).
 - Calories restantes : ${remainingKcal} kcal
 - Protéines restantes : ${remainingProtein}g
 - Glucides restants : ${remainingCarbs}g
 - Lipides restants : ${remainingFat}g
 - Objectif de la personne : ${user?.goal || 'forme générale'}
-- Style pour cette proposition : ${styleHint}
+- Styles suggérés, un par option (garde une vraie cohérence culinaire) : ${styleHints.join(' / ')}
 
-La recette doit se rapprocher au mieux de ces valeurs sans les dépasser significativement. Donne une recette réaliste, simple à préparer, avec des ingrédients courants. Varie vraiment les propositions d'une génération à l'autre — évite de retomber systématiquement sur les mêmes plats "sûrs" (ex. œufs brouillés + épinards à chaque fois), le style demandé ci-dessus doit se sentir dans le résultat.
+Chaque recette doit se rapprocher au mieux de ces valeurs sans les dépasser significativement, et rester réaliste avec des ingrédients courants et des quantités précises — pas d'approximation sur les valeurs nutritionnelles. Les 3 recettes doivent être vraiment différentes entre elles (pas 3 variations du même plat).
 Reply ONLY in valid JSON, no text before or after:
 {
-  "recipe_name": "...",
-  "ingredients": ["...", "..."],
-  "instructions": "...",
-  "kcal": 0,
-  "proteins": 0,
-  "carbs": 0,
-  "fats": 0,
-  "why": "Une phrase courte expliquant en quoi cette recette précise colle aux besoins ci-dessus (ex: pourquoi ces macros, pourquoi ce style à ce moment de la journée)."
+  "options": [
+    {
+      "recipe_name": "...",
+      "ingredients": ["...", "..."],
+      "instructions": "...",
+      "kcal": 0,
+      "proteins": 0,
+      "carbs": 0,
+      "fats": 0,
+      "why": "Une phrase courte expliquant en quoi cette recette précise colle aux besoins ci-dessus (ex: pourquoi ces macros, pourquoi ce style à ce moment de la journée)."
+    }
+  ]
 }
 Réponds en français.`
 
@@ -294,7 +325,7 @@ Réponds en français.`
         headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
         body: JSON.stringify({
           model: 'claude-haiku-4-5-20251001',
-          max_tokens: 1200,
+          max_tokens: 2200,
           messages: [{ role: 'user', content: prompt }],
         }),
       })
@@ -305,12 +336,16 @@ Réponds en français.`
       const data = await res.json()
       const raw = data.content?.[0]?.text || ''
       const clean = raw.replace(/```json|```/g, '').trim()
+      let parsed
       try {
-        setRecipe(JSON.parse(clean))
+        parsed = JSON.parse(clean)
       } catch (parseErr) {
         console.error('[Nutrition] generateRecipe: failed to parse recipe JSON', parseErr, raw)
         throw new Error('Réponse incomplète, réessaie')
       }
+      const opts = Array.isArray(parsed?.options) ? parsed.options : []
+      if (!opts.length) throw new Error('Aucune recette valide générée, réessaie')
+      setRecipeOptions(opts)
     } catch (err) {
       setRecipeError(`Erreur : ${err.message}`)
     }
@@ -323,12 +358,14 @@ Réponds en français.`
   // need a grocery run first.
   async function generateRecipeFromPhoto(file) {
     if (!file) return
+    recipeRegenerateRef.current = () => generateRecipeFromPhoto(file)
     setRecipeSourceLabel('à partir de ta photo')
     const type = recipeMealType
     setRecipeStep(3)
     setRecipeLoading(true)
     setRecipeError('')
     setRecipe(null)
+    setRecipeOptions([])
 
     const { remainingKcal, remainingProtein, remainingCarbs, remainingFat } = getMealBudget(type)
 
@@ -337,8 +374,8 @@ Réponds en français.`
       const base64 = resized.split(',')[1]
 
       const prompt = `Tu es un nutritionniste expert. Cette photo montre des ingrédients disponibles (frigo, placard, plan de travail).
-Identifie les ingrédients visibles et propose UNE recette réalisable UNIQUEMENT avec ce que tu vois sur la photo (+ des basiques courants comme sel, poivre, huile si besoin) — n'ajoute pas d'ingrédient qui nécessiterait d'aller faire des courses.
-La recette doit viser ces besoins nutritionnels restants pour aujourd'hui, sans les dépasser significativement :
+Identifie les ingrédients visibles et propose jusqu'à 3 recettes DIFFÉRENTES réalisables UNIQUEMENT avec ce que tu vois sur la photo (+ des basiques courants comme sel, poivre, huile si besoin) — n'ajoute pas d'ingrédient qui nécessiterait d'aller faire des courses. Si les ingrédients visibles ne permettent raisonnablement qu'une seule recette cohérente, ne propose qu'une seule option plutôt que d'en inventer une deuxième artificielle — pas d'approximation.
+Chaque recette doit viser ces besoins nutritionnels restants pour aujourd'hui, sans les dépasser significativement :
 - Repas concerné : ${type}
 - Calories restantes : ${remainingKcal} kcal
 - Protéines restantes : ${remainingProtein}g
@@ -349,14 +386,18 @@ La recette doit viser ces besoins nutritionnels restants pour aujourd'hui, sans 
 Si la photo ne montre pas assez d'ingrédients exploitables pour un repas cohérent, utilise le champ "error" pour l'expliquer plutôt que d'inventer une recette avec des ingrédients absents de la photo.
 Reply ONLY in valid JSON, no text before or after:
 {
-  "recipe_name": "...",
-  "ingredients": ["...", "..."],
-  "instructions": "...",
-  "kcal": 0,
-  "proteins": 0,
-  "carbs": 0,
-  "fats": 0,
-  "why": "Une phrase courte expliquant pourquoi cette recette précise, avec ces ingrédients de la photo, colle aux besoins ci-dessus.",
+  "options": [
+    {
+      "recipe_name": "...",
+      "ingredients": ["...", "..."],
+      "instructions": "...",
+      "kcal": 0,
+      "proteins": 0,
+      "carbs": 0,
+      "fats": 0,
+      "why": "Une phrase courte expliquant pourquoi cette recette précise, avec ces ingrédients de la photo, colle aux besoins ci-dessus."
+    }
+  ],
   "error": null
 }
 Réponds en français.`
@@ -366,7 +407,7 @@ Réponds en français.`
         headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
         body: JSON.stringify({
           model: 'claude-haiku-4-5-20251001',
-          max_tokens: 1200,
+          max_tokens: 2200,
           messages: [{
             role: 'user',
             content: [
@@ -391,7 +432,9 @@ Réponds en français.`
         throw new Error('Réponse incomplète, réessaie')
       }
       if (parsed.error) throw new Error(parsed.error)
-      setRecipe(parsed)
+      const opts = Array.isArray(parsed.options) ? parsed.options : []
+      if (!opts.length) throw new Error('Aucune recette exploitable trouvée sur cette photo')
+      setRecipeOptions(opts)
     } catch (err) {
       setRecipeError(`Erreur : ${err.message}`)
     }
@@ -405,15 +448,21 @@ Réponds en français.`
   // for food content, not guaranteed — a video-only recipe with nothing in
   // the caption will surface as the honest "impossible de lire" error from
   // that endpoint rather than a fabricated recipe.
+  // Deliberately NOT multi-option like the other two paths: there's exactly
+  // one real recipe in that specific video/caption. Offering "3 options"
+  // here would mean fabricating 2 recipes that were never actually in the
+  // source — the opposite of what was asked (no approximate info).
   async function generateRecipeFromLink() {
     const url = recipeLinkInput.trim()
     if (!url) return
+    recipeRegenerateRef.current = null
     setRecipeSourceLabel('à partir du lien')
     const type = recipeMealType
     setRecipeStep(3)
     setRecipeLoading(true)
     setRecipeError('')
     setRecipe(null)
+    setRecipeOptions([])
 
     const { remainingKcal, remainingProtein, remainingCarbs, remainingFat } = getMealBudget(type)
 
@@ -976,6 +1025,38 @@ Réponds en français.`
               </div>
             )}
 
+            {/* 2-3 options to pick from (auto/photo) instead of the AI
+                deciding alone — picking one below moves it into `recipe`
+                and this list gets replaced by the full detail view. */}
+            {!recipeLoading && !recipe && recipeOptions.length > 0 && (
+              <>
+                <p className="text-xs text-muted" style={{ marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  {recipeMealType}{recipeSourceLabel ? ` · ${recipeSourceLabel}` : ''} — choisis une option
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 12 }}>
+                  {recipeOptions.map((opt, i) => (
+                    <button key={i} onClick={() => setRecipe(opt)} className="card card-animated" style={{
+                      textAlign: 'left', cursor: 'pointer', padding: '16px', '--delay': `${i * 60}ms`,
+                    }}>
+                      <div className="text-base bold text-primary" style={{ marginBottom: 4 }}>{opt.recipe_name}</div>
+                      {opt.why && (
+                        <div className="text-xs text-secondary" style={{ marginBottom: 8, lineHeight: 1.4, fontStyle: 'italic' }}>{opt.why}</div>
+                      )}
+                      <div style={{ display: 'flex', gap: 14 }}>
+                        <span className="text-xs text-muted">{opt.kcal} kcal</span>
+                        <span className="text-xs text-muted">P {opt.proteins}g</span>
+                        <span className="text-xs text-muted">G {opt.carbs}g</span>
+                        <span className="text-xs text-muted">L {opt.fats}g</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                {recipeRegenerateRef.current && (
+                  <button className="scan-retry-btn" onClick={() => recipeRegenerateRef.current?.()}>Voir d'autres idées</button>
+                )}
+              </>
+            )}
+
             {recipe && !recipeLoading && (
               <>
                 <p className="text-xs text-muted" style={{ marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
@@ -1011,7 +1092,17 @@ Réponds en français.`
                   <p className="text-sm text-primary" style={{ margin: 0, lineHeight: 1.5 }}>{recipe.instructions}</p>
                 </div>
                 <button className="btn-accent" onClick={addRecipeAsMeal} style={{ marginBottom: 8 }}>Ajouter ce repas</button>
-                <button className="scan-retry-btn" onClick={() => generateRecipe()}>Une autre idée</button>
+                {recipeOptions.length > 1 && (
+                  <button className="scan-retry-btn" style={{ marginBottom: 8 }} onClick={() => setRecipe(null)}>← Revoir les autres options</button>
+                )}
+                {recipeRegenerateRef.current ? (
+                  <button className="scan-retry-btn" onClick={() => recipeRegenerateRef.current?.()}>Une autre idée</button>
+                ) : (
+                  // Lien : une seule vraie recette existe dans cette vidéo,
+                  // pas de "regénère" qui aurait du sens — on propose plutôt
+                  // de repartir sur un autre repas/source.
+                  <button className="scan-retry-btn" onClick={() => setRecipeStep(1)}>Changer de repas</button>
+                )}
               </>
             )}
           </>
