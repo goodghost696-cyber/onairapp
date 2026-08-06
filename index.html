@@ -3,7 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/logo-volta.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <!-- viewport-fit=cover: without it, env(safe-area-inset-*) always resolves
+         to 0 — meaning no code anywhere in this app could ever actually
+         compensate for the iOS status bar / home-indicator area, since the
+         values it would read were never non-zero to begin with. Needed
+         together with apple-mobile-web-app-status-bar-style=black-translucent
+         below, which makes content draw full-bleed under the status bar in
+         standalone (added-to-homescreen) mode specifically. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>VOLTA Fitness</title>
     <link rel="manifest" href="/manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">

@@ -71,6 +71,19 @@ body {
   -webkit-overflow-scrolling: touch;
   position: relative;
   overflow-x: hidden;
+  /* No safe-area handling existed anywhere in the app before this (checked —
+     zero usages of env(safe-area-inset-*) in the whole codebase), despite
+     apple-mobile-web-app-status-bar-style=black-translucent in index.html,
+     which draws content full-bleed under the iOS status bar in standalone
+     (home-screen) mode. Padding here (not on body, which never scrolls and
+     whose gradient should still fill edge-to-edge behind the status bar)
+     insets only the actual content/scroll area, so the true top of a
+     screen's content lands just below the status bar/notch instead of
+     partly behind it — which reads exactly like "can't scroll all the way
+     up", the top half of the reported "bloque en haut ou en bas". Requires
+     viewport-fit=cover in index.html's meta viewport, or env() always
+     resolves to 0. */
+  padding-top: env(safe-area-inset-top);
   /* The real gradient now lives on body (see above) — transparent lets it
      show through unchanged. */
   background: transparent;

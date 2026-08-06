@@ -7,7 +7,7 @@
   width: 100%;
   max-width: 480px;
   transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-  padding: 14px 14px 26px;
+  padding: 14px 14px calc(26px + env(safe-area-inset-bottom));
   /* Was var(--bg) — a solid flat rectangle, same color as the page
      background so invisible on mobile (where this box ≈ the full viewport
      width anyway). On a wide desktop screen, with the page background now
@@ -19,6 +19,18 @@
      the actual page scroll underneath it, which is the intended "floating
      pill over content" look anyway. */
   background: transparent;
+  /* This box is ~90-100px tall and sits, fixed, over the exact area a
+     thumb naturally starts a scroll swipe from on a phone (the bottom of
+     the screen) — on every scrollable screen, not just ones where the
+     pill itself is touched. Only the pill should ever intercept touches;
+     the transparent padding around it must let touches (and the scroll
+     gesture starting there) fall straight through to whatever's actually
+     underneath — part of chasing "le scroll bloque en bas". */
+  pointer-events: none;
+}
+
+.bottom-nav .nav-pill {
+  pointer-events: auto;
 }
 
 .bottom-nav.hidden {
