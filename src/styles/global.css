@@ -24,6 +24,15 @@ html {
   height: 100%;
   overflow: hidden;
   width: 100%;
+  /* Safety net for the white strip still visible at the very bottom of
+     some screens ("il y a toujours la partie blanche en bas de page",
+     reported after the theme-color fix — that fix covers Safari's own
+     gap-filler color, but never gave `html` itself a background, so any
+     residual gap between body's painted area and the true device edge
+     (dvh recalculating a beat late — the in-call status bar visible in
+     the report's screenshot resizes the viewport mid-session — or simple
+     sub-pixel rounding) fell through to the browser's default white. */
+  background: #9C2A22;
 }
 
 body {
