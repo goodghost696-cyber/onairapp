@@ -221,7 +221,7 @@ export default function Settings() {
         transition: 'top 300ms cubic-bezier(0.34,1.56,0.64,1)',
       }}>Données synchronisées ✓</div>
 
-      <div className="screen" style={{ paddingBottom: 110 }}>
+      <div className="screen">
         <div className="screen-header" style={{ paddingTop: 56, paddingBottom: 20 }}>
           <button
             onClick={() => navigate('/dashboard')}

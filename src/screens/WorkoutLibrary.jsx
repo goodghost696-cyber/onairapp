@@ -136,7 +136,7 @@ export default function WorkoutLibrary({ section }) {
         Ajouté à ta séance
       </div>
 
-      <div className="screen" style={{ paddingBottom: 110 }}>
+      <div className="screen">
         <div className="screen-header" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '20px 0 8px' }}>
           <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }} onClick={() => navigate('/workout')}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" strokeWidth="1.5" strokeLinecap="round">

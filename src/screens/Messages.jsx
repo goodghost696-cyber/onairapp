@@ -38,7 +38,7 @@ export default function Messages() {
 
   return (
     <div className="app-wrapper">
-      <div className="screen" style={{ paddingBottom: 110 }}>
+      <div className="screen">
         <div className="screen-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 0 12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <button

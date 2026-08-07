@@ -6,6 +6,18 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo (le nom de la branche de travail change à chaque session — vérifie celle en cours plutôt que de te fier à un nom figé ici), et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-08-07 — Session 18 (suite 50) : dernière carte coupée en bas sur TOUTES les pages — même classe de régression que la Landing, corrigée partout d'un coup
+
+Capture du Dashboard : le bouton CTA sombre ("Voir mon entraînement du jour", `#1B1710`, coins arrondis) apparaît partiellement coupé tout en bas, sous la nav — "Tu vois le bas de page là il a certes la même couleur que le fond mais pourquoi c'est encore coupé ?" puis, demande explicite d'aller plus loin : "Toutes les pages doivent être propre pas de bordure en bas de page donc corrige sur toutes les pages tout de suite".
+
+**Root cause — exactement la même classe de bug que la Landing (suite 49), mais générique cette fois** : la suite 44 a rendu `.bottom-nav` plus haute en ajoutant `env(safe-area-inset-bottom)` à son padding (pour la zone gestuelle des iPhone sans bouton Home). Mais chaque écran réservait sa clearance pour la nav via une valeur codée en dur (`paddingBottom: 110`, copiée-collée sur **19 écrans différents**, plus `padding-bottom:100px` dans la classe `.screen` de base) — aucune de ces valeurs n'a grandi en même temps que la nav. Résultat : sur tout appareil avec une zone de sécurité en bas (donc la quasi-totalité des iPhone actuels), la dernière carte de chaque écran a un peu moins de marge qu'il n'en faut et peut se retrouver partiellement masquée/coupée derrière la nav.
+
+**Fix, en un seul mouvement plutôt que 19 correctifs séparés qui auraient re-dérivé plus tard** :
+- `.screen` (règle de base, `global.css`) : `padding-bottom: 100px` → `calc(100px + env(safe-area-inset-bottom))`.
+- Les 19 écrans qui redéfinissaient `paddingBottom: 110` (ou le raccourci `padding: '0 24px 110px'`) en style inline React — ce qui aurait empêché la classe de base de s'appliquer, l'inline gagnant toujours sur une classe CSS — ont eu cette redéfinition **supprimée entièrement**, pas juste corrigée : elle était de toute façon redondante avec la classe `.screen`, une valeur légèrement différente (110 vs 100) copiée sans y repenser. Un seul point de vérité maintenant au lieu de 20 copies dont une seule aurait été mise à jour.
+
+**Vérifié dans le build compilé** : `.screen{padding-bottom:calc(100px + env(safe-area-inset-bottom))}` confirmé dans le CSS compilé, `npm run build` passe, plus aucune occurrence de `paddingBottom: 110`/`110px` dans `src/screens`. Comme toujours, pas de vérification visuelle réelle — mais cette fois la logique s'applique uniformément à toute l'app par construction (une seule règle CSS partagée), pas écran par écran à la main, donc le risque d'en avoir oublié un est bien plus faible que pour les correctifs précédents.
+
 ## 2026-08-07 — Session 18 (suite 49) : Landing "toujours coupé" — régression introduite par le fix de safe-area de la suite 44
 
 "C'est toujours coupé gros" avec une capture de la Landing : le bouton secondaire "Accès coach" est visiblement coupé, seul le haut de sa pilule dépasse en bas de l'écran. Cette fois la capture montre le bug directement, pas besoin de deviner.

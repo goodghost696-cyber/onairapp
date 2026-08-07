@@ -241,7 +241,7 @@ export default function Scan() {
 
   return (
     <div className="app-wrapper">
-      <div className="screen" style={{ paddingBottom: 110 }}>
+      <div className="screen">
         {/* Header */}
         <div className="screen-header" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '20px 0 24px' }}>
           <button

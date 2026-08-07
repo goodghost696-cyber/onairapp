@@ -103,7 +103,7 @@ export default function Dashboard() {
           it), clipped by #root's overflow-x so it never causes horizontal
           scroll. */}
       <div className="dashboard-ring" aria-hidden="true" />
-      <div className="screen dashboard-screen" style={{ paddingBottom: 110, padding: '0 24px 110px' }}>
+      <div className="screen dashboard-screen">
         {/* Header */}
         <div className="screen-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingTop: 56, paddingBottom: 28 }}>
           <div>
