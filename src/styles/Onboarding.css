@@ -1,8 +1,11 @@
 .onboarding-screen {
-  /* 100dvh override — see global.css's body rule for why (iOS Safari
-     address-bar/100vh scroll-stuck issue). */
-  min-height: 100vh;
-  min-height: 100dvh;
+  /* Was min-height:100vh/100dvh — same double-counting bug as .landing
+     (landing.css), fixed alongside it: #root already reserves
+     padding-top: env(safe-area-inset-top), so its content box is already
+     shorter than a full 100dvh — claiming 100dvh again here overflowed
+     that box by the safe-area amount. 100% correctly fills whatever
+     #root's content box actually has left. */
+  min-height: 100%;
   background: var(--bg);
   display: flex;
   flex-direction: column;

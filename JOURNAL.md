@@ -6,6 +6,18 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo (le nom de la branche de travail change à chaque session — vérifie celle en cours plutôt que de te fier à un nom figé ici), et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-08-07 — Session 18 (suite 49) : Landing "toujours coupé" — régression introduite par le fix de safe-area de la suite 44
+
+"C'est toujours coupé gros" avec une capture de la Landing : le bouton secondaire "Accès coach" est visiblement coupé, seul le haut de sa pilule dépasse en bas de l'écran. Cette fois la capture montre le bug directement, pas besoin de deviner.
+
+**Root cause — une régression que j'ai moi-même introduite** : la suite 44 a ajouté `padding-top: env(safe-area-inset-top)` sur `#root` pour compenser la zone sous la barre de statut iOS. `#root` a une hauteur fixe (`height:100dvh`), donc ce padding réduit d'autant sa zone de contenu réelle. Mais `.landing` (et `.onboarding-screen`, même pattern) réclamaient CHACUN `min-height:100dvh` — la totalité du viewport une deuxième fois — alors qu'ils sont enfants directs de `#root` et n'ont donc droit qu'à ce qu'il leur reste (`100dvh` moins le padding). Résultat : dépassement systématique de la hauteur exacte du padding de sécurité, qui pousse le bas de la page (ici le 2e bouton CTA) sous le bord visible. Pire sur cette capture précise à cause de la barre d'appel active (le bandeau noir avec l'icône téléphone en haut) qui agrandit encore la zone de statut au moment du screenshot.
+
+**Fix** : `.landing`/`.onboarding-screen` passent de `min-height:100vh/100dvh` à `min-height:100%` — ils remplissent maintenant ce qu'il reste réellement dans la boîte de contenu de `#root`, au lieu de réclamer tout le viewport une deuxième fois par-dessus.
+
+**Pas traité dans ce lot** : `Login.jsx`/`ResetPassword.jsx` ont le même `minHeight:'100dvh'` en style inline et la même classe de risque théorique — mais ils sont un niveau plus profond (`.app-wrapper` sans hauteur propre s'intercale entre `#root` et eux), donc le même correctif (`100%`) ne marcherait pas tel quel, et surtout aucun symptôme concret n'a été signalé dessus. Laissé de côté plutôt que de deviner un fix pour un problème non confirmé.
+
+**Vérifié dans le build compilé** : `.landing{min-height:100%...}` et `.onboarding-screen{min-height:100%...}` confirmés dans le CSS compilé. Comme toujours, pas de vérification visuelle réelle — mais cette fois le raisonnement est basé sur une capture montrant le bug précisément, pas une supposition.
+
 ## 2026-08-06 — Session 18 (suite 48) : logo (flèche "dégueulasse"), splash sur fond noir, bande blanche en bas — 3 retours sur capture
 
 3 captures (Dashboard, Réglages, splash + Landing) avec 3 retours groupés : "L'animation au début de l'app elle est sur fond noir il faut changer ça. La flèche est toujours dégueulasse. Et si tu regarde bien il y a toujours la partie blanche en bas de page."
