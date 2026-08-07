@@ -6,7 +6,14 @@
   position: fixed;
   inset: 0;
   z-index: 9999;
-  background: #0A0A0A;
+  /* Was a flat #0A0A0A — a deliberate choice early in the coral direction
+     (a brief dark "reveal" stage before the coral Landing underneath), but
+     landing on solid black while literally everything else in the app is
+     coral read as broken, not intentional ("l'animation au début de
+     l'app elle est sur fond noir il faut changer ça", reported directly).
+     Same gradient as body/#root now — the splash is the coral identity
+     starting a beat early, not a separate dark moment. */
+  background: radial-gradient(140% 70% at 18% -8%, #FF8355 0%, #E8552B 45%, #C6371E 82%, #9C2A22 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -27,11 +34,18 @@
   display: block;
 }
 
-.splash-mark polyline {
+/* :not(.arrowhead) — the terminal is a <polyline> now too (see
+   SplashIntro.jsx), and this dash-based draw effect must stay scoped to
+   the main line only: pathLength="1" is set on the main polyline so
+   stroke-dasharray:1 means "one full normalized length", but the
+   arrowhead has no pathLength, so the same rule on it would use its real
+   SVG-unit length (~12) as the dash pattern — a barely-visible dotted
+   stub instead of a solid chevron once it faded/scaled in. */
+.splash-mark polyline:not(.arrowhead) {
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
 }
-.splash-mark rect {
+.splash-mark .arrowhead {
   opacity: 0;
   transform: scale(0.3);
   transform-origin: 22.7px 5.7px;
@@ -41,17 +55,17 @@
      Timings here are keyed to SplashIntro.jsx's setTimeout schedule:
      'drawing' class lands at t=1000ms, so the delays below are relative
      to that, not to page load. */
-  .splash-mark polyline {
+  .splash-mark polyline:not(.arrowhead) {
     transition: stroke-dashoffset 1800ms cubic-bezier(0.16, 1, 0.3, 1);
   }
-  .splash-mark rect {
+  .splash-mark .arrowhead {
     transition: opacity 220ms ease-out 1500ms, transform 380ms cubic-bezier(0.34, 1.56, 0.64, 1) 1500ms;
   }
 }
-.splash-mark.drawing polyline {
+.splash-mark.drawing polyline:not(.arrowhead) {
   stroke-dashoffset: 0;
 }
-.splash-mark.drawing rect {
+.splash-mark.drawing .arrowhead {
   opacity: 1;
   transform: scale(1);
 }

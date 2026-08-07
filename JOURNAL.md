@@ -6,6 +6,18 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo (le nom de la branche de travail change à chaque session — vérifie celle en cours plutôt que de te fier à un nom figé ici), et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-08-06 — Session 18 (suite 48) : logo (flèche "dégueulasse"), splash sur fond noir, bande blanche en bas — 3 retours sur capture
+
+3 captures (Dashboard, Réglages, splash + Landing) avec 3 retours groupés : "L'animation au début de l'app elle est sur fond noir il faut changer ça. La flèche est toujours dégueulasse. Et si tu regarde bien il y a toujours la partie blanche en bas de page."
+
+**La flèche du logo** — root cause enfin identifiée en regardant le SVG source plutôt qu'en re-changeant des couleurs à l'aveugle : la pointe de la flèche était un **carré plein flottant** (`<rect>`) collé près de la fin du trait en zigzag, pas une vraie pointe de flèche — d'où l'impression de blob raté plutôt que de flèche, dans les 3 tentatives précédentes ("coupée" puis "toujours dégueulasse" x2). Remplacé par la construction standard d'un chevron en 2 segments (`17,6 → 23,6 → 23,12`, le même principe que l'icône "trending-up" de Feather/Lucide) dont le coin tombe exactement sur la fin du trait principal — se lit comme une seule flèche continue au lieu de deux formes distinctes. Corrigé aux 3 endroits où le SVG était dupliqué : `Logo.jsx` (source unique pour nav/écrans), `SplashIntro.jsx` (sa propre copie, animée séparément), `public/logo-volta.svg` (favicon).
+
+**Splash sur fond noir** — était un choix délibéré (un temps de révélation sombre du logo avant la Landing corail en dessous, jamais confirmé avec l'utilisateur, juste mon raisonnement de l'époque) — explicitement rejeté maintenant. Recalé sur le même dégradé corail que `body`/`#root`/Landing.
+
+**Bande blanche en bas** — fix précédent (`theme-color`) couvrait la couleur de comblement de Safari dans les espaces vides, mais `html` lui-même n'avait toujours aucun fond explicite — n'importe quel écart résiduel entre la zone peinte par `body` et le vrai bord de l'écran (dvh qui se recalcule en retard, la barre d'appel active visible sur la capture qui redimensionne le viewport en cours de session, arrondi sous-pixel) tombait sur le blanc par défaut du navigateur. Ajouté un fond de secours (`#9C2A22`, le ton le plus sombre du dégradé) directement sur `html`.
+
+**Vérifié dans le build compilé** : les 2 nouvelles coordonnées de chevron (`17 6 23 6 23 12`) confirmées dans le JS compilé et dans le favicon SVG copié, plus aucune trace de l'ancien `rect` (`21.1`/`4.1`/`3.2`) recherchée spécifiquement. `.splash-overlay` et `html` confirmés avec les nouveaux fonds dans le CSS compilé. Comme toujours, pas de vérification visuelle réelle possible dans ce sandbox — la bande blanche en particulier reste un correctif de sécurité (safety net), pas une certitude d'avoir trouvé la cause exacte, puisque je n'ai pas pu reproduire le phénomène.
+
 ## 2026-08-06 — Session 18 (suite 47) : audit produit + positionnement marché, correction d'une erreur d'audit, et 1er chantier lancé (classement de la salle)
 
 Demande directe : "fait une audit complète de l'app et dis ce qui manque pour toi en explorant les apps déjà présente il faut que cette application comble le manque qu'il y a sur le marché". Publié d'abord en artefact — reproché à raison ("arrête de faire des artefacts pour rien tu gaspille des tokens"), donc repris en texte simple ensuite. Résumé de la démarche et des conclusions ici pour ne pas perdre le travail.

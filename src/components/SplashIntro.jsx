@@ -52,7 +52,12 @@ export default function SplashIntro({ onDone }) {
       <span className={`splash-mark${drawing ? ' drawing' : ''}`}>
         <svg viewBox="-1 -1 26 26" fill="none" stroke="#F0C14B" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
           <polyline points="1 18 8.5 10.5 13.5 15.5 23 6" pathLength="1" />
-          <rect x="21.1" y="4.1" width="3.2" height="3.2" fill="#F0C14B" stroke="none" />
+          {/* Same fix as Logo.jsx's Mark() — a floating filled square read
+              as a stray blob, not an arrowhead ("la flèche est toujours
+              dégueulasse", reported again after the first pass only fixed
+              the clipping, not the shape itself). Chevron polyline instead,
+              corner on the main line's endpoint. */}
+          <polyline className="arrowhead" points="17 6 23 6 23 12" />
         </svg>
       </span>
       <span className={`splash-word${wordVisible ? ' visible' : ''}`}>VOLTA</span>
