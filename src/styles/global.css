@@ -277,17 +277,14 @@ body {
 
 .screen {
   padding: 0 24px;
-  /* Was a flat 100px, sized for the nav's OLD footprint. The nav's
-     wrapper grew taller by env(safe-area-inset-bottom) (suite 44's
-     safe-area fix), but nothing reserving clearance for it grew to
-     match — the last card on a page can now sit partially behind the
-     nav, its rounded top peeking into the gap between the pill and the
-     true screen edge ("le bas de page... pourquoi c'est encore coupé ?",
-     reported with a screenshot showing exactly that). Every screen had
-     its own hardcoded copy of this same clearance value (110px inline,
-     not even the 100px here) — fixed everywhere at once via this shared
-     calc rather than 19 separate inline edits drifting further apart. */
-  padding-bottom: calc(100px + env(safe-area-inset-bottom));
+  /* The nav went from a ~90-100px floating pill to a flat, shorter
+     icon+label bar (~54-60px of real content: 8px+8px padding, 22px icon,
+     3px gap, ~13px label) — this clearance shrunk to match instead of
+     leaving a now-oversized gap of empty space above the bar on every
+     screen. Still safe-area-aware for the same reason as before (the bar
+     itself reserves env(safe-area-inset-bottom) in its own padding, see
+     nav.css, so content needs to clear that too). */
+  padding-bottom: calc(70px + env(safe-area-inset-bottom));
 }
 
 input {
