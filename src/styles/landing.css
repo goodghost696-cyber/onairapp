@@ -11,8 +11,20 @@
 .landing {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
-  min-height: 100dvh;
+  /* Was min-height:100vh/100dvh — claiming the FULL viewport height for
+     itself while sitting inside #root, which now also reserves
+     padding-top: env(safe-area-inset-top) (the iOS status-bar safe-area
+     fix). #root's own height is exactly 100dvh, so its *content* box —
+     what .landing actually has to fit in — is already 100dvh minus that
+     padding. Demanding another full 100dvh on top of that overflowed by
+     exactly the safe-area amount, pushing the second CTA button below the
+     fold ("c'est toujours coupé gros", reported directly, with a
+     screenshot showing "Accès coach" cut off at the very bottom — worse
+     on this device because the in-call status bar shown in the screenshot
+     enlarges the safe area further). 100% correctly fills whatever height
+     #root's content box actually has left, instead of re-claiming the
+     whole viewport a second time. */
+  min-height: 100%;
   padding: 0 16px;
   background: radial-gradient(140% 70% at 18% -8%, #FF8355 0%, #E8552B 45%, #C6371E 82%, #9C2A22 100%);
   color: #fff;
