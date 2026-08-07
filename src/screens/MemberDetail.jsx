@@ -119,7 +119,7 @@ export default function MemberDetail() {
 
   return (
     <div className="app-wrapper">
-      <div className="screen coach-narrow" style={{ paddingBottom: 110 }}>
+      <div className="screen coach-narrow">
         <div className="screen-header" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '20px 0 8px' }}>
           <button style={{ background: 'none', border: 'none', cursor: 'pointer' }} onClick={() => navigate('/coach')}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" strokeWidth="1.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>

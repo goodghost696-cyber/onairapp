@@ -104,7 +104,7 @@ export default function Weekly() {
 
   return (
     <div className="app-wrapper">
-      <div className="screen" style={{ paddingBottom: 110, padding: '0 24px 110px' }}>
+      <div className="screen">
         <div className="screen-header" style={{ paddingTop: 56, paddingBottom: 20 }}>
           <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.85)', marginBottom: 4 }}>📊 BILAN</p>
           <h1 style={{ fontSize: 26, fontWeight: 800, color: 'var(--text-primary)' }}>{t('weekly_recap')}</h1>

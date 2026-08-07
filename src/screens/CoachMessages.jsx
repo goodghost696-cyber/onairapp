@@ -53,7 +53,7 @@ export default function CoachMessages() {
 
   return (
     <div className="app-wrapper">
-      <div className="screen" style={{ paddingBottom: 110 }}>
+      <div className="screen">
         <div className="screen-header" style={{ padding: '20px 0 12px' }}>
           <h1 className="text-xl bold" style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Icon name="message-circle" size={20} /> Messages</h1>
         </div>

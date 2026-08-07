@@ -54,7 +54,7 @@ export default function ClientsList() {
 
   return (
     <div className="app-wrapper">
-      <div className="screen" style={{ paddingBottom: 110 }}>
+      <div className="screen">
         <div className="screen-header" style={{ padding: '20px 0 8px' }}>
           <h1 className="text-xl bold" style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Icon name="users" size={20} /> Mes Clients</h1>
           <span className="text-xs text-muted">{loading ? '...' : `${members.length} membres`}</span>
