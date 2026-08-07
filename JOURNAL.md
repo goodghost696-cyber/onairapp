@@ -6,6 +6,22 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo (le nom de la branche de travail change à chaque session — vérifie celle en cours plutôt que de te fier à un nom figé ici), et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+## 2026-08-07 — Session 18 (suite 51) : nouvelle nav bar fixe (plus de pilule flottante, plus de sphère IA) + icônes Phosphor + suite du chantier gamification
+
+Capture de référence (Messenger, style app de discussion) : "Tu vois cette nav bar ? Je veux exactement ce design mais je la veux fixe... trouve des icône dans le même style ne t'aventure pas à les faire toi même". Confirmé ensuite : les deux navs (membre ET coach), effet **glass transparent** (pas sombre — correction directe : "pas sombre mais transparente elle a un effet glass miroir transparent"), pas de badges pour l'instant, sphère IA uniformisée avec les autres onglets (plus d'élément mis en avant).
+
+**Changement de fond, pas un ajustement** : la pilule flottante qui se cachait au scroll (BottomNav.jsx avait tout un système d'écoute du scroll pour ça) est remplacée par une barre fixe pleine largeur, **jamais masquée**, avec icône + label texte sous chaque onglet — ce que la nav n'avait jamais eu jusqu'ici. Réutilisé le système `--glass`/`--glass-border` (flou + transparence) déjà présent dans `global.css` plutôt qu'introduire un nouveau fond, pour respecter la correction "pas sombre".
+
+**Icônes — changement de librairie en cours de route** : parti sur lucide-react (déjà en place dans le projet), l'utilisateur a explicitement demandé de changer ("comment on peut être têtu comme ça, change pour voir"). Installé `@phosphor-icons/react` et basculé les icônes de nav dessus (les autres usages de lucide-react ailleurs dans l'app, via `Icon.jsx`, ne sont pas touchés — changement scopé à la nav, pas une migration globale). Phosphor a un avantage concret ici : son prop `weight` (regular/fill) donne un vrai état actif/inactif "gratuit" (l'onglet actif passe en plein plutôt qu'en contour), pas juste un changement de couleur.
+
+**`.nav-btn-elevated` et toute l'animation de pulsation de la sphère IA supprimées** de `nav.css` — pas juste désactivées, retirées, puisque le nouveau design explicite ("exactement ce design") ne prévoit aucun élément mis en avant.
+
+**Clearance des pages recalculée** : la nouvelle barre est nettement plus courte que l'ancienne pilule (~54-60px de contenu réel contre ~90-100px) — `.screen`'s `padding-bottom` réduit de `100px` à `70px` (+ la marge de sécurité iOS comme avant) pour ne pas laisser un vide disproportionné en bas de chaque page maintenant que la barre a rétréci.
+
+**Gamification, suite (pas encore implémenté)** : demande explicite de compléter le classement (qui compare aux autres) avec un point de motivation **personnel**, visible même sans consulter les autres membres — suggestion vague de l'utilisateur lui-même ("format de niveau, je sais pas encore") : pas assez défini pour être implémenté tel quel dans ce lot, à creuser dans une prochaine session (probablement un système de niveau/XP dérivé des séances déjà loggées, sur le modèle du classement existant).
+
+**Vérifié dans le build compilé** : `npm run build` passe (bond de 1924 à 6465 modules transformés, normal — Phosphor exporte un fichier par icône — mais le bundle JS gzippé ne grossit que d'environ 10 Ko puisque seules les icônes réellement importées sont packagées). `.bottom-nav{...backdrop-filter:blur(24px)...}`, les labels ("Accueil", "Coach IA", "Entraînement"...) et la nouvelle clearance `.screen{padding-bottom:calc(70px + env(safe-area-inset-bottom))}` confirmés dans le CSS/JS compilés. Comme toujours, pas de vérification visuelle réelle dans ce sandbox — c'est le changement le plus visible de toute la session, donc particulièrement important à faire confirmer par l'utilisateur.
+
 ## 2026-08-07 — Session 18 (suite 50) : dernière carte coupée en bas sur TOUTES les pages — même classe de régression que la Landing, corrigée partout d'un coup
 
 Capture du Dashboard : le bouton CTA sombre ("Voir mon entraînement du jour", `#1B1710`, coins arrondis) apparaît partiellement coupé tout en bas, sous la nav — "Tu vois le bas de page là il a certes la même couleur que le fond mais pourquoi c'est encore coupé ?" puis, demande explicite d'aller plus loin : "Toutes les pages doivent être propre pas de bordure en bas de page donc corrige sur toutes les pages tout de suite".
