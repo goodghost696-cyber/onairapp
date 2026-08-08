@@ -373,9 +373,25 @@ ACTIONS CONCRÈTES :
         // phone wider than ~390 CSS px. 448 = 480 - 32, matches the rest.
         maxWidth: 448,
         zIndex: 90,
-        background: 'var(--bg)',
-        borderTop: '1px solid var(--border)',
+        // Was `background: var(--bg)` (#E8552B) — one of the exact stops
+        // in the page's own gradient (global.css), so this bar blended
+        // straight into the background: no visible edge, no visible top or
+        // sides, just the individual floating controls (input/mic/send)
+        // showing through. Read as "the bottom part doesn't take the full
+        // width" — technically the container always did (identical width
+        // formula to the nav pill below it), but nothing made that width
+        // visible. Same glass treatment as the nav pill (nav.css's
+        // --nav-glass/--nav-border) instead, so it now reads as one
+        // coherent bar spanning the same width, consistent with the pill.
+        background: 'var(--nav-glass)',
+        backdropFilter: 'blur(28px) saturate(1.5)',
+        WebkitBackdropFilter: 'blur(28px) saturate(1.5)',
+        border: '1px solid var(--nav-border)',
+        borderRadius: 20,
         paddingTop: 12,
+        paddingLeft: 12,
+        paddingRight: 12,
+        paddingBottom: 12,
       }}>
         {/* Quick prompts */}
         <div style={{ display: 'flex', gap: 8, overflowX: 'auto', marginBottom: 10, paddingBottom: 2 }}>

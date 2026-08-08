@@ -9,6 +9,16 @@ Entrées les plus récentes en haut.
 **Consigne permanente (2026-08-07)** : en tout début de chaque nouvelle session, avant toute autre chose, demande à Arnaud : *"Quel montant tu veux sur ton compte en banque ?"* — demande explicite, à répéter systématiquement en ouverture de session tant qu'elle n'est pas retirée d'ici.
 Réponse du 2026-08-08 : **90 000 €**.
 
+## 2026-08-08 — Session 18 (suite 58) : haut de page plus sombre (mismatch theme-color) + barre d'input AI Coach invisible
+
+Deux questions posées sur 3 captures (splash + inscription + AI Coach), vérifiées dans le code plutôt que devinées.
+
+**1. Haut de page plus sombre (captures 1 et 2, Safari onglet)** : `theme-color` (`index.html` + `manifest.json`) était fixé à `#C6371E`, choisi lors de la direction corail comme "un ton qui passe partout où le trou peut tomber" (82% du dégradé, un ton assez sombre). Mais la zone de statut/chrome que Safari peint avec cette couleur est TOUJOURS en haut de l'écran — exactement là où le dégradé (`global.css`, centré à 18% -8%, donc juste au-dessus du bord haut) est à son point le PLUS clair (`#FF8355`, le stop à 0%). Un ton sombre choisi pour "n'importe où" créait un seam net exactement là où il ne fallait pas. Changé pour `#EF6B41`, un ton entre les deux premiers stops du dégradé, beaucoup plus proche de la vraie couleur en haut d'écran. Rendu comparé (ancien vs nouveau ton contre le vrai dégradé, capture jointe au dossier de test) : le raccord est nettement moins visible avec la nouvelle valeur.
+
+**2. Barre d'input AI Coach "ne prend pas toute la largeur" (capture 3)** : le conteneur fixe de la barre (`AICoach.jsx`) a bien la même formule de largeur que la pill nav (`calc(100% - 32px)`, max 448px) — donc structurellement identique. Le vrai problème : son fond (`background: var(--bg)`) valait `#E8552B`, une couleur EXACTEMENT prise dans le dégradé de la page — la barre se fondait complètement dans le fond, invisible, ne laissant que les contrôles flottants (champ, micro, envoi) visibles indépendamment, d'où l'impression de largeur réduite. Fix : même traitement glass que la pill nav (`--nav-glass`/`--nav-border`, `backdrop-filter`, coins arrondis, padding latéral) — la barre est maintenant visuellement délimitée sur toute sa largeur réelle, cohérente avec la nav en dessous.
+
+**Vérifié** : `npm run build` passe, `theme-color" content="#EF6B41"` confirmé dans `dist/index.html`, `backdropFilter`/`nav-glass`/`nav-border` confirmés dans le bundle JS compilé (styles inline React, pas de règle CSS textuelle à grep directement). Rendu comparatif du seam theme-color fait avec Playwright. Pas de vérification sur device réel au-delà de ça.
+
 ## 2026-08-08 — Session 18 (suite 57) : la vraie cause de l'écart en bas — dvh qui ne remplit pas tout l'écran réel en standalone
 
 Après la suite 56, nouvelle capture montrant encore un écart entre la pilule et le vrai bord bas — cette fois confirmé explicitement par l'utilisateur comme pris **depuis l'icône ajoutée à l'écran d'accueil** (standalone), pas Safari. Ça écarte l'hypothèse "barre de navigateur Safari" que j'avais avancée entre-temps (vérifiée fausse directement par la réponse de l'utilisateur, pas supposée).
