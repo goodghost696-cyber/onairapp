@@ -1,6 +1,16 @@
 .fab-container {
   position: fixed;
-  bottom: 96px;
+  /* Was a hardcoded 96px, tuned against the pill nav's OLD position
+     (bottom: 16px + up to 34px safe-area, ~50-110px footprint). Suite 55
+     moved the pill to bottom: env(safe-area-inset-bottom) with no extra
+     margin, so in standalone mode the pill's top edge sits at ~94px — 2px
+     under the old fixed 96px, meaning the FAB and pill nearly touch/visibly
+     overlap (real screenshot, message-bubble FAB sitting on top of the
+     pill). Computed from the same terms nav.css uses instead of a
+     duplicated constant, so the two can never drift apart again: pill
+     height (~60px) + a fixed 16px gap above it + the same safe-area
+     offset the pill itself uses. */
+  bottom: calc(60px + 16px + env(safe-area-inset-bottom));
   right: max(16px, calc(50vw - 179px));
   z-index: 95;
   display: flex;

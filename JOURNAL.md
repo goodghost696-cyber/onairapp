@@ -9,6 +9,14 @@ Entrées les plus récentes en haut.
 **Consigne permanente (2026-08-07)** : en tout début de chaque nouvelle session, avant toute autre chose, demande à Arnaud : *"Quel montant tu veux sur ton compte en banque ?"* — demande explicite, à répéter systématiquement en ouverture de session tant qu'elle n'est pas retirée d'ici.
 Réponse du 2026-08-08 : **90 000 €**.
 
+## 2026-08-08 — Session 18 (suite 56) : régression trouvée par capture réelle — le FAB messages chevauchait la pill nav après la suite 55
+
+Capture (écran Dashboard, mode standalone) montrant le bouton flottant "Mon Coach" (bulle de message jaune) posé quasiment sur la pilule, chevauchant la carte SOMMEIL. Pas un problème de zone de sécurité cette fois : `fab.css` avait `bottom: 96px` en dur, réglé pour l'ancienne position de la pilule (qui montait jusqu'à ~110px du bord en standalone avant la suite 55). Une fois la pilule ramenée à ~94px de hauteur totale en standalone (suite 55), les deux se retrouvaient à 2px l'un de l'autre — quasiment collés, d'où le chevauchement visible.
+
+**Fix** : `fab.css` calcule maintenant son offset à partir des mêmes termes que `nav.css` au lieu d'une constante dupliquée — `bottom: calc(60px + 16px + env(safe-area-inset-bottom))` (hauteur pilule + 16px d'écart garanti + même zone de sécurité). Les deux ne peuvent plus se désynchroniser.
+
+**Vérifié avec Playwright + CDP** (pas une supposition) : mesure `getBoundingClientRect()` du FAB et de la pilule sur le vrai CSS compilé, aux deux valeurs de zone de sécurité réelles (0 et 34) : `gapBetweenFabAndNav: 16px` dans les deux cas, `overlap: false`. Capture de la mesure jointe au dossier de test — le bouton flotte clairement au-dessus de la pilule, séparé.
+
 ## 2026-08-08 — Session 18 (suite 55) : pill nav réduite au strict minimum (0px d'écart mesuré) — enfin vérifié avec un vrai outil de mesure au lieu de deviner
 
 6e signalement sur ce point de spacing, cette fois avec une colère justifiée : "Toujours trop haut... pourquoi tu ne descends pas la nav bar". Changement d'approche cette session : au lieu de retoucher un chiffre à l'aveugle et espérer, mesure réelle avant tout changement, avec Playwright + CDP (`Emulation.setSafeAreaInsetsOverride`) sur une page de repro utilisant le vrai CSS compilé — mesure `getBoundingClientRect()` de la pilule vs `window.innerHeight`.
