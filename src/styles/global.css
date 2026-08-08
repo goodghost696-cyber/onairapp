@@ -287,14 +287,11 @@ body {
 
 .screen {
   padding: 0 24px;
-  /* Back to a floating pill (2nd nav redesign) — it now sits detached from
-     the true bottom edge (bottom: calc(16px + safe-area) in nav.css) with
-     its own ~54px height, plus a bit of breathing room between the page's
-     last card and the pill. 16 (offset) + 54 (pill) + 20 (gap) ≈ 90.
-     safe-area is already inside the pill's own offset, not double-counted
-     here — this padding just needs to clear the pill's full floating
-     footprint from the true screen edge. */
-  padding-bottom: calc(90px + env(safe-area-inset-bottom));
+  /* Matches nav.css's pill offset formula 1:1 (bottom: env(safe-area-inset-
+     bottom), no extra margin — pushed to the true minimum on request).
+     ~60px pill height + ~16px breathing room between the last card and the
+     pill = 76, plus the same safe-area offset the pill itself uses. */
+  padding-bottom: calc(76px + env(safe-area-inset-bottom));
 }
 
 input {

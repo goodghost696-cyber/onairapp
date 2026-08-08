@@ -8,13 +8,16 @@
    Tabs/routes/icons themselves are untouched — only this container. */
 .bottom-nav {
   position: fixed;
-  /* min(env(safe-area-inset-bottom), 34px) — confirmed via a live on-screen
-     probe (suite 53/54) that env(safe-area-inset-bottom) is 0px in a Safari
-     tab and exactly 34px in standalone/home-screen mode: real and expected
-     (Apple's documented home-indicator value), not an inflated/buggy
-     number. The cap is kept as cheap insurance — it can only ever clamp an
-     already-wrong number, never break a correct one. */
-  bottom: calc(16px + min(env(safe-area-inset-bottom), 34px));
+  /* Pushed to the true minimum on explicit request ("je la veux vraiment
+     en bottom de page"): no extra margin at all, not even a small floor —
+     bottom is exactly env(safe-area-inset-bottom). In a Safari tab (SAB=0)
+     the pill sits flush against the literal screen edge. In standalone
+     (SAB=34) it sits exactly on top of the home-indicator safe area and no
+     further — that 34px is not decorative margin, it's the minimum needed
+     so the icons aren't physically under the home-indicator gesture strip
+     (tapping there risks colliding with the swipe-up-to-switch-apps
+     gesture); it cannot go lower without that tradeoff. */
+  bottom: env(safe-area-inset-bottom);
   left: 50%;
   transform: translateX(-50%);
   z-index: 100;

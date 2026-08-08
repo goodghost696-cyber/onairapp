@@ -9,6 +9,19 @@ Entrées les plus récentes en haut.
 **Consigne permanente (2026-08-07)** : en tout début de chaque nouvelle session, avant toute autre chose, demande à Arnaud : *"Quel montant tu veux sur ton compte en banque ?"* — demande explicite, à répéter systématiquement en ouverture de session tant qu'elle n'est pas retirée d'ici.
 Réponse du 2026-08-08 : **90 000 €**.
 
+## 2026-08-08 — Session 18 (suite 55) : pill nav réduite au strict minimum (0px d'écart mesuré) — enfin vérifié avec un vrai outil de mesure au lieu de deviner
+
+6e signalement sur ce point de spacing, cette fois avec une colère justifiée : "Toujours trop haut... pourquoi tu ne descends pas la nav bar". Changement d'approche cette session : au lieu de retoucher un chiffre à l'aveugle et espérer, mesure réelle avant tout changement, avec Playwright + CDP (`Emulation.setSafeAreaInsetsOverride`) sur une page de repro utilisant le vrai CSS compilé — mesure `getBoundingClientRect()` de la pilule vs `window.innerHeight`.
+
+**Ce que la mesure a montré (état avant cette suite)** : la formule `bottom: calc(16px + min(env(safe-area-inset-bottom), 34px))` faisait exactement ce qui était écrit — 16px d'écart en Safari onglet, 50px en standalone. Pas un bug de calcul CSS (le `min()` survit très bien à la minification, vérifié dans le bundle) : la marge de 16px était juste ajoutée EN PLUS de la zone de sécurité, ce qui donnait un écart perçu comme largement trop grand — surtout en PWA installée (50px).
+
+**Fix, en 2 temps sur la même suite (l'utilisateur a demandé d'aller encore plus loin en cours de route — "Réduis la au max je la veux vraiment en bottom de page")** :
+1. Retrait de la marge fixe de 16px empilée sur la zone de sécurité.
+2. Poussé au minimum absolu : `bottom: env(safe-area-inset-bottom)` — aucune marge du tout. En Safari onglet (SAB=0) la pilule touche littéralement le bord bas de l'écran. En standalone (SAB=34) elle s'arrête pile sur la zone de sécurité — pas plus bas, parce que ces 34px ne sont pas une marge décorative mais l'espace minimum pour que les icônes ne soient pas physiquement sous la zone de geste "balayer pour changer d'appli" du home indicator.
+3. `.screen` padding-bottom recalculé en cohérence : `calc(76px + env(safe-area-inset-bottom))` (hauteur pilule ~60px + ~16px de respiration, sans la marge supprimée).
+
+**Vérifié, cette fois avec un vrai outil de mesure et pas une supposition** : `npm run build` passe, `.bottom-nav{bottom:env(safe-area-inset-bottom)...}` confirmé dans le CSS compilé. Mesure Playwright (viewport 390×844, CDP `Emulation.setSafeAreaInsetsOverride`) sur le vrai CSS compilé : `gapBelowNav: 0px` avec SAB=0 (Safari onglet), `gapBelowNav: 34px` avec SAB=34 (standalone — c'est la zone de sécurité elle-même, pas un écart en trop). Capture d'écran de la mesure à 0px : la pilule touche visuellement le bord bas. C'est la position la plus basse possible sans faire empiéter les boutons sous la zone de geste du home indicator en PWA.
+
 ## 2026-08-08 — Session 18 (suite 54) : confirmation de l'hypothèse safe-area + retrait du composant de debug temporaire
 
 Retour de l'utilisateur : 2 captures du badge `SafeAreaDebug` posé en suite 53 — `SAB: 0px · safari (onglet)` et `SAB: 34px · standalone (PWA)`. Confirme exactement l'hypothèse de départ (fournie par l'utilisateur lui-même) : `env(safe-area-inset-bottom)` diffère bien entre Safari onglet et PWA installée. Précision : 34px n'est pas une valeur "gonflée"/buguée comme on le craignait au départ — c'est exactement la valeur documentée par Apple pour la zone de la barre d'accueil sur iPhone Face ID. Le plafond `min(env(...), 34px)` livré en suite 53 était donc une sécurité qui ne mordait sur rien d'anormal, mais reste sans risque à garder.
