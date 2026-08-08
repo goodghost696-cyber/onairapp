@@ -8,6 +8,21 @@ Entrées les plus récentes en haut.
 
 **Consigne permanente (2026-08-07)** : en tout début de chaque nouvelle session, avant toute autre chose, demande à Arnaud : *"Quel montant tu veux sur ton compte en banque ?"* — demande explicite, à répéter systématiquement en ouverture de session tant qu'elle n'est pas retirée d'ici.
 
+## 2026-08-08 — Session 18 (suite 52) : nav — retour à une pill flottante (2e refonte en une session), icônes seules, glass très léger
+
+Revirement direct sur la suite 51 (barre fixe pleine largeur avec labels, livrée quelques heures plus tôt) : "Remplace la nav bar actuelle... par une pill flottante". Cette fois, plan présenté et validé avant tout code (demande explicite de l'utilisateur), avec 2 options de labels proposées — tranché en une réponse : "B" (icônes seules) + "Si tu sais ajouté un effet frost léger léger" (confirmation du glass, en insistant sur la légèreté).
+
+**Changement** :
+- `.bottom-nav` redevient flottante : `position:fixed`, décollée des bords (`bottom: calc(16px + safe-area)`, marge ~16px de chaque côté), `border-radius:999px` (pilule complète), `overflow:hidden` pour que le flou reste propre dans les coins arrondis.
+- `--nav-glass` (token existant dans `global.css` mais jamais réellement utilisé jusqu'ici — resté à 0.92, quasi-opaque, hérité d'un tout premier design de pilule) passé à 0.28 (0.4 en thème clair) — "on doit voir le contenu défiler derrière".
+- Labels supprimés (option B) — gardés uniquement en `aria-label` pour l'accessibilité, plus affichés visuellement. Pilule ~54px de haut au lieu des ~60px avec labels.
+- Glow corail **uniquement sur l'icône active** : `drop-shadow` à deux couches (`#FF6F59`, un point de départ explicitement annoncé comme à ajuster une fois comparé à une vraie image de référence — aucune n'est arrivée dans le chat à ce stade malgré l'annonce de l'utilisateur d'en coller). Icônes inactives inchangées.
+- `.screen` padding-bottom : `70px` → `90px` (+ safe-area) pour clearer le nouveau flottement (offset + hauteur de la pilule + un peu de respiration), recalculé une 3e fois dans la session au gré des changements de forme de la nav.
+
+**Bug "bas de page" persistant, diagnostic sans changement de code** : capture montrant une bande sombre sous la nav, en Safari classique (pas l'app ajoutée à l'écran d'accueil, à confirmer). Diagnostic le plus probable : c'est la zone que Safari réserve lui-même au-dessus de la barre d'indicateur home, peinte avec `theme-color` — de l'UI système, pas du contenu de page, donc rien à corriger côté CSS. Redemandé explicitement si le test se fait en Safari ou en app installée, toujours sans réponse ferme à ce stade — si c'est l'app installée, ce diagnostic tombe et il faudra rouvrir le sujet.
+
+**Vérifié dans le build compilé** : `npm run build` passe, `.bottom-nav{...border-radius:999px;...background:var(--nav-glass)...}`, `.nav-btn.active svg{...filter:drop-shadow(...)...}` et `.screen{padding-bottom:calc(90px + env(safe-area-inset-bottom))}` confirmés. Pas de vérification visuelle réelle — deuxième refonte de nav en quelques heures sans avoir eu confirmation de la première, donc particulièrement à valider avant d'aller plus loin dans ce sens.
+
 ## 2026-08-07 — Session 18 (suite 51) : nouvelle nav bar fixe (plus de pilule flottante, plus de sphère IA) + icônes Phosphor + suite du chantier gamification
 
 Capture de référence (Messenger, style app de discussion) : "Tu vois cette nav bar ? Je veux exactement ce design mais je la veux fixe... trouve des icône dans le même style ne t'aventure pas à les faire toi même". Confirmé ensuite : les deux navs (membre ET coach), effet **glass transparent** (pas sombre — correction directe : "pas sombre mais transparente elle a un effet glass miroir transparent"), pas de badges pour l'instant, sphère IA uniformisée avec les autres onglets (plus d'élément mis en avant).
