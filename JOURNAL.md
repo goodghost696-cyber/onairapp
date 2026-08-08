@@ -8,6 +8,16 @@ Entrées les plus récentes en haut.
 
 **Consigne permanente (2026-08-07)** : en tout début de chaque nouvelle session, avant toute autre chose, demande à Arnaud : *"Quel montant tu veux sur ton compte en banque ?"* — demande explicite, à répéter systématiquement en ouverture de session tant qu'elle n'est pas retirée d'ici.
 
+## 2026-08-08 — Session 18 (suite 54) : confirmation de l'hypothèse safe-area + retrait du composant de debug temporaire
+
+Retour de l'utilisateur : 2 captures du badge `SafeAreaDebug` posé en suite 53 — `SAB: 0px · safari (onglet)` et `SAB: 34px · standalone (PWA)`. Confirme exactement l'hypothèse de départ (fournie par l'utilisateur lui-même) : `env(safe-area-inset-bottom)` diffère bien entre Safari onglet et PWA installée. Précision : 34px n'est pas une valeur "gonflée"/buguée comme on le craignait au départ — c'est exactement la valeur documentée par Apple pour la zone de la barre d'accueil sur iPhone Face ID. Le plafond `min(env(...), 34px)` livré en suite 53 était donc une sécurité qui ne mordait sur rien d'anormal, mais reste sans risque à garder.
+
+**Nettoyage effectué** (comme prévu dès la suite 53, le composant n'était pas fait pour rester) :
+- `MemberLayout.jsx` : suppression du composant `SafeAreaDebug` et de son appel dans le rendu.
+- `nav.css` : commentaire mis à jour pour refléter la confirmation obtenue plutôt que l'hypothèse en attente.
+
+**Vérifié dans le build compilé** : `npm run build` passe, `grep -c "SafeAreaDebug\|SAB:" dist/assets/*.js` → 0 (composant bien absent du bundle final), `.bottom-nav{bottom:calc(16px + min(env(safe-area-inset-bottom),34px))...}` toujours présent dans le CSS compilé. Pas de vérification visuelle réelle au-delà de ça, mais le point précis qui restait ouvert (retirer l'outil de mesure une fois les valeurs obtenues) est fait.
+
 ## 2026-08-08 — Session 18 (suite 53) : pill nav — écart énorme sous la pilule, mais uniquement en PWA installée (5e signalement sur ce point de spacing)
 
 Rapport précis et bien construit cette fois (l'utilisateur a fait le diagnostic lui-même) : la pilule flotte avec un espace largement trop grand en dessous, reproduit uniquement en app ajoutée à l'écran d'accueil iOS, pas en Safari classique. Hypothèse fournie : `apple-mobile-web-app-status-bar-style=black-translucent` fait remonter des valeurs de `env(safe-area-inset-bottom)` incohérentes en mode standalone sur iOS, différentes de Safari. Demande explicite : vérifier avant de corriger, avec une méthode de vérification déjà précisée (indicateur visuel affichant la valeur réelle), un fix de repli déjà rédigé (`min(env(...), 34px)`), et de ne toucher à rien d'autre que ce point de positionnement.
