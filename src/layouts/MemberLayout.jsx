@@ -1,9 +1,42 @@
-import { useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useLocation, Outlet } from 'react-router-dom'
 import BottomNav from '../components/BottomNav'
 import OnboardingTour from '../components/OnboardingTour'
 import '../styles/fab.css'
 import '../styles/member.css'
+
+// TEMPORARY — added to verify (not guess) whether env(safe-area-inset-
+// bottom) actually reports an inflated value in standalone/home-screen
+// mode vs a Safari tab, per a direct report of the nav pill floating with
+// far too much gap underneath it specifically in standalone mode. env()
+// isn't directly readable via getComputedStyle — the standard trick is to
+// assign it to a real CSS property (padding-bottom here, on an invisible
+// 0-height probe) and read THAT back, since custom properties alone can
+// preserve the unresolved env() token instead of a computed px value in
+// some WebKit versions. Screenshot this in both Safari and the installed
+// app, then this whole component + its render call below get removed —
+// it's not meant to ship long-term.
+function SafeAreaDebug() {
+  const [info, setInfo] = useState('mesure...')
+  useEffect(() => {
+    const probe = document.createElement('div')
+    probe.style.cssText = 'position:fixed;bottom:0;left:0;height:0;width:0;padding-bottom:env(safe-area-inset-bottom);pointer-events:none;visibility:hidden'
+    document.body.appendChild(probe)
+    const sab = getComputedStyle(probe).paddingBottom
+    document.body.removeChild(probe)
+    const standalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches
+    setInfo(`SAB: ${sab} · ${standalone ? 'standalone (PWA)' : 'safari (onglet)'}`)
+  }, [])
+  return (
+    <div style={{
+      position: 'fixed', top: 'calc(8px + env(safe-area-inset-top))', right: 8, zIndex: 9999,
+      background: 'rgba(0,0,0,0.78)', color: '#7CFC9A', fontSize: 10, fontFamily: 'monospace',
+      padding: '4px 8px', borderRadius: 8, pointerEvents: 'none', whiteSpace: 'nowrap',
+    }}>
+      {info}
+    </div>
+  )
+}
 
 const MemberLayout = () => {
   const navigate = useNavigate()
@@ -31,6 +64,7 @@ const MemberLayout = () => {
 
   return (
     <div className="member-layout">
+      <SafeAreaDebug />
       <Outlet />
       <BottomNav />
       <OnboardingTour variant="member" />
