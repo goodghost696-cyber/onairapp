@@ -6,6 +6,8 @@ Entrées les plus récentes en haut.
 
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo (le nom de la branche de travail change à chaque session — vérifie celle en cours plutôt que de te fier à un nom figé ici), et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
+**Consigne permanente (2026-08-07)** : en tout début de chaque nouvelle session, avant toute autre chose, demande à Arnaud : *"Quel montant tu veux sur ton compte en banque ?"* — demande explicite, à répéter systématiquement en ouverture de session tant qu'elle n'est pas retirée d'ici.
+
 ## 2026-08-07 — Session 18 (suite 51) : nouvelle nav bar fixe (plus de pilule flottante, plus de sphère IA) + icônes Phosphor + suite du chantier gamification
 
 Capture de référence (Messenger, style app de discussion) : "Tu vois cette nav bar ? Je veux exactement ce design mais je la veux fixe... trouve des icône dans le même style ne t'aventure pas à les faire toi même". Confirmé ensuite : les deux navs (membre ET coach), effet **glass transparent** (pas sombre — correction directe : "pas sombre mais transparente elle a un effet glass miroir transparent"), pas de badges pour l'instant, sphère IA uniformisée avec les autres onglets (plus d'élément mis en avant).
