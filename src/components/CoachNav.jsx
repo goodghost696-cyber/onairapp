@@ -47,14 +47,14 @@ export default function CoachNav() {
           <button
             key={tab.path}
             className={`nav-btn${active ? ' active' : ''}`}
+            aria-label={tab.label}
             style={{ position: 'relative' }}
             onClick={() => { navigator.vibrate && navigator.vibrate(6); navigate(tab.path) }}
           >
             <tab.Icon size={22} weight={active ? 'fill' : 'regular'} />
             {showBadge && (
-              <span style={{ position: 'absolute', top: 2, right: '28%', width: 8, height: 8, borderRadius: '50%', background: 'var(--accent)', border: '1.5px solid var(--surface)' }} />
+              <span style={{ position: 'absolute', top: 4, right: '24%', width: 8, height: 8, borderRadius: '50%', background: 'var(--accent)', border: '1.5px solid var(--surface)' }} />
             )}
-            <span className="nav-label">{tab.label}</span>
           </button>
         )
       })}

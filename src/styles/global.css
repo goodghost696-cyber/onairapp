@@ -205,8 +205,13 @@ body {
   --glass-border: rgba(255,255,255,0.4);
   --glass-highlight: rgba(255,255,255,0.7);
   --glass-shadow: 0 8px 32px rgba(120,40,10,0.2);
-  --nav-glass: rgba(255,255,255,0.92);
-  --nav-border: rgba(0,0,0,0.06);
+  /* Was 0.92 (near-opaque, left over from an earlier flat-pill design,
+     never actually reached by the CSS that ended up shipping). Floating
+     glass pill nav asked for explicitly: "un effet frost léger léger" —
+     light frost, page content should read through it while scrolling
+     underneath, not a solid card. */
+  --nav-glass: rgba(255,255,255,0.28);
+  --nav-border: rgba(255,255,255,0.35);
   --nav-inset: rgba(0,0,0,0.03);
 }
 
@@ -232,8 +237,13 @@ body {
   --glass-border: rgba(255,255,255,0.4);
   --glass-highlight: rgba(255,255,255,0.7);
   --glass-shadow: 0 8px 32px rgba(120,40,10,0.2);
-  --nav-glass: rgba(255,255,255,0.92);
-  --nav-border: rgba(0,0,0,0.06);
+  /* Was 0.92 (near-opaque, left over from an earlier flat-pill design,
+     never actually reached by the CSS that ended up shipping). Floating
+     glass pill nav asked for explicitly: "un effet frost léger léger" —
+     light frost, page content should read through it while scrolling
+     underneath, not a solid card. */
+  --nav-glass: rgba(255,255,255,0.28);
+  --nav-border: rgba(255,255,255,0.35);
   --nav-inset: rgba(0,0,0,0.03);
 }
 
@@ -268,8 +278,8 @@ body {
   --glass: rgba(0,0,0,0.04);
   --glass-border: rgba(0,0,0,0.08);
   --glass-highlight: rgba(0,0,0,0.06);
-  --nav-glass: rgba(242,242,239,0.92);
-  --nav-border: rgba(0,0,0,0.1);
+  --nav-glass: rgba(255,255,255,0.4);
+  --nav-border: rgba(0,0,0,0.08);
   --nav-inset: rgba(255,255,255,0.8);
 }
 
@@ -277,14 +287,14 @@ body {
 
 .screen {
   padding: 0 24px;
-  /* The nav went from a ~90-100px floating pill to a flat, shorter
-     icon+label bar (~54-60px of real content: 8px+8px padding, 22px icon,
-     3px gap, ~13px label) — this clearance shrunk to match instead of
-     leaving a now-oversized gap of empty space above the bar on every
-     screen. Still safe-area-aware for the same reason as before (the bar
-     itself reserves env(safe-area-inset-bottom) in its own padding, see
-     nav.css, so content needs to clear that too). */
-  padding-bottom: calc(70px + env(safe-area-inset-bottom));
+  /* Back to a floating pill (2nd nav redesign) — it now sits detached from
+     the true bottom edge (bottom: calc(16px + safe-area) in nav.css) with
+     its own ~54px height, plus a bit of breathing room between the page's
+     last card and the pill. 16 (offset) + 54 (pill) + 20 (gap) ≈ 90.
+     safe-area is already inside the pill's own offset, not double-counted
+     here — this padding just needs to clear the pill's full floating
+     footprint from the true screen edge. */
+  padding-bottom: calc(90px + env(safe-area-inset-bottom));
 }
 
 input {

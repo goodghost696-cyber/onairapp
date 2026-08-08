@@ -2,11 +2,10 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { House, ForkKnife, Sparkle, ChartBar, Barbell } from '@phosphor-icons/react'
 import '../styles/nav.css'
 
-// Switched from lucide-react to Phosphor for this bar specifically — asked
-// for directly ("t'as pas autre que lucide react") — Phosphor's "regular"
-// weight is the closer match to the reference screenshot's icon style, and
-// its weight prop (regular -> fill on the active tab) gives a proper
-// active-state distinction for free instead of just a color change.
+// Icons-only (option B, chosen directly over icon+label) — label kept here
+// only for aria-label/accessibility, not rendered visually. Phosphor's
+// weight prop (regular -> fill on the active tab) gives a proper
+// active-state distinction on top of the coral glow (nav.css).
 const tabs = [
   { path: '/dashboard', label: 'Accueil', Icon: House },
   { path: '/nutrition', label: 'Nutrition', Icon: ForkKnife },
@@ -32,10 +31,10 @@ export default function BottomNav() {
           <button
             key={tab.path}
             className={`nav-btn${active ? ' active' : ''}`}
+            aria-label={tab.label}
             onClick={() => { navigator.vibrate && navigator.vibrate(6); navigate(tab.path) }}
           >
             <tab.Icon size={22} weight={active ? 'fill' : 'regular'} />
-            <span className="nav-label">{tab.label}</span>
           </button>
         )
       })}
