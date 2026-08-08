@@ -9,6 +9,18 @@ Entrées les plus récentes en haut.
 **Consigne permanente (2026-08-07)** : en tout début de chaque nouvelle session, avant toute autre chose, demande à Arnaud : *"Quel montant tu veux sur ton compte en banque ?"* — demande explicite, à répéter systématiquement en ouverture de session tant qu'elle n'est pas retirée d'ici.
 Réponse du 2026-08-08 : **90 000 €**.
 
+## 2026-08-08 — Session 18 (suite 57) : la vraie cause de l'écart en bas — dvh qui ne remplit pas tout l'écran réel en standalone
+
+Après la suite 56, nouvelle capture montrant encore un écart entre la pilule et le vrai bord bas — cette fois confirmé explicitement par l'utilisateur comme pris **depuis l'icône ajoutée à l'écran d'accueil** (standalone), pas Safari. Ça écarte l'hypothèse "barre de navigateur Safari" que j'avais avancée entre-temps (vérifiée fausse directement par la réponse de l'utilisateur, pas supposée).
+
+**Vérification faite avant tout changement** : CSS réellement servi en production récupéré par `curl` (pas une supposition sur un éventuel cache périmé) — `.bottom-nav{bottom:env(safe-area-inset-bottom)...}` bien le bon, à jour. Le nav lui-même est donc correct ; l'écart vient d'ailleurs.
+
+**Cause probable, cohérente avec un commentaire déjà présent dans le code depuis longtemps** (`global.css`, sur le fallback `background:#9C2A22` de `html`) : iOS WKWebView — Safari onglet et pire, standalone — a un bug documenté où `100dvh` ne se cale pas toujours sur la vraie hauteur de viewport au bon moment (juste après le lancement, ou après un recalcul de zone de sécurité). Le manque tombe sur le fond de secours d'`html` (`#9C2A22`, un rouge brique foncé) qui, en dessous de tout — la pilule y compris — se lit comme une bande sombre distincte. Ce n'est pas un bug du nav, c'est `body`/`#root` qui ne remplissent pas tout l'écran réel.
+
+**Fix** : `src/main.jsx` mesure maintenant la vraie hauteur (`window.visualViewport.height`, la même API que celle utilisée pour détecter un clavier à l'écran — fiable en temps réel sur iOS, contrairement à `dvh`) et l'écrit dans une variable CSS `--app-height`, mise à jour sur `resize`/`orientationchange`/`visualViewport resize`. `html`/`body`/`#root` utilisent maintenant `height: var(--app-height, 100dvh)` — `dvh` reste uniquement le filet de secours avant que le JS ait tourné.
+
+**Vérifié** : `npm run build` passe, `--app-height` et `visualViewport` bien présents dans le bundle compilé. Testé en isolation avec Playwright (la logique exacte du script, hors du bundle complet — celui-ci ne peut pas tourner en local faute de variables d'env Supabase, qui sont injectées par Vercel au build et n'existent pas dans ce sandbox) : `--app-height` se fixe correctement à la vraie hauteur mesurée. Limite assumée : impossible de reproduire le bug dvh de WKWebView lui-même dans Chromium (il n'existe pas dans ce moteur) — donc pas de preuve que c'était *exactement* ça, seulement que c'est la cause la plus probable et documentée pour ce symptôme précis, et que le correctif est la pratique standard reconnue pour ce cas.
+
 ## 2026-08-08 — Session 18 (suite 56) : régression trouvée par capture réelle — le FAB messages chevauchait la pill nav après la suite 55
 
 Capture (écran Dashboard, mode standalone) montrant le bouton flottant "Mon Coach" (bulle de message jaune) posé quasiment sur la pilule, chevauchant la carte SOMMEIL. Pas un problème de zone de sécurité cette fois : `fab.css` avait `bottom: 96px` en dur, réglé pour l'ancienne position de la pilule (qui montait jusqu'à ~110px du bord en standalone avant la suite 55). Une fois la pilule ramenée à ~94px de hauteur totale en standalone (suite 55), les deux se retrouvaient à 2px l'un de l'autre — quasiment collés, d'où le chevauchement visible.

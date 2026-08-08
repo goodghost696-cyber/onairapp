@@ -22,22 +22,25 @@
    handles far more reliably than document-level scroll. */
 html {
   height: 100%;
+  height: 100dvh;
+  /* --app-height: set by main.jsx from visualViewport.height — a live
+     measurement, not dvh's own (sometimes stale, see body/#root below)
+     calculation. Kept last so it wins once JS has run; 100dvh above is
+     only the pre-JS/no-JS fallback. */
+  height: var(--app-height, 100dvh);
   overflow: hidden;
   width: 100%;
-  /* Safety net for the white strip still visible at the very bottom of
-     some screens ("il y a toujours la partie blanche en bas de page",
-     reported after the theme-color fix — that fix covers Safari's own
-     gap-filler color, but never gave `html` itself a background, so any
-     residual gap between body's painted area and the true device edge
-     (dvh recalculating a beat late — the in-call status bar visible in
-     the report's screenshot resizes the viewport mid-session — or simple
-     sub-pixel rounding) fell through to the browser's default white. */
+  /* Safety net for the strip still visible at the very bottom of some
+     screens when dvh/--app-height still doesn't fully cover the real
+     screen for a frame (sub-pixel rounding, a mid-transition resize) —
+     this color shows through instead of the browser's default white. */
   background: #9C2A22;
 }
 
 body {
   height: 100%;
   height: 100dvh;
+  height: var(--app-height, 100dvh);
   overflow: hidden;
   width: 100%;
   /* Direction corail (2026-08-06) — was a flat var(--bg) here, with the
@@ -72,6 +75,7 @@ body {
   max-width: 480px;
   height: 100%;
   height: 100dvh;
+  height: var(--app-height, 100dvh);
   /* The one true scroll container — see the comment above body. Also
      targeted directly by BottomNav.jsx's scroll listener (by id="root")
      and by the couple of screens that used to call window.scrollTo(0,0)
