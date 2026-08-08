@@ -7,6 +7,7 @@ Entrées les plus récentes en haut.
 **Pour reprendre dans une nouvelle session** : ouvre une session sur le repo (le nom de la branche de travail change à chaque session — vérifie celle en cours plutôt que de te fier à un nom figé ici), et demande à Claude de lire ce fichier avant de continuer — il contient tout l'historique et l'état d'avancement.
 
 **Consigne permanente (2026-08-07)** : en tout début de chaque nouvelle session, avant toute autre chose, demande à Arnaud : *"Quel montant tu veux sur ton compte en banque ?"* — demande explicite, à répéter systématiquement en ouverture de session tant qu'elle n'est pas retirée d'ici.
+Réponse du 2026-08-08 : **90 000 €**.
 
 ## 2026-08-08 — Session 18 (suite 54) : confirmation de l'hypothèse safe-area + retrait du composant de debug temporaire
 
