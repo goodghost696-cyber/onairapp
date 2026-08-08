@@ -9,6 +9,16 @@ Entrées les plus récentes en haut.
 **Consigne permanente (2026-08-07)** : en tout début de chaque nouvelle session, avant toute autre chose, demande à Arnaud : *"Quel montant tu veux sur ton compte en banque ?"* — demande explicite, à répéter systématiquement en ouverture de session tant qu'elle n'est pas retirée d'ici.
 Réponse du 2026-08-08 : **90 000 €**.
 
+## 2026-08-08 — Session 18 (suite 59) : régression trouvée — le fix de la suite 57 cassait l'en-tête de l'AI Coach quand le clavier s'ouvre
+
+Capture montrant "9:54" (l'horloge du statut bar iOS) superposée sur "AI Coach" (le titre de l'écran), clavier ouvert. Une régression que j'ai moi-même introduite en suite 57, pas une nouvelle piste externe.
+
+**Mécanisme** : le fix de la suite 57 écoutait `window.visualViewport.addEventListener('resize', ...)` pour recalculer `--app-height` en temps réel. Sauf que c'est EXACTEMENT l'événement qui se déclenche quand le clavier virtuel s'ouvre (`visualViewport.height` rétrécit pour l'exclure — `dvh`, par spec, ne le fait jamais). Donc à l'ouverture du clavier, `#root` (qui utilise maintenant `--app-height`) rétrécissait, mais `AICoach.jsx` garde sa propre coquille indépendante (`height: 100dvh` en dur, jamais raccordée à `--app-height`) qui ne bouge pas. `#root`, devenu plus petit que son propre contenu, doit alors scroller pour révéler le champ de saisie ciblé — et ce scroll entraîne l'en-tête `position: sticky` au-dessus de sa zone de sécurité, jusque sous la barre de statut.
+
+**Fix** : retiré l'écoute de `visualViewport.resize` — `--app-height` se mesure une fois au chargement (ce qui corrige bien le vrai bug visé en suite 57 : le décalage `dvh` au lancement en standalone) et se remet à jour seulement sur `resize`/`orientationchange`, qui ne se déclenchent jamais pour le clavier sur iOS. `#root` ne rétrécit donc plus quand le clavier s'ouvre, alignement rétabli avec le chantier autonome d'AICoach.
+
+**Vérifié** : `npm run build` passe, `visualViewport.addEventListener` confirmé absent du bundle compilé (grep = 0 occurrence), seule la lecture initiale de `visualViewport.height` reste (2 occurrences du mot, la mesure au chargement).
+
 ## 2026-08-08 — Session 18 (suite 58) : haut de page plus sombre (mismatch theme-color) + barre d'input AI Coach invisible
 
 Deux questions posées sur 3 captures (splash + inscription + AI Coach), vérifiées dans le code plutôt que devinées.

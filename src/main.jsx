@@ -23,15 +23,23 @@ if ('serviceWorker' in navigator) {
 // shortfall isn't invisible — html's own background (#9C2A22, a dark
 // brick-red — global.css's existing "safety net" for exactly this gap)
 // shows through below body/#root, read as a solid dark band at the very
-// bottom, below the nav pill and everything else. That's almost certainly
-// what a real device screenshot showed (a dark bar with the page's own
-// coral still visible around it — not Safari UI, since it reproduced in
-// the installed standalone app too, which has no browser chrome at all).
+// bottom, below the nav pill and everything else.
 // Fix: stop trusting `dvh` at face value. Measure the actual viewport
-// (visualViewport.height, which iOS keeps accurate in real time — it's
-// the same API used to detect an on-screen keyboard) and write it to a
-// CSS custom property that html/body/#root now size themselves against,
-// with `dvh` kept only as the pre-JS fallback for the css var.
+// (visualViewport.height) once at launch and write it to a CSS custom
+// property that html/body/#root size themselves against, with `dvh` kept
+// only as the pre-JS fallback for the css var.
+//
+// Deliberately NOT listening to `visualViewport`'s own `resize` event —
+// that's the exact event that fires when the on-screen KEYBOARD opens
+// (visualViewport.height shrinks to exclude it; `dvh` does not, by spec).
+// Wiring it up made #root shrink under the keyboard while AICoach.jsx's
+// own chat shell (a separate, self-contained height: 100dvh box, not
+// using this variable) did not — #root, now shorter than its own child,
+// had to scroll to reveal the focused input, dragging the sticky header
+// up past the status bar (real screenshot: the clock overlapping the
+// screen title, keyboard open). `resize`/`orientationchange` still cover
+// genuine rotation/window changes; neither fires for the keyboard on iOS,
+// which is exactly the distinction we want here.
 function setRealViewportHeight() {
   const h = (window.visualViewport && window.visualViewport.height) || window.innerHeight
   document.documentElement.style.setProperty('--app-height', `${h}px`)
@@ -39,9 +47,6 @@ function setRealViewportHeight() {
 setRealViewportHeight()
 window.addEventListener('resize', setRealViewportHeight)
 window.addEventListener('orientationchange', setRealViewportHeight)
-if (window.visualViewport) {
-  window.visualViewport.addEventListener('resize', setRealViewportHeight)
-}
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
