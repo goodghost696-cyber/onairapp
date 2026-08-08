@@ -8,7 +8,20 @@
    Tabs/routes/icons themselves are untouched — only this container. */
 .bottom-nav {
   position: fixed;
-  bottom: calc(16px + env(safe-area-inset-bottom));
+  /* min(env(safe-area-inset-bottom), 34px) — reported gap far too large
+     specifically in standalone/home-screen mode (not in a Safari tab),
+     5th report of a bottom-spacing issue. 34px is Apple's own documented
+     home-indicator safe-area value on every current Face-ID iPhone; there
+     is no legitimate device where the real value exceeds that, so capping
+     here is safe regardless of whether standalone mode is actually
+     reporting an inflated value (a real, if lesser-known, WKWebView quirk
+     with apple-mobile-web-app-status-bar-style=black-translucent) or
+     something else entirely — it can only ever clamp an already-wrong
+     number, never break a correct one. See #debug-safe-area (App.jsx) for
+     the temporary on-screen readout added alongside this to actually
+     confirm the real values in both contexts before this comment (and the
+     debug element) get removed. */
+  bottom: calc(16px + min(env(safe-area-inset-bottom), 34px));
   left: 50%;
   transform: translateX(-50%);
   z-index: 100;
