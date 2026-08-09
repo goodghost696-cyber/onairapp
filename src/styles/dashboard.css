@@ -161,6 +161,16 @@
   font-weight: 400;
 }
 
+/* Was missing entirely — the bar below filled towards a target with no
+   number shown anywhere on the card, so the fill % had no visible
+   reference point. */
+.activity-card-goal {
+  font-size: 10px;
+  color: rgba(27,23,16,0.45);
+  margin: 4px 0 0;
+  font-variant-numeric: tabular-nums;
+}
+
 .activity-card-bar-wrap {
   height: 2px;
   background: var(--surface-2);
@@ -312,5 +322,41 @@
   inset: 0;
   background: rgba(0,0,0,0.5);
   z-index: 200;
+}
+
+/* Bottle picker for the water card's edit sheet — replaces a plain "type
+   a number of ml" field, reported as unnecessarily fiddly. Empty bottles
+   are dim/outlined, filled ones pick up the accent so progress reads at
+   a glance without looking at the ml line below. */
+.water-bottle-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.water-bottle-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  background: var(--surface-2);
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0.4;
+  filter: grayscale(1);
+  transition: opacity 150ms ease, filter 150ms ease, transform 150ms ease, border-color 150ms ease, background 150ms ease;
+}
+
+.water-bottle-btn.filled {
+  opacity: 1;
+  filter: none;
+  border-color: var(--accent);
+  background: rgba(240,193,75,0.16);
+  transform: scale(1.06);
 }
 

@@ -9,6 +9,28 @@ Entrées les plus récentes en haut.
 **Consigne permanente (2026-08-07)** : en tout début de chaque nouvelle session, avant toute autre chose, demande à Arnaud : *"Quel montant tu veux sur ton compte en banque ?"* — demande explicite, à répéter systématiquement en ouverture de session tant qu'elle n'est pas retirée d'ici.
 Réponse du 2026-08-08 : **90 000 €**.
 
+## 2026-08-09 — Session 18 (suite 74) : objectif invisible sur les cartes du Dashboard (pas/eau/course/sommeil) + steps ignorait le vrai objectif configurable
+
+Suite directe de la 73 : "je viens de mettre les pas que j'ai faits (17 557), mais je ne vois pas d'objectif, la jauge se remplit ok mais pourquoi".
+
+**Deux bugs distincts trouvés en vérifiant chaque carte, pas juste celle citée :**
+1. **Objectif jamais affiché nulle part** : les 4 cartes (`Dashboard.jsx`, `CARDS`) avaient chacune un `target` utilisé uniquement pour calculer le `%` de la barre — aucun texte ne montrait ce nombre à l'utilisateur, donc la barre se remplit sans qu'on sache par rapport à quoi. Ajout d'une ligne "Objectif : X{unité}" sous la valeur, sur les 4 cartes.
+2. **Carte "PAS" : `target: 10000` codé en dur**, alors qu'un vrai objectif configurable existe déjà et fonctionne (`appData.stepsGoal`, réglable dans Réglages, déjà utilisé ailleurs) — la barre se remplissait donc contre un chiffre qui n'avait aucun rapport avec l'objectif réel défini par l'utilisateur. Corrigé pour utiliser `appData.stepsGoal`.
+
+**Carte "COURSE" — limite honnête** : contrairement à pas/eau, il n'existe aucun objectif configurable en base ou dans Réglages pour le running (`target: null` avant ce fix). Pas de solution propre sans ajouter un nouveau champ objectif (comme `stepsGoal`/`waterGoal`) — non fait ici pour rester dans le scope demandé. Mis un défaut d'affichage (5km) pour que la carte ait un objectif visible comme les 3 autres, mais ce chiffre n'est pas personnalisable pour l'instant — à traiter comme un vrai réglage si demandé (même pattern que `stepsGoal`/`waterGoal`).
+
+**Vérifié** : `npm run build` passe, "Objectif : " confirmé dans le bundle JS compilé (2 occurrences : macros + activité), classe `.activity-card-goal` confirmée dans le CSS compilé.
+
+## 2026-08-09 — Session 18 (suite 73) : carte Eau du Dashboard — bouteilles cliquables au lieu d'un champ "ml" à taper
+
+Demande directe : "je lis 'Eau bue ajd (ml)'... on peut le rendre plus simple, tu mets plusieurs bouteilles (genre 5), l'utilisateur clique sur une bouteille, ça correspond à la moitié d'un litre". Écran concerné : la sheet d'édition de la carte "EAU" du Dashboard (`Dashboard.jsx`, `editingCard === 'water'`) — différent de l'écran Hydratation dédié (`Hydration.jsx`), qui a déjà des boutons +150/250/330/500ml et n'était pas visé par la remarque.
+
+**Comportement clarifié avant de coder** (ambigu entre "chaque clic ajoute +500ml en cumulé" et "les bouteilles représentent un niveau à sélectionner") : confirmé remplissage progressif — cliquer sur la 3e bouteille remplit 1-2-3 d'un coup (1500ml), recliquer sur la dernière remplie la vide (permet de corriger une erreur sans repasser par un clavier).
+
+**Fix** : nombre de bouteilles dérivé du vrai objectif (`appData.waterGoal`, 5 pour l'objectif par défaut 2500ml — au passage, la carte utilisait un `target: 2500` codé en dur, décorrélé du vrai objectif configurable dans Réglages ; corrigé pour utiliser le même `waterGoalMl` que le nouveau sélecteur de bouteilles, sinon la barre de progression de la carte et l'état rempli/vide des bouteilles auraient pu se contredire). Champ texte + bouton "ENREGISTRER" remplacés par une rangée de bouteilles (`setWaterBottles(index)`) uniquement pour `editingCard === 'water'` — les autres cartes (pas, course, sommeil) gardent le champ numérique existant, inchangé.
+
+**Vérifié** : `npm run build` passe, "Combien de bouteilles as-tu bues" et "chaque bouteille = 500ml" confirmés dans le bundle JS compilé, classes `.water-bottle-btn` confirmées dans le CSS compilé.
+
 ## 2026-08-09 — Session 18 (suite 72) : impossible de supprimer un aliment détecté (ex: "Pêche") sur les écrans de révision multi-ingrédients
 
 Capture directe de "Décrire un repas" : 5 aliments détectés, l'utilisateur veut retirer "Pêche" (ajoutée par erreur/pas mangée) mais aucun bouton de suppression n'existait — seul le grammage était modifiable.

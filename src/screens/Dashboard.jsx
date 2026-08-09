@@ -68,12 +68,49 @@ export default function Dashboard() {
   // monochrome line icons — a warm/playful palette reads better with real
   // color per card than a single neutral icon color did, per direct
   // feedback ("tu peux remmetre les emoji ça marche avec ce style").
+  // Was a hardcoded 2500 regardless of the real objectif (Settings'
+  // "Eau (ml)", appData.waterGoal) — the card's progress bar and the new
+  // bottle picker below need to agree on the same goal, otherwise a
+  // custom goal would show a full bar here but a half-empty bottle row
+  // in the sheet, or vice versa.
+  const waterGoalMl = appData.waterGoal || 2500
+  // Was hardcoded to 10000 regardless of the real objectif configurable in
+  // Réglages (appData.stepsGoal) — the bar filled against a number that
+  // had nothing to do with what the member actually set for themselves.
+  // Fixed the same way waterGoalMl was above.
+  const stepsGoalVal = appData.stepsGoal || 10000
+  // Reported directly: the bar fills but the goal it's filling towards is
+  // never shown anywhere on the card — added a visible "Objectif : X"
+  // line below the value on every card (see the JSX below), which is why
+  // kmRun (the one card with no real configurable goal anywhere in the
+  // app yet — no Settings field for it) still needs *some* number here
+  // rather than staying null: 5km, a reasonable default. Not yet
+  // configurable — same follow-up as steps/water would need if a
+  // per-member running goal is wanted later.
   const CARDS = [
-    { key: 'steps', label: 'PAS', icon: '👟', tint: '#FDEAD8', value: appData.steps, unit: 'pas', target: 10000 },
-    { key: 'kmRun', label: 'COURSE', icon: '🏃', tint: '#E3F0FF', value: appData.kmRun, unit: 'km', target: null },
-    { key: 'water', label: 'EAU', icon: '💧', tint: '#E6F6EE', value: appData.water, unit: 'ml', target: 2500 },
+    { key: 'steps', label: 'PAS', icon: '👟', tint: '#FDEAD8', value: appData.steps, unit: 'pas', target: stepsGoalVal },
+    { key: 'kmRun', label: 'COURSE', icon: '🏃', tint: '#E3F0FF', value: appData.kmRun, unit: 'km', target: 5 },
+    { key: 'water', label: 'EAU', icon: '💧', tint: '#E6F6EE', value: appData.water, unit: 'ml', target: waterGoalMl },
     { key: 'sleep', label: 'SOMMEIL', icon: '😴', tint: '#F1EAFB', value: appData.sleep?.hours || 0, unit: 'h', target: 8 },
   ]
+
+  // Bottles instead of a numeric keyboard for water — reported directly
+  // ("je lis Eau bue ajd (ml)... on peut le rendre plus simple"). One
+  // bottle = 500ml, count derived from the real goal (5 bottles for the
+  // default 2500ml). Tapping bottle N fills 1..N in one tap (1500ml on
+  // the 3rd); tapping the currently-last-filled bottle again empties it,
+  // so a mis-tap is correctable without typing a number.
+  const bottleCount = Math.max(1, Math.round(waterGoalMl / 500))
+  const filledBottles = Math.min(bottleCount, Math.round(appData.water / 500))
+
+  function setWaterBottles(index) {
+    const targetCount = index + 1
+    const newCount = targetCount === filledBottles ? filledBottles - 1 : targetCount
+    const newMl = clamp(newCount * 500, BOUNDS.water)
+    updateData('water', newMl)
+    save('water', newMl)
+    navigator.vibrate && navigator.vibrate(8)
+  }
 
   const handleSave = () => {
     const raw = parseFloat(inputVal)
@@ -231,12 +268,21 @@ export default function Dashboard() {
                 <span className="activity-card-unit"> {card.unit}</span>
               </p>
               {card.target && (
-                <div className="activity-card-bar-wrap">
-                  <div
-                    className="activity-card-bar-fill"
-                    style={{ width: `${Math.min((card.value / card.target) * 100, 100)}%` }}
-                  />
-                </div>
+                <>
+                  {/* Bar filled but towards a goal that was never shown
+                      anywhere on the card — reported directly ("je ne vois
+                      pas d'objectif, la jauge se remplit ok mais
+                      pourquoi"). */}
+                  <p className="activity-card-goal">
+                    Objectif : {card.key === 'steps' ? card.target.toLocaleString('fr-FR') : card.target}{card.unit}
+                  </p>
+                  <div className="activity-card-bar-wrap">
+                    <div
+                      className="activity-card-bar-fill"
+                      style={{ width: `${Math.min((card.value / card.target) * 100, 100)}%` }}
+                    />
+                  </div>
+                </>
               )}
             </div>
           ))}
@@ -272,21 +318,45 @@ export default function Dashboard() {
             <p className="sheet-subtitle">
               {editingCard === 'steps' && "Nombre de pas aujourd'hui"}
               {editingCard === 'kmRun' && "Km courus aujourd'hui"}
-              {editingCard === 'water' && "Eau bue aujourd'hui (ml)"}
+              {editingCard === 'water' && "Combien de bouteilles as-tu bues ?"}
               {editingCard === 'sleep' && "Heures de sommeil cette nuit"}
             </p>
-            <input
-              className="sheet-input"
-              type="text"
-              inputMode="decimal"
-              placeholder={String(CARDS.find(c => c.key === editingCard)?.value || '0')}
-              value={inputVal}
-              onChange={e => setInputVal(e.target.value)}
-              autoFocus
-              onKeyDown={e => e.key === 'Enter' && handleSave()}
-            />
-            <button className="sheet-save-btn" onClick={handleSave}>ENREGISTRER</button>
-            <button className="sheet-cancel-btn" onClick={() => setEditingCard(null)}>Annuler</button>
+            {editingCard === 'water' ? (
+              <>
+                <div className="water-bottle-row">
+                  {Array.from({ length: bottleCount }).map((_, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      className={`water-bottle-btn${i < filledBottles ? ' filled' : ''}`}
+                      onClick={() => setWaterBottles(i)}
+                      aria-label={`${(i + 1) * 500}ml`}
+                    >
+                      💧
+                    </button>
+                  ))}
+                </div>
+                <p className="sheet-subtitle" style={{ marginTop: 12, marginBottom: 20 }}>
+                  {appData.water}ml / {bottleCount * 500}ml — chaque bouteille = 500ml
+                </p>
+                <button className="sheet-cancel-btn" onClick={() => setEditingCard(null)}>Fermer</button>
+              </>
+            ) : (
+              <>
+                <input
+                  className="sheet-input"
+                  type="text"
+                  inputMode="decimal"
+                  placeholder={String(CARDS.find(c => c.key === editingCard)?.value || '0')}
+                  value={inputVal}
+                  onChange={e => setInputVal(e.target.value)}
+                  autoFocus
+                  onKeyDown={e => e.key === 'Enter' && handleSave()}
+                />
+                <button className="sheet-save-btn" onClick={handleSave}>ENREGISTRER</button>
+                <button className="sheet-cancel-btn" onClick={() => setEditingCard(null)}>Annuler</button>
+              </>
+            )}
           </div>
         </>
       )}
