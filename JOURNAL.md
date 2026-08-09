@@ -9,6 +9,16 @@ Entrées les plus récentes en haut.
 **Consigne permanente (2026-08-07)** : en tout début de chaque nouvelle session, avant toute autre chose, demande à Arnaud : *"Quel montant tu veux sur ton compte en banque ?"* — demande explicite, à répéter systématiquement en ouverture de session tant qu'elle n'est pas retirée d'ici.
 Réponse du 2026-08-08 : **90 000 €**.
 
+## 2026-08-09 — Session 18 (suite 78) : le sélecteur d'eau montrait des gouttes, pas des bouteilles ("ce ne sont pas des bouteilles igo")
+
+Signalé directement sur capture : le sélecteur "Combien de bouteilles as-tu bues ?" (suite 73) affichait des 💧 (goutte d'eau), pas des bouteilles — demande initiale explicitement "des bouteilles".
+
+**Pas d'emoji Unicode satisfaisant** : aucun emoji standard ne représente vraiment une bouteille d'eau (🧴 = flacon cosmétique/lotion, 🍾 = champagne). Construit à la place un petit pictogramme SVG dédié (`BottleIcon`, `Dashboard.jsx`) — bouchon + col + corps arrondi, en `currentColor` pour que l'état rempli/vide reste piloté par la même classe CSS `.filled` déjà en place (couleur accent vs. gris atténué), sans dupliquer la logique.
+
+**Vérifié où d'autres 💧 restent utilisés dans le code avant de conclure** (grep) : le label "💧 HYDRATATION" de l'écran Hydratation dédié et l'icône de la carte "EAU" sur le Dashboard — deux usages différents, légitimes, non concernés par la remarque (qui visait uniquement le sélecteur de la sheet).
+
+**Vérifié** : `npm run build` passe, `fillOpacity` (attribut du nouveau SVG) confirmé dans le bundle compilé ; les seules occurrences restantes de 💧 dans le code source sont bien les deux usages légitimes ci-dessus, pas le sélecteur.
+
 ## 2026-08-09 — Session 18 (suite 77) : le petit trait "glisser vers le bas" des sheets ne faisait rien
 
 Signalé directement sur capture : au-dessus de la sheet "Course", un petit trait gris (`.modal-handle`, convention standard iOS/Android pour "glisse vers le bas pour fermer") ne réagissait à aucun geste — purement décoratif, aucun écouteur de touch derrière.
