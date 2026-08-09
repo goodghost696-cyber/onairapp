@@ -46,23 +46,6 @@ function RotatingQuote() {
   )
 }
 
-// Was the 💧 droplet emoji — reported directly ("ce ne sont pas des
-// bouteilles") since a droplet doesn't read as a bottle at all. No
-// Unicode emoji actually depicts a water bottle well (🧴 is a skincare
-// squeeze bottle, 🍾 is champagne), so a small dedicated silhouette
-// instead: cap + neck + body. Uses currentColor throughout so the
-// existing .water-bottle-btn/.filled CSS (which now sets `color`) drives
-// both states without duplicating filled/empty logic here.
-function BottleIcon() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-      <rect x="9" y="1.5" width="6" height="2.5" rx="1" fill="currentColor" />
-      <rect x="10" y="4" width="4" height="3" fill="currentColor" opacity="0.55" />
-      <rect x="6" y="7" width="12" height="15.5" rx="3.5" fill="currentColor" fillOpacity="0.18" stroke="currentColor" strokeWidth="1.4" />
-    </svg>
-  )
-}
-
 export default function Dashboard() {
   const navigate = useNavigate()
   const { user } = useAuth()
@@ -394,7 +377,7 @@ export default function Dashboard() {
             <p className="sheet-subtitle">
               {editingCard === 'steps' && "Nombre de pas aujourd'hui"}
               {editingCard === 'kmRun' && "Km courus aujourd'hui"}
-              {editingCard === 'water' && "Combien de bouteilles as-tu bues ?"}
+              {editingCard === 'water' && "Combien de gouttes as-tu bues ?"}
               {editingCard === 'sleep' && "Heures de sommeil cette nuit"}
             </p>
             {editingCard === 'water' ? (
@@ -408,12 +391,12 @@ export default function Dashboard() {
                       onClick={() => setWaterBottles(i)}
                       aria-label={`${(i + 1) * 500}ml`}
                     >
-                      <BottleIcon />
+                      💧
                     </button>
                   ))}
                 </div>
                 <p className="sheet-subtitle" style={{ marginTop: 12, marginBottom: 20 }}>
-                  Chaque bouteille = 500ml
+                  Chaque goutte = 500ml
                 </p>
                 <button className="sheet-cancel-btn" onClick={() => setEditingCard(null)}>Fermer</button>
               </>
