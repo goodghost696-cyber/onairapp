@@ -9,6 +9,16 @@ Entrées les plus récentes en haut.
 **Consigne permanente (2026-08-07)** : en tout début de chaque nouvelle session, avant toute autre chose, demande à Arnaud : *"Quel montant tu veux sur ton compte en banque ?"* — demande explicite, à répéter systématiquement en ouverture de session tant qu'elle n'est pas retirée d'ici.
 Réponse du 2026-08-08 : **90 000 €**.
 
+## 2026-08-09 — Session 18 (suite 75) : bug d'arrondi flottant sur les macros ("LIPIDES 51.10000000000001G") + explication de "dont +790 activité"
+
+Capture réelle : `Nutrition.jsx` affichait `51.10000000000001G` sur la carte Lipides — bug classique d'addition flottante JS (ex: `45.8 + 5.3` ne donne pas exactement `51.1` en IEEE 754). Root-caused dans `AppContext.jsx` : `protein`/`carbs`/`fat` s'accumulent par simple addition (`prev.fat + meal.fat`) à 3 endroits — `addMeal()`, `deleteMeal()`, et surtout le `reduce()` qui recalcule les totaux du jour depuis `repas` à **chaque fetch** (donc à chaque chargement/rafraîchissement de page, pas seulement pendant la session en cours) — sans jamais arrondir le résultat.
+
+**Fix** : arrondi à 1 décimale (`Math.round(n*10)/10`, même précision déjà utilisée ailleurs — `calcNutrition`, `foodEstimate.js`) appliqué aux 3 endroits. `calories` arrondi à l'entier au passage (même risque, moins visible car déjà des entiers en pratique).
+
+**Question annexe répondue** : "dont +790 activité" (carte calories) = les kcal en plus gagnées aujourd'hui grâce à l'activité déjà loggée (≈0,045 kcal/pas + ≈1 kcal/kg/km couru, `utils/metabolism.js`), ajoutées à l'objectif de base pour calculer "Restant" — logique déjà en place depuis la suite "budget calorique lié à l'activité", affichage volontairement détaillé plutôt que caché dans un total global.
+
+**Vérifié** : `npm run build` passe.
+
 ## 2026-08-09 — Session 18 (suite 74) : objectif invisible sur les cartes du Dashboard (pas/eau/course/sommeil) + steps ignorait le vrai objectif configurable
 
 Suite directe de la 73 : "je viens de mettre les pas que j'ai faits (17 557), mais je ne vois pas d'objectif, la jauge se remplit ok mais pourquoi".
