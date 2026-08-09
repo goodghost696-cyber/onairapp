@@ -195,6 +195,17 @@ export default function Scan() {
     })
   }
 
+  // Zeroing the grams (above) kept the item visible with a strikethrough-
+  // free "0 kcal" row — not an obvious way to actually remove a
+  // mis-detected item (reported directly: "je veux enlever la pêche mais
+  // je ne peux pas"). Removes it from the list outright.
+  function removeItem(index) {
+    setResult(prev => {
+      const items = prev.data.items.filter((_, i) => i !== index)
+      return { ...prev, data: { ...prev.data, items } }
+    })
+  }
+
   async function handleAddToMeal() {
     if (!result) return
     const t2 = computeItemsTotal(result.data.items)
@@ -362,9 +373,21 @@ export default function Scan() {
                       }}
                     />
                     <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>g</span>
+                    <button
+                      type="button"
+                      onClick={() => removeItem(i)}
+                      aria-label="Supprimer cet aliment"
+                      style={{
+                        marginLeft: 'auto', background: 'none', border: 'none', color: 'var(--text-secondary)',
+                        fontSize: 18, lineHeight: 1, padding: 4, cursor: 'pointer',
+                      }}
+                    >✕</button>
                   </div>
                 </div>
               ))}
+              {result.data.items.length === 0 && (
+                <p className="text-xs text-muted" style={{ padding: '8px 0' }}>Tous les aliments ont été supprimés.</p>
+              )}
             </div>
             <div className="scan-meal-selector">
               {mealOptions.map(meal => (
@@ -377,7 +400,7 @@ export default function Scan() {
                 </button>
               ))}
             </div>
-            <button className="scan-add-btn" onClick={handleAddToMeal}>
+            <button className="scan-add-btn" onClick={handleAddToMeal} disabled={result.data.items.length === 0}>
               {t('add_to_meal')}
             </button>
             <button className="scan-retry-btn" onClick={() => { setResult(null); setError(null) }}>

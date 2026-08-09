@@ -329,6 +329,14 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant ou après, avec exactement 
     })
   }
 
+  // Same list, same problem as Scan.jsx's photo-result screen: no way to
+  // remove a wrongly-detected item, only to zero it out (still visible,
+  // still counted as "there"). Reported directly ("je veux enlever la
+  // pêche mais je ne peux pas") — fixed here and mirrored in Scan.jsx.
+  function removeDescribeItem(index) {
+    setDescribeResult(prev => ({ ...prev, items: prev.items.filter((_, i) => i !== index) }))
+  }
+
   async function addDescribedMeal() {
     if (!describeResult) return
     const total = computeItemsTotal(describeResult.items)
@@ -1237,9 +1245,21 @@ Réponds en français.`
                             }}
                           />
                           <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>g</span>
+                          <button
+                            type="button"
+                            onClick={() => removeDescribeItem(i)}
+                            aria-label="Supprimer cet aliment"
+                            style={{
+                              marginLeft: 'auto', background: 'none', border: 'none', color: 'var(--text-secondary)',
+                              fontSize: 18, lineHeight: 1, padding: 4, cursor: 'pointer',
+                            }}
+                          >✕</button>
                         </div>
                       </div>
                     ))}
+                    {describeResult.items.length === 0 && (
+                      <p className="text-xs text-muted" style={{ padding: '8px 0' }}>Tous les aliments ont été supprimés.</p>
+                    )}
                   </div>
                   <div style={{ display: 'flex', gap: 8, marginBottom: 16, overflowX: 'auto' }}>
                     {MEAL_TYPES.map(mt => (
@@ -1252,7 +1272,7 @@ Réponds en français.`
                       }}>{mt}</button>
                     ))}
                   </div>
-                  <button className="btn-accent" onClick={addDescribedMeal}>{t('add')}</button>
+                  <button className="btn-accent" onClick={addDescribedMeal} disabled={describeResult.items.length === 0}>{t('add')}</button>
                 </>
               )
             })()
