@@ -201,12 +201,24 @@ export function AppProvider({ children }) {
           return
         }
         const meals = (data || []).map(mealFromRow)
-        const totals = meals.reduce((acc, m) => ({
+        const rawTotals = meals.reduce((acc, m) => ({
           calories: acc.calories + m.calories,
           protein: acc.protein + m.protein,
           carbs: acc.carbs + m.carbs,
           fat: acc.fat + m.fat,
         }), { calories: 0, protein: 0, carbs: 0, fat: 0 })
+        // This reduce runs on every fetch (page load/refresh) — the actual
+        // source of the "51.10000000000001G" bug reported on a real
+        // screenshot, not just the addMeal/deleteMeal state updates below
+        // (those only matter until the next refresh recomputes from
+        // scratch here). Same 1-decimal rounding applied.
+        const round1 = n => Math.round(n * 10) / 10
+        const totals = {
+          calories: Math.round(rawTotals.calories),
+          protein: round1(rawTotals.protein),
+          carbs: round1(rawTotals.carbs),
+          fat: round1(rawTotals.fat),
+        }
         setAppData(prev => ({ ...prev, meals, ...totals }))
       })
 
@@ -551,13 +563,19 @@ export function AppProvider({ children }) {
       }
     }
 
+    // Raw float addition (0.1 + 0.2-style JS rounding error) — reported
+    // directly on a real screenshot ("LIPIDES 51.10000000000001G"). Round
+    // to 1 decimal on every accumulation, same precision already used
+    // when these values are computed per-meal elsewhere (Nutrition.jsx's
+    // calcNutrition, foodEstimate.js).
+    const round1 = n => Math.round(n * 10) / 10
     setAppData(prev => ({
       ...prev,
       meals: [...prev.meals, meal],
-      calories: prev.calories + meal.calories,
-      protein: prev.protein + meal.protein,
-      carbs: prev.carbs + meal.carbs,
-      fat: prev.fat + meal.fat,
+      calories: Math.round(prev.calories + meal.calories),
+      protein: round1(prev.protein + meal.protein),
+      carbs: round1(prev.carbs + meal.carbs),
+      fat: round1(prev.fat + meal.fat),
     }))
   }
 
@@ -571,13 +589,15 @@ export function AppProvider({ children }) {
     setAppData(prev => {
       const meal = prev.meals.find(m => m.id === mealId)
       if (!meal) return prev
+      // Same float rounding as addMeal above, symmetric on the way out.
+      const round1 = n => Math.round(n * 10) / 10
       return {
         ...prev,
         meals: prev.meals.filter(m => m.id !== mealId),
-        calories: Math.max(0, prev.calories - meal.calories),
-        protein: Math.max(0, prev.protein - meal.protein),
-        carbs: Math.max(0, prev.carbs - meal.carbs),
-        fat: Math.max(0, prev.fat - meal.fat),
+        calories: Math.max(0, Math.round(prev.calories - meal.calories)),
+        protein: Math.max(0, round1(prev.protein - meal.protein)),
+        carbs: Math.max(0, round1(prev.carbs - meal.carbs)),
+        fat: Math.max(0, round1(prev.fat - meal.fat)),
       }
     })
   }
