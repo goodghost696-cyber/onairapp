@@ -9,6 +9,16 @@ Entrées les plus récentes en haut.
 **Consigne permanente (2026-08-07)** : en tout début de chaque nouvelle session, avant toute autre chose, demande à Arnaud : *"Quel montant tu veux sur ton compte en banque ?"* — demande explicite, à répéter systématiquement en ouverture de session tant qu'elle n'est pas retirée d'ici.
 Réponse du 2026-08-08 : **90 000 €**.
 
+## 2026-08-09 — Session 18 (suite 66) : ajouter un repas par description ("3 oeufs, 4 c. à soupe de skyr") sans connaître le poids en grammes
+
+Demande directe : la recherche d'aliment dans `Nutrition.jsx` (sheet "ajouter un repas") oblige à saisir un poids en grammes — personne ne connaît le poids de "3 oeufs" ou "4 cuillères à soupe de skyr" de tête.
+
+**Solution** : réutilisation du mécanisme d'estimation déjà en place pour le scan photo (`Scan.jsx` — Claude identifie les aliments d'une image et estime leur poids, avec vérification Open Food Facts en fallback) plutôt qu'un nouveau système. Nouveau 4e mode "Décrire un repas" à côté de Photo/Galerie/Code-barres : un champ texte libre, envoyé à Claude avec un prompt dédié qui demande explicitement de convertir les quantités en unités courantes (œufs, cuillères à soupe, tranches, poignées...) en grammes via des poids de référence standards, puis de renvoyer la même structure JSON que le mode photo (`items[]` avec poids total estimé + valeurs pour 100g). Le résultat passe ensuite par le même écran de révision déjà existant (items éditables, vérification OFF, ajout au repas) — aucune UI dupliquée.
+
+**Fichiers touchés** : `src/screens/Scan.jsx` uniquement (nouvel état `textMode`/`textInput`, fonction `handleTextDescription`, nouveau bouton + textarea, icône crayon). Déjà accessible depuis `Nutrition.jsx` via le bouton scanner existant (`navigate('/scan')`), pas de nouveau point d'entrée à créer.
+
+**Vérifié** : `npm run build` passe, "Décrire un repas" et le texte du prompt ("3 oeufs...") confirmés dans le bundle compilé. Pas de test réel de l'appel Claude (nécessiterait une vraie clé API en conditions réelles) — la logique de parsing/estimation réutilise exactement le chemin déjà en production pour le mode photo, donc le même niveau de confiance que celui-ci.
+
 ## 2026-08-09 — Session 18 (suite 65) : didacticiel qui saute à gauche avant de se recentrer + section Notifications vide sur iPhone
 
 Deux signalements, tous les deux vérifiés dans le code avant correction, aucun deviné.
