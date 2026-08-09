@@ -1,4 +1,5 @@
 import { useLanguage } from '../context/LanguageContext';
+import { useSwipeToDismiss } from '../hooks/useSwipeToDismiss';
 import '../styles/ExerciseModal.css';
 
 const EXERCISE_DATA = {
@@ -320,6 +321,9 @@ const EXERCISE_DATA = {
 
 export const ExerciseModal = ({ exercise, onClose, onAdd }) => {
   const { t } = useLanguage();
+  // Same handle-bar-does-nothing bug as Dashboard's activity sheet,
+  // reported on the same real screenshot ("les cartes" — fixed both).
+  const swipeDismiss = useSwipeToDismiss(() => onClose());
   if (!exercise) return null;
 
   // EXERCISE_DATA only ever covered the 24 hand-written local exercises
@@ -341,8 +345,10 @@ export const ExerciseModal = ({ exercise, onClose, onAdd }) => {
   return (
     <>
       <div className="modal-overlay" onClick={onClose} />
-      <div className="exercise-modal">
-        <div className="modal-handle" />
+      <div className="exercise-modal" style={swipeDismiss.style}>
+        <div className="sheet-drag-zone" {...swipeDismiss.handlers}>
+          <div className="modal-handle" />
+        </div>
 
         <div className="modal-content">
           <h2 className="modal-title">{exercise.name}</h2>

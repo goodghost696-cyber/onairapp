@@ -7,6 +7,7 @@ import { save } from '../utils/storage'
 import { BOUNDS, clamp } from '../utils/validation'
 import { dailyRemainingCalories } from '../utils/metabolism'
 import { fetchStreak } from '../utils/streak'
+import { useSwipeToDismiss } from '../hooks/useSwipeToDismiss'
 import '../styles/dashboard.css'
 
 const QUOTES = [
@@ -52,6 +53,9 @@ export default function Dashboard() {
   const { t } = useLanguage()
   const [editingCard, setEditingCard] = useState(null)
   const [inputVal, setInputVal] = useState('')
+  // The sheet's handle bar looked draggable (standard bottom-sheet
+  // convention) but did nothing — reported directly on a real screenshot.
+  const swipeDismiss = useSwipeToDismiss(() => setEditingCard(null))
   // Objectif édité directement dans la sheet de la carte — "passer par
   // Réglages pour ça c'est pas ouf, il faut rendre le chemin simple". Un
   // seul state car une seule sheet est ouverte à la fois (comme inputVal).
@@ -331,8 +335,13 @@ export default function Dashboard() {
       {editingCard && (
         <>
           <div className="sheet-overlay" onClick={() => setEditingCard(null)} />
-          <div className="activity-edit-sheet">
-            <div className="modal-handle" />
+          <div className="activity-edit-sheet" style={swipeDismiss.style}>
+            {/* The visible bar (.modal-handle, 36x4px) is too small a target
+                to reliably grab — wrapped in a full-width padded zone that
+                actually listens for the drag, same trick as ExerciseModal. */}
+            <div className="sheet-drag-zone" {...swipeDismiss.handlers}>
+              <div className="modal-handle" />
+            </div>
             <p className="sheet-title">{currentCard?.label}</p>
 
             {/* Progression + objectif, réunis ici — "je peux modifier mes

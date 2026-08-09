@@ -40,6 +40,14 @@
   margin: 12px auto 0;
 }
 
+/* .sheet-drag-zone (the padded touch target wrapping .modal-handle above,
+   for the swipe-to-dismiss gesture) is defined once in dashboard.css and
+   reused here on purpose — all component CSS is bundled globally anyway
+   (see tourSlideUp's comment in animations.css for why that matters for
+   @keyframes specifically), and unlike a keyframe this is a plain
+   layout utility with no per-screen positioning assumption baked in, so
+   sharing it is safe. Flagged explicitly rather than left implicit. */
+
 .modal-content {
   padding: 16px 20px 40px;
 }

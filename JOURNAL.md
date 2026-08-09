@@ -9,6 +9,16 @@ Entrées les plus récentes en haut.
 **Consigne permanente (2026-08-07)** : en tout début de chaque nouvelle session, avant toute autre chose, demande à Arnaud : *"Quel montant tu veux sur ton compte en banque ?"* — demande explicite, à répéter systématiquement en ouverture de session tant qu'elle n'est pas retirée d'ici.
 Réponse du 2026-08-08 : **90 000 €**.
 
+## 2026-08-09 — Session 18 (suite 77) : le petit trait "glisser vers le bas" des sheets ne faisait rien
+
+Signalé directement sur capture : au-dessus de la sheet "Course", un petit trait gris (`.modal-handle`, convention standard iOS/Android pour "glisse vers le bas pour fermer") ne réagissait à aucun geste — purement décoratif, aucun écouteur de touch derrière.
+
+**Vérifié où d'autres sheets ont ce même trait avant de corriger un seul endroit** (grep sur `modal-handle`) : seuls `Dashboard.jsx` (sheet d'édition des cartes d'activité) et `ExerciseModal.jsx` (modale détail d'exercice) affichent ce trait — les sheets de `Nutrition.jsx` n'en ont pas du tout (donc rien à corriger là, pas de faux "ça marche pas" à traiter).
+
+**Fix** : nouveau hook `src/hooks/useSwipeToDismiss.js`, réutilisé sur les deux écrans plutôt que dupliqué — suit le déplacement vertical du doigt (vers le bas seulement), applique `translateY` en direct pendant le geste, et ferme la sheet si le relâchement dépasse 80px, sinon revient en place avec une petite transition. Le trait visuel (36×4px) étant trop petit pour être une cible fiable, il est maintenant enveloppé dans une zone tactile plus large (`.sheet-drag-zone`, pleine largeur, ~20px de haut) qui capte le geste.
+
+**Vérifié** : `npm run build` passe, classe `.sheet-drag-zone` confirmée dans le CSS compilé et utilisée dans les deux écrans (comptée 2 fois dans le bundle JS).
+
 ## 2026-08-09 — Session 18 (suite 76) : objectifs des 4 cartes d'activité modifiables directement depuis la carte (plus besoin de Réglages)
 
 Retour direct sur la suite 74 : "passer par Réglages pour ça c'est pas ouf, il faut rendre le chemin simple, quand je clique sur la carte je peux modifier mes objectifs et voir ma progression". 3 questions posées avant de coder (chemin unique ou dupliqué avec Réglages, Course/Sommeil doivent-ils devenir de vrais objectifs réglables, niveau de détail de "voir ma progression") — les 3 réponses recommandées confirmées.
