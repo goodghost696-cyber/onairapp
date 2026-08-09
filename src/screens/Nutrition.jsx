@@ -105,8 +105,16 @@ export default function Nutrition() {
   const [toast, setToast] = useState('')
 
   const [recipeSheetOpen, setRecipeSheetOpen] = useState(false)
-  // 1 = choix du repas, 2 = choix de la source (auto / photo / lien), 3 = résultat.
+  // Was "1 = choix du repas, 2 = choix de la source, 3 = résultat" — la
+  // source (auto/photo/lien) est maintenant choisie EN AMONT, directement
+  // en tapant l'une des cartes dédiées sur l'écran principal (plus de
+  // menu à 3 options caché derrière "Idée recette"). 1 = choix du repas
+  // (seule étape encore nécessaire avant de générer — le budget
+  // nutritionnel dépend réellement du repas choisi, voir getMealBudget),
+  // 2 = lien (seule source qui a encore besoin d'une saisie derrière le
+  // choix du repas), 3 = résultat.
   const [recipeStep, setRecipeStep] = useState(1)
+  const [recipeSource, setRecipeSource] = useState('auto')
   const [recipeMealType, setRecipeMealType] = useState('')
   const [recipeLoading, setRecipeLoading] = useState(false)
   // `recipe` = la recette choisie (vue détail). `recipeOptions` = les 2-3
@@ -116,7 +124,6 @@ export default function Nutrition() {
   const [recipe, setRecipe] = useState(null)
   const [recipeOptions, setRecipeOptions] = useState([])
   const [recipeError, setRecipeError] = useState('')
-  const [recipeLinkOpen, setRecipeLinkOpen] = useState(false)
   const [recipeLinkInput, setRecipeLinkInput] = useState('')
   const [recipeSourceLabel, setRecipeSourceLabel] = useState('')
   const [recipeLoadingMsgIndex, setRecipeLoadingMsgIndex] = useState(0)
@@ -333,15 +340,15 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant ou après, avec exactement 
     setTimeout(() => setToast(''), 2000)
   }
 
-  function openRecipeSheet() {
+  function openRecipeSheet(source) {
     setRecipeSheetOpen(true)
     setRecipeStep(1)
+    setRecipeSource(source)
     setRecipeMealType('')
     setRecipe(null)
     setRecipeOptions([])
     setRecipeError('')
     setRecipeSourceLabel('')
-    setRecipeLinkOpen(false)
     setRecipeLinkInput('')
     recipeRegenerateRef.current = null
   }
@@ -375,16 +382,24 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant ou après, avec exactement 
     }
   }
 
-  // Picking a meal type used to jump straight into generating a recipe —
-  // now it just records the type and moves to a source choice (auto vs
-  // photo vs link), added below.
+  // Was "record the type, then show a 3-option source picker" — the
+  // source is now already known (recipeSource, set by which card was
+  // tapped on the main screen), so picking a meal type goes straight into
+  // the actual action for that source instead of one more menu screen.
+  // Explicit request: "enlève les longs chemins inutiles, que tout soit
+  // simple d'accès".
   function chooseMealType(type) {
     setRecipeMealType(type)
-    setRecipeStep(2)
-    setRecipeLinkOpen(false)
-    setRecipeLinkInput('')
     setRecipe(null)
     setRecipeOptions([])
+    if (recipeSource === 'photo') {
+      recipePhotoInputRef.current?.click()
+    } else if (recipeSource === 'link') {
+      setRecipeLinkInput('')
+      setRecipeStep(2)
+    } else {
+      generateRecipe()
+    }
   }
 
   async function generateRecipe() {
@@ -818,12 +833,32 @@ Réponds en français.`
           </div>
         </button>
 
+        {/* "Une recette depuis mon frigo" — was buried 2 taps deep behind
+            "Idée recette" (choisir le repas, PUIS choisir "photo" parmi 3
+            options). Aussi forte que "Décrire un repas" côté utilité
+            (l'IA propose une recette avec ce qu'il y a vraiment sous la
+            main), promue au même niveau. */}
         <button
-          onClick={openRecipeSheet}
+          onClick={() => openRecipeSheet('photo')}
+          className="card card-animated"
+          style={{
+            display: 'flex', alignItems: 'center', gap: 14, width: '100%',
+            marginBottom: 16, cursor: 'pointer', textAlign: 'left', '--delay': '50ms',
+          }}
+        >
+          <span className="nutrition-recipe-icon">📸</span>
+          <div>
+            <div className="text-base bold">Une recette depuis mon frigo</div>
+            <div className="text-xs text-muted">Prends en photo ce que tu as sous la main, l'IA propose une recette avec</div>
+          </div>
+        </button>
+
+        <button
+          onClick={() => openRecipeSheet('auto')}
           className="card card-violet nutrition-recipe-card card-animated"
           style={{
             display: 'flex', alignItems: 'center', gap: 14, width: '100%',
-            marginBottom: 16, cursor: 'pointer', textAlign: 'left', '--delay': '60ms',
+            cursor: 'pointer', textAlign: 'left', '--delay': '60ms',
           }}
         >
           <span className="nutrition-recipe-icon">💡</span>
@@ -839,6 +874,16 @@ Réponds en français.`
             <div className="text-base bold text-primary">Idée recette</div>
             <div className="text-xs text-muted">Suggestion IA basée sur ce qu'il te reste aujourd'hui</div>
           </div>
+        </button>
+        {/* Moins utilisée que les deux au-dessus (photo/texte) — reste
+            accessible en un seul tap plutôt que dans un sous-menu, mais
+            sans carte pleine largeur dédiée pour ne pas surcharger l'écran
+            de 3 cartes qui se ressemblent. */}
+        <button
+          onClick={() => openRecipeSheet('link')}
+          style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: 12, fontWeight: 600, padding: '8px 4px', cursor: 'pointer', display: 'block', marginBottom: 16 }}
+        >
+          🔗 ou depuis un lien TikTok / Reel →
         </button>
 
         {/* New — the mockup shows a meal-type icon row here (Matin/Midi/Soir/
@@ -1213,7 +1258,22 @@ Réponds en français.`
         transition: 'transform 320ms cubic-bezier(0.34,1.56,0.64,1)',
         zIndex: 200, maxHeight: '80vh', overflowY: 'auto',
       }}>
-        <h2 className="text-lg bold" style={{ marginBottom: 16 }}>💡 Idée recette</h2>
+        <h2 className="text-lg bold" style={{ marginBottom: 16 }}>
+          {recipeSource === 'photo' ? '📸 Recette depuis ton frigo' : recipeSource === 'link' ? '🔗 Recette depuis un lien' : '💡 Idée recette'}
+        </h2>
+
+        {/* Toujours monté (juste caché) — le clic déclenché depuis
+            chooseMealType (étape 1) a besoin de la ref disponible
+            immédiatement, l'input ne peut pas être imbriqué dans un bloc
+            conditionnel qui ne s'affiche plus pour la source photo. */}
+        <input
+          ref={recipePhotoInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          style={{ display: 'none' }}
+          onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) generateRecipeFromPhoto(f) }}
+        />
 
         {recipeStep === 1 && (
           <>
@@ -1232,85 +1292,38 @@ Réponds en français.`
           </>
         )}
 
+        {/* Seule la source "lien" a encore besoin d'une saisie après le
+            choix du repas — auto génère directement, photo ouvre la
+            caméra directement (chooseMealType). */}
         {recipeStep === 2 && (
           <>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
               <button onClick={() => setRecipeStep(1)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" strokeWidth="1.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
               </button>
-              <p className="text-sm text-muted" style={{ margin: 0 }}>{recipeMealType} — comment veux-tu la recette ?</p>
+              <p className="text-sm text-muted" style={{ margin: 0 }}>{recipeMealType} — lien TikTok / Instagram</p>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <button onClick={generateRecipe} className="card" style={{
-                textAlign: 'left', cursor: 'pointer', padding: '16px', display: 'flex',
-                alignItems: 'center', gap: 14,
-              }}>
-                <span style={{ fontSize: 22 }}>✨</span>
-                <div>
-                  <div className="text-base bold text-primary">Suggestion automatique</div>
-                  <div className="text-xs text-muted">L'IA propose une recette adaptée à tes objectifs</div>
-                </div>
-              </button>
-              <button onClick={() => recipePhotoInputRef.current?.click()} className="card" style={{
-                textAlign: 'left', cursor: 'pointer', padding: '16px', display: 'flex',
-                alignItems: 'center', gap: 14,
-              }}>
-                <span style={{ fontSize: 22 }}>📸</span>
-                <div>
-                  <div className="text-base bold text-primary">Depuis une photo</div>
-                  <div className="text-xs text-muted">Prends en photo ton frigo ou tes ingrédients disponibles</div>
-                </div>
-              </button>
-              <input
-                ref={recipePhotoInputRef}
-                type="file"
-                accept="image/*"
-                capture="environment"
-                style={{ display: 'none' }}
-                onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) generateRecipeFromPhoto(f) }}
-              />
-
-              {!recipeLinkOpen ? (
-                <button onClick={() => setRecipeLinkOpen(true)} className="card" style={{
-                  textAlign: 'left', cursor: 'pointer', padding: '16px', display: 'flex',
-                  alignItems: 'center', gap: 14,
-                }}>
-                  <span style={{ fontSize: 22 }}>🔗</span>
-                  <div>
-                    <div className="text-base bold text-primary">Depuis un lien</div>
-                    <div className="text-xs text-muted">Colle un lien TikTok ou Reel Instagram</div>
-                  </div>
-                </button>
-              ) : (
-                <div className="card" style={{ padding: '16px' }}>
-                  <div className="text-xs text-muted" style={{ marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                    Lien TikTok / Instagram
-                  </div>
-                  <input
-                    type="url"
-                    inputMode="url"
-                    placeholder="https://www.tiktok.com/..."
-                    value={recipeLinkInput}
-                    onChange={e => setRecipeLinkInput(e.target.value)}
-                    autoFocus
-                    style={{ marginBottom: 8 }}
-                  />
-                  {/* Honest expectation-setting up front rather than a
-                      surprise error after a wait. Stays accurate whether or
-                      not SUPADATA_API_KEY is configured server-side: with
-                      it, this reads what's actually said in the video
-                      (real transcript); without it, only the post's own
-                      caption/description — the client has no way to know
-                      which one it'll get in advance. */}
-                  <p className="text-xs text-muted" style={{ marginBottom: 12, lineHeight: 1.4 }}>
-                    On essaie de lire ce qui est dit dans la vidéo ; si ce n'est pas possible, on se base sur la légende du post.
-                  </p>
-                  <button className="btn-accent" onClick={generateRecipeFromLink} disabled={!recipeLinkInput.trim()} style={{ opacity: recipeLinkInput.trim() ? 1 : 0.5 }}>
-                    Générer
-                  </button>
-                </div>
-              )}
-            </div>
+            <input
+              type="url"
+              inputMode="url"
+              placeholder="https://www.tiktok.com/..."
+              value={recipeLinkInput}
+              onChange={e => setRecipeLinkInput(e.target.value)}
+              autoFocus
+              style={{ marginBottom: 8 }}
+            />
+            {/* Honest expectation-setting up front rather than a surprise
+                error after a wait. Stays accurate whether or not
+                SUPADATA_API_KEY is configured server-side: with it, this
+                reads what's actually said in the video (real transcript);
+                without it, only the post's own caption/description — the
+                client has no way to know which one it'll get in advance. */}
+            <p className="text-xs text-muted" style={{ marginBottom: 12, lineHeight: 1.4 }}>
+              On essaie de lire ce qui est dit dans la vidéo ; si ce n'est pas possible, on se base sur la légende du post.
+            </p>
+            <button className="btn-accent" onClick={generateRecipeFromLink} disabled={!recipeLinkInput.trim()} style={{ opacity: recipeLinkInput.trim() ? 1 : 0.5 }}>
+              Générer
+            </button>
           </>
         )}
 
