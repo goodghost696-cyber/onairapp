@@ -9,6 +9,21 @@ Entrées les plus récentes en haut.
 **Consigne permanente (2026-08-07)** : en tout début de chaque nouvelle session, avant toute autre chose, demande à Arnaud : *"Quel montant tu veux sur ton compte en banque ?"* — demande explicite, à répéter systématiquement en ouverture de session tant qu'elle n'est pas retirée d'ici.
 Réponse du 2026-08-08 : **90 000 €**.
 
+## 2026-08-09 — Session 18 (suite 70) : "Une recette depuis mon frigo" promue au même niveau que "Décrire un repas" + suppression du menu source à 2 niveaux
+
+Question directe après la suite 69 : "Décrire un repas c'est une feature forte, tout comme la feature photo du frigo — elle ne doit pas être visible aussi ?". Vérifié : la photo du frigo était cachée à 2 niveaux — taper "Idée recette", PUIS choisir "photo" parmi 3 options (auto/photo/lien) qui n'apparaissaient qu'à cette étape. Confirmé par l'utilisateur : "enlève les longs chemins inutiles, que tout soit simple d'accès".
+
+**Nuance technique vérifiée avant de tout aplatir** : le choix du repas (matin/midi/soir/snack) n'est pas de la friction gratuite — `getMealBudget(type)` calcule un budget calorique/macros réellement différent selon le repas choisi, utilisé dans le prompt de génération des 3 sources (auto/photo/lien). Contrairement au grammage de "Décrire un repas" (une simple étiquette de classement posée après coup), ici le repas choisi influence vraiment le contenu généré — impossible de le supprimer sans dégrader la pertinence des suggestions.
+
+**Restructuration** : le menu à 2 niveaux ("choisis le repas" PUIS "choisis la source") devient 1 seul niveau — la source est maintenant choisie EN AMONT en tapant l'une des 3 entrées dédiées sur l'écran principal (`recipeSource`, nouvel état), et `chooseMealType()` va directement à l'action correspondante une fois le repas choisi (plus de menu à 3 options intermédiaire) :
+- **"Une recette depuis mon frigo"** (nouveau label, remplace le "Depuis une photo" enterré) — choix du repas → ouverture directe de l'appareil photo.
+- **"Idée recette"** (garde son intitulé, suggestion automatique) — choix du repas → génération directe.
+- **Lien TikTok/Reel** — reste accessible en 1 tap mais sans carte pleine largeur dédiée (petit lien texte sous "Idée recette", pour ne pas empiler 3 cartes qui se ressemblent) — choix du repas → champ lien direct (plus de sélection "comment veux-tu la recette" avant).
+
+Nettoyage au passage : l'input caméra caché déplacé hors du bloc conditionnel (il doit être monté avant le clic déclenché depuis l'étape "choix du repas"), état `recipeLinkOpen` devenu mort retiré.
+
+**Vérifié** : `npm run build` passe, "Une recette depuis mon frigo", "Recette depuis ton frigo", "Recette depuis un lien" et "ou depuis un lien TikTok" confirmés dans le bundle compilé. Aucune trace résiduelle de l'ancien menu à 3 options (grep vide sur "comment veux-tu la recette"/"Suggestion automatique").
+
 ## 2026-08-09 — Session 18 (suite 69) : "Décrire un repas" (multi-ingrédients) promu sur l'écran Nutrition + fusion Photo/Code-barres dans Scanner
 
 Suite de discussion sur "comment saisir 3 c. à soupe de skyr + 2 c. à soupe de confiture sans se soucier des grammes" — plan validé avant code (deux changements distincts).
