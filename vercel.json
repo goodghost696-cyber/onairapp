@@ -6,10 +6,12 @@
     "api/food-search.js": { "memory": 128, "maxDuration": 10 },
     "api/recipe-from-link.js": { "memory": 128, "maxDuration": 25 },
     "api/send-push.js": { "memory": 128, "maxDuration": 10 },
-    "api/cron/inactivity-nudge.js": { "memory": 256, "maxDuration": 30 }
+    "api/cron/inactivity-nudge.js": { "memory": 256, "maxDuration": 30 },
+    "api/cron/streak-nudge.js": { "memory": 256, "maxDuration": 30 }
   },
   "crons": [
-    { "path": "/api/cron/inactivity-nudge", "schedule": "0 10 * * *" }
+    { "path": "/api/cron/inactivity-nudge", "schedule": "0 10 * * *" },
+    { "path": "/api/cron/streak-nudge", "schedule": "0 18 * * *" }
   ],
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }

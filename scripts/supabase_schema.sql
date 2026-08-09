@@ -30,6 +30,9 @@ create table if not exists profiles (
   -- per inactivity episode rather than daily spam — nothing in the app
   -- reads or writes this from the client.
   last_inactivity_nudge_at timestamptz,
+  -- Same idea, written by api/cron/streak-nudge.js — one streak nudge per
+  -- day max, compared by date (not timestamp) against `today` in that job.
+  last_streak_nudge_at timestamptz,
   created_at timestamptz default now(),
   unique(user_id)
 );
