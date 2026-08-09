@@ -9,6 +9,20 @@ Entrées les plus récentes en haut.
 **Consigne permanente (2026-08-07)** : en tout début de chaque nouvelle session, avant toute autre chose, demande à Arnaud : *"Quel montant tu veux sur ton compte en banque ?"* — demande explicite, à répéter systématiquement en ouverture de session tant qu'elle n'est pas retirée d'ici.
 Réponse du 2026-08-08 : **90 000 €**.
 
+## 2026-08-09 — Session 18 (suite 64) : notification streak — construite sur l'infra push existante
+
+Suite directe à la suite 63 : constat qu'aucune notification de streak n'existait, demande explicite de la construire ("fais fais").
+
+**`api/cron/streak-nudge.js`** (nouveau) : même squelette que `api/cron/inactivity-nudge.js` déjà en place (auth `CRON_SECRET`, client `service_role`, VAPID déjà configurés — rien de nouveau côté env vars). `calculateStreak` dupliqué à l'identique depuis `src/utils/streak.js` (pas importable ici — ce runtime Node ne peut pas charger `lib/supabase.js`, qui lit `import.meta.env`, Vite-only ; même contrainte que pour `inactivity-nudge.js` déjà documentée dans ce fichier).
+
+**Logique** : candidat au nudge = streak actif (≥1 jour) ET rien loggé aujourd'hui ET pas déjà nudgé aujourd'hui (`profiles.last_streak_nudge_at`, comparé par date). Message toujours formulé en invitation, jamais en perte — contrainte explicite du cahier des charges initial du streak, toujours respectée maintenant qu'une notification existe vraiment : *"🔥 X jours de suite — une petite activité aujourd'hui pour continuer sur ta lancée ?"*.
+
+**Schéma** : `profiles.last_streak_nudge_at timestamptz` — appliquée directement en base via Supabase MCP (colonne nullable, additive, sans risque) et répercutée dans `scripts/supabase_schema.sql`, cohérent avec l'instruction en tête de ce fichier ("si tu appliques un fix directement contre prod, mets aussi à jour ce fichier").
+
+**`vercel.json`** : nouvelle entrée cron `0 18 * * *` (18h UTC, rappel de fin de journée plutôt que le matin comme le nudge d'inactivité à 10h — laisse la journée se dérouler avant de relancer).
+
+**Vérifié** : `node --check` sur le nouveau fichier, `vercel.json` validé comme JSON correct, `npm run build` (frontend) passe toujours. Pas de test d'envoi réel (nécessiterait un vrai abonnement push actif sur un compte de test).
+
 ## 2026-08-09 — Session 18 (suite 63) : sommeil/course manquaient au reset quotidien local + état des lieux notifications
 
 Question de suivi après la suite 62 : "elles seront à jour à 0 tous les jours ?". Vérifié le reset quotidien local (`clearDay()` + son effet dans `AppContext.jsx`) : `calories`/`water`/`steps`/`protein`/`carbs`/`fat`/`meals` étaient bien remis à 0 chaque nouveau jour (local, `toDateString()`), mais **`sleep` et `kmRun` en étaient absents** — sur un jour neuf, avant que Supabase ne trouve une ligne pour aujourd'hui (il n'y en a pas encore), ces deux champs continuaient d'afficher la valeur mise en cache de la veille au lieu d'un état neutre, contrairement à tout le reste.
