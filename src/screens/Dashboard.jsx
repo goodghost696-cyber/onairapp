@@ -46,20 +46,6 @@ function RotatingQuote() {
   )
 }
 
-// Third try on the water picker's icon — bottle SVG rejected ("tellement
-// laides"), droplet emoji accepted but user wanted to compare a glass.
-// A trapezoid drinking-glass outline with a water-level line, rather
-// than another emoji (no Unicode glass-of-water exists — 🥛 is milk).
-// currentColor throughout, same convention as the bottle attempt, so
-// .water-bottle-btn/.filled (color-based) keeps driving both states.
-function GlassIcon() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-      <path d="M7 4h10l-1.3 16.3a1 1 0 0 1-1 .7H9.3a1 1 0 0 1-1-.7L7 4z" fill="currentColor" fillOpacity="0.16" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
-      <path d="M7.7 12h8.6" stroke="currentColor" strokeWidth="1.3" strokeOpacity="0.55" />
-    </svg>
-  )
-}
 
 export default function Dashboard() {
   const navigate = useNavigate()
@@ -124,6 +110,11 @@ export default function Dashboard() {
   // default 2500ml). Tapping bottle N fills 1..N in one tap (1500ml on
   // the 3rd); tapping the currently-last-filled bottle again empties it,
   // so a mis-tap is correctable without typing a number.
+  // Icon went 💧 → custom bottle SVG (rejected, ugly) → custom glass SVG
+  // → now 🥛 : asked directly to use an emoji rather than a hand-drawn
+  // icon. No Unicode emoji actually depicts a glass of water — 🥛 is
+  // technically milk — but it's the closest real "glass" shape available
+  // and reads fine against the "verre" wording below.
   const bottleCount = Math.max(1, Math.round(waterGoalMl / 500))
   const filledBottles = Math.min(bottleCount, Math.round(appData.water / 500))
 
@@ -406,7 +397,7 @@ export default function Dashboard() {
                       onClick={() => setWaterBottles(i)}
                       aria-label={`${(i + 1) * 500}ml`}
                     >
-                      <GlassIcon />
+                      🥛
                     </button>
                   ))}
                 </div>

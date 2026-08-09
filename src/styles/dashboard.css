@@ -422,18 +422,19 @@
   border-radius: 50%;
   border: 1.5px solid var(--border);
   background: var(--surface-2);
+  font-size: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  /* GlassIcon (Dashboard.jsx) uses currentColor throughout — this drives
-     both the empty and filled look, no separate icon-level state needed. */
-  color: var(--text-muted);
-  transition: color 150ms ease, transform 150ms ease, border-color 150ms ease, background 150ms ease;
+  opacity: 0.4;
+  filter: grayscale(1);
+  transition: opacity 150ms ease, filter 150ms ease, transform 150ms ease, border-color 150ms ease, background 150ms ease;
 }
 
 .water-bottle-btn.filled {
-  color: var(--accent);
+  opacity: 1;
+  filter: none;
   border-color: var(--accent);
   background: rgba(240,193,75,0.16);
   transform: scale(1.06);

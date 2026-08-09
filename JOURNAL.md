@@ -9,6 +9,16 @@ Entrées les plus récentes en haut.
 **Consigne permanente (2026-08-07)** : en tout début de chaque nouvelle session, avant toute autre chose, demande à Arnaud : *"Quel montant tu veux sur ton compte en banque ?"* — demande explicite, à répéter systématiquement en ouverture de session tant qu'elle n'est pas retirée d'ici.
 Réponse du 2026-08-08 : **90 000 €**.
 
+## 2026-08-09 — Session 18 (suite 81) : verre gardé, mais en émoji plutôt qu'en SVG dessiné à la main
+
+Retour sur la suite 80 : "on garde les verres... tu peux pas prendre une verre dans la bibliothèque d'émoji ?" — verre validé, mais l'implémentation en SVG custom remplacée par l'émoji 🥛 (le plus proche d'un "verre" dans la bibliothèque Unicode — pas d'émoji verre d'eau à proprement parler, 🥛 est techniquement un verre de lait, mais c'est la vraie forme de verre disponible la plus proche).
+
+**Historique complet de cette icône, pour mémoire** : 💧 goutte (73) → SVG bouteille (78, rejeté) → 💧 goutte (79) → SVG verre (80) → 🥛 émoji verre (cette suite, retenu).
+
+`GlassIcon` (composant SVG) retiré, CSS `.water-bottle-btn`/`.filled` repris en version opacité/niveaux de gris (adaptée à un emoji plutôt qu'à un SVG `currentColor`) — même bascule déjà faite en suite 79 lors du retour à la goutte.
+
+**Vérifié** : `npm run build` passe, 🥛 confirmé dans le bundle compilé, `GlassIcon` absent du code source.
+
 ## 2026-08-09 — Session 18 (suite 80) : essai verres d'eau pour le sélecteur d'eau (3e itération sur cette icône)
 
 Suite directe de la 79 : "Essaie avec des verres d'eau pour voir" — explicitement un essai à valider, pas une confirmation.
