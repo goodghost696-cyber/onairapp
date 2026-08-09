@@ -140,6 +140,12 @@ create table if not exists objectifs (
   lipides       int default 80,
   eau_ml        int default 2500,
   pas_jour      int default 10000,
+  -- Objectifs course/sommeil, modifiables directement depuis la carte du
+  -- Dashboard concernée ("chemin simple" — pas besoin de passer par
+  -- Réglages). Numeric plutôt qu'int : le sommeil se règle en heures
+  -- fractionnaires (7.5h).
+  km_objectif           numeric default 5,
+  sommeil_h_objectif    numeric default 8,
   updated_at    timestamptz default now(),
   unique(user_id)
 );

@@ -80,7 +80,13 @@ export default function Settings() {
   const [profile, setProfile] = useState({ name: user?.name || '', email: user?.email || '', weight: '', height: '', age: '' })
   const [profileSaving, setProfileSaving] = useState(false)
   const [profileSaved, setProfileSaved] = useState(false)
-  const [goals, setGoals] = useState({ calories: String(appData.calorieGoal), protein: String(appData.proteinGoal), water: String(appData.waterGoal), steps: String(appData.stepsGoal) })
+  // Eau/Pas retirés d'ici — modifiables directement depuis leur carte sur
+  // le Dashboard maintenant ("passer par Réglages pour ça c'est pas ouf,
+  // il faut rendre le chemin simple"). Calories/protéines restent ici :
+  // pas de carte dédiée pour ces deux-là, et ce sont des réglages plus
+  // complexes (liés au(x) objectif(s) choisi(s) ci-dessous) que "modifier
+  // un objectif en tapant sur une carte" ne couvrirait pas bien.
+  const [goals, setGoals] = useState({ calories: String(appData.calorieGoal), protein: String(appData.proteinGoal) })
   const [goalsSaving, setGoalsSaving] = useState(false)
   const [goalsSaved, setGoalsSaved] = useState(false)
   // "il faut remettre l'objectif et toujours laisser le choix à
@@ -185,14 +191,10 @@ export default function Settings() {
   async function saveGoals() {
     const calorieGoal = clamp(parseInt(goals.calories), BOUNDS.calorieGoal, appData.calorieGoal)
     const proteinGoal = clamp(parseInt(goals.protein), BOUNDS.proteinGoal, appData.proteinGoal)
-    const waterGoal = clamp(parseInt(goals.water), BOUNDS.waterGoal, appData.waterGoal)
-    const stepsGoal = clamp(parseInt(goals.steps), BOUNDS.stepsGoal, appData.stepsGoal)
     // Immediate local reflection (Dashboard's ring, Nutrition's bars, etc.
     // all read appData.*Goal directly).
     updateData('calorieGoal', calorieGoal)
     updateData('proteinGoal', proteinGoal)
-    updateData('waterGoal', waterGoal)
-    updateData('stepsGoal', stepsGoal)
     setGoalsSaving(true)
     // Was: this whole function only ever called updateData above, which is
     // in-memory + localStorage only (utils/storage.js) — nothing here ever
@@ -200,11 +202,15 @@ export default function Settings() {
     // reverted to whatever was last saved server-side on the next login /
     // different device. Also the only place `objectif` (the goal TYPE, not
     // the numeric targets) gets persisted, now that it's editable here.
+    // waterGoal/stepsGoal deliberately NOT sent — eau/pas are edited from
+    // their own Dashboard card now (AppContext.updateGoal), and
+    // AuthContext.updateUserProfile only touches eau_ml/pas_jour when
+    // those keys are actually provided, so omitting them here leaves
+    // whatever was set from the card untouched.
     await updateUserProfile({
       goal: selectedGoals.join(', '),
       calorieGoal, proteinGoal,
       carbGoal: appData.carbsGoal, fatGoal: appData.fatGoal,
-      waterGoal, stepsGoal,
     })
     setGoalsSaving(false)
     setGoalsSaved(true)
@@ -261,8 +267,8 @@ export default function Settings() {
           </div>
           <Field label={t('calories_day')} value={goals.calories} onChange={v => setGoals(g => ({...g, calories: v}))} type="number" />
           <Field label={t('proteins')} value={goals.protein} onChange={v => setGoals(g => ({...g, protein: v}))} type="number" />
-          <Field label={t('water_goal')} value={goals.water} onChange={v => setGoals(g => ({...g, water: v}))} type="number" />
-          <Field label={t('steps_goal')} value={goals.steps} onChange={v => setGoals(g => ({...g, steps: v}))} type="number" />
+          {/* Eau/Pas retirés — modifiables directement depuis leur carte
+              sur le Dashboard maintenant. */}
         </div>
         <button className="btn-ghost" onClick={saveGoals} disabled={goalsSaving} style={{ marginBottom: 8, opacity: goalsSaving ? 0.6 : 1 }}>
           {goalsSaving ? '...' : goalsSaved ? '✓ ENREGISTRÉ' : t('save_goals')}
