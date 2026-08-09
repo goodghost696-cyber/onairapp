@@ -9,6 +9,14 @@ Entrées les plus récentes en haut.
 **Consigne permanente (2026-08-07)** : en tout début de chaque nouvelle session, avant toute autre chose, demande à Arnaud : *"Quel montant tu veux sur ton compte en banque ?"* — demande explicite, à répéter systématiquement en ouverture de session tant qu'elle n'est pas retirée d'ici.
 Réponse du 2026-08-08 : **90 000 €**.
 
+## 2026-08-09 — Session 18 (suite 71) : liste "REPAS D'AUJOURD'HUI" tronquée à 3, avec "Voir tout" pour dérouler le reste
+
+Capture confirmant que la restructuration de la suite 70 fonctionne bien en vrai (Skyr naturel 68g bien estimé pour 3 cuillères). Remarque de suivi sur la disposition : "REPAS D'AUJOURD'HUI" affiche tous les repas sans limite, la page devient interminable au fil de la journée. Proposition initiale de l'utilisateur (titre cliquable qui replie tout) écartée au profit d'une version qui ne cache rien au premier coup d'œil : les 3 repas les plus récents restent visibles direct, un lien "Voir tout (X repas) →" déplie le reste sur la même page (pas de nouvelle page, pas de repli total qui masquerait le log du jour). Confirmé par l'utilisateur avant de coder.
+
+**Fix** : `Nutrition.jsx`, nouvel état `showAllMeals` (bool). `appData.meals.slice(0, 3)` par défaut, liste complète une fois "Voir tout" cliqué. Le lien n'apparaît que si plus de 3 repas sont loggés.
+
+**Vérifié** : `npm run build` passe, "Voir tout (" et "repas) →" confirmés dans le bundle compilé.
+
 ## 2026-08-09 — Session 18 (suite 70) : "Une recette depuis mon frigo" promue au même niveau que "Décrire un repas" + suppression du menu source à 2 niveaux
 
 Question directe après la suite 69 : "Décrire un repas c'est une feature forte, tout comme la feature photo du frigo — elle ne doit pas être visible aussi ?". Vérifié : la photo du frigo était cachée à 2 niveaux — taper "Idée recette", PUIS choisir "photo" parmi 3 options (auto/photo/lien) qui n'apparaissaient qu'à cette étape. Confirmé par l'utilisateur : "enlève les longs chemins inutiles, que tout soit simple d'accès".

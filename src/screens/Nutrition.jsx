@@ -103,6 +103,12 @@ export default function Nutrition() {
   const [describeMealType, setDescribeMealType] = useState('Déjeuner')
   const [mealType, setMealType] = useState('Déjeuner')
   const [toast, setToast] = useState('')
+  // "REPAS D'AUJOURD'HUI" showed every meal unconditionally — fine early
+  // in the day, becomes an endless scroll by evening. Show the 3 most
+  // recent directly (still visible at a glance, no tap needed) with a
+  // "Voir tout" link to expand the rest inline — not a full collapse
+  // (which would hide today's log entirely) and not a separate screen.
+  const [showAllMeals, setShowAllMeals] = useState(false)
 
   const [recipeSheetOpen, setRecipeSheetOpen] = useState(false)
   // Was "1 = choix du repas, 2 = choix de la source, 3 = résultat" — la
@@ -911,7 +917,7 @@ Réponds en français.`
 
         <div className="section-label">{t('today_meals')}</div>
         <p className="text-xs" style={{ marginTop: -4, marginBottom: 10, color: 'rgba(255,255,255,0.7)' }}>Glisse un repas vers la gauche pour le modifier ou le supprimer.</p>
-        {appData.meals.map((meal, i) => (
+        {(showAllMeals ? appData.meals : appData.meals.slice(0, 3)).map((meal, i) => (
           <SwipeableRow
             key={meal.id}
             actions={[
@@ -938,6 +944,15 @@ Réponds en français.`
             </div>
           </SwipeableRow>
         ))}
+        {!showAllMeals && appData.meals.length > 3 && (
+          <button
+            type="button"
+            onClick={() => setShowAllMeals(true)}
+            style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.85)', fontSize: 12, fontWeight: 600, padding: '10px 0', cursor: 'pointer', display: 'block', width: '100%', textAlign: 'center' }}
+          >
+            Voir tout ({appData.meals.length} repas) →
+          </button>
+        )}
       </div>
 
       {/* Edit meal (grams) overlay */}
