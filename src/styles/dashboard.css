@@ -256,6 +256,18 @@
   box-shadow: 0 -12px 40px rgba(0,0,0,0.25);
 }
 
+/* Full-width padded touch target around .modal-handle (36x4px — too
+   small to reliably grab on its own) so the drag-to-dismiss gesture is
+   easy to actually hit. touch-action:none stops the page/sheet scroll
+   from fighting the drag while a finger is on it. */
+.sheet-drag-zone {
+  display: flex;
+  justify-content: center;
+  padding: 6px 0 10px;
+  touch-action: none;
+  cursor: grab;
+}
+
 .sheet-title {
   font-size: 11px;
   letter-spacing: 2px;
