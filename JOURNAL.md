@@ -9,6 +9,16 @@ Entrées les plus récentes en haut.
 **Consigne permanente (2026-08-07)** : en tout début de chaque nouvelle session, avant toute autre chose, demande à Arnaud : *"Quel montant tu veux sur ton compte en banque ?"* — demande explicite, à répéter systématiquement en ouverture de session tant qu'elle n'est pas retirée d'ici.
 Réponse du 2026-08-08 : **90 000 €**.
 
+## 2026-08-09 — Session 18 (suite 67) : la suite 66 refaite en inline — pas de nouveau chemin + bouton "+" mal aligné avec le FAB messages
+
+Retour direct sur la suite 66 : "je ne veux pas un nouveau chemin !" — le détour par l'écran Scanner ne convenait pas, la conversion de quantité devait se faire directement dans l'écran de saisie du poids déjà existant (celui qui affiche "QUANTITÉ (G)" après avoir choisi un aliment dans la recherche).
+
+**1. Estimation de quantité, inline, sur l'écran existant** : `Nutrition.jsx`, sous le champ grammes de l'étape 2 (`selectFood` → poids), un lien "Je ne connais pas le poids →" ouvre un petit champ texte + bouton "Estimer" dans le même écran (pas de navigation). Prompt Claude délibérément plus simple que celui de `Scan.jsx` : l'aliment est déjà connu (`selectedFood.name`), seule la conversion quantité → grammes est demandée (`{ "grams": 150 }`), résultat injecté directement dans `gramsInput`. Le chemin de la suite 66 (`Scan.jsx`, "Décrire un repas") reste en place pour la saisie d'un repas complet depuis zéro — les deux répondent à des besoins différents, mais celui-ci est le vrai correctif demandé pour ce cas précis (aliment déjà sélectionné dans la recherche).
+
+**2. Boutons du bas mal alignés (capture 1)** : le bouton "+" (ouvrir la recherche d'aliment, propre à `Nutrition.jsx`) avait `bottom: 90` en dur, alors que le bouton messages (`fab.css`, global) utilise `calc(76px + env(safe-area-inset-bottom))` depuis les fixes de suite 55/56. Les deux ne coïncidaient que par hasard quand la zone de sécurité valait pile 14px — ailleurs (Safari onglet : 76 vs 90 ; standalone : 110 vs 90), ils divergeaient visiblement, exactement ce que montrait la capture. Même formule appliquée aux deux maintenant.
+
+**Vérifié** : `npm run build` passe, "Je ne connais pas le poids", "DÉCRIS LA QUANTITÉ", "Estimation impossible" et `calc(76px + env(safe-area-inset-bottom))` confirmés dans le bundle compilé.
+
 ## 2026-08-09 — Session 18 (suite 66) : ajouter un repas par description ("3 oeufs, 4 c. à soupe de skyr") sans connaître le poids en grammes
 
 Demande directe : la recherche d'aliment dans `Nutrition.jsx` (sheet "ajouter un repas") oblige à saisir un poids en grammes — personne ne connaît le poids de "3 oeufs" ou "4 cuillères à soupe de skyr" de tête.
