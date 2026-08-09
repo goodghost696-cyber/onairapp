@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import RunContent from '../components/RunContent'
 import { useApp } from '../context/AppContext'
 import { useAuth } from '../context/AuthContext'
 import { useLanguage } from '../context/LanguageContext'
@@ -14,7 +13,6 @@ export default function Workout() {
   const { t, lang } = useLanguage()
   const sessionHistory = appData.sessionHistory || []
   const activeSession = appData.activeSession || { exercises: [], startTime: null }
-  const [activeTab, setActiveTab] = useState('workout')
 
   const [program, setProgram] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -116,15 +114,6 @@ Donne exactement 4-5 exercices adaptés à l'objectif.`
           </div>
         </div>
 
-        <div className="workout-tabs">
-          <button className={`workout-tab${activeTab === 'workout' ? ' active' : ''}`} onClick={() => setActiveTab('workout')}>MUSCULATION</button>
-          <button className={`workout-tab${activeTab === 'run' ? ' active' : ''}`} onClick={() => setActiveTab('run')}>COURSE</button>
-        </div>
-
-        {activeTab === 'run' && <RunContent />}
-
-        {activeTab === 'workout' && <>
-
         {activeSession.exercises.length > 0 && (
           <div className="active-session-banner" onClick={() => navigate('/workout/session')}>
             <div className="active-session-left">
@@ -224,7 +213,6 @@ Donne exactement 4-5 exercices adaptés à l'objectif.`
             ))}
           </div>
         )}
-        </>}
       </div>
 
     </div>

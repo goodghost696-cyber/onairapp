@@ -58,38 +58,6 @@
   flex-shrink: 0;
 }
 
-.workout-tabs {
-  display: flex;
-  background: var(--surface);
-  border: 2px solid var(--border);
-  border-radius: 16px;
-  padding: 4px;
-  margin-bottom: 18px;
-  gap: 4px;
-}
-
-.workout-tab {
-  flex: 1;
-  padding: 10px;
-  border-radius: 12px;
-  border: none;
-  background: transparent;
-  color: #8A8A8A;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 1.5px;
-  cursor: pointer;
-  transition: all 150ms ease;
-  font-family: inherit;
-}
-
-/* Matches the mockup's active tab exactly: solid gold fill + dark ink text,
-   not a dark-bg-with-gold-text treatment. */
-.workout-tab.active {
-  background: linear-gradient(135deg, var(--accent), #FBE08A);
-  color: var(--accent-ink);
-}
-
 .workout-cta-row {
   display: grid;
   grid-template-columns: 1fr 1fr;

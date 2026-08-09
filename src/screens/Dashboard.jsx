@@ -6,9 +6,61 @@ import { useLanguage } from '../context/LanguageContext'
 import { save } from '../utils/storage'
 import { BOUNDS, clamp } from '../utils/validation'
 import { dailyRemainingCalories } from '../utils/metabolism'
-import { fetchStreak } from '../utils/streak'
+import { fetchStreakDetails } from '../utils/streak'
 import { useSwipeToDismiss } from '../hooks/useSwipeToDismiss'
 import '../styles/dashboard.css'
+
+// Streak paliers — first shown at 7 days, then every 30 days after the
+// 30-day mark ("après 30 jours, 60 jours, 90 jours etc."). Deliberately
+// tied to the *live* streak, not a permanently-unlocked trophy case: if
+// the streak breaks, the badge disappears until it's earned again. A
+// persistent achievements history would need a whole new table + screen
+// and starts turning a coaching app into a collect-everything gamified
+// app — bigger than what was asked, and the direction here has been
+// "premium/futuriste", not "arcade". Capped at 365 (a year) as a
+// defensive bound, same pattern as calculateStreak's own maxDays.
+const STREAK_MILESTONES = [7, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330, 365]
+function currentStreakMilestone(streak) {
+  let milestone = null
+  for (const m of STREAK_MILESTONES) {
+    if (streak >= m) milestone = m
+    else break
+  }
+  return milestone
+}
+
+// Real weather + reverse-geocoded place name — moved here from the now-
+// deleted onglet "Course" (RunContent.jsx), the only part of that screen
+// that was ever genuinely real (not a fake GPS/pace/BPM simulation).
+// Deliberately a single compact line merged into the existing date
+// subtitle rather than its own card — the Dashboard is already dense
+// (streak, calories, 4 activity cards, CTA, weekly card); a whole new
+// weather card would be one block too many for what's a nice-to-have,
+// not core to the app. Best-effort: silent on failure/denied permission,
+// exactly like the original.
+function useWeather() {
+  const [weather, setWeather] = useState(null)
+  useEffect(() => {
+    navigator.geolocation?.getCurrentPosition(async (pos) => {
+      const { latitude, longitude } = pos.coords
+      try {
+        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`)
+        const data = await res.json()
+        const code = data.current_weather?.weathercode
+        const temp = Math.round(data.current_weather?.temperature)
+        const emoji = code === 0 ? '☀️' : code <= 3 ? '⛅' : code <= 48 ? '🌫️' : code <= 67 ? '🌧️' : code <= 77 ? '❄️' : '⛈️'
+        let place = null
+        try {
+          const geoRes = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=fr`)
+          const geoData = await geoRes.json()
+          place = geoData.city || geoData.locality || geoData.principalSubdivision || null
+        } catch {}
+        setWeather({ temp, emoji, place })
+      } catch {}
+    }, () => {})
+  }, [])
+  return weather
+}
 
 const QUOTES = [
   'Reste constant.',
@@ -62,11 +114,17 @@ export default function Dashboard() {
   // seul state car une seule sheet est ouverte à la fois (comme inputVal).
   const [goalInputVal, setGoalInputVal] = useState('')
   const [streak, setStreak] = useState(0)
+  const [restDayAvailable, setRestDayAvailable] = useState(false)
+  const weather = useWeather()
 
   useEffect(() => {
     if (!user?.id) return
     let cancelled = false
-    fetchStreak(user.id).then(n => { if (!cancelled) setStreak(n) })
+    fetchStreakDetails(user.id).then(({ streak, restDayAvailable }) => {
+      if (cancelled) return
+      setStreak(streak)
+      setRestDayAvailable(restDayAvailable)
+    })
     return () => { cancelled = true }
   }, [user?.id])
 
@@ -157,6 +215,8 @@ export default function Dashboard() {
     navigator.vibrate && navigator.vibrate(8)
   }
 
+  const streakMilestone = currentStreakMilestone(streak)
+
   // Same fix as Nutrition.jsx's hero card: folds in today's logged
   // steps/course instead of a flat calorieGoal - calories, so activity
   // actually shows up in what's left to eat (see utils/metabolism.js).
@@ -190,6 +250,7 @@ export default function Dashboard() {
             <h1 style={{ fontSize: 28, fontWeight: 800, lineHeight: 1.15, color: '#FFFFFF' }}>{greeting}, {user?.name}.</h1>
             <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)', marginTop: 4, textTransform: 'capitalize' }}>
               {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+              {weather && ` · ${weather.emoji} ${weather.temp}°C${weather.place ? ` · ${weather.place}` : ''}`}
             </p>
           </div>
           {/* Solid --accent → gold gradient, matching the mockup's avatar
@@ -226,8 +287,26 @@ export default function Dashboard() {
         >
           <span style={{ fontSize: 28, lineHeight: 1, opacity: streak > 0 ? 1 : 0.35 }}>🔥</span>
           <div>
-            <span style={{ fontSize: 20, fontWeight: 800 }}>{streak} jour{streak > 1 ? 's' : ''}</span>
-            <span className="text-sm text-muted" style={{ marginLeft: 6 }}>{streak > 0 ? 'de suite' : "— à toi de commencer aujourd'hui"}</span>
+            <div>
+              <span style={{ fontSize: 20, fontWeight: 800 }}>{streak} jour{streak > 1 ? 's' : ''}</span>
+              <span className="text-sm text-muted" style={{ marginLeft: 6 }}>{streak > 0 ? 'de suite' : "— à toi de commencer aujourd'hui"}</span>
+            </div>
+            {/* Palier — only the currently-active streak's highest reached
+                milestone, not a permanent trophy (see STREAK_MILESTONES
+                comment above). */}
+            {streakMilestone && (
+              <div className="text-xs" style={{ color: 'var(--accent)', fontWeight: 700, marginTop: 2 }}>
+                🏅 Palier {streakMilestone} jours
+              </div>
+            )}
+            {/* Rest-day tolerance made visible — was already there
+                silently (calculateStreak's freeze logic), reported
+                directly ("rendre le jour de repos toléré visible"). */}
+            {restDayAvailable && (
+              <div className="text-xs text-muted" style={{ marginTop: 2 }}>
+                🛡️ Jour de repos disponible cette semaine
+              </div>
+            )}
           </div>
         </div>
 

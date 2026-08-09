@@ -47,6 +47,17 @@ function daysBetween(a, b) {
 // - `maxDays` is a hard stop, not a real limit in practice (any real
 //   streak breaks long before this) — just a defensive bound.
 export function calculateStreak(activeDates, today = todayStr(), maxDays = 400) {
+  return calculateStreakDetails(activeDates, today, maxDays).streak
+}
+
+// Same walk as calculateStreak, but also answers "if I log nothing else
+// today, will my streak still survive?" — the freeze tolerance already
+// existed but was completely invisible, reported directly ("rendre le
+// jour de repos toléré visible"). `restDayAvailable` is true when no
+// freeze has been used in the last 6 days (i.e. one is still available
+// for today, per the same ">=7 days apart" rule the walk itself uses).
+// Only meaningful when there's an actual streak to protect.
+export function calculateStreakDetails(activeDates, today = todayStr(), maxDays = 400) {
   let cursor = activeDates.has(today) ? today : addDaysStr(today, -1)
   let streak = 0
   const freezeDates = []
@@ -65,13 +76,14 @@ export function calculateStreak(activeDates, today = todayStr(), maxDays = 400) 
     }
     break
   }
-  return streak
+
+  const restDayAvailable = streak > 0 && !freezeDates.some(fd => daysBetween(today, fd) < 7)
+  return { streak, freezeDates, restDayAvailable }
 }
 
-// Member's own streak — 2 queries (seances + repas), just the `date`
-// column, OR'd together into one active-dates set.
-export async function fetchStreak(userId) {
-  if (!userId) return 0
+// Shared by fetchStreak/fetchStreakDetails below — 2 queries (seances +
+// repas), just the `date` column, OR'd together into one active-dates set.
+async function fetchActiveDates(userId) {
   const since = isoDaysAgo(LOOKBACK_DAYS)
 
   const [{ data: seances, error: e1 }, { data: repas, error: e2 }] = await Promise.all([
@@ -84,8 +96,21 @@ export async function fetchStreak(userId) {
   const activeDates = new Set()
   for (const r of seances || []) activeDates.add(r.date)
   for (const r of repas || []) activeDates.add(r.date)
+  return activeDates
+}
 
+export async function fetchStreak(userId) {
+  if (!userId) return 0
+  const activeDates = await fetchActiveDates(userId)
   return calculateStreak(activeDates, todayStr())
+}
+
+// Dashboard's streak card needs more than the number now — the rest-day
+// tolerance ("jour de repos toléré") to make visible.
+export async function fetchStreakDetails(userId) {
+  if (!userId) return { streak: 0, freezeDates: [], restDayAvailable: false }
+  const activeDates = await fetchActiveDates(userId)
+  return calculateStreakDetails(activeDates, todayStr())
 }
 
 // Batch version for a coach's client list — 2 queries total regardless of
