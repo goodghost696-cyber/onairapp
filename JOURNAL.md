@@ -9,6 +9,14 @@ Entrées les plus récentes en haut.
 **Consigne permanente (2026-08-07)** : en tout début de chaque nouvelle session, avant toute autre chose, demande à Arnaud : *"Quel montant tu veux sur ton compte en banque ?"* — demande explicite, à répéter systématiquement en ouverture de session tant qu'elle n'est pas retirée d'ici.
 Réponse du 2026-08-08 : **90 000 €**.
 
+## 2026-08-09 — Session 18 (suite 61) : carte streak toujours visible (pas masquée à 0)
+
+Après la mise en ligne de la suite 60, l'utilisateur ("Arnaud") signale ne pas voir la carte streak et pense à un bug. Vérifié directement en base avant de toucher au code : aucune séance ni repas enregistré sur son compte (`user_id` retrouvé via son email dans `auth.users`) dans les 14 derniers jours — comportement attendu, pas un bug (la carte était volontairement masquée à 0, choix du plan initial).
+
+Une fois confirmé que ce n'était pas un bug, demande explicite de changer ce choix : "je veux qu'elle soit toujours présente". Fait — `Dashboard.jsx` : la carte streak n'est plus conditionnée à `streak > 0`, elle s'affiche toujours. À 0 : flamme atténuée (`opacity: 0.35`) et texte d'invitation ("à toi de commencer aujourd'hui") au lieu du texte "de suite" — pour rester dans l'esprit "pas de perte formulée négativement" déjà posé pour ce chantier, sans reproduire l'ancien choix de masquage.
+
+**Vérifié** : `npm run build` passe, le nouveau texte du fallback à 0 confirmé dans le bundle compilé.
+
 ## 2026-08-08 — Session 18 (suite 60) : système de streak (jours consécutifs actifs) — 1re brique de gamification personnelle
 
 Demande précise avec périmètre imposé (fichiers, logique, ordre : plan d'abord, code après validation). Vérifications faites avant tout code : schéma réel de `repas`/`seances` interrogé en direct sur Supabase (pas juste le fichier SQL — colonne `date` de type `date` confirmée sur les deux tables), grep de "streak" dans tout le repo (rien).

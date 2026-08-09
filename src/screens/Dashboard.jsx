@@ -139,31 +139,31 @@ export default function Dashboard() {
         {/* Rotating quote */}
         <RotatingQuote />
 
-        {/* Streak — hidden at 0 (no point showing a dead flame on a brand
-            new/broken streak). From 3 days on (first visual palier, not
-            30), the card gets the --accent glow treatment to read as an
-            actual badge instead of just a number. */}
-        {streak > 0 && (
-          <div
-            className="card card-animated"
-            style={{
-              marginBottom: 16,
-              '--delay': '0ms',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 12,
-              ...(streak >= 3
-                ? { border: '1px solid var(--accent)', boxShadow: '0 0 0 1px var(--accent) inset, 0 4px 20px rgba(240,193,75,0.25)' }
-                : {}),
-            }}
-          >
-            <span style={{ fontSize: 28, lineHeight: 1 }}>🔥</span>
-            <div>
-              <span style={{ fontSize: 20, fontWeight: 800 }}>{streak} jour{streak > 1 ? 's' : ''}</span>
-              <span className="text-sm text-muted" style={{ marginLeft: 6 }}>de suite</span>
-            </div>
+        {/* Streak — always present now (direct request: "je veux qu'elle
+            soit toujours présente"). At 0, neutral/muted treatment (dimmed
+            flame, no glow) rather than hidden — reads as an invitation, not
+            a failure. From 3 days on (first visual palier, not 30), the
+            card gets the --accent glow treatment to read as an actual
+            badge instead of just a number. */}
+        <div
+          className="card card-animated"
+          style={{
+            marginBottom: 16,
+            '--delay': '0ms',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            ...(streak >= 3
+              ? { border: '1px solid var(--accent)', boxShadow: '0 0 0 1px var(--accent) inset, 0 4px 20px rgba(240,193,75,0.25)' }
+              : {}),
+          }}
+        >
+          <span style={{ fontSize: 28, lineHeight: 1, opacity: streak > 0 ? 1 : 0.35 }}>🔥</span>
+          <div>
+            <span style={{ fontSize: 20, fontWeight: 800 }}>{streak} jour{streak > 1 ? 's' : ''}</span>
+            <span className="text-sm text-muted" style={{ marginLeft: 6 }}>{streak > 0 ? 'de suite' : "— à toi de commencer aujourd'hui"}</span>
           </div>
-        )}
+        </div>
 
         {/* Calorie card — was a ring (CalorieRing.jsx) on a plain dark
             surface; converted to the same flat gold-gradient "hero" card
