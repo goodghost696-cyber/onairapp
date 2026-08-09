@@ -8,6 +8,7 @@ import { authHeader } from '../lib/supabase'
 import { BOUNDS, clamp } from '../utils/validation'
 import { dailyRemainingCalories } from '../utils/metabolism'
 import { resizeImage } from '../utils/image'
+import { estimateFoodsFromText, computeItemsTotal } from '../utils/foodEstimate'
 import NutriscoreBadge from '../components/NutriscoreBadge'
 import SwipeableRow from '../components/SwipeableRow'
 import '../styles/nutrition.css'
@@ -65,7 +66,7 @@ export default function Nutrition() {
   const [editingMeal, setEditingMeal] = useState(null)
   const [editGrams, setEditGrams] = useState('')
   const { user } = useAuth()
-  const { t } = useLanguage()
+  const { t, lang } = useLanguage()
   const [sheetOpen, setSheetOpen] = useState(false)
   const [step, setStep] = useState(1)
   const [foodSearch, setFoodSearch] = useState('')
@@ -88,6 +89,18 @@ export default function Nutrition() {
   const [qtyHelperInput, setQtyHelperInput] = useState('')
   const [qtyHelperLoading, setQtyHelperLoading] = useState(false)
   const [qtyHelperError, setQtyHelperError] = useState('')
+
+  // "Décrire plusieurs aliments" — whole compound meal in one description
+  // ("3 c. à soupe de skyr, 2 c. à soupe de confiture"), moved from
+  // Scan.jsx onto this screen directly and promoted above Idée recette
+  // (explicit request: same reasoning as the single-item helper above —
+  // no separate screen for something this central to the flow).
+  const [describeSheetOpen, setDescribeSheetOpen] = useState(false)
+  const [describeInput, setDescribeInput] = useState('')
+  const [describeLoading, setDescribeLoading] = useState(false)
+  const [describeError, setDescribeError] = useState('')
+  const [describeResult, setDescribeResult] = useState(null)
+  const [describeMealType, setDescribeMealType] = useState('Déjeuner')
   const [mealType, setMealType] = useState('Déjeuner')
   const [toast, setToast] = useState('')
 
@@ -270,6 +283,54 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant ou après, avec exactement 
       setQtyHelperError('Estimation impossible, réessaie ou entre le poids directement.')
     }
     setQtyHelperLoading(false)
+  }
+
+  function openDescribeSheet() {
+    setDescribeSheetOpen(true)
+    setDescribeInput('')
+    setDescribeError('')
+    setDescribeResult(null)
+    setDescribeMealType('Déjeuner')
+  }
+
+  async function estimateMultipleFoods() {
+    const description = describeInput.trim()
+    if (!description) return
+    setDescribeLoading(true)
+    setDescribeError('')
+    setDescribeResult(null)
+    try {
+      const result = await estimateFoodsFromText(description, lang)
+      setDescribeResult(result)
+    } catch (err) {
+      setDescribeError(`Erreur : ${err.message}`)
+    }
+    setDescribeLoading(false)
+  }
+
+  function updateDescribeItemGrams(index, grams) {
+    setDescribeResult(prev => {
+      const items = [...prev.items]
+      items[index] = { ...items[index], grams: clamp(grams, { min: 0, max: BOUNDS.grams.max }, 0) }
+      return { ...prev, items }
+    })
+  }
+
+  async function addDescribedMeal() {
+    if (!describeResult) return
+    const total = computeItemsTotal(describeResult.items)
+    await addMeal({
+      name: describeResult.meal_name,
+      calories: Math.round(total.kcal),
+      protein: Math.round(total.proteins),
+      carbs: Math.round(total.carbs),
+      fat: Math.round(total.fats),
+      nutriscore: 'B',
+      mealType: describeMealType,
+    })
+    setDescribeSheetOpen(false)
+    setToast(`Ajouté au ${describeMealType}`)
+    setTimeout(() => setToast(''), 2000)
   }
 
   function openRecipeSheet() {
@@ -736,6 +797,27 @@ Réponds en français.`
           </div>
         </div>
 
+        {/* "Décrire plusieurs aliments" — promoted above Idée recette on
+            request ("on doit mettre ça au-dessus d'idée recette"). Handles
+            a whole compound meal in one description ("3 c. à soupe de
+            skyr, 2 c. à soupe de confiture"), unlike the single-item helper
+            on the quantity step below, which only knows the one food
+            already selected in the search. */}
+        <button
+          onClick={openDescribeSheet}
+          className="card card-animated"
+          style={{
+            display: 'flex', alignItems: 'center', gap: 14, width: '100%',
+            marginBottom: 16, cursor: 'pointer', textAlign: 'left', '--delay': '40ms',
+          }}
+        >
+          <span className="nutrition-recipe-icon">✏️</span>
+          <div>
+            <div className="text-base bold">Décrire un repas</div>
+            <div className="text-xs text-muted">"3 c. à soupe de skyr, 2 c. à soupe de confiture..." — pas besoin des grammes</div>
+          </div>
+        </button>
+
         <button
           onClick={openRecipeSheet}
           className="card card-violet nutrition-recipe-card card-animated"
@@ -1016,6 +1098,107 @@ Réponds en français.`
           </>
         )}
       </div>
+
+      {/* "Décrire plusieurs aliments" overlay + sheet */}
+      {describeSheetOpen && <div onClick={() => setDescribeSheetOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 199 }} />}
+      {describeSheetOpen && (
+        <div style={{
+          position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)',
+          width: '100%', maxWidth: 480, background: 'var(--surface-solid)',
+          backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)',
+          borderRadius: '20px 20px 0 0', borderTop: '1px solid var(--glass-border)',
+          padding: '24px 20px 40px', zIndex: 200, maxHeight: '80vh', overflowY: 'auto',
+        }}>
+          {!describeResult ? (
+            <>
+              <h2 className="text-lg bold" style={{ marginBottom: 16 }}>Décrire un repas</h2>
+              <textarea
+                autoFocus
+                value={describeInput}
+                onChange={e => setDescribeInput(e.target.value)}
+                placeholder="Ex : 3 c. à soupe de skyr, 2 c. à soupe de confiture..."
+                rows={4}
+                disabled={describeLoading}
+                style={{
+                  width: '100%', resize: 'vertical', padding: '14px 16px', borderRadius: 12,
+                  background: 'var(--surface)', border: '2px solid var(--border)',
+                  color: 'var(--text-primary)', fontSize: 15, fontFamily: 'inherit', lineHeight: 1.5,
+                  marginBottom: 16,
+                }}
+              />
+              {describeError && <p style={{ color: 'var(--danger)', fontSize: 12, marginBottom: 12 }}>{describeError}</p>}
+              <button className="btn-accent" onClick={estimateMultipleFoods} disabled={describeLoading || !describeInput.trim()}>
+                {describeLoading ? 'Analyse en cours...' : 'Analyser'}
+              </button>
+            </>
+          ) : (
+            (() => {
+              const total = computeItemsTotal(describeResult.items)
+              return (
+                <>
+                  <h2 className="text-lg bold" style={{ marginBottom: 16 }}>{describeResult.meal_name}</h2>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 8, marginBottom: 20, padding: '14px', background: 'var(--surface-2)', borderRadius: 12 }}>
+                    {[
+                      { label: 'kcal', val: Math.round(total.kcal) },
+                      { label: 'P', val: `${Math.round(total.proteins)}g` },
+                      { label: 'G', val: `${Math.round(total.carbs)}g` },
+                      { label: 'L', val: `${Math.round(total.fats)}g` },
+                    ].map(m => (
+                      <div key={m.label} style={{ textAlign: 'center' }}>
+                        <div className="text-base bold">{m.val}</div>
+                        <div className="text-xs text-muted">{m.label}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginBottom: 16 }}>
+                    {describeResult.items.map((item, i) => (
+                      <div key={i} style={{ padding: '10px 0', borderBottom: '0.5px solid var(--border)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                          <span>
+                            {item.name}
+                            <span
+                              title={item.verified ? 'Valeurs vérifiées (Open Food Facts)' : 'Estimation IA — non vérifiée'}
+                              style={{ marginLeft: 6, fontSize: 11, color: item.verified ? 'var(--success)' : 'var(--text-secondary)' }}
+                            >
+                              {item.verified ? '✓' : '≈'}
+                            </span>
+                          </span>
+                          <span>{Math.round(item.kcal100 * item.grams / 100)} kcal</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <input
+                            type="number"
+                            min="0"
+                            value={item.grams}
+                            onChange={e => updateDescribeItemGrams(i, parseInt(e.target.value, 10) || 0)}
+                            style={{
+                              width: 64, background: 'var(--surface-2)', border: '2px solid var(--border)',
+                              borderRadius: 8, color: 'var(--text-primary)', padding: '4px 8px', fontSize: 13, fontFamily: 'inherit',
+                            }}
+                          />
+                          <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>g</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, marginBottom: 16, overflowX: 'auto' }}>
+                    {MEAL_TYPES.map(mt => (
+                      <button key={mt} onClick={() => setDescribeMealType(mt)} style={{
+                        background: describeMealType === mt ? 'var(--accent)' : 'var(--surface-2)',
+                        border: '0.5px solid var(--border)',
+                        color: describeMealType === mt ? 'var(--accent-ink)' : 'var(--text-secondary)',
+                        fontSize: 11, fontWeight: 700, padding: '8px 14px', borderRadius: 50,
+                        whiteSpace: 'nowrap', flexShrink: 0, cursor: 'pointer',
+                      }}>{mt}</button>
+                    ))}
+                  </div>
+                  <button className="btn-accent" onClick={addDescribedMeal}>{t('add')}</button>
+                </>
+              )
+            })()
+          )}
+        </div>
+      )}
 
       {/* Recipe overlay + sheet */}
       {recipeSheetOpen && <div onClick={() => setRecipeSheetOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 199 }} />}
