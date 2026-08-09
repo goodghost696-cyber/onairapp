@@ -9,6 +9,18 @@ Entrées les plus récentes en haut.
 **Consigne permanente (2026-08-07)** : en tout début de chaque nouvelle session, avant toute autre chose, demande à Arnaud : *"Quel montant tu veux sur ton compte en banque ?"* — demande explicite, à répéter systématiquement en ouverture de session tant qu'elle n'est pas retirée d'ici.
 Réponse du 2026-08-08 : **90 000 €**.
 
+## 2026-08-09 — Session 18 (suite 69) : "Décrire un repas" (multi-ingrédients) promu sur l'écran Nutrition + fusion Photo/Code-barres dans Scanner
+
+Suite de discussion sur "comment saisir 3 c. à soupe de skyr + 2 c. à soupe de confiture sans se soucier des grammes" — plan validé avant code (deux changements distincts).
+
+**1. "Décrire un repas" déplacé de Scanner vers l'écran principal Nutrition, au-dessus d'Idée recette.** La sheet "Décrire un repas" (suite 66, `Scan.jsx`) gérait déjà plusieurs ingrédients en une seule description — mais vivait derrière une navigation vers `/scan`. Retirée de `Scan.jsx`, reconstruite comme sheet inline dans `Nutrition.jsx` (nouvelle carte juste au-dessus d'Idée recette), même logique de parsing multi-items (prompt Claude + vérification Open Food Facts), même écran de révision (items éditables, chips repas, ajout groupé).
+
+**Refactor** : la logique partagée (`lookupOFF`, calcul des totaux, et maintenant `estimateFoodsFromText`) extraite dans `src/utils/foodEstimate.js` — évite de dupliquer le prompt et la logique OFF entre `Scan.jsx` (toujours utilisé pour photo/code-barres) et `Nutrition.jsx` (nouveau point d'entrée texte).
+
+**2. Scanner : "Prendre une photo" et "Code-barres" fusionnés.** Contrainte technique expliquée et validée avant de coder : la caméra utilisée (`<input capture>`) est l'interface native du téléphone — impossible d'y injecter un toggle personnalisé, on n'a aucun contrôle sur son UI. Alternative retenue : un petit sélecteur à 2 chips ("Repas" / "Code-barres", réutilise `.meal-chip` déjà existant) juste au-dessus d'un unique bouton caméra, qui s'ouvre directement dans le mode choisi. "Galerie" reste un bouton séparé, toujours en mode repas (pas concerné par le toggle).
+
+**Vérifié** : `npm run build` passe. "Décrire un repas", le placeholder multi-ingrédients et "Analyse en cours" confirmés dans le bundle compilé côté Nutrition ; les classes `meal-chip` du nouveau toggle confirmées côté Scanner. Aucune référence résiduelle à l'ancien mode texte de `Scan.jsx` (grep vide).
+
 ## 2026-08-09 — Session 18 (suite 68) : "Modifier" un repas ne permettait pas de changer le créneau (matin/midi/soir/snack)
 
 Question directe : coché "Petit-déjeuner" au lieu de "Déjeuner" par erreur, "je fais comment ?". Vérifié : la modale "Modifier" (`Nutrition.jsx`, `editingMeal`) ne permettait de changer que le grammage — pas de sélecteur de repas, contrairement à la sheet d'ajout qui en a un.
