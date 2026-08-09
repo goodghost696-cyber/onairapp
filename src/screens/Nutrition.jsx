@@ -80,6 +80,14 @@ export default function Nutrition() {
   // what's displayed — same pattern already used for editGrams.
   const [gramsInput, setGramsInput] = useState('100')
   const grams = clamp(parseInt(gramsInput), BOUNDS.grams, 100)
+  // Inline quantity-to-grams helper, right on the quantity step — not a
+  // separate screen/flow (explicitly rejected: "je ne veux pas un nouveau
+  // chemin"). "3 oeufs", "4 c. à soupe" → estimated total grams for the
+  // food already selected, filled straight into gramsInput above.
+  const [qtyHelperOpen, setQtyHelperOpen] = useState(false)
+  const [qtyHelperInput, setQtyHelperInput] = useState('')
+  const [qtyHelperLoading, setQtyHelperLoading] = useState(false)
+  const [qtyHelperError, setQtyHelperError] = useState('')
   const [mealType, setMealType] = useState('Déjeuner')
   const [toast, setToast] = useState('')
 
@@ -216,10 +224,53 @@ export default function Nutrition() {
 
   function openSheet(presetMealType) {
     setSheetOpen(true); setStep(1); setFoodSearch(''); setSelectedFood(null); setGramsInput('100')
+    setQtyHelperOpen(false); setQtyHelperInput(''); setQtyHelperError('')
     if (presetMealType) setMealType(presetMealType)
   }
 
-  function selectFood(f) { setSelectedFood(f); setStep(2) }
+  function selectFood(f) { setSelectedFood(f); setStep(2); setQtyHelperOpen(false); setQtyHelperInput(''); setQtyHelperError('') }
+
+  // "3 oeufs", "4 c. à soupe" → poids total estimé en grammes pour
+  // l'aliment déjà sélectionné (selectedFood.name) — beaucoup plus simple
+  // que le prompt multi-aliments de Scan.jsx puisque l'aliment est déjà
+  // connu, seule la quantité doit être convertie.
+  async function estimateGramsFromQuantity() {
+    const description = qtyHelperInput.trim()
+    if (!description || !selectedFood) return
+    setQtyHelperLoading(true)
+    setQtyHelperError('')
+    try {
+      const prompt = `Aliment : "${selectedFood.name}". Quantité décrite par l'utilisateur : "${description}".
+Convertis cette quantité en un poids total en grammes, en te basant sur des poids de référence standards et réalistes pour cet aliment et cette unité (ex: un oeuf moyen ≈ 50-55g, une cuillère à soupe de yaourt/skyr ≈ 15-18g, une tranche de pain ≈ 30g, une poignée ≈ 30g). Reste réaliste, ne sur-estime ni sous-estime pas grossièrement.
+Réponds UNIQUEMENT en JSON valide, sans texte avant ou après, avec exactement cette structure :
+{ "grams": 150 }`
+
+      const response = await fetch('/api/claude', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 100,
+          messages: [{ role: 'user', content: prompt }],
+        }),
+      })
+      if (!response.ok) {
+        const err = await response.json()
+        throw new Error(err.error || `HTTP ${response.status}`)
+      }
+      const data = await response.json()
+      const raw = data.content?.[0]?.text || ''
+      const clean = raw.replace(/```json|```/g, '').trim()
+      const parsed = JSON.parse(clean)
+      const estimated = clamp(parseInt(parsed.grams, 10), BOUNDS.grams, 100)
+      setGramsInput(String(estimated))
+      setQtyHelperOpen(false)
+      setQtyHelperInput('')
+    } catch (err) {
+      setQtyHelperError('Estimation impossible, réessaie ou entre le poids directement.')
+    }
+    setQtyHelperLoading(false)
+  }
 
   function openRecipeSheet() {
     setRecipeSheetOpen(true)
@@ -795,7 +846,15 @@ Réponds en français.`
           reliably. Same class of bug already fixed once on the
           Conversation screen's send button. */}
       <button onClick={openSheet} style={{
-        position: 'fixed', bottom: 90, left: 16, zIndex: 95,
+        // Was a flat bottom:90 — the message FAB it needs to align with
+        // (fab.css's .fab-container) uses calc(76px + env(safe-area-inset-
+        // bottom)), safe-area-aware since suite 55/56. The two only lined
+        // up by coincidence when the safe area happened to equal 14px;
+        // anywhere else (Safari tab: SAB=0, so 76px vs this button's flat
+        // 90px; standalone: SAB=34, so 110px vs 90px) they visibly
+        // diverged — reported directly on a real screenshot. Same formula
+        // now, so they can't drift apart again.
+        position: 'fixed', bottom: 'calc(76px + env(safe-area-inset-bottom))', left: 16, zIndex: 95,
         width: 52, height: 52, borderRadius: '50%',
         background: 'var(--accent)', border: 'none', cursor: 'pointer',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -869,6 +928,43 @@ Réponds en français.`
                 onBlur={() => setGramsInput(String(grams))}
                 style={{ fontSize: 24, fontWeight: 700, textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}
               />
+              {/* Inline, sur cet écran — pas un nouveau chemin/écran séparé.
+                  "3 oeufs", "4 c. à soupe de skyr" -> l'IA remplit le champ
+                  grammes ci-dessus directement. */}
+              {!qtyHelperOpen ? (
+                <button
+                  type="button"
+                  onClick={() => setQtyHelperOpen(true)}
+                  style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: 12, fontWeight: 600, padding: '8px 0 0', cursor: 'pointer', display: 'block', margin: '0 auto' }}
+                >
+                  Je ne connais pas le poids →
+                </button>
+              ) : (
+                <div style={{ marginTop: 10, padding: 12, background: 'var(--surface-2)', borderRadius: 12 }}>
+                  <label className="text-xs text-muted" style={{ display: 'block', marginBottom: 6 }}>DÉCRIS LA QUANTITÉ</label>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <input
+                      autoFocus
+                      value={qtyHelperInput}
+                      onChange={e => setQtyHelperInput(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && estimateGramsFromQuantity()}
+                      placeholder="ex : 3 oeufs, 4 c. à soupe..."
+                      style={{ flex: 1 }}
+                      disabled={qtyHelperLoading}
+                    />
+                    <button
+                      type="button"
+                      className="btn-accent"
+                      onClick={estimateGramsFromQuantity}
+                      disabled={qtyHelperLoading || !qtyHelperInput.trim()}
+                      style={{ width: 'auto', padding: '0 16px', flexShrink: 0 }}
+                    >
+                      {qtyHelperLoading ? '...' : 'Estimer'}
+                    </button>
+                  </div>
+                  {qtyHelperError && <p style={{ color: 'var(--danger)', fontSize: 11, marginTop: 6 }}>{qtyHelperError}</p>}
+                </div>
+              )}
             </div>
             {preview && (
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 8, marginBottom: 20, padding: '14px', background: 'var(--surface-2)', borderRadius: 12 }}>
