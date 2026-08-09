@@ -64,7 +64,7 @@ export default function OnboardingTour({ variant }) {
         width: '100%', maxWidth: 480, background: 'var(--surface-solid)',
         borderRadius: '24px 24px 0 0', border: '1px solid var(--glass-border)',
         borderBottom: 'none', padding: '32px 24px 40px',
-        animation: 'slideUp 320ms cubic-bezier(0.34,1.56,0.64,1)',
+        animation: 'tourSlideUp 320ms cubic-bezier(0.34,1.56,0.64,1)',
       }}>
         <button
           onClick={finish}

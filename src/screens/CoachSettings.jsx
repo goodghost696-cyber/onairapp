@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import CoachNav from '../components/CoachNav'
 import { authHeader } from '../lib/supabase'
-import { isPushSupported, getPushSubscriptionState, subscribeToPush, unsubscribeFromPush } from '../utils/push'
+import { isPushSupported, getPushSubscriptionState, subscribeToPush, unsubscribeFromPush, isIOSNotStandalone } from '../utils/push'
 import DeleteAccountButton from '../components/DeleteAccountButton'
 import { storageKey } from '../components/OnboardingTour'
 import { useGymConfig } from '../hooks/useGymConfig'
@@ -97,6 +97,20 @@ export default function CoachSettings() {
                 {pushState === 'denied' && <div className="text-xs" style={{ color: 'var(--danger)', marginTop: 2 }}>Bloquées dans les réglages du navigateur</div>}
               </div>
               <Toggle on={pushState === 'subscribed'} onToggle={handleTogglePush} />
+            </div>
+          )}
+          {/* Same fix as Settings.jsx (member side) — was rendering nothing
+              at all when unsupported, which on iOS Safari (Push API only
+              available in an installed home-screen app) is the default
+              case, not an edge case. */}
+          {pushState === 'unsupported' && (
+            <div style={{ padding: '14px 0' }}>
+              <div className="text-sm text-secondary">Nouveaux messages</div>
+              <div className="text-xs text-muted" style={{ marginTop: 4, lineHeight: 1.5 }}>
+                {isIOSNotStandalone()
+                  ? "Indisponibles depuis Safari sur iPhone — ajoute VOLTA à ton écran d'accueil (icône de partage → \"Sur l'écran d'accueil\") pour pouvoir les activer."
+                  : "Non prises en charge par ce navigateur."}
+              </div>
             </div>
           )}
           {/* "Alertes membres" used to live here as a local-state

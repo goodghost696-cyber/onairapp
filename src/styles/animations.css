@@ -41,6 +41,24 @@
   }
 }
 
+/* Dedicated to OnboardingTour.jsx's bottom sheet — it used to reuse the
+   `slideUp` name from ExerciseModal.css (a global @keyframes, since Vite
+   bundles all imported CSS into one stylesheet regardless of which
+   component imported it — same name anywhere wins for every element using
+   it). That keyframe's `from`/`to` both include `translateX(-50%)`,
+   correct for ExerciseModal's own absolute+left:50% positioning but wrong
+   for this sheet, which centers itself with flexbox instead — for the
+   animation's whole 320ms duration the borrowed transform shoved it 50%
+   of its own width to the left, snapping back to its real (flex-centered)
+   position the instant the animation ended (default fill-mode: none).
+   Reported directly: "apparaît d'abord sur le côté gauche... pour se
+   mettre au bon endroit la seconde qui suit". Own name, translateY only —
+   no positioning assumption to get wrong for a different component. */
+@keyframes tourSlideUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
 .card:active {
   transform: scale(0.985);
   transition: transform 100ms ease;
