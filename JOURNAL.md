@@ -9,6 +9,16 @@ Entrées les plus récentes en haut.
 **Consigne permanente (2026-08-07)** : en tout début de chaque nouvelle session, avant toute autre chose, demande à Arnaud : *"Quel montant tu veux sur ton compte en banque ?"* — demande explicite, à répéter systématiquement en ouverture de session tant qu'elle n'est pas retirée d'ici.
 Réponse du 2026-08-08 : **90 000 €**.
 
+## 2026-08-09 — Session 18 (suite 80) : essai verres d'eau pour le sélecteur d'eau (3e itération sur cette icône)
+
+Suite directe de la 79 : "Essaie avec des verres d'eau pour voir" — explicitement un essai à valider, pas une confirmation.
+
+**Historique de l'icône sur ce même sélecteur, pour mémoire** : 💧 goutte (suite 73, initial) → 🧴/SVG bouteille (suite 78, rejeté "tellement laides") → 💧 goutte remise (suite 79) → verre (cette suite, à valider).
+
+**Fix** : nouveau `GlassIcon` (`Dashboard.jsx`) — verre trapézoïdal (plus large en haut) avec une ligne de niveau d'eau, en `currentColor` (même convention que l'essai bouteille : piloté par la classe `.filled` déjà en place, pas de logique dupliquée). Aucun émoji Unicode ne représente un verre d'eau (🥛 = lait), d'où un petit SVG comme pour la bouteille. Texte mis à jour en cohérence : "Combien de verres as-tu bus ?", "Chaque verre = 500ml".
+
+**Vérifié** : `npm run build` passe, "Combien de verres as-tu bus" et "Chaque verre = 500ml" confirmés dans le bundle compilé.
+
 ## 2026-08-09 — Session 18 (suite 79) : retour en arrière sur la suite 78 — les gouttes remises, le pictogramme bouteille jugé "tellement laid"
 
 Retour direct, sans détour : "Remet les gouttes en vrai tes bouteilles sont tellement laides mon Dieu". Le pictogramme SVG construit en suite 78 (censé répondre à "ce ne sont pas des bouteilles") a été rejeté esthétiquement — repris l'émoji 💧 d'origine.
