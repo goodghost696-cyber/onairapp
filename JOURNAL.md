@@ -9,6 +9,18 @@ Entrées les plus récentes en haut.
 **Consigne permanente (2026-08-07)** : en tout début de chaque nouvelle session, avant toute autre chose, demande à Arnaud : *"Quel montant tu veux sur ton compte en banque ?"* — demande explicite, à répéter systématiquement en ouverture de session tant qu'elle n'est pas retirée d'ici.
 Réponse du 2026-08-08 : **90 000 €**.
 
+## 2026-08-09 — Session 18 (suite 62) : bug réel trouvé — sommeil (et eau/pas/km) réécrits en silence chaque jour avec la valeur par défaut
+
+Question d'Arnaud : "les données se mettent à jour chaque jour ? le sommeil est toujours à 7h". Vérifié directement en base (pas supposé) : `activite_jour.sommeil_h = 7.3833...` (= 7h23, exactement le défaut codé en dur `{hours:7, minutes:23}`) sur TOUS les jours depuis le 18 juillet, et `pas`/`eau_ml`/`km_courus` à 0 partout aussi (même défaut, moins visible car 0 ressemble à "rien tracké").
+
+**Cause réelle** : `AppContext.jsx`, les 4 effets qui persistent eau/pas/sommeil/course vers `activite_jour` étaient gardés par `activiteLoaded` pour ne jamais écrire AVANT le fetch du jour — mais rien ne les empêchait d'écrire PENDANT la transition elle-même : au moment exact où `activiteLoaded` passe à `true`, l'effet se redéclenche (il est dans son propre tableau de dépendances) et persiste `appData.sleep`/`.water`/etc. tel qu'il est à cet instant — la valeur par défaut ou celle d'un jour précédent en cache local, jamais une vraie saisie du jour. Résultat : chaque nouvelle ouverture de l'app réécrit silencieusement le défaut sur la ligne du jour, avant même que l'utilisateur ait pu toucher quoi que ce soit.
+
+**Fix** : `skipFirstPersist` (un `useRef` avec un flag par champ) — chaque effet ignore sa toute première exécution une fois `activiteLoaded` passé à `true`, et ne persiste qu'à partir du changement suivant, qui est alors une vraie action utilisateur. Touche les 4 effets (eau, pas, km, sommeil) puisque le même bug les affectait tous.
+
+**Vérifié** : `npm run build` passe, l'objet `{water:true,steps:true,kmRun:true,sleep:true}` confirmé dans le bundle compilé (les noms de propriété d'un objet littéral survivent à la minification, contrairement aux noms de variables).
+
+**Non fait, à valider avec Arnaud séparément** : les lignes déjà polluées en base (tous les jours depuis le 18 juillet) restent fausses tant qu'il ne les édite pas manuellement ou que je ne les nettoie pas — pas touché à ses données réelles sans son accord explicite.
+
 ## 2026-08-09 — Session 18 (suite 61) : carte streak toujours visible (pas masquée à 0)
 
 Après la mise en ligne de la suite 60, l'utilisateur ("Arnaud") signale ne pas voir la carte streak et pense à un bug. Vérifié directement en base avant de toucher au code : aucune séance ni repas enregistré sur son compte (`user_id` retrouvé via son email dans `auth.users`) dans les 14 derniers jours — comportement attendu, pas un bug (la carte était volontairement masquée à 0, choix du plan initial).

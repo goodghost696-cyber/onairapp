@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useContext, useState, useEffect, useRef } from 'react'
 import { save, load, clearDay } from '../utils/storage'
 import { supabase } from '../lib/supabase'
 import { useAuth } from './AuthContext'
@@ -116,6 +116,19 @@ export function AppProvider({ children }) {
   // Guards the activite_jour persist-effects below from firing with stale
   // localStorage/default values before the day's real row has been fetched.
   const [activiteLoaded, setActiviteLoaded] = useState(false)
+  // activiteLoaded only guarded writes BEFORE the fetch — not the write
+  // that fires ON the exact transition to true, which still carries
+  // whatever appData held right then (a previous day's cached value, or
+  // the hardcoded seed default like sleep's {hours:7,minutes:23}). That
+  // write was real and silent: confirmed in production, every single day
+  // since the earliest row, activite_jour.sommeil_h sat at exactly
+  // 7.3833...h (7h23, the untouched default) and pas/eau_ml/km_courus at
+  // 0 — not because nothing was tracked, but because this effect was
+  // re-persisting the unedited default back over each new day's row
+  // before the user ever touched anything. One ref per field skips
+  // exactly that first post-load run; any later change is a real edit
+  // and persists normally.
+  const skipFirstPersist = useRef({ water: true, steps: true, kmRun: true, sleep: true })
   const [appData, setAppData] = useState(() => {
     const goals = getPersonalisedGoals()
     return {
@@ -281,7 +294,10 @@ export function AppProvider({ children }) {
 
   // Persist water/steps/sleep/run to activite_jour whenever they change —
   // gated on activiteLoaded so we never write back the pre-fetch defaults
-  // over a real row that hasn't loaded yet.
+  // over a real row that hasn't loaded yet, AND skipping the exact first
+  // run once activiteLoaded flips true (see skipFirstPersist above) so
+  // that transition itself — carrying whatever value was already in
+  // appData, real or default, not a user edit — never gets written back.
   // clamp() below is a second line of defense, not the primary guard — the
   // UI inputs (Dashboard, AI Coach tool calls) already clamp before calling
   // updateData. This just guarantees nothing absurd can reach the DB even
@@ -289,6 +305,7 @@ export function AppProvider({ children }) {
   // columns funnels through these four effects.
   useEffect(() => {
     if (!user?.id || !activiteLoaded) return
+    if (skipFirstPersist.current.water) { skipFirstPersist.current.water = false; return }
     supabase.from('activite_jour').upsert({
       user_id: user.id, date: todayStr(), eau_ml: clamp(appData.water, BOUNDS.water),
     }, { onConflict: 'user_id,date' }).then(({ error }) => {
@@ -298,6 +315,7 @@ export function AppProvider({ children }) {
 
   useEffect(() => {
     if (!user?.id || !activiteLoaded) return
+    if (skipFirstPersist.current.steps) { skipFirstPersist.current.steps = false; return }
     supabase.from('activite_jour').upsert({
       user_id: user.id, date: todayStr(), pas: clamp(appData.steps, BOUNDS.steps),
     }, { onConflict: 'user_id,date' }).then(({ error }) => {
@@ -307,6 +325,7 @@ export function AppProvider({ children }) {
 
   useEffect(() => {
     if (!user?.id || !activiteLoaded) return
+    if (skipFirstPersist.current.kmRun) { skipFirstPersist.current.kmRun = false; return }
     supabase.from('activite_jour').upsert({
       user_id: user.id, date: todayStr(), km_courus: clamp(appData.kmRun, BOUNDS.kmRun),
     }, { onConflict: 'user_id,date' }).then(({ error }) => {
@@ -316,6 +335,7 @@ export function AppProvider({ children }) {
 
   useEffect(() => {
     if (!user?.id || !activiteLoaded) return
+    if (skipFirstPersist.current.sleep) { skipFirstPersist.current.sleep = false; return }
     const hours = clamp((appData.sleep?.hours || 0) + (appData.sleep?.minutes || 0) / 60, BOUNDS.sleepHours)
     supabase.from('activite_jour').upsert({
       user_id: user.id, date: todayStr(), sommeil_h: hours,
