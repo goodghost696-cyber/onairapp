@@ -168,12 +168,18 @@ export function AppProvider({ children }) {
     }
   })
 
-  // Day reset — resets only daily metrics
+  // Day reset — resets only daily metrics. sleep/kmRun were missing here
+  // (only calories/water/steps/protein/carbs/fat/meals were reset) — on a
+  // fresh local day, before the Supabase fetch below finds today's row
+  // (there isn't one yet), appData.sleep/.kmRun kept showing yesterday's
+  // cached number instead of a blank slate, unlike everything else.
   useEffect(() => {
     if (clearDay()) {
-      setAppData(prev => ({ ...prev, calories: 0, water: 0, steps: 0, protein: 0, carbs: 0, fat: 0, meals: [] }))
+      const freshSleep = sleepFromHours(0)
+      setAppData(prev => ({ ...prev, calories: 0, water: 0, steps: 0, protein: 0, carbs: 0, fat: 0, meals: [], sleep: freshSleep, kmRun: 0 }))
       save('calories', 0); save('water', 0); save('steps', 0)
       save('protein', 0); save('carbs', 0); save('fat', 0); save('meals', [])
+      save('sleep', freshSleep); save('kmRun', 0)
     }
   }, [])
 

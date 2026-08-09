@@ -9,6 +9,16 @@ Entrées les plus récentes en haut.
 **Consigne permanente (2026-08-07)** : en tout début de chaque nouvelle session, avant toute autre chose, demande à Arnaud : *"Quel montant tu veux sur ton compte en banque ?"* — demande explicite, à répéter systématiquement en ouverture de session tant qu'elle n'est pas retirée d'ici.
 Réponse du 2026-08-08 : **90 000 €**.
 
+## 2026-08-09 — Session 18 (suite 63) : sommeil/course manquaient au reset quotidien local + état des lieux notifications
+
+Question de suivi après la suite 62 : "elles seront à jour à 0 tous les jours ?". Vérifié le reset quotidien local (`clearDay()` + son effet dans `AppContext.jsx`) : `calories`/`water`/`steps`/`protein`/`carbs`/`fat`/`meals` étaient bien remis à 0 chaque nouveau jour (local, `toDateString()`), mais **`sleep` et `kmRun` en étaient absents** — sur un jour neuf, avant que Supabase ne trouve une ligne pour aujourd'hui (il n'y en a pas encore), ces deux champs continuaient d'afficher la valeur mise en cache de la veille au lieu d'un état neutre, contrairement à tout le reste.
+
+**Fix** : ajout de `sleep: sleepFromHours(0)` et `kmRun: 0` à la liste du reset quotidien, `save()` correspondants. Sans risque avec le fix de la suite 62 : `activiteLoaded` est encore `false` à ce stade (le reset tourne avant le fetch Supabase), donc les effets de persistance ne peuvent pas écrire cette remise à zéro en base par erreur.
+
+**Notifications streak** : question directe, vérifiée plutôt que supposée. Aucun système de notification spécifique au streak n'existe (confirmé, comme en suite 60). Il existe en revanche une vraie infrastructure de push déjà en place (`api/send-push.js`, `api/cron/inactivity-nudge.js`, toggle dans Settings/CoachSettings) — dont un cron quotidien d'inactivité déjà formulé positivement ("Ça fait quelques jours... une petite séance aujourd'hui ?"). Réutilisable pour un futur cron streak si demandé, mais rien construit pour l'instant tant que ce n'est pas explicitement demandé.
+
+**Vérifié** : `npm run build` passe.
+
 ## 2026-08-09 — Session 18 (suite 62) : bug réel trouvé — sommeil (et eau/pas/km) réécrits en silence chaque jour avec la valeur par défaut
 
 Question d'Arnaud : "les données se mettent à jour chaque jour ? le sommeil est toujours à 7h". Vérifié directement en base (pas supposé) : `activite_jour.sommeil_h = 7.3833...` (= 7h23, exactement le défaut codé en dur `{hours:7, minutes:23}`) sur TOUS les jours depuis le 18 juillet, et `pas`/`eau_ml`/`km_courus` à 0 partout aussi (même défaut, moins visible car 0 ressemble à "rien tracké").
