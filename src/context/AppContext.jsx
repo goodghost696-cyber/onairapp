@@ -143,12 +143,18 @@ export function AppProvider({ children }) {
       steps: load('steps', 0),
       stepsGoal: 10000,
       kmRun: load('kmRun', 0),
+      // Was display-only (Dashboard hardcoded 5/8) — now a real objectif,
+      // modifiable straight from the card ("chemin simple", pas besoin de
+      // Réglages), matching stepsGoal/waterGoal below. Same defaults as
+      // the DB columns' own defaults (objectifs.km_objectif/sommeil_h_objectif).
+      kmRunGoal: 5,
       // Used only for the running-calorie-burn estimate (utils/metabolism.js)
       // — a reasonable adult default until the real profile loads below.
       weightKg: 75,
       water: load('water', 0),
       waterGoal: 2500,
       sleep: load('sleep', { hours: 7, minutes: 23, quality: 'Bonne' }),
+      sleepGoal: 8,
       weeklyWorkouts: load('weeklyWorkouts', 4),
       weeklyGoal: 6,
       meals: load('meals', [
@@ -224,7 +230,7 @@ export function AppProvider({ children }) {
 
     supabase
       .from('objectifs')
-      .select('calories_jour, proteines, glucides, lipides, eau_ml, pas_jour')
+      .select('calories_jour, proteines, glucides, lipides, eau_ml, pas_jour, km_objectif, sommeil_h_objectif')
       .eq('user_id', user.id)
       .single()
       .then(({ data, error }) => {
@@ -237,6 +243,8 @@ export function AppProvider({ children }) {
           fatGoal: data.lipides ?? prev.fatGoal,
           waterGoal: data.eau_ml ?? prev.waterGoal,
           stepsGoal: data.pas_jour ?? prev.stepsGoal,
+          kmRunGoal: data.km_objectif ?? prev.kmRunGoal,
+          sleepGoal: data.sommeil_h_objectif ?? prev.sleepGoal,
         }))
       })
 
@@ -377,6 +385,23 @@ export function AppProvider({ children }) {
 
   function updateData(key, value) {
     setAppData(prev => ({ ...prev, [key]: value }))
+  }
+
+  // Objectifs des cartes d'activité (Dashboard) — jusqu'ici seuls steps/eau
+  // étaient réglables, et seulement depuis Réglages (Settings.jsx's
+  // saveGoals -> AuthContext.updateUserProfile, qui upsert TOUT `objectifs`
+  // d'un coup). Reporté directement : passer par Réglages pour ça "c'est
+  // pas ouf" — l'utilisateur veut modifier l'objectif directement en tapant
+  // sur la carte concernée. D'où ce upsert ciblé, une seule colonne à la
+  // fois, appelé depuis la sheet d'édition de chaque carte (Dashboard.jsx)
+  // au lieu de repasser par le flow complet de Réglages.
+  const GOAL_COLUMNS = { stepsGoal: 'pas_jour', waterGoal: 'eau_ml', kmRunGoal: 'km_objectif', sleepGoal: 'sommeil_h_objectif' }
+  async function updateGoal(key, value) {
+    setAppData(prev => ({ ...prev, [key]: value }))
+    const column = GOAL_COLUMNS[key]
+    if (!column || !user?.id) return
+    const { error } = await supabase.from('objectifs').upsert({ user_id: user.id, [column]: value }, { onConflict: 'user_id' })
+    if (error) console.error('[App] updateGoal: objectifs upsert failed', key, error)
   }
 
   function clearActiveSession() {
@@ -604,7 +629,7 @@ export function AppProvider({ children }) {
 
   return (
     <AppContext.Provider value={{
-      appData, updateData,
+      appData, updateData, updateGoal,
       addExerciseToSession, addExercisesToSession,
       addSetToExercise, toggleSetDone, updateSet,
       clearActiveSession, addSessionToHistory, logQuickExercise,

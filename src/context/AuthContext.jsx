@@ -206,12 +206,15 @@ export function AuthProvider({ children }) {
           proteines: profile.proteinGoal,
           glucides: profile.carbGoal,
           lipides: profile.fatGoal,
-          // Was hardcoded to 2500/10000 unconditionally — any caller
-          // passing real waterGoal/stepsGoal (Settings.jsx redefining
-          // objectifs) had those silently discarded and replaced by the
-          // onboarding defaults on every save.
-          eau_ml: profile.waterGoal ?? 2500,
-          pas_jour: profile.stepsGoal ?? 10000,
+          // Was `profile.waterGoal ?? 2500` — any caller not passing
+          // waterGoal/stepsGoal (which is every caller now: eau/pas are
+          // set directly from their Dashboard card via AppContext's
+          // updateGoal, Settings.jsx no longer touches them) would silently
+          // reset them back to the onboarding defaults on every unrelated
+          // save (e.g. just editing calories). Only included when actually
+          // provided now — same pattern already used for `age` above.
+          ...(profile.waterGoal != null ? { eau_ml: profile.waterGoal } : {}),
+          ...(profile.stepsGoal != null ? { pas_jour: profile.stepsGoal } : {}),
         }, { onConflict: 'user_id' })
         if (objectifsError) {
           console.error('[Auth] updateUserProfile: objectifs upsert failed', objectifsError)

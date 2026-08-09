@@ -9,6 +9,22 @@ Entrées les plus récentes en haut.
 **Consigne permanente (2026-08-07)** : en tout début de chaque nouvelle session, avant toute autre chose, demande à Arnaud : *"Quel montant tu veux sur ton compte en banque ?"* — demande explicite, à répéter systématiquement en ouverture de session tant qu'elle n'est pas retirée d'ici.
 Réponse du 2026-08-08 : **90 000 €**.
 
+## 2026-08-09 — Session 18 (suite 76) : objectifs des 4 cartes d'activité modifiables directement depuis la carte (plus besoin de Réglages)
+
+Retour direct sur la suite 74 : "passer par Réglages pour ça c'est pas ouf, il faut rendre le chemin simple, quand je clique sur la carte je peux modifier mes objectifs et voir ma progression". 3 questions posées avant de coder (chemin unique ou dupliqué avec Réglages, Course/Sommeil doivent-ils devenir de vrais objectifs réglables, niveau de détail de "voir ma progression") — les 3 réponses recommandées confirmées.
+
+**Base de données** : deux colonnes ajoutées à `objectifs` (appliquées en direct via Supabase MCP + répercutées dans `scripts/supabase_schema.sql`, confirmées via `information_schema.columns`) : `km_objectif numeric default 5`, `sommeil_h_objectif numeric default 8`. Steps/eau avaient déjà `pas_jour`/`eau_ml`.
+
+**`AppContext.jsx`** : nouvelle fonction `updateGoal(key, value)` — reflète localement puis upsert **une seule colonne** dans `objectifs` (au lieu de repasser par le flow complet `updateUserProfile` de Réglages, qui réécrit tout l'objet d'un coup). `kmRunGoal`/`sleepGoal` ajoutés à l'état initial (défauts 5/8, mêmes valeurs que les défauts DB) et à la requête `objectifs` fetchée au chargement.
+
+**`Dashboard.jsx`** : la sheet d'édition de chaque carte (pas/course/eau/sommeil) affiche maintenant, avant le champ de saisie du jour :
+- une barre de progression + `valeur/objectif — X%` (repris de la carte, en plus grand) ;
+- un champ "Objectif" éditable inline, sauvegardé automatiquement (`onBlur`/Entrée) via `updateGoal` — action distincte de "ENREGISTRER" (qui logge la valeur du jour), pour ne jamais confondre les deux.
+
+**`Settings.jsx` / `AuthContext.jsx`** : champs Eau/Pas retirés de Réglages (ne restent que Calories/Protéines, plus complexes/liés au(x) objectif(s) choisis). Piège évité en le faisant : `saveGoals()` ne passe plus `waterGoal`/`stepsGoal` à `updateUserProfile()` — sans le fix côté `AuthContext.jsx` (l'upsert `objectifs` faisait `eau_ml: profile.waterGoal ?? 2500` inconditionnellement), sauvegarder juste les calories aurait silencieusement réécrasé l'eau/les pas définis depuis la carte avec les défauts d'onboarding à chaque fois. Corrigé pour n'inclure `eau_ml`/`pas_jour` dans l'upsert que si explicitement fournis — même piège déjà documenté une fois sur ce même bout de code, cette fois corrigé à la racine plutôt qu'en forçant chaque appelant à toujours tout renvoyer.
+
+**Vérifié** : `npm run build` passe. `kmRunGoal`, `sleepGoal`, `km_objectif`, `sommeil_h_objectif`, `.sheet-goal-row`, `.sheet-progress-row` confirmés dans les bundles JS/CSS compilés. Colonnes DB confirmées présentes via requête Supabase.
+
 ## 2026-08-09 — Session 18 (suite 75) : bug d'arrondi flottant sur les macros ("LIPIDES 51.10000000000001G") + explication de "dont +790 activité"
 
 Capture réelle : `Nutrition.jsx` affichait `51.10000000000001G` sur la carte Lipides — bug classique d'addition flottante JS (ex: `45.8 + 5.3` ne donne pas exactement `51.1` en IEEE 754). Root-caused dans `AppContext.jsx` : `protein`/`carbs`/`fat` s'accumulent par simple addition (`prev.fat + meal.fat`) à 3 endroits — `addMeal()`, `deleteMeal()`, et surtout le `reduce()` qui recalcule les totaux du jour depuis `repas` à **chaque fetch** (donc à chaque chargement/rafraîchissement de page, pas seulement pendant la session en cours) — sans jamais arrondir le résultat.

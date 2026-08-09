@@ -9,6 +9,11 @@ export const BOUNDS = {
   proteinGoal: { min: 20, max: 400 },
   waterGoal: { min: 500, max: 10000 },
   stepsGoal: { min: 1000, max: 50000 },
+  // New — steps/eau already had a goal bound above; course/sommeil didn't
+  // because neither had a real configurable goal until now (Dashboard's
+  // activity cards, "objectif modifiable directement depuis la carte").
+  kmRunGoal: { min: 1, max: 100 },
+  sleepGoal: { min: 1, max: 16 },
   steps: { min: 0, max: 100000 },
   water: { min: 0, max: 10000 },
   kmRun: { min: 0, max: 500 },

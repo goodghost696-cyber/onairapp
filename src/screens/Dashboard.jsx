@@ -48,10 +48,14 @@ function RotatingQuote() {
 export default function Dashboard() {
   const navigate = useNavigate()
   const { user } = useAuth()
-  const { appData, updateData } = useApp()
+  const { appData, updateData, updateGoal } = useApp()
   const { t } = useLanguage()
   const [editingCard, setEditingCard] = useState(null)
   const [inputVal, setInputVal] = useState('')
+  // Objectif édité directement dans la sheet de la carte — "passer par
+  // Réglages pour ça c'est pas ouf, il faut rendre le chemin simple". Un
+  // seul state car une seule sheet est ouverte à la fois (comme inputVal).
+  const [goalInputVal, setGoalInputVal] = useState('')
   const [streak, setStreak] = useState(0)
 
   useEffect(() => {
@@ -81,18 +85,19 @@ export default function Dashboard() {
   const stepsGoalVal = appData.stepsGoal || 10000
   // Reported directly: the bar fills but the goal it's filling towards is
   // never shown anywhere on the card — added a visible "Objectif : X"
-  // line below the value on every card (see the JSX below), which is why
-  // kmRun (the one card with no real configurable goal anywhere in the
-  // app yet — no Settings field for it) still needs *some* number here
-  // rather than staying null: 5km, a reasonable default. Not yet
-  // configurable — same follow-up as steps/water would need if a
-  // per-member running goal is wanted later.
+  // line below the value on every card (see the JSX below). Follow-up
+  // request: all 4 objectifs (not just steps/eau) are now editable
+  // straight from the card's sheet (updateGoal, AppContext.jsx) instead of
+  // Réglages — kmRun/sleep gained real persisted goals for this
+  // (objectifs.km_objectif/sommeil_h_objectif) instead of staying a
+  // display-only default.
   const CARDS = [
     { key: 'steps', label: 'PAS', icon: '👟', tint: '#FDEAD8', value: appData.steps, unit: 'pas', target: stepsGoalVal },
-    { key: 'kmRun', label: 'COURSE', icon: '🏃', tint: '#E3F0FF', value: appData.kmRun, unit: 'km', target: 5 },
+    { key: 'kmRun', label: 'COURSE', icon: '🏃', tint: '#E3F0FF', value: appData.kmRun, unit: 'km', target: appData.kmRunGoal || 5 },
     { key: 'water', label: 'EAU', icon: '💧', tint: '#E6F6EE', value: appData.water, unit: 'ml', target: waterGoalMl },
-    { key: 'sleep', label: 'SOMMEIL', icon: '😴', tint: '#F1EAFB', value: appData.sleep?.hours || 0, unit: 'h', target: 8 },
+    { key: 'sleep', label: 'SOMMEIL', icon: '😴', tint: '#F1EAFB', value: appData.sleep?.hours || 0, unit: 'h', target: appData.sleepGoal || 8 },
   ]
+  const currentCard = CARDS.find(c => c.key === editingCard)
 
   // Bottles instead of a numeric keyboard for water — reported directly
   // ("je lis Eau bue ajd (ml)... on peut le rendre plus simple"). One
@@ -126,6 +131,20 @@ export default function Dashboard() {
     navigator.vibrate && navigator.vibrate(8)
     setEditingCard(null)
     setInputVal('')
+  }
+
+  // Saves the objectif itself (not today's value) — separate action from
+  // handleSave above on purpose, so tapping one never accidentally
+  // changes the other. Bounds key matches appData's own key by
+  // construction (stepsGoal/kmRunGoal/waterGoal/sleepGoal), same pattern
+  // BOUNDS already follows everywhere else.
+  function saveGoal() {
+    const raw = parseFloat(goalInputVal)
+    if (isNaN(raw) || raw <= 0 || !editingCard) return
+    const goalKey = `${editingCard}Goal`
+    const num = clamp(raw, BOUNDS[goalKey], currentCard?.target)
+    updateGoal(goalKey, num)
+    navigator.vibrate && navigator.vibrate(8)
   }
 
   // Same fix as Nutrition.jsx's hero card: folds in today's logged
@@ -259,7 +278,7 @@ export default function Dashboard() {
               key={card.key}
               className={`activity-card-compact card-animated${card.key === 'water' ? ' activity-card-accent' : ''}`}
               style={{ '--delay': `${80 + i * 40}ms` }}
-              onClick={() => { setEditingCard(card.key); setInputVal('') }}
+              onClick={() => { setEditingCard(card.key); setInputVal(''); setGoalInputVal(String(card.target)) }}
             >
               <span className="activity-card-icon-badge" style={{ background: card.tint }}>{card.icon}</span>
               <p className="activity-card-label">{card.label}</p>
@@ -314,7 +333,38 @@ export default function Dashboard() {
           <div className="sheet-overlay" onClick={() => setEditingCard(null)} />
           <div className="activity-edit-sheet">
             <div className="modal-handle" />
-            <p className="sheet-title">{CARDS.find(c => c.key === editingCard)?.label}</p>
+            <p className="sheet-title">{currentCard?.label}</p>
+
+            {/* Progression + objectif, réunis ici — "je peux modifier mes
+                objectifs et voir ma progression" depuis la carte, sans
+                passer par Réglages. Même barre que sur la carte elle-même,
+                juste reprise en plus grand avec le % à côté. */}
+            <div className="sheet-progress-row">
+              <div className="sheet-progress-bar-wrap">
+                <div
+                  className="sheet-progress-bar-fill"
+                  style={{ width: `${Math.min((currentCard?.value / currentCard?.target) * 100, 100)}%` }}
+                />
+              </div>
+              <p className="sheet-progress-label">
+                {currentCard?.value}{currentCard?.unit} / {currentCard?.target}{currentCard?.unit}
+                {' — '}{Math.round(Math.min((currentCard?.value / currentCard?.target) * 100, 100))}%
+              </p>
+            </div>
+            <div className="sheet-goal-row">
+              <span className="sheet-goal-label">Objectif</span>
+              <input
+                className="sheet-goal-input"
+                type="number"
+                inputMode="decimal"
+                value={goalInputVal}
+                onChange={e => setGoalInputVal(e.target.value)}
+                onBlur={saveGoal}
+                onKeyDown={e => e.key === 'Enter' && (saveGoal(), e.target.blur())}
+              />
+              <span className="sheet-goal-unit">{currentCard?.unit}</span>
+            </div>
+
             <p className="sheet-subtitle">
               {editingCard === 'steps' && "Nombre de pas aujourd'hui"}
               {editingCard === 'kmRun' && "Km courus aujourd'hui"}
@@ -337,7 +387,7 @@ export default function Dashboard() {
                   ))}
                 </div>
                 <p className="sheet-subtitle" style={{ marginTop: 12, marginBottom: 20 }}>
-                  {appData.water}ml / {bottleCount * 500}ml — chaque bouteille = 500ml
+                  Chaque bouteille = 500ml
                 </p>
                 <button className="sheet-cancel-btn" onClick={() => setEditingCard(null)}>Fermer</button>
               </>
