@@ -7,7 +7,7 @@ import { useTheme } from '../context/ThemeContext'
 import { supabase } from '../lib/supabase'
 import { BOUNDS, clamp } from '../utils/validation'
 import { calculateCalorieGoal } from '../utils/metabolism'
-import { isPushSupported, getPushSubscriptionState, subscribeToPush, unsubscribeFromPush } from '../utils/push'
+import { isPushSupported, getPushSubscriptionState, subscribeToPush, unsubscribeFromPush, isIOSNotStandalone } from '../utils/push'
 import DeleteAccountButton from '../components/DeleteAccountButton'
 import { storageKey } from '../components/OnboardingTour'
 
@@ -277,6 +277,24 @@ export default function Settings() {
                 {pushState === 'denied' && <div className="text-xs" style={{ color: 'var(--danger)', marginTop: 2 }}>Bloquées dans les réglages du navigateur</div>}
               </div>
               <Toggle on={pushState === 'subscribed'} onToggle={handleTogglePush} />
+            </div>
+          )}
+          {/* Was rendering nothing at all here when unsupported — on iOS
+              that's the DEFAULT case (Safari restricts the Push API to an
+              installed home-screen app, always, in every regular tab), so
+              this empty card was what most iPhone users actually saw.
+              Reported directly: "ne propose rien... je dois avoir le
+              choix". Explains why instead of leaving a silent void — with
+              the actual fix (install to home screen) when that's the
+              specific cause, a plain "not supported" otherwise. */}
+          {pushState === 'unsupported' && (
+            <div style={{ padding: '14px 0' }}>
+              <div className="text-sm text-secondary">Notifications push</div>
+              <div className="text-xs text-muted" style={{ marginTop: 4, lineHeight: 1.5 }}>
+                {isIOSNotStandalone()
+                  ? "Indisponibles depuis Safari sur iPhone — ajoute VOLTA à ton écran d'accueil (icône de partage → \"Sur l'écran d'accueil\") pour pouvoir les activer."
+                  : "Non prises en charge par ce navigateur."}
+              </div>
             </div>
           )}
           {/* The "hydratation"/"séance"/"récap hebdo" toggles that used to

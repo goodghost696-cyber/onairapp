@@ -9,6 +9,16 @@ Entrées les plus récentes en haut.
 **Consigne permanente (2026-08-07)** : en tout début de chaque nouvelle session, avant toute autre chose, demande à Arnaud : *"Quel montant tu veux sur ton compte en banque ?"* — demande explicite, à répéter systématiquement en ouverture de session tant qu'elle n'est pas retirée d'ici.
 Réponse du 2026-08-08 : **90 000 €**.
 
+## 2026-08-09 — Session 18 (suite 65) : didacticiel qui saute à gauche avant de se recentrer + section Notifications vide sur iPhone
+
+Deux signalements, tous les deux vérifiés dans le code avant correction, aucun deviné.
+
+**1. Didacticiel décalé à gauche pendant ~320ms** : `OnboardingTour.jsx` utilisait `animation: slideUp 320ms ...` sans importer aucun CSS à lui — il empruntait le `@keyframes slideUp` global défini dans `ExerciseModal.css` (Vite regroupe tout le CSS importé dans une seule feuille de style globale, peu importe quel composant l'a importé ; un nom de keyframe est partagé par tout ce qui l'utilise). Ce keyframe emprunté a `from`/`to` avec `translateX(-50%)` — correct pour `ExerciseModal`, positionné en `absolute; left:50%`, mais faux pour ce panneau, centré en flexbox : pendant les 320ms de l'animation, le transform emprunté le décalait de 50% de sa propre largeur vers la gauche, avant de revenir pile à sa position réelle (centrée) une fois l'animation finie (`fill-mode` par défaut = `none`, donc le transform emprunté disparaît à la fin). Fix : nouveau keyframe dédié `tourSlideUp` (translateY uniquement, aucune hypothèse de positionnement) dans `animations.css` (déjà chargé globalement), `OnboardingTour.jsx` pointé dessus.
+
+**2. Section Notifications vide dans Réglages (membre et coach)** : `pushState !== 'unsupported'` conditionnait TOUT l'affichage — quand non supporté, rien du tout n'apparaissait, pas même une explication. Sur iPhone, Safari restreint l'API Push aux apps installées sur l'écran d'accueil (jamais disponible dans un onglet classique) — donc "non supporté" est le cas par défaut pour la plupart des membres sur iPhone, pas un cas limite. Fix : nouvel état affiché avec message explicite — détection iOS+non-standalone (`isIOSNotStandalone()`, nouveau dans `utils/push.js`) pour dire précisément "ajoute l'app à l'écran d'accueil pour les activer" plutôt qu'un vide silencieux. Appliqué à `Settings.jsx` (membre) et `CoachSettings.jsx` (coach), même bug dans les deux fichiers.
+
+**Vérifié** : `npm run build` passe, `@keyframes tourSlideUp{...translateY...}` et le texte "ajoute VOLTA à ton écran d'accueil" confirmés dans le bundle compilé.
+
 ## 2026-08-09 — Session 18 (suite 64) : notification streak — construite sur l'infra push existante
 
 Suite directe à la suite 63 : constat qu'aucune notification de streak n'existait, demande explicite de la construire ("fais fais").

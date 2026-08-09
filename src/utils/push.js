@@ -17,6 +17,18 @@ export function isPushSupported() {
   return 'serviceWorker' in navigator && 'PushManager' in window && !!VAPID_PUBLIC_KEY
 }
 
+// iOS restricts the Push API to an installed (home-screen/standalone) PWA
+// — a regular Safari tab always fails isPushSupported() there, silently,
+// with nothing in the DOM to explain why (reported directly: "ne propose
+// rien... je dois avoir le choix"). This tells the UI whether that's
+// *why*, so it can say "install to your home screen" instead of just
+// showing nothing.
+export function isIOSNotStandalone() {
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+  const isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches
+  return isIOS && !isStandalone
+}
+
 export async function getPushSubscriptionState() {
   if (!isPushSupported()) return 'unsupported'
   if (Notification.permission === 'denied') return 'denied'
