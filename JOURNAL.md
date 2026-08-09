@@ -9,6 +9,16 @@ Entrées les plus récentes en haut.
 **Consigne permanente (2026-08-07)** : en tout début de chaque nouvelle session, avant toute autre chose, demande à Arnaud : *"Quel montant tu veux sur ton compte en banque ?"* — demande explicite, à répéter systématiquement en ouverture de session tant qu'elle n'est pas retirée d'ici.
 Réponse du 2026-08-08 : **90 000 €**.
 
+## 2026-08-09 — Session 18 (suite 79) : retour en arrière sur la suite 78 — les gouttes remises, le pictogramme bouteille jugé "tellement laid"
+
+Retour direct, sans détour : "Remet les gouttes en vrai tes bouteilles sont tellement laides mon Dieu". Le pictogramme SVG construit en suite 78 (censé répondre à "ce ne sont pas des bouteilles") a été rejeté esthétiquement — repris l'émoji 💧 d'origine.
+
+**Fix demandé avec l'émoji** : le texte ne correspondait plus une fois les gouttes remises ("Chaque bouteille = 500ml" alors que l'icône est une goutte) — corrigé en "Chaque goutte = 500ml" et "Combien de gouttes as-tu bues ?" (était "bouteilles"), pour que le texte et l'icône disent la même chose.
+
+`BottleIcon` (composant + toute logique `currentColor`) retiré, CSS `.water-bottle-btn`/`.filled` repris tel qu'avant la suite 78 (opacité + niveaux de gris plutôt que `color`, propre à un emoji plutôt qu'à un SVG).
+
+**Vérifié** : `npm run build` passe, "Combien de gouttes as-tu bues" et "Chaque goutte = 500ml" confirmés dans le bundle compilé, plus aucune référence à `BottleIcon` dans le code source.
+
 ## 2026-08-09 — Session 18 (suite 78) : le sélecteur d'eau montrait des gouttes, pas des bouteilles ("ce ne sont pas des bouteilles igo")
 
 Signalé directement sur capture : le sélecteur "Combien de bouteilles as-tu bues ?" (suite 73) affichait des 💧 (goutte d'eau), pas des bouteilles — demande initiale explicitement "des bouteilles".
