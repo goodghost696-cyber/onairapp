@@ -833,6 +833,26 @@ Réponds en français.`
               autoFocus
               style={{ fontSize: 24, fontWeight: 700, textAlign: 'center', fontVariantNumeric: 'tabular-nums', marginBottom: 20 }}
             />
+            {/* Was grammage-only — pas moyen de corriger "cliqué sur petit
+                déjeuner au lieu de déjeuner" sans supprimer et retout
+                ressaisir. Même sélecteur de chips que la sheet d'ajout. */}
+            <label className="text-xs text-muted" style={{ display: 'block', marginBottom: 8 }}>REPAS</label>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 20, overflowX: 'auto' }}>
+              {MEAL_TYPES.map(mt => (
+                <button
+                  key={mt}
+                  type="button"
+                  onClick={() => setEditingMeal(prev => ({ ...prev, mealType: mt }))}
+                  style={{
+                    background: editingMeal.mealType === mt ? 'var(--accent)' : 'var(--surface-2)',
+                    border: '0.5px solid var(--border)',
+                    color: editingMeal.mealType === mt ? 'var(--accent-ink)' : 'var(--text-secondary)',
+                    fontSize: 11, fontWeight: 700, padding: '8px 14px', borderRadius: 50,
+                    whiteSpace: 'nowrap', flexShrink: 0, cursor: 'pointer',
+                  }}
+                >{mt}</button>
+              ))}
+            </div>
             <button className="btn-accent" onClick={saveMealEdit}>ENREGISTRER</button>
           </div>
         </>

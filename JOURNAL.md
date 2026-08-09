@@ -9,6 +9,14 @@ Entrées les plus récentes en haut.
 **Consigne permanente (2026-08-07)** : en tout début de chaque nouvelle session, avant toute autre chose, demande à Arnaud : *"Quel montant tu veux sur ton compte en banque ?"* — demande explicite, à répéter systématiquement en ouverture de session tant qu'elle n'est pas retirée d'ici.
 Réponse du 2026-08-08 : **90 000 €**.
 
+## 2026-08-09 — Session 18 (suite 68) : "Modifier" un repas ne permettait pas de changer le créneau (matin/midi/soir/snack)
+
+Question directe : coché "Petit-déjeuner" au lieu de "Déjeuner" par erreur, "je fais comment ?". Vérifié : la modale "Modifier" (`Nutrition.jsx`, `editingMeal`) ne permettait de changer que le grammage — pas de sélecteur de repas, contrairement à la sheet d'ajout qui en a un.
+
+**Fix** : ajout du même sélecteur de chips (MEAL_TYPES) que la sheet d'ajout, sous le champ grammage. `saveMealEdit()` envoyait déjà `mealType: editingMeal.mealType` à `addMeal()` — la logique de sauvegarde était déjà prête, seul le sélecteur manquait côté UI.
+
+**Vérifié** : `npm run build` passe, le nouveau label "REPAS" confirmé dans le bundle compilé.
+
 ## 2026-08-09 — Session 18 (suite 67) : la suite 66 refaite en inline — pas de nouveau chemin + bouton "+" mal aligné avec le FAB messages
 
 Retour direct sur la suite 66 : "je ne veux pas un nouveau chemin !" — le détour par l'écran Scanner ne convenait pas, la conversion de quantité devait se faire directement dans l'écran de saisie du poids déjà existant (celui qui affiche "QUANTITÉ (G)" après avoir choisi un aliment dans la recherche).
