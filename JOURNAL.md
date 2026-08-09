@@ -9,6 +9,24 @@ Entrées les plus récentes en haut.
 **Consigne permanente (2026-08-07)** : en tout début de chaque nouvelle session, avant toute autre chose, demande à Arnaud : *"Quel montant tu veux sur ton compte en banque ?"* — demande explicite, à répéter systématiquement en ouverture de session tant qu'elle n'est pas retirée d'ici.
 Réponse du 2026-08-08 : **90 000 €**.
 
+## 2026-08-08 — Session 18 (suite 60) : système de streak (jours consécutifs actifs) — 1re brique de gamification personnelle
+
+Demande précise avec périmètre imposé (fichiers, logique, ordre : plan d'abord, code après validation). Vérifications faites avant tout code : schéma réel de `repas`/`seances` interrogé en direct sur Supabase (pas juste le fichier SQL — colonne `date` de type `date` confirmée sur les deux tables), grep de "streak" dans tout le repo (rien).
+
+**Calcul** : à la volée depuis `seances`/`repas` (2 requêtes légères, fenêtre de 120 jours), pas de colonne dédiée à maintenir — mêmes principes que `fetchMemberActivitySummaries` dans `coachStats.js` (batch, pas une requête par membre).
+
+- `src/utils/streak.js` (nouveau) : `calculateStreak(activeDates, today, maxDays)` — cœur pur et testable. Un jour actif = au moins une séance OU un repas ce jour-là (OR volontaire). "Aujourd'hui" suit la même convention UTC que le reste du code (`todayStr()` d'`AppContext.jsx`, `date default current_date`) — pas de 2e notion de jour. Si aujourd'hui n'a encore rien, le calcul part d'hier (jour pas terminé ≠ jour cassé). Tolérance : 1 jour raté par fenêtre glissante de 7 jours est automatiquement "gelé" (ne casse pas la série, ne l'incrémente pas non plus) — 2 gels doivent être espacés d'au moins 7 jours, ce qui autorise nativement un streak infini avec 1 jour de repos fixe par semaine.
+- `fetchStreak(userId)` (dashboard membre) et `fetchStreaksForUsers(userIds)` (liste coach, 2 requêtes batchées au lieu d'une par membre).
+- Aucune notification de perte de streak n'existe dans le code (vérifié) — rien à reformuler, rien créé.
+
+**Bug trouvé et corrigé avant tout commit, par un vrai test et pas juste `npm run build`** : la 1re version de `daysBetween` calculait une différence de dates sans valeur absolue. Comme le calcul remonte toujours du présent vers le passé, cette différence était systématiquement négative — donc toujours `< 7`, ce qui bloquait silencieusement tout gel après le premier, quelle que soit la vraie distance. Repéré en testant le cas "repos hebdomadaire régulier" (résultat 12 au lieu de la valeur correcte) avant même de toucher à l'UI. Fix : `Math.abs()`. Retesté ensuite avec 7 scénarios (streak parfait, aujourd'hui vide, trou toléré, 2 trous rapprochés qui cassent, repos hebdo infini, historique vide) contre le fichier réel (pas une copie) — tous corrects après le fix.
+
+**Affichage** :
+- `Dashboard.jsx` : nouvelle carte entre la citation et la carte calories, masquée à 0 (pas de flamme éteinte), mise en avant avec `--accent` (bordure + glow) à partir de 3 jours (palier choisi, pas 30).
+- `ClientsList.jsx` : streak ajouté sur la ligne "Vu ... · X séances" de chaque carte membre, batché avec `fetchMemberActivitySummaries` existant dans le même `Promise.all` (pas de requête supplémentaire par membre).
+
+**Vérifié** : `npm run build` passe, `fetchStreak`/`fetchStreaksForUsers`/`calculateStreak` (minifiés mais avec `Math.abs` bien présent) et le texte "de suite"/🔥 confirmés dans le bundle compilé. Pas de vérification visuelle réelle au-delà de ça — logique testée unitairement, pas l'UI sur un vrai compte avec des données réelles.
+
 ## 2026-08-08 — Session 18 (suite 59) : régression trouvée — le fix de la suite 57 cassait l'en-tête de l'AI Coach quand le clavier s'ouvre
 
 Capture montrant "9:54" (l'horloge du statut bar iOS) superposée sur "AI Coach" (le titre de l'écran), clavier ouvert. Une régression que j'ai moi-même introduite en suite 57, pas une nouvelle piste externe.

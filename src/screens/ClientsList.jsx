@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import CoachNav from '../components/CoachNav'
 import { supabase } from '../lib/supabase'
 import { fetchMemberActivitySummaries, lastSeenLabel } from '../utils/coachStats'
+import { fetchStreaksForUsers } from '../utils/streak'
 import Icon from '../components/Icon'
 
 const STATUS_COLORS = { 'ON TRACK': 'var(--success)', 'AT RISK': 'var(--warning)', 'INACTIVE': 'var(--danger)' }
@@ -37,9 +38,13 @@ export default function ClientsList() {
       // profiles.* and never merging real activity, so every card silently
       // showed "Vu — · — séances" and the status filter chips never matched
       // anything (m.status was always undefined).
-      const summaries = await fetchMemberActivitySummaries(data.map(m => m.user_id))
+      const userIds = data.map(m => m.user_id)
+      const [summaries, streaks] = await Promise.all([
+        fetchMemberActivitySummaries(userIds),
+        fetchStreaksForUsers(userIds),
+      ])
       if (cancelled) return
-      setMembers(data.map(m => ({ ...m, ...summaries[m.user_id] })))
+      setMembers(data.map(m => ({ ...m, ...summaries[m.user_id], streak: streaks[m.user_id] || 0 })))
       setLoading(false)
     }
     fetchMembers()
@@ -96,7 +101,14 @@ export default function ClientsList() {
                     <span className="text-base bold">{m.prenom}</span>
                     <span style={{ fontSize: 9, border: `1px solid ${GOAL_COLORS[m.objectif] || 'var(--border)'}`, color: GOAL_COLORS[m.objectif] || 'var(--text-muted)', padding: '2px 6px', borderRadius: 4, letterSpacing: 0.5, textTransform: 'uppercase', fontWeight: 700 }}>{m.objectif || '-'}</span>
                   </div>
-                  <div className="text-xs text-muted">Vu {lastSeenLabel(m.lastActiveDate).toLowerCase()} · {m.sessionsThisWeek ?? 0} séance{m.sessionsThisWeek > 1 ? 's' : ''}</div>
+                  <div className="text-xs text-muted">
+                    Vu {lastSeenLabel(m.lastActiveDate).toLowerCase()} · {m.sessionsThisWeek ?? 0} séance{m.sessionsThisWeek > 1 ? 's' : ''}
+                    {m.streak > 0 && (
+                      <span style={{ color: m.streak >= 3 ? 'var(--accent)' : 'var(--text-muted)', fontWeight: m.streak >= 3 ? 700 : 400 }}>
+                        {' '}· 🔥 {m.streak}j
+                      </span>
+                    )}
+                  </div>
                   <div className="progress-bar" style={{ marginTop: 6 }}>
                     <div className="progress-fill" style={{ width: `${Math.min((m.sessionsThisWeek || 0)/8*100,100)}%` }} />
                   </div>
