@@ -46,6 +46,21 @@ function RotatingQuote() {
   )
 }
 
+// Third try on the water picker's icon — bottle SVG rejected ("tellement
+// laides"), droplet emoji accepted but user wanted to compare a glass.
+// A trapezoid drinking-glass outline with a water-level line, rather
+// than another emoji (no Unicode glass-of-water exists — 🥛 is milk).
+// currentColor throughout, same convention as the bottle attempt, so
+// .water-bottle-btn/.filled (color-based) keeps driving both states.
+function GlassIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+      <path d="M7 4h10l-1.3 16.3a1 1 0 0 1-1 .7H9.3a1 1 0 0 1-1-.7L7 4z" fill="currentColor" fillOpacity="0.16" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+      <path d="M7.7 12h8.6" stroke="currentColor" strokeWidth="1.3" strokeOpacity="0.55" />
+    </svg>
+  )
+}
+
 export default function Dashboard() {
   const navigate = useNavigate()
   const { user } = useAuth()
@@ -377,7 +392,7 @@ export default function Dashboard() {
             <p className="sheet-subtitle">
               {editingCard === 'steps' && "Nombre de pas aujourd'hui"}
               {editingCard === 'kmRun' && "Km courus aujourd'hui"}
-              {editingCard === 'water' && "Combien de gouttes as-tu bues ?"}
+              {editingCard === 'water' && "Combien de verres as-tu bus ?"}
               {editingCard === 'sleep' && "Heures de sommeil cette nuit"}
             </p>
             {editingCard === 'water' ? (
@@ -391,12 +406,12 @@ export default function Dashboard() {
                       onClick={() => setWaterBottles(i)}
                       aria-label={`${(i + 1) * 500}ml`}
                     >
-                      💧
+                      <GlassIcon />
                     </button>
                   ))}
                 </div>
                 <p className="sheet-subtitle" style={{ marginTop: 12, marginBottom: 20 }}>
-                  Chaque goutte = 500ml
+                  Chaque verre = 500ml
                 </p>
                 <button className="sheet-cancel-btn" onClick={() => setEditingCard(null)}>Fermer</button>
               </>
