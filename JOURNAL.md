@@ -9,6 +9,16 @@ Entrées les plus récentes en haut.
 **Consigne permanente (2026-08-07)** : en tout début de chaque nouvelle session, avant toute autre chose, demande à Arnaud : *"Quel montant tu veux sur ton compte en banque ?"* — demande explicite, à répéter systématiquement en ouverture de session tant qu'elle n'est pas retirée d'ici.
 Réponse du 2026-08-08 : **90 000 €**.
 
+## 2026-08-09 — Session 18 (suite 72) : impossible de supprimer un aliment détecté (ex: "Pêche") sur les écrans de révision multi-ingrédients
+
+Capture directe de "Décrire un repas" : 5 aliments détectés, l'utilisateur veut retirer "Pêche" (ajoutée par erreur/pas mangée) mais aucun bouton de suppression n'existait — seul le grammage était modifiable.
+
+**Vérifié où le même problème pouvait se poser** avant de corriger un seul endroit : `updateItemGrams`/`updateDescribeItemGrams` acceptaient déjà 0g ("0g is allowed here (lets the user exclude a detected item from the total)" — un contournement déjà prévu dans le code, mais qui laisse la ligne visible à "0 kcal" au lieu de la retirer, pas ce qui a été demandé). Deux écrans construits sur exactement le même écran de révision par item : la sheet "Décrire un repas" (`Nutrition.jsx`) et l'écran de résultat du Scanner photo/code-barres (`Scan.jsx`) — les deux partagent la logique de `src/utils/foodEstimate.js` mais gardent chacun leur propre state/JSX de liste.
+
+**Fix, appliqué aux deux écrans** : bouton "✕" par ligne d'aliment (`removeDescribeItem`/`removeItem`), qui retire l'item du tableau au lieu de le mettre à 0g. Bouton "Ajouter"/"Ajouter au journal" désactivé si la liste devient vide (plus rien à logger), avec un message "Tous les aliments ont été supprimés." à la place de la liste vide.
+
+**Vérifié** : `npm run build` passe, "Supprimer cet aliment" et "Tous les aliments ont été supprimés" comptés 2 fois chacun dans le bundle compilé (une occurrence par écran, confirmant que les deux ont bien reçu le fix).
+
 ## 2026-08-09 — Session 18 (suite 71) : liste "REPAS D'AUJOURD'HUI" tronquée à 3, avec "Voir tout" pour dérouler le reste
 
 Capture confirmant que la restructuration de la suite 70 fonctionne bien en vrai (Skyr naturel 68g bien estimé pour 3 cuillères). Remarque de suivi sur la disposition : "REPAS D'AUJOURD'HUI" affiche tous les repas sans limite, la page devient interminable au fil de la journée. Proposition initiale de l'utilisateur (titre cliquable qui replie tout) écartée au profit d'une version qui ne cache rien au premier coup d'œil : les 3 repas les plus récents restent visibles direct, un lien "Voir tout (X repas) →" déplie le reste sur la même page (pas de nouvelle page, pas de repli total qui masquerait le log du jour). Confirmé par l'utilisateur avant de coder.
