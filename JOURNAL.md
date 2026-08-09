@@ -9,6 +9,27 @@ Entrées les plus récentes en haut.
 **Consigne permanente (2026-08-07)** : en tout début de chaque nouvelle session, avant toute autre chose, demande à Arnaud : *"Quel montant tu veux sur ton compte en banque ?"* — demande explicite, à répéter systématiquement en ouverture de session tant qu'elle n'est pas retirée d'ici.
 Réponse du 2026-08-08 : **90 000 €**.
 
+## 2026-08-09 — Session 18 (suite 82) : suppression de l'onglet Course (fake), météo réelle déplacée sur l'accueil, paliers de streak + jour de repos visible
+
+Suite à 3 questions posées directement (chantier Course, niveau de gamification, propositions streak), réponses tranchées avec l'utilisateur avant de coder, puis 4 changements livrés dans le même lot.
+
+**1. Onglet "Course" de Workout supprimé** (`src/components/RunContent.jsx` supprimé, tab retiré de `Workout.jsx`, CSS `.workout-tabs`/`.workout-tab` mort nettoyé). Recommandation confirmée par l'utilisateur ("On supprime") après relecture précise du fichier en suite 39 : distance incrémentée par un minuteur fixe (+0.0032km/s, jamais de vrai GPS), BPM figé à "142 bpm", graphique d'allure et stats "cette semaine" tous codés en dur — une coquille qui pouvait faire croire à de vraies stats. La carte "COURSE" du Dashboard (retravaillée plus tôt cette session — km logués, objectif réel, jauge) couvre déjà honnêtement le même besoin.
+
+**2. Météo réelle déplacée sur le Dashboard.** Seule partie authentique de l'ancien écran Course (vraie géoloc + Open-Meteo + géocodage inverse BigDataCloud) — sauvée avant suppression du fichier. Question posée à l'utilisateur ("ou ça fait trop ?") : recommandation de l'intégrer en une seule ligne compacte fusionnée dans la date déjà affichée ("Dimanche 9 Août · ☀️ 22°C · Paris"), plutôt qu'une nouvelle carte dédiée — le Dashboard est déjà dense (streak, calories, 4 cartes d'activité, CTA séance, carte hebdo), une carte météo de plus aurait été un bloc visuel superflu pour du nice-to-have. `useWeather()` (hook local à `Dashboard.jsx`), best-effort silencieux comme l'original.
+
+**3. Paliers de streak (7/30/60/90/120... jours).** Confirmé par l'utilisateur avec la règle exacte demandée ("après 30 jours, 60 jours, 90 jours etc."). `STREAK_MILESTONES = [7,30,60,90,120,...365]`, badge "🏅 Palier X jours" affiché sur la carte streak du Dashboard quand atteint.
+
+**Position prise sur "il faut pas dénaturer l'application"** (demande explicite de mon avis après relecture minutieuse du journal) : le badge reste lié au streak **en cours**, pas un trophée permanent — s'il casse, le badge disparaît jusqu'à ce qu'il soit regagné. Un vrai système de succès persistants (table dédiée, écran de collection) est un chantier bien plus lourd et rapprocherait VOLTA d'une appli arcade/gamifiée grand public, alors que la direction affirmée dans ce même journal est "premium/futuriste" (voir la tâche "Direction visuelle futuriste premium" et le ton général des choix de design corail). Un badge éphémère célèbre la régularité sans faire glisser l'app vers autre chose qu'elle n'est pas.
+
+**4. Jour de repos toléré rendu visible.** La tolérance existait déjà en silence (1 jour "gelé" par semaine glissante dans `calculateStreak`) mais n'était jamais montrée. Nouvelle fonction `calculateStreakDetails()` dans `utils/streak.js` (garde `calculateStreak()` intact, `fetchStreakDetails()` nouveau, `fetchStreak()` inchangé) qui expose aussi `restDayAvailable` — vrai si aucun freeze n'a été utilisé dans les 6 derniers jours. Affiché sur la carte streak : "🛡️ Jour de repos disponible cette semaine".
+
+**Questions produit répondues avec avis tranché, pas d'exécution automatique** :
+- Course : recommandation de suppression, confirmée par l'utilisateur avant de toucher au code.
+- Gamification actuelle : jugée correcte mais incomplète (streak + classement hebdo, tous les deux réels — contrairement à Course — mais aucun signal de progression perso hors comparaison) ; c'est précisément le trou que comblent les paliers de streak de cette suite.
+- Météo : question ouverte de l'utilisateur, réponse tranchée (compact, pas de nouvelle carte) plutôt que la faire à moitié.
+
+**Vérifié** : `npm run build` passe. `RunContent` absent du bundle compilé (zéro occurrence, confirmé retiré proprement). "Palier ", "Jour de repos disponible cette semaine", `bigdatacloud.net/data/reverse-geocode-client` et `open-meteo.com` confirmés dans le bundle JS compilé.
+
 ## 2026-08-09 — Session 18 (suite 81) : verre gardé, mais en émoji plutôt qu'en SVG dessiné à la main
 
 Retour sur la suite 80 : "on garde les verres... tu peux pas prendre une verre dans la bibliothèque d'émoji ?" — verre validé, mais l'implémentation en SVG custom remplacée par l'émoji 🥛 (le plus proche d'un "verre" dans la bibliothèque Unicode — pas d'émoji verre d'eau à proprement parler, 🥛 est techniquement un verre de lait, mais c'est la vraie forme de verre disponible la plus proche).
