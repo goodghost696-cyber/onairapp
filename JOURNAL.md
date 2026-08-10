@@ -9,6 +9,22 @@ Entrées les plus récentes en haut.
 **Consigne permanente (2026-08-07)** : en tout début de chaque nouvelle session, avant toute autre chose, demande à Arnaud : *"Quel montant tu veux sur ton compte en banque ?"* — demande explicite, à répéter systématiquement en ouverture de session tant qu'elle n'est pas retirée d'ici.
 Réponse du 2026-08-08 : **90 000 €**.
 
+## 2026-08-10 — Session 18 (suite 90) : fermeture de la faille `gym_id` laissée ouverte en suite 88
+
+Repris directement dans la liste de la suite 89 ("qu'est-ce qu'il reste à faire ?") — choisi en premier parce qu'indépendant de Stripe (pas d'action requise côté Arnaud) et que c'était un vrai point de sécurité documenté mais pas fermé.
+
+**Le problème (rappel de la suite 88)** : `trg_prevent_self_privilege_insert` forçait déjà `role='member'` et `is_platform_admin=false` sur tout INSERT authentifié, mais laissait `gym_id` de côté volontairement — `AuthContext.register()` en avait encore besoin pour son upsert client direct. Un utilisateur technique pouvait donc encore s'auto-déclarer membre d'une salle arbitraire via un appel REST brut, en contournant complètement `api/invite.js`.
+
+**Le vrai correctif : sortir la création du profil membre du client, comme `create-gym.js` le fait déjà pour les coachs.**
+- `trg_prevent_self_privilege_insert` force maintenant `gym_id := null` aussi, sur tout INSERT authentifié — plus aucun moyen pour un client de poser un `gym_id` qui "tient" à l'insertion, peu importe le chemin emprunté (`UPDATE` était déjà bloqué depuis le début, `gym_id` n'a jamais fait partie de l'allowlist de colonnes updatable).
+- `AuthContext.register()` ne pose plus `gym_id` dans son upsert (de toute façon le trigger l'aurait annulé). À la place, une fois `signUp()` réussi, il appelle `POST /api/invite` **authentifié**, avec le code brut tapé par l'utilisateur.
+- `api/invite.js` (déjà fusionné en suite 88 pour la limite Vercel) gagne un 3ᵉ mode, distingué simplement par la présence d'une session : sans session → validation publique (juste UX, "code invalide" avant même de créer le compte) ; avec session → **le vrai rattachement** : re-résout `gym_id` depuis le code côté serveur (`service_role`, jamais en confiance sur une valeur venue du client), pose `gym_id` par upsert, et refuse (409) si le profil a déjà un `gym_id` — même posture "one-shot" que `create-gym.js`, pour qu'un membre/coach existant ne puisse pas changer de salle juste en apprenant un code.
+- `Login.jsx` : passe maintenant le **code** à `register()` (plus un `gym_id` supposément déjà validé) — la réponse de l'appel de pré-validation ne contient plus que `{ valid }`, `gym_id` ne sort plus jamais du serveur vers un contexte non authentifié.
+
+**Pourquoi c'est le vrai correctif et pas un pansement** : avant, "valider le code" et "poser le gym_id" étaient deux étapes séparées, reliées uniquement par la confiance dans le client entre les deux. Maintenant c'est une seule opération atomique côté serveur — re-valider ET poser dans le même appel, avec le trigger qui garantit qu'aucun autre chemin (insertion brute, upsert direct) ne peut faire tenir un `gym_id` pour un compte authentifié normal.
+
+**Vérifié** : migration appliquée en base réelle (Supabase MCP), relu directement le code source du trigger en base pour confirmer (`select prosrc from pg_proc`). `get_advisors` (sécurité) relu — aucun nouveau warning. `npm run build` passe, `node --check` sur les 12 fichiers `api/*.js`. Toujours exactement 12 fonctions serverless (pas de nouveau fichier ajouté — le 3ᵉ mode vit dans `api/invite.js` existant). **Pas de test de bout en bout réel** (créerait un vrai compte + une vraie salle) — logique relue attentivement plutôt que devinée, notamment le point de course (le upsert de `complete-signup` peut arriver avant ou après l'upsert `prenom`/`email` de `register()`, les deux se mergent proprement via `onConflict`).
+
 ## 2026-08-10 — Session 18 (suite 89) : ce qu'il reste à faire, après la 88 (PR #113 mergée)
 
 Récap demandé directement après le merge de la 88 — à garder comme point de reprise fidèle pour la prochaine session, pas juste dans le chat.
@@ -26,7 +42,7 @@ Tant que ce n'est pas fait, les boutons "S'abonner"/"Gérer mon abonnement" renv
 **Volontairement laissé de côté, pas oublié** :
 - **Tests automatisés** — mis en mémoire sur demande explicite d'Arnaud (suite 87), toujours en attente.
 - **Marketplace** (mise en relation coachs/salles spécialisées CrossFit/Pilates/Street workout) — parkée en suite 84, à reprendre seulement après que le SaaS coach soit stable.
-- **`gym_id` auto-déclaré à l'inscription** (trouvé en suite 88 en même temps que la faille `role`/`is_platform_admin`) : rien ne prouve cryptographiquement qu'un insert de profil a suivi un vrai appel à `api/invite.js` — un utilisateur technique pourrait se déclarer membre d'une salle arbitraire par un appel REST brut. Pas grave seul (juste mal rattaché, invisible pour tout coach), mais un vrai correctif (déplacer la création de profil côté serveur, comme `create-gym.js` le fait déjà pour les coachs) reste à faire.
+- ~~`gym_id` auto-déclaré à l'inscription~~ **Fermé en suite 90** — voir plus haut.
 
 ## 2026-08-10 — Session 18 (suite 88) : facturation Stripe par salle + console admin "toutes les salles", et une vraie faille trouvée en chemin
 

@@ -1,20 +1,16 @@
 import { createClient } from '@supabase/supabase-js';
 import { applyCors, requireUser } from './_lib/auth.js';
-import { checkMemoryRateLimit } from './_lib/rateLimit.js';
+import { checkMemoryRateLimit, checkRateLimit } from './_lib/rateLimit.js';
 
-// Merges the old invite-code.js (GET, authenticated coach reading their
-// own gym's code) and validate-invite.js (POST, public — called before a
-// signup even has a session) into one file. Not a natural pairing
-// otherwise, done to stay under Vercel Hobby's 12-Serverless-Functions-
-// per-deployment cap (this repo was already sitting exactly at that cap
-// before Stripe billing needed a slot too — see stripe-billing.js).
-// Dispatched on req.method, which the two never shared before either.
+// Three call shapes on one file/path — kept under Vercel Hobby's 12-
+// Serverless-Functions-per-deployment cap (see stripe-billing.js for the
+// same reasoning; this repo sits exactly at that cap).
 export default async function handler(req, res) {
   applyCors(req, res, 'GET, POST');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   if (req.method === 'GET') return handleGetOwnCode(req, res);
-  if (req.method === 'POST') return handleValidateCode(req, res);
+  if (req.method === 'POST') return handlePost(req, res);
   return res.status(405).json({ error: 'Method not allowed' });
 }
 
@@ -56,22 +52,30 @@ async function handleGetOwnCode(req, res) {
   return res.status(200).json({ code: gym.invite_code });
 }
 
-// Public on purpose (called before the user has an account/session), but
-// only ever reveals a boolean (+ which gym, needed by register() —
-// not sensitive, a gym's own invite code already gates who gets this far).
-// Uses the service role key because this runs before the caller has a
-// session, so `gyms`' own "own gym only" RLS policy would otherwise
-// reject the lookup.
+// Two very different POST calls share this path — distinguished by whether
+// the caller has a session, which naturally matches the two real call
+// sites: Login.jsx calls this BEFORE supabase.auth.signUp() (no session
+// yet, just to show "code invalide" without creating an account), then
+// AuthContext.register() calls it again AFTER signUp() succeeds (now
+// authenticated) to actually join the gym.
+async function handlePost(req, res) {
+  const user = await requireUser(req);
+  if (user) return handleCompleteSignup(req, res, user);
+  return handleValidateCode(req, res);
+}
+
+// Public on purpose (called before the user has an account/session) — pure
+// UX feedback ("code invalide"), no longer the thing that actually grants
+// gym membership (see handleCompleteSignup below, 2026-08-10 suite 90:
+// a client-supplied gym_id was trusted here before, closed now).
 async function handleValidateCode(req, res) {
-  // No user identity exists yet at this point — best-effort IP-based
-  // deterrent against scripted brute-forcing (see rateLimit.js for caveats).
   const ip = (req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown').split(',')[0].trim();
   if (!checkMemoryRateLimit(`validate-invite:${ip}`, { max: 10, windowMs: 5 * 60 * 1000 })) {
     return res.status(429).json({ error: 'Too many attempts, try again shortly' });
   }
 
   const { code } = req.body || {};
-  if (!code) return res.status(200).json({ valid: false, gym_id: null });
+  if (!code) return res.status(200).json({ valid: false });
 
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!serviceRoleKey) {
@@ -87,5 +91,48 @@ async function handleValidateCode(req, res) {
     .maybeSingle();
   if (error) console.error('[invite] validate: gyms lookup failed', error);
 
-  return res.status(200).json({ valid: !!gym, gym_id: gym?.id || null });
+  return res.status(200).json({ valid: !!gym });
+}
+
+// The actual gym-join, moved server-side (2026-08-10 suite 90) to close a
+// real gap: register()'s old client-side profile upsert set gym_id
+// straight from a value the client controlled — nothing stopped a raw
+// REST insert with an arbitrary gym_id. Now gym_id is re-resolved from the
+// code HERE, service_role, never trusting anything the client claims about
+// which gym it validated earlier. One-shot like create-gym.js: only ever
+// assigns gym_id to a profile that doesn't already have one, so an
+// existing member/coach can't use this to hop gyms just by learning a code.
+async function handleCompleteSignup(req, res, user) {
+  const rateLimit = await checkRateLimit(req, 'complete-signup', { max: 5, windowMs: 10 * 60 * 1000 });
+  if (!rateLimit.ok) return res.status(rateLimit.status).json({ error: 'Too many requests, try again shortly' });
+
+  const { code } = req.body || {};
+  if (!code) return res.status(400).json({ error: 'Code manquant' });
+
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!serviceRoleKey) {
+    console.error('[invite] complete-signup: SUPABASE_SERVICE_ROLE_KEY not configured');
+    return res.status(500).json({ error: 'Not configured' });
+  }
+  const admin = createClient(process.env.VITE_SUPABASE_URL, serviceRoleKey);
+
+  const { data: existingProfile } = await admin.from('profiles').select('gym_id').eq('user_id', user.id).maybeSingle();
+  if (existingProfile?.gym_id) {
+    return res.status(409).json({ error: 'Ce compte est déjà rattaché à une salle' });
+  }
+
+  const { data: gym, error: gymError } = await admin.from('gyms').select('id').eq('invite_code', code).maybeSingle();
+  if (gymError) console.error('[invite] complete-signup: gyms lookup failed', gymError);
+  if (!gym) return res.status(400).json({ error: 'Code invalide' });
+
+  const { error: upsertError } = await admin.from('profiles').upsert({
+    user_id: user.id,
+    gym_id: gym.id,
+  }, { onConflict: 'user_id' });
+  if (upsertError) {
+    console.error('[invite] complete-signup: profile upsert failed', upsertError);
+    return res.status(500).json({ error: "Erreur lors du rattachement à la salle" });
+  }
+
+  return res.status(200).json({ success: true, gym_id: gym.id });
 }
