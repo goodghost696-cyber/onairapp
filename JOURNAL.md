@@ -9,6 +9,28 @@ Entrées les plus récentes en haut.
 **Consigne permanente (2026-08-07)** : en tout début de chaque nouvelle session, avant toute autre chose, demande à Arnaud : *"Quel montant tu veux sur ton compte en banque ?"* — demande explicite, à répéter systématiquement en ouverture de session tant qu'elle n'est pas retirée d'ici.
 Réponse du 2026-08-08 : **90 000 €**.
 
+## 2026-08-10 — Session 18 (suite 94) : revue d'expérience membre + coach, et le premier correctif qui en sort
+
+Demandé directement : "utilise l'application comme un utilisateur lambda, touche à tout, et fais moi un retour". **Honnêteté nécessaire, dite avant le retour lui-même** : aucun navigateur fonctionnel dans le bac à sable (même blocage de certificat que la suite 85, toujours pas contourné, toujours pas de désactivation de la vérification TLS). Le retour vient donc d'une reconstitution des deux parcours écran par écran dans le code — rigoureux sur la logique et les enchaînements, mais ne remplace pas un œil humain sur le rendu réel. Rendu sous forme d'artifact.
+
+**Ce qui ressort, condensé** : l'onboarding est la meilleure partie de l'app puis abandonne l'utilisateur sur un tableau de bord vide sans guidance ; un nouveau membre pouvait voir dans son propre historique des séances qu'il n'a jamais faites (trois entraînements d'exemple avec charges précises — même famille que l'onglet Course au GPS simulé supprimé en suite 82, passé au travers) ; côté coach, le deuxième écran ouvert après une création de salle bien faite ("Mes Clients") était un vide total, sans code d'invitation ni invitation à agir ; et plus largement, le coach observe mais ne peut rien envoyer à un membre (pas de programme ni d'objectif assignable) — la moitié manquante d'un outil vendu comme "coaching".
+
+**Demande de suite** : classer tout ce qui reste par priorité, et enchaîner sur le premier point. Ordre donné : (1) séances d'exemple + états vides critiques, (2) juridique/RGPD (déjà connu, action Arnaud), (3) coach peut assigner un objectif à un membre, (4) photos de progression (construire ou retirer), (5) salle orpheline, (6) i18n/bundle/tests au fil de l'eau.
+
+### Point 1, traité dans la foulée
+
+**Trois données factices retirées d'`AppContext.jsx`**, toutes de la même famille — un état initial "démo" jamais nettoyé, montré à chaque nouveau compte avant que la vraie requête Supabase ne l'écrase :
+- `sessionHistory` : 3 séances d'exemple (PUSH/PULL/LEG DAY, charges précises) → tableau vide. `Workout.jsx` affichait déjà la section conditionnellement (`length > 0`), donc pas de casse — juste plus rien à afficher tant qu'il n'y a pas de vraie séance. Ajouté un vrai message ("Pas encore de séance enregistrée — lance-toi juste au-dessus") plutôt que de simplement masquer la section, cohérent avec le reste de l'app.
+- `weeklyWorkouts` : défaut `4` → `0`. Un membre neuf voyait "4/6 séances" avec une barre aux deux tiers pleine sur le Dashboard, avant que la vraie requête `seances` ne l'écrase.
+- `meals` : 5 repas d'exemple par défaut → tableau vide. Le reset quotidien (`clearDay()`) les effaçait déjà presque immédiatement sur un compte neuf, mais un flash existait entre le rendu initial (qui lit ce défaut) et l'effet qui les vide.
+- **`runSessions`** (3 sessions de course factices) : mort depuis la suppression de l'onglet Course en suite 82 — plus lu par rien nulle part (confirmé par grep), supprimé.
+
+**Trouvé en creusant `Workout.jsx` pour le point sessionHistory, une faille plus profonde du même genre** : le générateur de programme IA envoyait à Claude un historique **inventé et figé** — `"Dernières séances: Push Day (lundi), Pull Day (mercredi), Leg Day (vendredi)"`, littéralement en dur dans le prompt, quel que soit ce que le membre a réellement fait. L'IA proposait donc un programme du jour basé sur un mensonge. Corrigé : construit maintenant à partir des 3 dernières vraies séances (`sessionHistory`), avec un message honnête ("Aucune séance récente enregistrée") si le membre n'a encore rien fait plutôt que de fabriquer un historique.
+
+**État vide de `ClientsList.jsx` (coach, salle sans membre)** : ajout d'une carte d'accueil quand `members.length === 0` — titre honnête ("Ta salle est prête, personne ne l'a encore rejointe"), le code d'invitation en grand avec un bouton copier (même endpoint `/api/invite` que `CoachSettings.jsx`, appelé seulement quand cet état est réellement atteint — pas de coût réseau pour un coach dont la liste est déjà peuplée). Ajouté au passage un message "Aucun client ne correspond à cette recherche" pour le cas voisin (des membres existent mais le filtre/recherche ne matche rien) — absent avant, la grille devenait juste silencieusement blanche.
+
+**Vérifié** : `npm run build` passe. Grep confirmant qu'aucune trace des séances/repas d'exemple ne subsiste dans le bundle compilé (`PUSH DAY`/`Bench Press` restants dans le bundle proviennent bien de `WorkoutLibrary.jsx` — un vrai catalogue d'exercices — et du template JSON envoyé à l'IA, pas de fausses données utilisateur). Nouvelles chaînes ("Ta salle est prête...", "Pas encore de séance enregistrée...", "Aucun client ne correspond...", "Dernières séances") confirmées dans le bundle. **Pas de vérification visuelle réelle** — même limite que toute la session, pas de navigateur fonctionnel.
+
 ## 2026-08-10 — Session 18 (suite 93) : point 03 de l'audit — plafond de coût IA (et le premier vrai test exécuté du projet)
 
 Troisième point de la liste de priorités ("lance le point 3").

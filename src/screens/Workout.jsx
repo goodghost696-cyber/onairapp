@@ -32,6 +32,15 @@ export default function Workout() {
   const generateProgram = async () => {
     setLoading(true)
     try {
+      // Était "Push Day (lundi), Pull Day (mercredi), Leg Day (vendredi)" en
+      // dur, quel que soit ce que le membre a réellement fait — l'IA se
+      // basait donc sur un faux historique pour proposer le programme du
+      // jour. Repéré en relisant l'app comme un utilisateur (2026-08-10),
+      // même famille que les séances d'exemple retirées d'AppContext.jsx.
+      // Construit maintenant à partir des vraies séances récentes.
+      const recentSessionsLine = sessionHistory.length > 0
+        ? sessionHistory.slice(0, 3).map(s => `${s.type} (${s.date})`).join(', ')
+        : 'Aucune séance récente enregistrée'
       const response = await fetch('/api/claude', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
@@ -43,7 +52,7 @@ export default function Workout() {
             content: `Tu es coach sportif expert. Génère un programme d'entraînement pour aujourd'hui.
 Utilisateur: ${user?.name}
 Objectif: ${user?.goal || 'Prise de masse'}
-Dernières séances: Push Day (lundi), Pull Day (mercredi), Leg Day (vendredi)
+Dernières séances: ${recentSessionsLine}
 Jour: ${new Date().toLocaleDateString('fr-FR', { weekday: 'long' })}
 Réponds UNIQUEMENT en JSON valide:
 {
@@ -186,10 +195,14 @@ Donne exactement 4-5 exercices adaptés à l'objectif.`
           </div>
         ))}
 
-        {sessionHistory.length > 0 && (
-          <div className="history-section">
-            <p className="section-label">DERNIÈRES SÉANCES</p>
-            {sessionHistory.map(session => (
+        <div className="history-section">
+          <p className="section-label">DERNIÈRES SÉANCES</p>
+          {sessionHistory.length === 0 && (
+            <p className="text-sm text-muted" style={{ padding: '4px 0 8px' }}>
+              Pas encore de séance enregistrée — lance-toi juste au-dessus.
+            </p>
+          )}
+          {sessionHistory.length > 0 && sessionHistory.map(session => (
               <div
                 className="history-card"
                 key={session.id}
@@ -211,8 +224,7 @@ Donne exactement 4-5 exercices adaptés à l'objectif.`
                 </div>
               </div>
             ))}
-          </div>
-        )}
+        </div>
       </div>
 
     </div>
