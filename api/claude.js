@@ -1,5 +1,6 @@
 import { applyCors, requireUser } from './_lib/auth.js';
 import { checkRateLimit } from './_lib/rateLimit.js';
+import { consumeAiQuota, recordAiTokens } from './_lib/aiQuota.js';
 
 export const config = {
   api: {
@@ -32,8 +33,15 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: `max_tokens must be between 1 and ${MAX_TOKENS_CAP}` });
   }
 
+  // Deux protections distinctes, dans cet ordre :
+  //   - rafale (par utilisateur, sur 5 min) : empêche de marteler l'API
+  //   - quota mensuel (par salle) + plafond plateforme : protège la marge
+  // La rafale d'abord, elle est plus rapide et filtre le gros de l'abus.
   const rateLimit = await checkRateLimit(req, 'claude', { max: 15, windowMs: 5 * 60 * 1000 });
   if (!rateLimit.ok) return res.status(rateLimit.status).json({ error: 'Too many requests, try again shortly' });
+
+  const quota = await consumeAiQuota(req);
+  if (!quota.ok) return res.status(quota.status).json({ error: quota.error || 'Quota exceeded' });
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return res.status(500).json({ error: 'API key not configured' });
@@ -55,6 +63,12 @@ export default async function handler(req, res) {
       console.error('Anthropic error:', JSON.stringify(data));
       return res.status(response.status).json({ error: data.error?.message || 'Anthropic error' });
     }
+
+    // Consommation réelle, connue seulement maintenant. Awaité malgré la
+    // latence (~20ms, négligeable face à un appel IA de plusieurs
+    // secondes) : sur Vercel, une promesse non awaitée peut être tuée dès
+    // que la réponse part.
+    await recordAiTokens(req, data.usage);
 
     return res.status(200).json(data);
   } catch (error) {

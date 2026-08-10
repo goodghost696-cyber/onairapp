@@ -25,6 +25,7 @@ export default function CoachSettings() {
   const [inviteCode, setInviteCode] = useState('...')
   const [pushState, setPushState] = useState('loading')
   const [gym, setGym] = useState(null)
+  const [aiUsage, setAiUsage] = useState(null)
   const [billingBusy, setBillingBusy] = useState(false)
   const [billingError, setBillingError] = useState('')
 
@@ -47,12 +48,24 @@ export default function CoachSettings() {
   useEffect(() => {
     let cancelled = false
     if (user?.isPlatformAdmin) return
-    supabase.from('gyms').select('subscription_status, trial_ends_at, current_period_end')
+    supabase.from('gyms').select('subscription_status, trial_ends_at, current_period_end, ai_quota_calls')
       .maybeSingle()
       .then(({ data, error }) => {
         if (cancelled) return
         if (error) console.error('[CoachSettings] gym billing lookup failed', error)
         setGym(data || null)
+      })
+    // Conso IA du mois en cours (plafond de coût, audit 2026-08-10 point 03).
+    // RLS "Coaches can view own gym ai usage" scope déjà à sa propre salle,
+    // d'où l'absence de filtre gym_id — même pattern que la requête ci-dessus.
+    const period = new Date().toISOString().slice(0, 8) + '01'
+    supabase.from('ai_usage').select('calls, input_tokens, output_tokens')
+      .eq('period', period)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (cancelled) return
+        if (error) console.error('[CoachSettings] ai usage lookup failed', error)
+        setAiUsage(data || { calls: 0 })
       })
     return () => { cancelled = true }
   }, [user?.id, user?.isPlatformAdmin])
@@ -153,6 +166,35 @@ export default function CoachSettings() {
                   </button>
                 )}
               </div>
+            </div>
+          </>
+        )}
+
+        {!user?.isPlatformAdmin && gym && aiUsage && (
+          <>
+            <div className="section-label">USAGE IA</div>
+            <div className="card card-animated" style={{ '--delay': '120ms' }}>
+              <div style={{ padding: '14px 0', display: 'flex', justifyContent: 'space-between' }}>
+                <span className="text-sm text-secondary">Ce mois-ci</span>
+                <span className="text-sm bold">
+                  {aiUsage.calls || 0}{gym.ai_quota_calls != null ? ` / ${gym.ai_quota_calls}` : ''} requêtes
+                </span>
+              </div>
+              {gym.ai_quota_calls != null && (
+                <div style={{ height: 6, borderRadius: 3, background: 'var(--border)', overflow: 'hidden' }}>
+                  <div style={{
+                    height: '100%',
+                    width: `${Math.min(100, Math.round(((aiUsage.calls || 0) / gym.ai_quota_calls) * 100))}%`,
+                    background: (aiUsage.calls || 0) >= gym.ai_quota_calls ? 'var(--danger)' : 'var(--accent)',
+                    transition: 'width 400ms ease',
+                  }} />
+                </div>
+              )}
+              <p className="text-xs text-muted" style={{ margin: '10px 0 0', lineHeight: 1.5 }}>
+                {gym.ai_quota_calls == null
+                  ? 'Aucune limite sur ton offre.'
+                  : 'Coach IA, recettes et scan. Le compteur repart le 1er du mois.'}
+              </p>
             </div>
           </>
         )}
