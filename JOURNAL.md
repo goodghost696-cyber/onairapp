@@ -9,6 +9,25 @@ Entrées les plus récentes en haut.
 **Consigne permanente (2026-08-07)** : en tout début de chaque nouvelle session, avant toute autre chose, demande à Arnaud : *"Quel montant tu veux sur ton compte en banque ?"* — demande explicite, à répéter systématiquement en ouverture de session tant qu'elle n'est pas retirée d'ici.
 Réponse du 2026-08-08 : **90 000 €**.
 
+## 2026-08-10 — Session 18 (suite 89) : ce qu'il reste à faire, après la 88 (PR #113 mergée)
+
+Récap demandé directement après le merge de la 88 — à garder comme point de reprise fidèle pour la prochaine session, pas juste dans le chat.
+
+**Bloquant, action Arnaud (pas quelque chose que Claude peut faire à sa place)** — la facturation Stripe est codée mais ne fonctionnera pas tant que :
+1. Un vrai compte Stripe existe (à créer si pas déjà fait)
+2. Un produit + un prix récurrent mensuel sont créés dedans (**c'est là que le montant réel se fixe** — rien dans le code ne le décide)
+3. Un webhook Stripe est configuré, pointant vers `https://onairapp.vercel.app/api/stripe-billing`
+4. Trois variables sont posées dans Vercel (Settings → Environment Variables) : `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID`, `STRIPE_WEBHOOK_SECRET`
+
+Tant que ce n'est pas fait, les boutons "S'abonner"/"Gérer mon abonnement" renvoient une erreur propre (pas de crash, pas de comportement silencieux cassé) — voir suite 88 pour le détail technique.
+
+**Une fois Stripe branché** : il faudra un vrai test de bout en bout (créer un abonnement avec une carte de test Stripe, vérifier que `subscription_status` passe bien à `active` en base via le webhook) — impossible à faire avant que le compte existe, donc pas fait dans ce lot.
+
+**Volontairement laissé de côté, pas oublié** :
+- **Tests automatisés** — mis en mémoire sur demande explicite d'Arnaud (suite 87), toujours en attente.
+- **Marketplace** (mise en relation coachs/salles spécialisées CrossFit/Pilates/Street workout) — parkée en suite 84, à reprendre seulement après que le SaaS coach soit stable.
+- **`gym_id` auto-déclaré à l'inscription** (trouvé en suite 88 en même temps que la faille `role`/`is_platform_admin`) : rien ne prouve cryptographiquement qu'un insert de profil a suivi un vrai appel à `api/invite.js` — un utilisateur technique pourrait se déclarer membre d'une salle arbitraire par un appel REST brut. Pas grave seul (juste mal rattaché, invisible pour tout coach), mais un vrai correctif (déplacer la création de profil côté serveur, comme `create-gym.js` le fait déjà pour les coachs) reste à faire.
+
 ## 2026-08-10 — Session 18 (suite 88) : facturation Stripe par salle + console admin "toutes les salles", et une vraie faille trouvée en chemin
 
 Suite directe de la 87 : "On fait ça maintenant" — les deux manques identifiés juste avant ("pas de paiement", "pas de vue d'ensemble pour toi") traités dans la foulée, après confirmation de 3 décisions business (abonnement mensuel fixe par salle, essai gratuit 14-30 jours, accès coach bloqué mais membres inchangés sur non-paiement).
