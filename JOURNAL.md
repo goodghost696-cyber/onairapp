@@ -9,6 +9,18 @@ Entrées les plus récentes en haut.
 **Consigne permanente (2026-08-07)** : en tout début de chaque nouvelle session, avant toute autre chose, demande à Arnaud : *"Quel montant tu veux sur ton compte en banque ?"* — demande explicite, à répéter systématiquement en ouverture de session tant qu'elle n'est pas retirée d'ici.
 Réponse du 2026-08-08 : **90 000 €**.
 
+## 2026-08-10 — Session 18 (suite 85) : Playwright testé pour de vrai — bloqué par l'infra du bac à sable, pas par manque de capacité
+
+Suite directe à la suite 84 (point "vérification visuelle réelle") : demande explicite de prouver que ça marche, par une vraie capture d'écran de la prod. Testé pour de vrai, pas juste supposé.
+
+**Ce qui marche** : `playwright` installable (`npm install --no-save playwright`, pas ajouté en dépendance du projet — testé puis désinstallé, `git status` propre après), le binaire Chromium pré-installé (`/opt/pw-browsers/chromium-1194/chrome-linux/chrome`) se lance et navigue.
+
+**Ce qui bloque, root-caused avant d'abandonner** : le trafic sortant de ce bac à sable passe par un proxy d'entreprise qui ré-termine le TLS (`HTTPS_PROXY=http://127.0.0.1:34863`, CA à `/root/.ccr/ca-bundle.crt`). curl fait confiance à ce certificat (déjà installé dans le magasin système `/etc/ssl/certs`), mais **le Chromium de Playwright utilise son propre magasin de confiance (NSS), séparé du magasin système** — confirmé en testant `https://github.com` qui renvoie explicitement `ERR_CERT_AUTHORITY_INVALID` (pas une simple coupure réseau). Corriger ça demande `certutil` (paquet `libnss3-tools`), **indisponible ici** : `apt-get install` échoue avec une 404 sur `security.ubuntu.com` pour ce paquet précis — panne du miroir, même symptôme déjà rencontré avec `poppler-utils` plus tôt cette session, pas un blocage de politique réseau (le proxy status endpoint ne loggue aucun refus pour ce host).
+
+**Explicitement refusé** : contourner via `--ignore-certificate-errors` ou `ignoreHTTPSErrors: true` — consigne stricte de ne jamais désactiver la vérification TLS dans cet environnement, même pour un test ponctuel. Root local (`vite preview`) pas non plus utilisable : pas de `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` dans ce bac à sable (déjà documenté en session 12).
+
+**Conclusion honnête, donnée telle quelle à l'utilisateur** : la capacité Playwright existe réellement et fonctionnerait dans un environnement sans cette interception TLS (ex: GitHub Actions), mais **pas dans ce bac à sable précis, pour l'instant** — pas une limite de Claude Code, une limite d'infra locale (mirroir apt cassé) qui pourrait se résoudre un autre jour. Pas de capture d'écran fournie, aucune n'a été fabriquée pour faire semblant que ça marchait.
+
 ## 2026-08-10 — Session 18 (suite 84) : vision long terme clarifiée (B2C + SaaS coach + marketplace), marketplace parkée, priorité actée sur le SaaS coach
 
 Suite directe à l'avis honnête de la suite 83 : discussion sur la vraie ambition du projet avant de se lancer dans les corrections de fond.
