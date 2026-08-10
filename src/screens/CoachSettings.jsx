@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import CoachNav from '../components/CoachNav'
-import { authHeader } from '../lib/supabase'
+import { supabase, authHeader } from '../lib/supabase'
 import { isPushSupported, getPushSubscriptionState, subscribeToPush, unsubscribeFromPush, isIOSNotStandalone } from '../utils/push'
 import DeleteAccountButton from '../components/DeleteAccountButton'
 import { storageKey } from '../components/OnboardingTour'
 import { useGymConfig } from '../hooks/useGymConfig'
+import { isGymAccessActive, trialDaysLeft } from '../utils/billing'
 import Icon from '../components/Icon'
 
 function Toggle({ on, onToggle }) {
@@ -20,14 +21,17 @@ function Toggle({ on, onToggle }) {
 export default function CoachSettings() {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
-  const gym = useGymConfig()
+  const gymConfig = useGymConfig()
   const [inviteCode, setInviteCode] = useState('...')
   const [pushState, setPushState] = useState('loading')
+  const [gym, setGym] = useState(null)
+  const [billingBusy, setBillingBusy] = useState(false)
+  const [billingError, setBillingError] = useState('')
 
   useEffect(() => {
     let cancelled = false
     authHeader().then(headers =>
-      fetch('/api/invite-code', { headers }).then(r => r.json())
+      fetch('/api/invite', { headers }).then(r => r.json())
     ).then(data => {
       if (!cancelled) setInviteCode(data.code || '—')
     }).catch(() => {
@@ -35,6 +39,41 @@ export default function CoachSettings() {
     })
     return () => { cancelled = true }
   }, [])
+
+  // Own gym's billing row — RLS ("Users can view their own gym") already
+  // scopes this with no filter needed, same pattern as CoachLayout's gate.
+  // Not fetched for the platform-admin account (CoachLayout never gates it
+  // either, so there's nothing meaningful to show/manage here).
+  useEffect(() => {
+    let cancelled = false
+    if (user?.isPlatformAdmin) return
+    supabase.from('gyms').select('subscription_status, trial_ends_at, current_period_end')
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (cancelled) return
+        if (error) console.error('[CoachSettings] gym billing lookup failed', error)
+        setGym(data || null)
+      })
+    return () => { cancelled = true }
+  }, [user?.id, user?.isPlatformAdmin])
+
+  async function handleBillingAction(action) {
+    setBillingError('')
+    setBillingBusy(true)
+    try {
+      const res = await fetch('/api/stripe-billing', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
+        body: JSON.stringify({ action }),
+      })
+      const result = await res.json()
+      if (!res.ok) throw new Error(result.error || 'Erreur')
+      window.location.href = result.url
+    } catch (err) {
+      setBillingError(err.message)
+      setBillingBusy(false)
+    }
+  }
 
   useEffect(() => {
     if (!isPushSupported()) { setPushState('unsupported'); return }
@@ -81,12 +120,42 @@ export default function CoachSettings() {
         <div className="section-label">SALLE</div>
         <div className="card card-animated" style={{ '--delay': '60ms' }}>
           <div style={{ padding: '14px 0', borderBottom: '2px solid var(--border)', display: 'flex', justifyContent: 'space-between' }}>
-            <span className="text-sm text-secondary">Salle</span><span className="text-sm">{gym.name}{gym.city ? ` ${gym.city}` : ''}</span>
+            <span className="text-sm text-secondary">Salle</span><span className="text-sm">{gymConfig.name}{gymConfig.city ? ` ${gymConfig.city}` : ''}</span>
           </div>
           <div style={{ padding: '14px 0', display: 'flex', justifyContent: 'space-between' }}>
             <span className="text-sm text-secondary">Code accès</span><span className="text-sm text-accent bold">{inviteCode}</span>
           </div>
         </div>
+
+        {!user?.isPlatformAdmin && gym && (
+          <>
+            <div className="section-label">FACTURATION</div>
+            <div className="card card-animated" style={{ '--delay': '90ms' }}>
+              <div style={{ padding: '14px 0', borderBottom: '2px solid var(--border)', display: 'flex', justifyContent: 'space-between' }}>
+                <span className="text-sm text-secondary">Statut</span>
+                <span className="text-sm bold" style={{ color: isGymAccessActive(gym) ? 'var(--success)' : 'var(--danger)' }}>
+                  {gym.subscription_status === 'active' && 'Actif'}
+                  {gym.subscription_status === 'trialing' && (isGymAccessActive(gym) ? `Essai — ${trialDaysLeft(gym)} j restants` : 'Essai terminé')}
+                  {gym.subscription_status === 'past_due' && 'Paiement en échec'}
+                  {gym.subscription_status === 'canceled' && 'Annulé'}
+                  {!['active', 'trialing', 'past_due', 'canceled'].includes(gym.subscription_status) && gym.subscription_status}
+                </span>
+              </div>
+              {billingError && <div style={{ padding: '10px 0' }}><span className="text-xs" style={{ color: 'var(--danger)' }}>{billingError}</span></div>}
+              <div style={{ padding: '14px 0 0' }}>
+                {gym.subscription_status === 'active' ? (
+                  <button className="btn-ghost" disabled={billingBusy} onClick={() => handleBillingAction('portal')}>
+                    {billingBusy ? '...' : 'Gérer mon abonnement'}
+                  </button>
+                ) : (
+                  <button className="btn-accent" disabled={billingBusy} onClick={() => handleBillingAction('checkout')}>
+                    {billingBusy ? '...' : "S'abonner"}
+                  </button>
+                )}
+              </div>
+            </div>
+          </>
+        )}
 
         <div className="section-label">NOTIFICATIONS</div>
         <div className="card card-animated" style={{ '--delay': '120ms' }}>
@@ -119,6 +188,15 @@ export default function CoachSettings() {
               (see there) rather than leave a toggle that lies about what it
               does. */}
         </div>
+
+        {user?.isPlatformAdmin && (
+          <>
+            <div className="section-label">VOLTA</div>
+            <button className="btn-ghost" onClick={() => navigate('/admin')} style={{ marginBottom: 12 }}>
+              Console admin — toutes les salles
+            </button>
+          </>
+        )}
 
         <div className="section-label">COMPTE</div>
         <button className="btn-ghost" onClick={replayTour} style={{ marginBottom: 8 }}>

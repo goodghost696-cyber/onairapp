@@ -389,6 +389,15 @@ export default function Settings() {
           </>
         )}
 
+        {user?.isPlatformAdmin && (
+          <>
+            <div className="section-label">VOLTA</div>
+            <button className="btn-ghost" onClick={() => navigate('/admin')} style={{ marginBottom: 12 }}>
+              Console admin — toutes les salles
+            </button>
+          </>
+        )}
+
         <div className="section-label">{t('account_section')}</div>
         <button className="btn-ghost" onClick={replayTour} style={{ marginBottom: 8 }}>
           Revoir le didacticiel
