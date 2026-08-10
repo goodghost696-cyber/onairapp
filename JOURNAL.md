@@ -9,6 +9,43 @@ Entrées les plus récentes en haut.
 **Consigne permanente (2026-08-07)** : en tout début de chaque nouvelle session, avant toute autre chose, demande à Arnaud : *"Quel montant tu veux sur ton compte en banque ?"* — demande explicite, à répéter systématiquement en ouverture de session tant qu'elle n'est pas retirée d'ici.
 Réponse du 2026-08-08 : **90 000 €**.
 
+## 2026-08-10 — Session 18 (suite 92) : correction des points 02 et 04 de l'audit (perte de données silencieuse + index manquants)
+
+Deux premiers points de la liste de priorités validée juste après l'audit ("commence les deux points que tu viens de me citer").
+
+### Point 04 — index manquants (le rapide)
+
+Les 5 clés étrangères sans index couvrant sont indexées. Composites `(user_id, date)` plutôt que colonne seule sur `repas` et `seances` : tout le code lit ces tables par utilisateur **et** plage de dates (AppContext, coachStats, streak), et la colonne de la FK reste en tête — donc le même index satisfait l'exigence de la FK *et* sert la vraie requête. `profiles_gym_id_idx` est le plus important : c'est la colonne que chaque policy "même salle" filtre, elle était sans index depuis la suite 86.
+
+**Vérifié** : requête directe sur `pg_constraint`/`pg_index` — les **12** clés étrangères de la base ont maintenant un index dont elles sont colonne de tête. Répercuté dans `supabase_schema.sql` (règle du projet : la base et ce fichier ne divergent jamais).
+
+**Pas fait volontairement** : les 28 policies `auth_rls_initplan` (qui recalculent `auth.uid()` à chaque ligne) et les 40 `multiple_permissive_policies`. C'est mécanique — envelopper dans `(select auth.uid())` — mais ça touche 28 policies de sécurité, et vu l'historique de subtilités RLS de ce projet (le piège des grants `anon`, hit deux fois), ça mérite un lot dédié et vérifié à part, pas un ajout à un lot "index rapides".
+
+### Point 02 — perte de données silencieuse (le vrai sujet)
+
+**Nouveau `src/utils/writeQueue.js`** : file d'attente persistée dans localStorage. On tente l'écriture directe ; si elle échoue, l'opération est mise en file et rejouée automatiquement — au retour du réseau (`online`), au lancement de l'app, après n'importe quelle écriture réussie, et via une relance périodique de 30s tant qu'il reste quelque chose (filet pour les cas où l'événement `online` ne se déclenche pas, typiquement un passage wifi capricieux → 4G).
+
+Choix de conception, dans l'ordre où ils comptent :
+- **Rejeu séquentiel, pas parallèle** — plusieurs upserts peuvent viser la même ligne, seul l'ordre garantit la bonne valeur finale. S'arrête au premier échec plutôt que de marteler.
+- **Ce qui rend le rejeu sûr** : les écritures `activite_jour` (eau/pas/km/sommeil) et `objectifs` sont des upserts à **valeur absolue** avec `onConflict`, pas des deltas. Les rejouer est idempotent par nature. C'est ce qui rendait ce correctif faisable sans refonte.
+- **Collapse** : deux upserts visant la même ligne ET le même jeu de colonnes sont redondants, seul le dernier est gardé — la file ne gonfle pas pendant une longue coupure. Deux réglages de colonnes *différentes* ne se collapsent pas (jeux de colonnes différents), ce qui est le comportement voulu.
+- **Erreurs permanentes non rejouées** : un refus RLS (`42501`) ou une violation de contrainte (`23xxx`/`22xxx`) ne se répare pas en réessayant — inutile d'encombrer la file. Seules les pannes réseau/serveur (pas de `code` PostgreSQL) valent un rejeu.
+- **Purge** : entrées de plus de 7 jours abandonnées (une valeur périmée ne doit pas écraser une valeur fraîche ressaisie entre-temps), file plafonnée à 200 entrées.
+
+**Les 7 chemins d'écriture membre y passent maintenant** : `addMeal`, `deleteMeal`, les 4 upserts `activite_jour`, les 2 inserts `seances`, et `updateGoal` (celui-là m'avait échappé au premier passage, trouvé en vérifiant qu'il ne restait plus d'écriture directe). Vérifié par grep : plus aucun `.insert(`/`.upsert(`/`.delete()` direct dans `AppContext.jsx`.
+
+**Nouveau `src/components/SyncIndicator.jsx`** — la partie visible, celle qui fait que l'app ne ment plus : petit bandeau discret au-dessus du FAB, "Synchronisation… N en attente" ou "Hors ligne — N en attente", avec un bouton Réessayer. Volontairement une information, pas une alarme : la donnée n'est pas perdue et repartira seule. Monté dans `MemberLayout`.
+
+**Bug de positionnement trouvé et corrigé avant de livrer** : mon premier placement (`76px + safe-area`) superposait exactement le FAB (46px de haut, ancré à `76px + safe-area` d'après `fab.css`) — l'indicateur centré fait jusqu'à 340px de large, il l'aurait recouvert. Empilé au-dessus en prolongeant la formule déjà documentée dans `fab.css`/`global.css`.
+
+**Deux limites documentées honnêtement plutôt que cachées** :
+1. Le rejeu d'un **insert `repas`** n'est pas strictement idempotent : si l'insertion a réussi mais que la réponse s'est perdue, le rejeu crée un doublon. Assumé — `repas` n'a pas de colonne d'idempotence, et un doublon se supprime d'un geste alors qu'un repas perdu ne se récupère jamais.
+2. Un repas mis en file garde un **id temporaire** (`Date.now()`) côté local alors que le rejeu lui donnera un vrai uuid. Le supprimer *avant* le prochain rechargement ne supprimera pas la ligne réelle, et il réapparaîtra au rafraîchissement. Fenêtre étroite (même session, ajout hors ligne puis suppression immédiate), et ça se répare tout seul au rechargement qui relit les vrais ids.
+
+**Périmètre non couvert, à noter** : seules les écritures *membre* passent par la file. Les écritures côté coach (`coach_notes`, `messages`) gardent le comportement d'avant — l'audit visait la donnée membre, mais c'est le prolongement naturel.
+
+**Vérifié** : `npm run build` passe, chaînes ("Synchronisation…", "Hors ligne —", "Réessayer") confirmées dans le bundle compilé, grep confirmant qu'aucune écriture directe ne subsiste, et que les 5 lectures Supabase d'`AppContext` sont intactes. **Pas de test réel du comportement hors ligne** — il faudrait un navigateur pour couper le réseau et observer le rejeu, ce que le bac à sable ne permet toujours pas (limite documentée en suite 85). La logique a été relue attentivement, pas exécutée en conditions réelles.
+
 ## 2026-08-10 — Session 18 (suite 91) : compte Stripe créé + audit complet de l'app (points faibles / axes d'ouverture)
 
 **Compte Stripe créé par Arnaud** (annoncé en début d'échange). Reste donc à faire, côté configuration, avant que la facturation fonctionne réellement : créer le produit + prix récurrent mensuel dans ce compte, configurer le webhook vers `https://onairapp.vercel.app/api/stripe-billing`, et poser les 3 variables dans Vercel (`STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID`, `STRIPE_WEBHOOK_SECRET`). **Toujours pas de test de bout en bout du paiement** tant que ces 3 variables ne sont pas en place. Arnaud a explicitement classé ce sujet comme "un ajustement" et demandé de passer à plus prioritaire : un audit complet.

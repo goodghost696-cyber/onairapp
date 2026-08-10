@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useNavigate, useLocation, Outlet } from 'react-router-dom'
 import BottomNav from '../components/BottomNav'
 import OnboardingTour from '../components/OnboardingTour'
+import SyncIndicator from '../components/SyncIndicator'
 import '../styles/fab.css'
 import '../styles/member.css'
 
@@ -34,6 +35,7 @@ const MemberLayout = () => {
       <Outlet />
       <BottomNav />
       <OnboardingTour variant="member" />
+      <SyncIndicator />
 
       {!hideFAB && (
         <div className="fab-container">

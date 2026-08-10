@@ -145,6 +145,14 @@ create policy "Members can view own-gym coach profiles"
 create policy "Platform admins can view all profiles"
   on profiles for select using (public.is_platform_admin());
 
+-- LA colonne du multi-salles : chaque policy "même salle" filtre dessus, et
+-- CoachDashboard/ClientsList listent les membres d'une salle. Était sans
+-- index jusqu'à l'audit du 2026-08-10 (suite 91, point 04) — invisible à 4
+-- profils, mur à 5 000. Les sous-requêtes exists() des policies partent de
+-- user_id (déjà couvert par profiles_user_id_key) ; celui-ci sert le
+-- listing par salle.
+create index if not exists profiles_gym_id_idx on profiles (gym_id);
+
 create or replace function public.is_coach()
 returns boolean language sql security definer set search_path = public stable as $$
   select exists (select 1 from public.profiles where user_id = auth.uid() and role in ('coach','admin'));
@@ -369,6 +377,11 @@ create policy "Coaches can view same-gym repas"
     )
   );
 
+-- Composite plutôt que user_id seul : tout le code lit repas par user_id +
+-- plage de dates (AppContext, coachStats, streak). La colonne de la FK
+-- reste en tête, donc l'exigence de la FK est satisfaite par le même index.
+create index if not exists repas_user_date_idx on repas (user_id, date);
+
 -- ── seances ───────────────────────────────────────────────
 create table if not exists seances (
   id         uuid primary key default gen_random_uuid(),
@@ -398,6 +411,9 @@ create policy "Coaches can view same-gym seances"
       where p.user_id = seances.user_id and p.gym_id = public.my_gym_id()
     )
   );
+
+-- Même raisonnement que repas_user_date_idx ci-dessus.
+create index if not exists seances_user_date_idx on seances (user_id, date);
 
 -- ── activite_jour ─────────────────────────────────────────
 create table if not exists activite_jour (
@@ -517,6 +533,9 @@ create index if not exists messages_thread_idx
   on messages (least(sender_id, receiver_id), greatest(sender_id, receiver_id), created_at);
 create index if not exists messages_unread_idx
   on messages (receiver_id) where read_at is null;
+-- messages_thread_idx est sur least/greatest des deux participants : il ne
+-- couvre pas sender_id seul, dont la FK a besoin (audit 2026-08-10).
+create index if not exists messages_sender_idx on messages (sender_id);
 
 -- Realtime: let clients subscribe to new rows in their conversation.
 alter publication supabase_realtime add table messages;
@@ -549,6 +568,9 @@ create policy "Coach can update own notes"
   with check (auth.uid() = coach_id);
 
 create index if not exists coach_notes_lookup_idx on coach_notes (coach_id, member_id);
+-- member_id n'est pas colonne de tête de l'index ci-dessus, sa FK n'était
+-- donc pas couverte (audit 2026-08-10).
+create index if not exists coach_notes_member_idx on coach_notes (member_id);
 
 -- ── push_subscriptions ────────────────────────────────────
 -- Web Push subscriptions — one row per browser/device a user has enabled
