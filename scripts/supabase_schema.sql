@@ -15,6 +15,36 @@
 -- `drop ... if exists` where relevant so re-running is idempotent).
 -- ============================================================
 
+-- ── gyms (multi-tenant foundation, 2026-08-10) ──────────────
+-- Was completely absent before this — every member/coach implicitly
+-- belonged to "the" one gym that existed, and coach-facing RLS policies
+-- below just checked is_coach() with no notion of WHICH gym, meaning any
+-- second coach added would have seen every gym's members. This table +
+-- profiles.gym_id below give every profile a real tenant, and the coach
+-- policies are rescoped to same-gym-only accordingly.
+create table if not exists gyms (
+  id          uuid primary key default gen_random_uuid(),
+  name        text not null,
+  invite_code text not null unique,
+  created_at  timestamptz default now()
+);
+
+alter table gyms enable row level security;
+
+-- Anyone authenticated can read a gym's name/invite_code — needed to
+-- display "tu rejoins TELLE salle" and for validate-invite.js/invite-code.js
+-- to resolve a code to a gym. No sensitive data on this table.
+create policy "Authenticated can view gyms"
+  on gyms for select using (auth.role() = 'authenticated');
+
+-- Seed the one gym that already existed before this migration — idempotent,
+-- only inserts if no gym exists yet at all. Real production data: applied
+-- via Supabase MCP on 2026-08-10, this insert already ran once against the
+-- live database (id 30cd42d5-ece1-453d-8866-d4e874d8d103).
+insert into gyms (name, invite_code)
+select 'VOLTA FITNESS', 'ONAIR2026'
+where not exists (select 1 from gyms);
+
 -- ── profiles ──────────────────────────────────────────────
 create table if not exists profiles (
   id         uuid primary key default gen_random_uuid(),
@@ -33,6 +63,11 @@ create table if not exists profiles (
   -- Same idea, written by api/cron/streak-nudge.js — one streak nudge per
   -- day max, compared by date (not timestamp) against `today` in that job.
   last_streak_nudge_at timestamptz,
+  -- Which gym this profile belongs to (see `gyms` above). Set at signup
+  -- from the invite code (api/validate-invite.js resolves code -> gym_id,
+  -- threaded through AuthContext.register()). Backfilled on 2026-08-10 for
+  -- every profile that predates this column, to the one gym that existed.
+  gym_id     uuid references gyms(id),
   created_at timestamptz default now(),
   unique(user_id)
 );
@@ -51,17 +86,19 @@ create policy "Users can update own profile"
 
 -- Coaches/admins can read every member's profile — gated by is_coach(),
 -- which is itself gated on the same `role` column this whole setup exists
--- to protect (see the GRANT/trigger below).
-create policy "Coaches can view all profiles"
-  on profiles for select using (is_coach());
+-- to protect (see the GRANT/trigger below). Rescoped 2026-08-10 to only
+-- the coach's own gym (my_gym_id() below) — was unconditional, meaning
+-- any second coach on the platform would have seen every gym's members.
+create policy "Coaches can view same-gym profiles"
+  on profiles for select using (is_coach() and gym_id = public.my_gym_id());
 
 -- Reverse direction: a member needs to discover "the" coach to message
 -- them (fetchPrimaryCoach() in src/utils/messages.js) — scoped to
 -- coach/admin rows only, so a member still can't read another member's
--- profile through this policy.
-create policy "Anyone authenticated can view coach/admin profiles"
+-- profile through this policy. Also gym-scoped now, same reasoning.
+create policy "Members can view own-gym coach profiles"
   on profiles for select
-  using (role in ('coach', 'admin'));
+  using (role in ('coach', 'admin') and gym_id = public.my_gym_id());
 
 create or replace function public.is_coach()
 returns boolean language sql security definer set search_path = public stable as $$
@@ -71,10 +108,25 @@ $$;
 -- PostgreSQL grants EXECUTE on new functions to PUBLIC by default, which
 -- every role (including anon) inherits — a REVOKE targeted at just `anon`
 -- does NOT override that. Revoke from PUBLIC, then re-grant explicitly to
--- the role that actually needs it (the "Coaches can view all profiles"
+-- the role that actually needs it (the "Coaches can view same-gym profiles"
 -- policy above calls this on the caller's behalf).
 revoke execute on function public.is_coach() from public;
 grant execute on function public.is_coach() to authenticated;
+
+-- Same pattern as is_coach() above — a caller's own gym_id, resolved via
+-- SECURITY DEFINER so it doesn't re-trigger the RLS policy that depends on
+-- it (would otherwise recurse — same class of bug already hit once on the
+-- coach policy, see the 2026-07-10 entry in JOURNAL.md). Both PUBLIC and
+-- the explicit per-role default grant to `anon` need revoking (revoking
+-- from PUBLIC alone leaves anon's own explicit grant in place — the same
+-- gotcha already documented below for prevent_self_role_escalation()).
+create or replace function public.my_gym_id()
+returns uuid language sql security definer set search_path = public stable as $$
+  select gym_id from public.profiles where user_id = auth.uid();
+$$;
+revoke execute on function public.my_gym_id() from public;
+revoke execute on function public.my_gym_id() from anon;
+grant execute on function public.my_gym_id() to authenticated;
 
 -- CRITICAL — the actual fix for self-promotion to coach/admin:
 -- A column-level `revoke update (role) ...` does NOT override a broader
@@ -166,8 +218,14 @@ create policy "Users can update own objectifs"
   with check (auth.uid() = user_id);
 
 -- Read-only — coaches never modify a member's own goals, just view them.
-create policy "Coaches can view all objectifs"
-  on objectifs for select using (is_coach());
+-- Rescoped to same-gym 2026-08-10, same reasoning as profiles above.
+create policy "Coaches can view same-gym objectifs"
+  on objectifs for select using (
+    is_coach() and exists (
+      select 1 from public.profiles p
+      where p.user_id = objectifs.user_id and p.gym_id = public.my_gym_id()
+    )
+  );
 
 -- ── repas ─────────────────────────────────────────────────
 create table if not exists repas (
@@ -200,9 +258,15 @@ create policy "Users can delete own repas"
   on repas for delete using (auth.uid() = user_id);
 
 -- Read-only — lets CoachDashboard/MemberDetail show a member's real meals
--- instead of the hardcoded mock data they used before.
-create policy "Coaches can view all repas"
-  on repas for select using (is_coach());
+-- instead of the hardcoded mock data they used before. Rescoped to
+-- same-gym 2026-08-10.
+create policy "Coaches can view same-gym repas"
+  on repas for select using (
+    is_coach() and exists (
+      select 1 from public.profiles p
+      where p.user_id = repas.user_id and p.gym_id = public.my_gym_id()
+    )
+  );
 
 -- ── seances ───────────────────────────────────────────────
 create table if not exists seances (
@@ -225,9 +289,14 @@ create policy "Users can insert own seances"
 create policy "Users can delete own seances"
   on seances for delete using (auth.uid() = user_id);
 
--- Read-only — same reasoning as repas above.
-create policy "Coaches can view all seances"
-  on seances for select using (is_coach());
+-- Read-only — same reasoning as repas above. Rescoped to same-gym 2026-08-10.
+create policy "Coaches can view same-gym seances"
+  on seances for select using (
+    is_coach() and exists (
+      select 1 from public.profiles p
+      where p.user_id = seances.user_id and p.gym_id = public.my_gym_id()
+    )
+  );
 
 -- ── activite_jour ─────────────────────────────────────────
 create table if not exists activite_jour (
@@ -254,9 +323,14 @@ create policy "Users can update own activite"
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
 
--- Read-only — same reasoning as repas above.
-create policy "Coaches can view all activite_jour"
-  on activite_jour for select using (is_coach());
+-- Read-only — same reasoning as repas above. Rescoped to same-gym 2026-08-10.
+create policy "Coaches can view same-gym activite_jour"
+  on activite_jour for select using (
+    is_coach() and exists (
+      select 1 from public.profiles p
+      where p.user_id = activite_jour.user_id and p.gym_id = public.my_gym_id()
+    )
+  );
 
 -- ── api_rate_limit ────────────────────────────────────────
 -- Backs per-user sliding-window rate limiting for the api/* serverless
@@ -305,16 +379,23 @@ create policy "Participants can view their messages"
 
 -- Insert only as yourself, and only into a real member↔coach pair — blocks
 -- a member from messaging another member, or spoofing sender_id, without
--- needing a separate relationships/conversations table.
-create policy "Users can message a valid member/coach counterpart"
+-- needing a separate relationships/conversations table. Rescoped to
+-- same-gym 2026-08-10 — was is_coach() OR "receiver is any coach/admin
+-- system-wide", meaning a coach at gym B could message gym A's members
+-- and vice versa.
+create policy "Users can message a valid same-gym member/coach counterpart"
   on messages for insert
   with check (
     auth.uid() = sender_id
     and (
-      is_coach()
+      (is_coach() and exists (
+        select 1 from public.profiles p
+        where p.user_id = receiver_id and p.gym_id = public.my_gym_id()
+      ))
       or exists (
         select 1 from public.profiles p
         where p.user_id = receiver_id and p.role in ('coach', 'admin')
+          and p.gym_id = public.my_gym_id()
       )
     )
   );
@@ -401,36 +482,50 @@ create policy "Users can delete own push subscriptions"
 -- "coach reads member data" pattern as objectifs/repas/seances/etc.
 -- Scope intentionally one-directional (coach → member push only) per this
 -- iteration's scope; a member reading a coach's subscriptions isn't needed
--- since coach-side push isn't built yet.
-create policy "Coaches can view member push subscriptions"
-  on push_subscriptions for select using (is_coach());
+-- since coach-side push isn't built yet. Rescoped to same-gym 2026-08-10.
+create policy "Coaches can view same-gym member push subscriptions"
+  on push_subscriptions for select using (
+    is_coach() and exists (
+      select 1 from public.profiles p
+      where p.user_id = push_subscriptions.user_id and p.gym_id = public.my_gym_id()
+    )
+  );
 
 -- api/send-push.js prunes a subscription when the push service reports it
 -- gone (404/410) — using the sending coach's own token, same as the read.
 -- Without this, that cleanup silently no-ops under RLS (0 rows affected,
--- no error), leaving dead endpoints that get retried forever.
-create policy "Coaches can delete stale member push subscriptions"
-  on push_subscriptions for delete using (is_coach());
+-- no error), leaving dead endpoints that get retried forever. Rescoped to
+-- same-gym 2026-08-10.
+create policy "Coaches can delete stale same-gym member push subscriptions"
+  on push_subscriptions for delete using (
+    is_coach() and exists (
+      select 1 from public.profiles p
+      where p.user_id = push_subscriptions.user_id and p.gym_id = public.my_gym_id()
+    )
+  );
 
 -- Mirrors the two policies above, other direction — lets api/send-push.js
 -- read/prune a coach's subscriptions using a member's own bearer token, so
 -- a member sending a message can notify their coach (coach-side push).
-create policy "Members can view coach push subscriptions"
+-- Rescoped to same-gym 2026-08-10.
+create policy "Members can view own-gym coach push subscriptions"
   on push_subscriptions for select
   using (
     exists (
       select 1 from profiles p
       where p.user_id = push_subscriptions.user_id
         and p.role in ('coach', 'admin')
+        and p.gym_id = public.my_gym_id()
     )
   );
-create policy "Members can delete stale coach push subscriptions"
+create policy "Members can delete stale own-gym coach push subscriptions"
   on push_subscriptions for delete
   using (
     exists (
       select 1 from profiles p
       where p.user_id = push_subscriptions.user_id
         and p.role in ('coach', 'admin')
+        and p.gym_id = public.my_gym_id()
     )
   );
 
@@ -459,6 +554,11 @@ create policy "Members can delete stale coach push subscriptions"
 -- pouvoir agréger les séances de tout le monde — avec security_invoker=true
 -- elle n'aurait jamais renvoyé que la ligne de l'utilisateur courant,
 -- vidant le classement de tout son sens.
+--
+-- Filtre gym_id ajouté le 2026-08-10 (fondations multi-salles) : c'était
+-- littéralement TOUS les membres de l'app, sans distinction — un vrai
+-- classement inter-salles par accident dès qu'une 2e salle existerait,
+-- contrairement à l'intention ("un classement de salle affiché au mur").
 create or replace view public.leaderboard_weekly
   with (security_invoker = false)
   as
@@ -471,6 +571,7 @@ create or replace view public.leaderboard_weekly
     on s.user_id = p.user_id
     and s.date >= (current_date - interval '6 days')
   where p.role = 'member'
+    and p.gym_id = public.my_gym_id()
   group by p.user_id, p.prenom;
 
 grant select on public.leaderboard_weekly to authenticated;

@@ -57,24 +57,30 @@ export default function Login() {
     if (!firstName || !se || !sp || !confirm || !code) { setSignupError('Tous les champs sont requis'); return }
     if (sp !== confirm) { setSignupError(t('passwords_no_match')); return }
     setSigningUp(true)
+    let gymId = null
     try {
       const codeRes = await fetch('/api/validate-invite', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code }),
       })
-      const { valid } = await codeRes.json()
+      // gym_id resolved from the code itself (multi-tenant foundation,
+      // 2026-08-10) — the same lookup that validates the code also tells
+      // us which gym this new member is joining, threaded through to
+      // register() so profiles.gym_id is set correctly from the start.
+      const { valid, gym_id } = await codeRes.json()
       if (!valid) {
         setSigningUp(false)
         setSignupError(t('invalid_code'))
         return
       }
+      gymId = gym_id
     } catch {
       setSigningUp(false)
       setSignupError("Erreur lors de la vérification du code")
       return
     }
-    const result = await register(firstName, se, sp)
+    const result = await register(firstName, se, sp, {}, gymId)
     setSigningUp(false)
     if (result.success) {
       setSignupSuccess(true)

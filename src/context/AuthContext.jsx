@@ -53,6 +53,15 @@ async function resolveRole(u) {
       u.role = data.role
     } else {
       console.error('[Auth] resolveRole: no profile row for', u.id, '— self-healing one now')
+      // No gym_id here — this rare self-heal path has no invite code to
+      // resolve one from (unlike register(), which threads it through
+      // from api/validate-invite.js). A self-healed profile lands with
+      // gym_id null, meaning it fails CLOSED under the same-gym coach RLS
+      // policies (invisible to any coach) rather than leaking into the
+      // wrong gym — safe direction to fail in, but still a real gap to
+      // notice: if this ever fires for a real user, gym_id needs fixing
+      // by hand afterwards (same as this account's original healing on
+      // 2026-08-05, done manually).
       const { error: healError } = await supabase.from('profiles').upsert({
         user_id: u.id,
         prenom: u.name,
@@ -113,7 +122,14 @@ export function AuthProvider({ children }) {
     return { success: true, user: u, role: u.role }
   }
 
-  async function register(firstName, email, password, extraMeta = {}) {
+  // gymId comes from api/validate-invite.js's response — the invite code
+  // resolves both "is this valid" AND "which gym", so the new profile can
+  // be scoped to the right gym from the start (multi-tenant foundation,
+  // 2026-08-10). Optional param so any other caller of register() that
+  // hasn't been updated yet doesn't break — a null gym_id just means the
+  // member won't be visible to any coach's same-gym RLS policies until
+  // fixed, which is loud/obviously-broken rather than a silent leak.
+  async function register(firstName, email, password, extraMeta = {}, gymId = null) {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -132,6 +148,7 @@ export function AuthProvider({ children }) {
         user_id: data.user.id,
         prenom: firstName,
         email,
+        gym_id: gymId,
       }, { onConflict: 'user_id' })
       if (profileError) {
         console.error('[Auth] register: profiles upsert failed', profileError)
