@@ -59,6 +59,13 @@ alter table gyms add column if not exists subscription_status text not null defa
 alter table gyms add column if not exists trial_ends_at timestamptz;
 alter table gyms add column if not exists current_period_end timestamptz;
 
+-- Quota mensuel d'appels IA de la salle. NULL = illimité. Défaut 2000 —
+-- audit 2026-08-10 point 03 : il n'existait AUCUN plafond de coût, alors
+-- que l'abonnement est un montant fixe par salle (revenu plat, coût
+-- variable). À recalibrer sur le coût réellement constaté, que la table
+-- ai_usage plus bas enregistre en tokens.
+alter table gyms add column if not exists ai_quota_calls int default 2000;
+
 -- Seed the one gym that already existed before this migration — idempotent,
 -- only inserts if no gym exists yet at all. Real production data: applied
 -- via Supabase MCP on 2026-08-10, this insert already ran once against the
@@ -472,6 +479,121 @@ create policy "Users can delete own rate limit rows"
 
 create index if not exists api_rate_limit_user_endpoint_idx
   on api_rate_limit (user_id, endpoint, created_at);
+
+-- ── ai_usage ──────────────────────────────────────────────
+-- Consommation IA agrégée par salle et par mois. Une ligne par (salle,
+-- mois) plutôt qu'un journal par appel : c'est tout ce dont le quota a
+-- besoin, et ça ne grossit pas. Le quota se compte en APPELS (explicable à
+-- un coach), les tokens sont là pour calibrer le quota sur le coût réel.
+create table if not exists ai_usage (
+  gym_id        uuid not null references gyms(id) on delete cascade,
+  period        date not null,
+  calls         int    not null default 0,
+  input_tokens  bigint not null default 0,
+  output_tokens bigint not null default 0,
+  updated_at    timestamptz default now(),
+  primary key (gym_id, period)
+);
+
+-- Sert la somme globale (plafond plateforme) dans consume_ai_quota().
+create index if not exists ai_usage_period_idx on ai_usage (period);
+
+alter table ai_usage enable row level security;
+
+-- Lecture seule côté client. Toute écriture passe par les deux fonctions
+-- SECURITY DEFINER ci-dessous, jamais directement.
+create policy "Coaches can view own gym ai usage"
+  on ai_usage for select using (is_coach() and gym_id = public.my_gym_id());
+create policy "Platform admins can view all ai usage"
+  on ai_usage for select using (public.is_platform_admin());
+
+-- Vérifie ET consomme en une opération atomique (verrou de ligne) : deux
+-- appels simultanés ne peuvent pas passer tous les deux au-dessus du quota.
+-- p_global_cap = filet plateforme, fourni par l'API depuis la variable
+-- d'env AI_GLOBAL_MONTHLY_CALL_CAP.
+create or replace function public.consume_ai_quota(p_global_cap int default null)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_gym    uuid;
+  v_quota  int;
+  v_period date := date_trunc('month', now())::date;
+  v_calls  int;
+  v_global bigint;
+begin
+  select gym_id into v_gym from public.profiles where user_id = auth.uid();
+
+  -- Profil sans salle : cas résiduel (auto-réparation de resolveRole), on
+  -- laisse passer — le limiteur de rafale s'applique toujours. Rien à
+  -- imputer à une salle, donc rien n'est compté.
+  if v_gym is null then
+    return jsonb_build_object('allowed', true, 'reason', 'no_gym');
+  end if;
+
+  select ai_quota_calls into v_quota from public.gyms where id = v_gym;
+
+  insert into public.ai_usage (gym_id, period) values (v_gym, v_period)
+  on conflict (gym_id, period) do nothing;
+
+  select calls into v_calls from public.ai_usage
+   where gym_id = v_gym and period = v_period for update;
+
+  if v_quota is not null and v_calls >= v_quota then
+    return jsonb_build_object('allowed', false, 'reason', 'gym_quota',
+                              'used', v_calls, 'quota', v_quota);
+  end if;
+
+  if p_global_cap is not null then
+    select coalesce(sum(calls), 0) into v_global from public.ai_usage where period = v_period;
+    if v_global >= p_global_cap then
+      return jsonb_build_object('allowed', false, 'reason', 'global_cap');
+    end if;
+  end if;
+
+  update public.ai_usage set calls = calls + 1, updated_at = now()
+   where gym_id = v_gym and period = v_period;
+
+  return jsonb_build_object('allowed', true, 'used', v_calls + 1, 'quota', v_quota);
+end;
+$$;
+
+-- Séparée de la consommation du quota : celui-ci doit bloquer AVANT
+-- l'appel, alors que le coût réel n'est connu qu'APRÈS la réponse
+-- d'Anthropic.
+create or replace function public.record_ai_tokens(p_input bigint, p_output bigint)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_gym    uuid;
+  v_period date := date_trunc('month', now())::date;
+begin
+  select gym_id into v_gym from public.profiles where user_id = auth.uid();
+  if v_gym is null then return; end if;
+
+  update public.ai_usage
+     set input_tokens  = input_tokens  + greatest(coalesce(p_input, 0), 0),
+         output_tokens = output_tokens + greatest(coalesce(p_output, 0), 0),
+         updated_at    = now()
+   where gym_id = v_gym and period = v_period;
+end;
+$$;
+
+-- Même précaution que is_coach()/my_gym_id()/is_platform_admin() : révoquer
+-- PUBLIC seul laisse en place le grant explicite à anon (piège déjà rencontré
+-- deux fois sur ce projet).
+revoke execute on function public.consume_ai_quota(int) from public;
+revoke execute on function public.consume_ai_quota(int) from anon;
+grant  execute on function public.consume_ai_quota(int) to authenticated;
+
+revoke execute on function public.record_ai_tokens(bigint, bigint) from public;
+revoke execute on function public.record_ai_tokens(bigint, bigint) from anon;
+grant  execute on function public.record_ai_tokens(bigint, bigint) to authenticated;
 
 -- ── messages ──────────────────────────────────────────────
 -- Persisted member↔coach chat. Each row is one message, ordered by

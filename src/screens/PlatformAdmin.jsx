@@ -15,17 +15,25 @@ export default function PlatformAdmin() {
   const navigate = useNavigate()
   const [gyms, setGyms] = useState(null)
   const [counts, setCounts] = useState({})
+  const [ai, setAi] = useState({})
   const [error, setError] = useState('')
 
   useEffect(() => {
     let cancelled = false
     Promise.all([
-      supabase.from('gyms').select('id, name, invite_code, created_at, subscription_status, trial_ends_at, current_period_end').order('created_at', { ascending: false }),
+      supabase.from('gyms').select('id, name, invite_code, created_at, subscription_status, trial_ends_at, current_period_end, ai_quota_calls').order('created_at', { ascending: false }),
       supabase.from('profiles').select('gym_id, role').not('gym_id', 'is', null),
-    ]).then(([gymsRes, profilesRes]) => {
+      // Conso IA du mois en cours, toutes salles (audit 2026-08-10 point 03).
+      // La policy "Platform admins can view all ai usage" ouvre la lecture
+      // cross-salles, même mécanique que pour gyms/profiles ci-dessus.
+      supabase.from('ai_usage').select('gym_id, calls, input_tokens, output_tokens')
+        .eq('period', new Date().toISOString().slice(0, 8) + '01'),
+    ]).then(([gymsRes, profilesRes, aiRes]) => {
       if (cancelled) return
       if (gymsRes.error) { setError(gymsRes.error.message); return }
       if (profilesRes.error) { setError(profilesRes.error.message); return }
+      if (aiRes.error) console.error('[PlatformAdmin] ai usage lookup failed', aiRes.error)
+      setAi(Object.fromEntries((aiRes.data || []).map(r => [r.gym_id, r])))
       const byGym = {}
       for (const p of profilesRes.data || []) {
         if (!byGym[p.gym_id]) byGym[p.gym_id] = { members: 0, coaches: 0 }
@@ -55,6 +63,7 @@ export default function PlatformAdmin() {
     members: Object.values(counts).reduce((s, c) => s + c.members, 0),
     coaches: Object.values(counts).reduce((s, c) => s + c.coaches, 0),
     active: gyms.filter(isGymAccessActive).length,
+    aiCalls: Object.values(ai).reduce((s, r) => s + (r.calls || 0), 0),
   } : null
 
   return (
@@ -75,12 +84,13 @@ export default function PlatformAdmin() {
         {error && <div style={{ padding: 16, color: 'var(--danger)', fontSize: 13 }}>{error}</div>}
 
         {totals && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 24 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(104px, 1fr))', gap: 8, marginBottom: 24 }}>
             {[
               ['Salles', totals.gyms],
               ['Abonnements actifs', totals.active],
               ['Coachs', totals.coaches],
               ['Membres', totals.members],
+              ['Appels IA / mois', totals.aiCalls],
             ].map(([label, value]) => (
               <div key={label} style={{ background: 'var(--surface)', border: '2px solid var(--border-strong)', borderRadius: 14, padding: '12px 10px', textAlign: 'center' }}>
                 <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--text-primary)', fontVariantNumeric: 'tabular-nums' }}>{value}</div>
@@ -100,6 +110,10 @@ export default function PlatformAdmin() {
           {gyms?.map(gym => {
             const status = statusLabel(gym)
             const c = counts[gym.id] || { members: 0, coaches: 0 }
+            const usage = ai[gym.id] || {}
+            const aiCalls = usage.calls || 0
+            const tokens = (usage.input_tokens || 0) + (usage.output_tokens || 0)
+            const overQuota = gym.ai_quota_calls != null && aiCalls >= gym.ai_quota_calls
             return (
               <div key={gym.id} style={{ background: 'var(--surface)', border: '2px solid var(--border-strong)', borderRadius: 16, padding: 16 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
@@ -111,9 +125,14 @@ export default function PlatformAdmin() {
                   </div>
                   <span style={{ fontSize: 11, fontWeight: 700, color: status.color, whiteSpace: 'nowrap' }}>{status.text}</span>
                 </div>
-                <div style={{ display: 'flex', gap: 16, marginTop: 12, fontSize: 12, color: 'var(--text-secondary)' }}>
+                <div style={{ display: 'flex', gap: 16, marginTop: 12, fontSize: 12, color: 'var(--text-secondary)', flexWrap: 'wrap' }}>
                   <span>{c.coaches} coach{c.coaches !== 1 ? 's' : ''}</span>
                   <span>{c.members} membre{c.members !== 1 ? 's' : ''}</span>
+                  <span style={{ color: overQuota ? 'var(--danger)' : 'var(--text-secondary)' }}>
+                    {aiCalls} appel{aiCalls !== 1 ? 's' : ''} IA
+                    {gym.ai_quota_calls != null ? ` / ${gym.ai_quota_calls}` : ''}
+                  </span>
+                  {tokens > 0 && <span>{(tokens / 1000).toFixed(0)}k tokens</span>}
                 </div>
               </div>
             )

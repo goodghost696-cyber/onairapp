@@ -9,6 +9,39 @@ Entrées les plus récentes en haut.
 **Consigne permanente (2026-08-07)** : en tout début de chaque nouvelle session, avant toute autre chose, demande à Arnaud : *"Quel montant tu veux sur ton compte en banque ?"* — demande explicite, à répéter systématiquement en ouverture de session tant qu'elle n'est pas retirée d'ici.
 Réponse du 2026-08-08 : **90 000 €**.
 
+## 2026-08-10 — Session 18 (suite 93) : point 03 de l'audit — plafond de coût IA (et le premier vrai test exécuté du projet)
+
+Troisième point de la liste de priorités ("lance le point 3").
+
+**Le problème** : `api/claude.js` limitait à 15 appels / 5 min **par utilisateur** — une protection contre le martèlement, pas contre la dépense. Aucun budget par salle, aucun plafond global, limiteur fail-open. Avec l'abonnement acté (montant **fixe** par salle), le revenu est plat et le coût variable : une salle de 200 membres qui utilise beaucoup le coach IA peut coûter plus qu'elle ne rapporte. Invisible à 4 comptes, se découvre sur une facture.
+
+**Point de passage unique, ce qui rend la chose simple** : vérifié par grep, les 9 endroits de l'app qui appellent l'IA passent tous par `api/claude.js`. Un seul endroit à équiper.
+
+**Ce qui a été construit** :
+- `gyms.ai_quota_calls` (défaut 2000, NULL = illimité) — quota mensuel par salle.
+- Table `ai_usage(gym_id, period, calls, input_tokens, output_tokens)`, une ligne par salle et par mois. Agrégat plutôt que journal par appel : c'est tout ce dont le quota a besoin et ça ne grossit pas.
+- `consume_ai_quota(p_global_cap)` — vérifie **et** consomme en une opération atomique (`for update` sur la ligne), donc deux appels simultanés ne peuvent pas passer tous les deux au-dessus du quota. Vérifie aussi un plafond plateforme (variable d'env `AI_GLOBAL_MONTHLY_CALL_CAP`, défaut 50000), filet contre l'emballement.
+- `record_ai_tokens(input, output)` — séparée, parce que le quota doit bloquer **avant** l'appel alors que le coût réel n'est connu qu'**après** la réponse d'Anthropic.
+- `api/_lib/aiQuota.js` + branchement dans `api/claude.js`, après le limiteur de rafale.
+
+**Choix assumé — quota en appels, mesure en tokens** : le quota se compte en appels parce que c'est ce qu'on peut expliquer à un coach ("2000 requêtes IA/mois"). Mais la consommation réelle en tokens est enregistrée en parallèle, précisément pour pouvoir **recalibrer** le 2000 sur le coût constaté plutôt que de le laisser au doigt mouillé. Le 2000 est un défaut d'ingénierie, pas une décision commerciale — à revoir une fois les premiers mois observés.
+
+**Fail-open assumé et documenté** : si le compteur lui-même tombe en panne, l'appel passe (même posture que le limiteur de rafale). Une panne Supabase ne doit pas couper l'IA à des salles qui paient ; le risque est borné et le log est explicite.
+
+**Visibilité, sans quoi un plafond ne sert à rien** : carte "USAGE IA" dans les réglages coach (conso du mois, barre de progression, rouge au dépassement), et dans la console admin plateforme — total d'appels IA du mois plus, par salle, appels / quota et volume de tokens.
+
+### Premier vrai test exécuté du projet
+
+Jusqu'ici toutes les vérifications étaient statiques (build, grep, relecture). Là, la logique était testable en base : usurpation d'un vrai utilisateur authentifié via `set local role authenticated` + `request.jwt.claims`, le tout dans une transaction **annulée** à la fin — donc test réel sans laisser de trace.
+
+Résultats : appels 1 et 2 sur un quota de 2 → autorisés (1/2 puis 2/2) ; appel 3 → **refusé** avec `gym_quota` ; ligne `ai_usage` vérifiée à `calls=2, input_tokens=1200, output_tokens=800` (l'enregistrement des tokens fonctionne) ; plafond plateforme → **refusé** avec `global_cap` ; sans plafond global → autorisé.
+
+**Le test a attrapé une erreur — la mienne, pas celle du code** : mon premier cas "plafond plateforme" renvoyait `gym_quota` au lieu de `global_cap`. Comportement correct du code (le quota salle était déjà épuisé, il se déclenche en premier), mais **test mal construit** : le filet global n'était donc pas réellement vérifié. Refait avec un quota salle hors de portée pour isoler le plafond global, qui est cette fois confirmé. C'est exactement l'intérêt d'exécuter plutôt que de relire — un test qui passe par accident ne prouve rien.
+
+**Vérifié après coup** : quota revenu à 2000, `ai_usage` vide — la base est dans l'état d'avant les tests. `get_advisors` sécurité relu : les deux nouvelles fonctions n'apparaissent qu'en `authenticated_security_definer_function_executable` (même classe déjà acceptée pour `is_coach`/`my_gym_id`/`is_platform_admin` — elles n'agissent que sur la salle de l'appelant), **aucune alerte `anon`**, confirmé en plus par une requête directe sur `routine_privileges` (le piège des grants `anon` a déjà mordu deux fois sur ce projet). `npm run build` passe, `node --check` sur tous les fichiers `api/`, toujours exactement **12** fonctions serverless (`aiQuota.js` est dans `_lib/`, il ne compte pas).
+
+**Non testé** : le comportement réel bout en bout via l'app (il faudrait un navigateur, limite connue). Ce qui est testé, c'est le cœur — la logique de quota en base.
+
 ## 2026-08-10 — Session 18 (suite 92) : correction des points 02 et 04 de l'audit (perte de données silencieuse + index manquants)
 
 Deux premiers points de la liste de priorités validée juste après l'audit ("commence les deux points que tu viens de me citer").
