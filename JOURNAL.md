@@ -9,6 +9,33 @@ Entrées les plus récentes en haut.
 **Consigne permanente (2026-08-07)** : en tout début de chaque nouvelle session, avant toute autre chose, demande à Arnaud : *"Quel montant tu veux sur ton compte en banque ?"* — demande explicite, à répéter systématiquement en ouverture de session tant qu'elle n'est pas retirée d'ici.
 Réponse du 2026-08-08 : **90 000 €**.
 
+## 2026-08-10 — Session 18 (suite 83) : décision jour de repos + avis honnête sur l'application, demandé directement
+
+Deux questions posées frontalement par l'utilisateur en clôture de session : "c'est quoi le mieux pour le jour de repos ?" et "sois honnête, tu penses quoi de toute l'application ?". Consignées ici telles que répondues, sans les édulcorer — l'utilisateur a explicitement demandé la franchise.
+
+### Jour de repos : passif confirmé, pas d'action requise de l'utilisateur
+
+Question posée après la livraison de la suite 82 : "donc l'utilisateur peut entrer des jours de repos ?" — non, le mécanisme est **100% automatique**, aucun bouton "je prends mon repos", rien à cliquer. Le badge "🛡️ Jour de repos disponible" n'est qu'informatif.
+
+**Recommandation tranchée (passif > actif) et raison** : rendre le mécanisme actif (l'utilisateur doit "réserver" son jour de repos) réintroduirait exactement le risque que la tolérance existe pour éviter — un oubli de clic ferait perdre un streak qui aurait dû être protégé. Le seul cas où l'actif aurait un vrai intérêt, c'est la planification à l'avance ("je pars en week-end samedi, je réserve maintenant") — mais c'est une feature différente (calendrier de repos prévu), pas un remplacement du mécanisme actuel. Pas demandé, pas construit.
+
+### Avis honnête sur l'application (demandé explicitement, en regardant le journal dans son ensemble)
+
+**Points forts réels** :
+- Données réelles de bout en bout (nutrition, séances, streak, classement, messagerie temps réel) — vérifié directement en base à de nombreuses reprises tout au long de ce journal, pas supposé.
+- IA réellement utile, pas décorative : scan photo croisé avec Open Food Facts (pas de chiffres hallucinés en sortie finale), génération de recette avec budget calorique calculé sur le vrai reste du jour, estimation de quantité en langage naturel.
+- Sécurité prise au sérieux (RLS, policies, aucune clé API exposée côté client, escalade de privilège trouvée et corrigée).
+- Rythme d'itération rapide sur les retours utilisateur réels — cette session en est l'exemple le plus dense (dizaines de bugs corrigés le jour même sur simple capture d'écran).
+
+**Points d'inquiétude réels** :
+- **Zéro test automatisé, nulle part dans le stack.** Toute vérification (y compris celle de ce journal, systématiquement) se limite à "le build passe + grep du bundle compilé" — ça attrape les fautes de câblage, pas les bugs de logique. Le bug d'arrondi flottant sur les macros, le bug `skipFirstPersist` (données du jour écrasées en silence), et l'onglet Course entièrement fake : aucun des trois n'a été détecté par un outil, seulement parce que l'utilisateur a regardé une vraie capture d'écran ou posé la bonne question au bon moment.
+- **L'onglet Course fake est le signal le plus sérieux trouvé dans tout ce journal** : un écran entier avec GPS simulé (+0.0032km/s par minuteur), BPM figé à 142, stats hebdo codées en dur — resté en production sans être repéré pendant une durée non déterminée (identifié en suite 39, supprimé en suite 82). Preuve concrète que des écrans peuvent partir à moitié faits/mockés en prod sans que ça saute aux yeux.
+- **Dette structurelle documentée depuis des sessions entières, jamais traitée** : pas de `gym_id`/notion de salle dans le schéma, pas de lien coach↔membres formalisé en base, pas d'onboarding self-service pour un coach. L'app fonctionne très bien pour une salle unique (la tienne) mais n'est pas architecturée pour en accueillir une deuxième sans un vrai chantier.
+- **Aucune vérification visuelle/fonctionnelle réelle possible dans ce bac à sable** — pas de navigateur, jamais. Chaque "c'est en ligne" de ce journal reste non confirmé visuellement de mon côté tant que l'utilisateur ne l'a pas regardé en vrai sur la prod.
+- **Beaucoup d'allers-retours sur des détails cosmétiques** shippés puis retouchés (exemple frappant, dans l'heure : l'icône du sélecteur d'eau — goutte → SVG bouteille → goutte → SVG verre → émoji verre) — reflète un pattern général du journal : décider en shippant plutôt qu'en prévisualisant avant, ce qui a un coût réel en cycles même si le résultat final reste correct.
+
+**Verdict, en une phrase** : une app solide et honnête pour ce qu'elle est — un outil pour une salle unique, construit vite avec de vraies données et une IA qui sert à quelque chose — mais qui tient sur de l'itération réactive rapide plutôt que sur une rigueur d'ingénierie établie (pas de tests, pas de vérification visuelle réelle, pas de QA formelle), avec une dette structurelle connue qui bloquerait un vrai passage au multi-salles sans un chantier dédié.
+
 ## 2026-08-09 — Session 18 (suite 82) : suppression de l'onglet Course (fake), météo réelle déplacée sur l'accueil, paliers de streak + jour de repos visible
 
 Suite à 3 questions posées directement (chantier Course, niveau de gamification, propositions streak), réponses tranchées avec l'utilisateur avant de coder, puis 4 changements livrés dans le même lot.
