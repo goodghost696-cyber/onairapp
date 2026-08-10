@@ -68,35 +68,17 @@ export const FOOD_DATABASE = [
   { id:'f20', name:"Huile d'olive",       per100g: { kcal:884, proteins:0,   carbs:0,   fats:100 }},
 ]
 
-const DEFAULT_SESSION_HISTORY = [
-  {
-    id: 1, date: 'Mar 3 juin', type: 'PUSH DAY',
-    exercises: ['Bench Press', 'Incline Press', 'Cable Fly'], duration: '52 min', totalSets: 12,
-    exerciseDetails: [
-      { name: 'Bench Press', sets: [{ reps: 10, kg: 80 }, { reps: 8, kg: 85 }, { reps: 8, kg: 85 }, { reps: 6, kg: 90 }] },
-      { name: 'Incline Dumbbell Press', sets: [{ reps: 12, kg: 28 }, { reps: 10, kg: 30 }, { reps: 10, kg: 30 }] },
-      { name: 'Cable Fly', sets: [{ reps: 15, kg: 20 }, { reps: 15, kg: 20 }, { reps: 12, kg: 22 }] },
-    ]
-  },
-  {
-    id: 2, date: 'Lun 2 juin', type: 'PULL DAY',
-    exercises: ['Deadlift', 'Pull-up', 'Cable Row'], duration: '48 min', totalSets: 10,
-    exerciseDetails: [
-      { name: 'Deadlift', sets: [{ reps: 5, kg: 120 }, { reps: 5, kg: 130 }, { reps: 3, kg: 140 }] },
-      { name: 'Pull-up', sets: [{ reps: 10, kg: 0 }, { reps: 8, kg: 0 }, { reps: 8, kg: 0 }] },
-      { name: 'Cable Row', sets: [{ reps: 12, kg: 60 }, { reps: 10, kg: 65 }, { reps: 10, kg: 65 }] },
-    ]
-  },
-  {
-    id: 3, date: 'Sam 1 juin', type: 'LEG DAY',
-    exercises: ['Back Squat', 'Romanian Deadlift', 'Fentes'], duration: '55 min', totalSets: 14,
-    exerciseDetails: [
-      { name: 'Back Squat', sets: [{ reps: 8, kg: 100 }, { reps: 6, kg: 110 }, { reps: 6, kg: 110 }, { reps: 5, kg: 120 }] },
-      { name: 'Romanian Deadlift', sets: [{ reps: 10, kg: 80 }, { reps: 10, kg: 80 }, { reps: 8, kg: 85 }] },
-      { name: 'Fentes', sets: [{ reps: 12, kg: 40 }, { reps: 12, kg: 40 }, { reps: 10, kg: 45 }, { reps: 10, kg: 45 }] },
-    ]
-  },
-]
+// Était 3 séances d'exemple (PUSH/PULL/LEG DAY, charges précises type
+// "développé couché 90kg") — un nouveau membre les voyait dans son propre
+// historique dès l'inscription, sans rien qui les signale comme des
+// exemples. Elles disparaissaient normalement dès que la vraie requête
+// `seances` aboutissait (voir l'effet plus bas), mais restaient visibles
+// jusque-là, écrites dans le localStorage entre-temps, et seraient restées
+// pour de bon si cette requête échouait. Même défaut que l'onglet Course au
+// GPS simulé, supprimé en suite 82 — repéré en relisant l'app comme un
+// utilisateur (2026-08-10). Un membre démarre maintenant sur un historique
+// vide, avec un vrai message plutôt qu'un faux contenu (voir Workout.jsx).
+const DEFAULT_SESSION_HISTORY = []
 
 function getPersonalisedGoals() {
   try {
@@ -156,22 +138,21 @@ export function AppProvider({ children }) {
       waterGoal: 2500,
       sleep: load('sleep', { hours: 7, minutes: 23, quality: 'Bonne' }),
       sleepGoal: 8,
-      weeklyWorkouts: load('weeklyWorkouts', 4),
+      // Était 4 par défaut — même défaut que sessionHistory ci-dessous : un
+      // membre qui vient de s'inscrire voyait "4/6 séances" avec une barre
+      // aux deux tiers pleine, avant que la vraie requête `seances` (plus
+      // bas) ne l'écrase à sa vraie valeur. Repéré en même temps, même
+      // correctif : démarrer à zéro, comme calories/water/steps.
+      weeklyWorkouts: load('weeklyWorkouts', 0),
       weeklyGoal: 6,
-      meals: load('meals', [
-        { id: 1, name: "Flocons d'avoine + banane", calories: 380, protein: 12, carbs: 68, fat: 6, nutriscore: 'A', time: '07:30' },
-        { id: 2, name: 'Poulet grillé + riz', calories: 520, protein: 45, carbs: 58, fat: 8, nutriscore: 'B', time: '12:30' },
-        { id: 3, name: 'Yaourt grec + fruits rouges', calories: 210, protein: 18, carbs: 22, fat: 4, nutriscore: 'A', time: '16:00' },
-        { id: 4, name: 'Saumon + légumes', calories: 480, protein: 42, carbs: 28, fat: 22, nutriscore: 'A', time: '19:30' },
-        { id: 5, name: 'Whey protéine', calories: 257, protein: 25, carbs: 22, fat: 2, nutriscore: 'C', time: '14:00' },
-      ]),
+      // Étaient 5 repas d'exemple par défaut — le reset quotidien juste plus
+      // bas (clearDay()) les efface dès le premier montage sur un compte
+      // neuf, mais entre le rendu initial (qui lit déjà ce défaut) et l'effet
+      // qui les vide, ils apparaissaient brièvement. Même correctif que
+      // sessionHistory/weeklyWorkouts ci-dessus : démarrer vide.
+      meals: load('meals', []),
       activeSession: { exercises: [], startTime: null, startTimestamp: null },
       sessionHistory: load('sessionHistory', DEFAULT_SESSION_HISTORY),
-      runSessions: [
-        { date: "Aujourd'hui", km: 5.2, time: '27:30', pace: '5:17/km', calories: 420 },
-        { date: 'Mardi', km: 8.0, time: '42:15', pace: '5:17/km', calories: 640 },
-        { date: 'Dimanche', km: 12.5, time: '1:05:30', pace: '5:14/km', calories: 980 },
-      ],
     }
   })
 

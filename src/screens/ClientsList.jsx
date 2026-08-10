@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import CoachNav from '../components/CoachNav'
-import { supabase } from '../lib/supabase'
+import { supabase, authHeader } from '../lib/supabase'
 import { fetchMemberActivitySummaries, lastSeenLabel } from '../utils/coachStats'
 import { fetchStreaksForUsers } from '../utils/streak'
 import Icon from '../components/Icon'
@@ -23,6 +23,13 @@ export default function ClientsList() {
   const [search, setSearch] = useState('')
   const [members, setMembers] = useState([])
   const [loading, setLoading] = useState(true)
+  // Repéré en relisant l'app comme un coach qui vient de créer sa salle
+  // (2026-08-10) : ce deuxième écran qu'il ouvre, juste après un accueil
+  // "Créer ma salle" bien fait, était vide — pas de code d'invitation, pas
+  // d'invitation à agir, pas de raison d'y croire. Récupéré ici (même
+  // endpoint que CoachSettings) uniquement pour l'état vide ci-dessous.
+  const [inviteCode, setInviteCode] = useState(null)
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -50,6 +57,24 @@ export default function ClientsList() {
     fetchMembers()
     return () => { cancelled = true }
   }, [])
+
+  // Uniquement récupéré quand il sert vraiment (salle vide) — pas de coût
+  // réseau supplémentaire pour un coach dont la liste est déjà peuplée.
+  useEffect(() => {
+    if (loading || members.length > 0 || inviteCode) return
+    let cancelled = false
+    authHeader().then(headers => fetch('/api/invite', { headers }).then(r => r.json()))
+      .then(data => { if (!cancelled) setInviteCode(data.code || null) })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [loading, members.length, inviteCode])
+
+  function copyCode() {
+    if (!inviteCode) return
+    navigator.clipboard?.writeText(inviteCode)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   const filtered = members.filter(m => {
     const matchFilter = filter === 'TOUS' || m.status === filter
@@ -88,6 +113,35 @@ export default function ClientsList() {
         </div>
 
         {loading && <p className="text-sm text-muted">Chargement des clients...</p>}
+
+        {!loading && members.length === 0 && (
+          <div className="card card-animated" style={{ textAlign: 'center', padding: '32px 24px' }}>
+            <p className="text-base bold" style={{ margin: '0 0 6px' }}>Ta salle est prête, personne ne l'a encore rejointe</p>
+            <p className="text-sm text-muted" style={{ margin: '0 0 20px' }}>
+              Partage ce code à tes premiers membres pour qu'ils s'inscrivent.
+            </p>
+            {inviteCode && (
+              <>
+                <div style={{
+                  background: 'var(--surface-2)', border: '2px solid var(--accent)', borderRadius: 14,
+                  padding: '16px', marginBottom: 14,
+                }}>
+                  <div style={{ fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 6 }}>
+                    Code d'invitation
+                  </div>
+                  <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: '0.1em', color: 'var(--text-primary)', fontVariantNumeric: 'tabular-nums' }}>
+                    {inviteCode}
+                  </div>
+                </div>
+                <button className="btn-ghost" onClick={copyCode}>{copied ? '✓ Copié' : 'Copier le code'}</button>
+              </>
+            )}
+          </div>
+        )}
+
+        {!loading && members.length > 0 && filtered.length === 0 && (
+          <p className="text-sm text-muted">Aucun client ne correspond à cette recherche.</p>
+        )}
 
         <div className="coach-grid">
           {!loading && filtered.map((m, i) => (
