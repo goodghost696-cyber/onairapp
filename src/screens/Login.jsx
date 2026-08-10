@@ -59,7 +59,7 @@ export default function Login() {
     setSigningUp(true)
     let gymId = null
     try {
-      const codeRes = await fetch('/api/validate-invite', {
+      const codeRes = await fetch('/api/invite', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code }),

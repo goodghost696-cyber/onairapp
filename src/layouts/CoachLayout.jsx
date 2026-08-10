@@ -56,9 +56,10 @@ export default function CoachLayout() {
     setBillingError('')
     setSubscribing(true)
     try {
-      const res = await fetch('/api/create-checkout-session', {
+      const res = await fetch('/api/stripe-billing', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
+        body: JSON.stringify({ action: 'checkout' }),
       })
       const result = await res.json()
       if (!res.ok) throw new Error(result.error || 'Erreur lors de la création de la session de paiement')

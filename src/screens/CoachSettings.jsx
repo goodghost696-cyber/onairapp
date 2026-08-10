@@ -31,7 +31,7 @@ export default function CoachSettings() {
   useEffect(() => {
     let cancelled = false
     authHeader().then(headers =>
-      fetch('/api/invite-code', { headers }).then(r => r.json())
+      fetch('/api/invite', { headers }).then(r => r.json())
     ).then(data => {
       if (!cancelled) setInviteCode(data.code || '—')
     }).catch(() => {
@@ -57,11 +57,15 @@ export default function CoachSettings() {
     return () => { cancelled = true }
   }, [user?.id, user?.isPlatformAdmin])
 
-  async function handleBillingAction(endpoint) {
+  async function handleBillingAction(action) {
     setBillingError('')
     setBillingBusy(true)
     try {
-      const res = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(await authHeader()) } })
+      const res = await fetch('/api/stripe-billing', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
+        body: JSON.stringify({ action }),
+      })
       const result = await res.json()
       if (!res.ok) throw new Error(result.error || 'Erreur')
       window.location.href = result.url
@@ -140,11 +144,11 @@ export default function CoachSettings() {
               {billingError && <div style={{ padding: '10px 0' }}><span className="text-xs" style={{ color: 'var(--danger)' }}>{billingError}</span></div>}
               <div style={{ padding: '14px 0 0' }}>
                 {gym.subscription_status === 'active' ? (
-                  <button className="btn-ghost" disabled={billingBusy} onClick={() => handleBillingAction('/api/create-billing-portal-session')}>
+                  <button className="btn-ghost" disabled={billingBusy} onClick={() => handleBillingAction('portal')}>
                     {billingBusy ? '...' : 'Gérer mon abonnement'}
                   </button>
                 ) : (
-                  <button className="btn-accent" disabled={billingBusy} onClick={() => handleBillingAction('/api/create-checkout-session')}>
+                  <button className="btn-accent" disabled={billingBusy} onClick={() => handleBillingAction('checkout')}>
                     {billingBusy ? '...' : "S'abonner"}
                   </button>
                 )}

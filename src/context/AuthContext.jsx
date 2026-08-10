@@ -60,7 +60,7 @@ async function resolveRole(u) {
       console.error('[Auth] resolveRole: no profile row for', u.id, '— self-healing one now')
       // No gym_id here — this rare self-heal path has no invite code to
       // resolve one from (unlike register(), which threads it through
-      // from api/validate-invite.js). A self-healed profile lands with
+      // from api/invite.js). A self-healed profile lands with
       // gym_id null, meaning it fails CLOSED under the same-gym coach RLS
       // policies (invisible to any coach) rather than leaking into the
       // wrong gym — safe direction to fail in, but still a real gap to
@@ -127,7 +127,7 @@ export function AuthProvider({ children }) {
     return { success: true, user: u, role: u.role }
   }
 
-  // gymId comes from api/validate-invite.js's response — the invite code
+  // gymId comes from api/invite.js's response — the invite code
   // resolves both "is this valid" AND "which gym", so the new profile can
   // be scoped to the right gym from the start (multi-tenant foundation,
   // 2026-08-10). Optional param so any other caller of register() that
