@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useRef } from 'react'
 import { save, load, clearDay } from '../utils/storage'
 import { supabase } from '../lib/supabase'
+import { writeWithQueue } from '../utils/writeQueue'
 import { useAuth } from './AuthContext'
 import { BOUNDS, clamp } from '../utils/validation'
 
@@ -332,30 +333,27 @@ export function AppProvider({ children }) {
   useEffect(() => {
     if (!user?.id || !activiteLoaded) return
     if (skipFirstPersist.current.water) { skipFirstPersist.current.water = false; return }
-    supabase.from('activite_jour').upsert({
-      user_id: user.id, date: todayStr(), eau_ml: clamp(appData.water, BOUNDS.water),
-    }, { onConflict: 'user_id,date' }).then(({ error }) => {
-      if (error) console.error('[App] persist water to activite_jour failed', error)
+    writeWithQueue({
+      table: 'activite_jour', op: 'upsert', onConflict: 'user_id,date',
+      payload: { user_id: user.id, date: todayStr(), eau_ml: clamp(appData.water, BOUNDS.water) },
     })
   }, [appData.water, activiteLoaded, user?.id])
 
   useEffect(() => {
     if (!user?.id || !activiteLoaded) return
     if (skipFirstPersist.current.steps) { skipFirstPersist.current.steps = false; return }
-    supabase.from('activite_jour').upsert({
-      user_id: user.id, date: todayStr(), pas: clamp(appData.steps, BOUNDS.steps),
-    }, { onConflict: 'user_id,date' }).then(({ error }) => {
-      if (error) console.error('[App] persist steps to activite_jour failed', error)
+    writeWithQueue({
+      table: 'activite_jour', op: 'upsert', onConflict: 'user_id,date',
+      payload: { user_id: user.id, date: todayStr(), pas: clamp(appData.steps, BOUNDS.steps) },
     })
   }, [appData.steps, activiteLoaded, user?.id])
 
   useEffect(() => {
     if (!user?.id || !activiteLoaded) return
     if (skipFirstPersist.current.kmRun) { skipFirstPersist.current.kmRun = false; return }
-    supabase.from('activite_jour').upsert({
-      user_id: user.id, date: todayStr(), km_courus: clamp(appData.kmRun, BOUNDS.kmRun),
-    }, { onConflict: 'user_id,date' }).then(({ error }) => {
-      if (error) console.error('[App] persist kmRun to activite_jour failed', error)
+    writeWithQueue({
+      table: 'activite_jour', op: 'upsert', onConflict: 'user_id,date',
+      payload: { user_id: user.id, date: todayStr(), km_courus: clamp(appData.kmRun, BOUNDS.kmRun) },
     })
   }, [appData.kmRun, activiteLoaded, user?.id])
 
@@ -363,10 +361,9 @@ export function AppProvider({ children }) {
     if (!user?.id || !activiteLoaded) return
     if (skipFirstPersist.current.sleep) { skipFirstPersist.current.sleep = false; return }
     const hours = clamp((appData.sleep?.hours || 0) + (appData.sleep?.minutes || 0) / 60, BOUNDS.sleepHours)
-    supabase.from('activite_jour').upsert({
-      user_id: user.id, date: todayStr(), sommeil_h: hours,
-    }, { onConflict: 'user_id,date' }).then(({ error }) => {
-      if (error) console.error('[App] persist sleep to activite_jour failed', error)
+    writeWithQueue({
+      table: 'activite_jour', op: 'upsert', onConflict: 'user_id,date',
+      payload: { user_id: user.id, date: todayStr(), sommeil_h: hours },
     })
   }, [appData.sleep, activiteLoaded, user?.id])
 
@@ -400,8 +397,14 @@ export function AppProvider({ children }) {
     setAppData(prev => ({ ...prev, [key]: value }))
     const column = GOAL_COLUMNS[key]
     if (!column || !user?.id) return
-    const { error } = await supabase.from('objectifs').upsert({ user_id: user.id, [column]: value }, { onConflict: 'user_id' })
-    if (error) console.error('[App] updateGoal: objectifs upsert failed', key, error)
+    // Valeur absolue + onConflict user_id : rejouable sans risque. Deux
+    // réglages de colonnes différentes ne se collapsent pas entre eux dans
+    // la file (jeux de colonnes différents), deux réglages de la MÊME
+    // colonne si — seul le dernier compte, c'est le comportement voulu.
+    await writeWithQueue({
+      table: 'objectifs', op: 'upsert', onConflict: 'user_id',
+      payload: { user_id: user.id, [column]: value },
+    })
   }
 
   function clearActiveSession() {
@@ -485,19 +488,19 @@ export function AppProvider({ children }) {
     let entry = session
 
     if (user?.id) {
-      const { data, error } = await supabase.from('seances').insert({
-        user_id: user.id,
-        date: todayStr(),
-        nom: session.type,
-        duree_min: session.durationMin,
-        exercices: session.exerciseDetails,
-      }).select().single()
-
-      if (error) {
-        console.error('[App] addSessionToHistory: insert into seances failed', error)
-      } else if (data) {
-        entry = seanceFromRow(data)
-      }
+      const { data } = await writeWithQueue({
+        table: 'seances',
+        op: 'insert',
+        returning: true,
+        payload: {
+          user_id: user.id,
+          date: todayStr(),
+          nom: session.type,
+          duree_min: session.durationMin,
+          exercices: session.exerciseDetails,
+        },
+      })
+      if (data) entry = seanceFromRow(data)
     }
 
     setAppData(prev => ({
@@ -527,19 +530,19 @@ export function AppProvider({ children }) {
     }
 
     if (user?.id) {
-      const { data, error } = await supabase.from('seances').insert({
-        user_id: user.id,
-        date: todayStr(),
-        nom: name,
-        duree_min: 0,
-        exercices: [{ name, sets }],
-      }).select().single()
-
-      if (error) {
-        console.error('[App] logQuickExercise: insert into seances failed', error)
-      } else if (data) {
-        entry = seanceFromRow(data)
-      }
+      const { data } = await writeWithQueue({
+        table: 'seances',
+        op: 'insert',
+        returning: true,
+        payload: {
+          user_id: user.id,
+          date: todayStr(),
+          nom: name,
+          duree_min: 0,
+          exercices: [{ name, sets }],
+        },
+      })
+      if (data) entry = seanceFromRow(data)
     }
 
     setAppData(prev => ({
@@ -549,8 +552,23 @@ export function AppProvider({ children }) {
   }
 
   // Persists a meal to `repas` and reflects it (+ its totals) in local state.
-  // Falls back to a local-only add if the write fails, so the UI never blocks
-  // on network — the console error is there for us to catch during testing.
+  // L'interface ne bloque toujours pas sur le réseau (bon réflexe d'origine),
+  // mais une écriture ratée part maintenant en file de rejeu au lieu d'être
+  // perdue en silence — voir writeQueue.js (audit 2026-08-10, point 02).
+  //
+  // Seul rejeu non strictement idempotent de l'app : si l'insertion a en
+  // fait réussi mais que la réponse s'est perdue, le rejeu crée un doublon.
+  // Assumé — `repas` n'a pas de colonne d'idempotence, et un repas en double
+  // se supprime d'un geste, alors qu'un repas perdu ne se récupère jamais.
+  //
+  // Limite connue, assumée elle aussi : un repas mis en file garde un id
+  // temporaire (Date.now()) côté local, alors que le rejeu lui donnera un
+  // vrai uuid en base. Le supprimer AVANT le prochain rechargement ne
+  // supprimera donc pas la ligne réelle, et il réapparaîtra au
+  // rafraîchissement. Fenêtre étroite (même session, ajout hors ligne puis
+  // suppression immédiate) et ça se répare tout seul au rechargement, qui
+  // relit les vrais ids. Corriger proprement demanderait une colonne
+  // d'idempotence sur `repas` — pas fait ici pour rester sur le périmètre.
   async function addMeal({ name, calories, protein, carbs, fat, nutriscore, mealType }) {
     // Write-boundary clamp — every caller (manual add, Scan, AI recipe, AI
     // Coach tool calls) goes through this one function, so this is the
@@ -570,22 +588,22 @@ export function AppProvider({ children }) {
     }
 
     if (user?.id) {
-      const { data, error } = await supabase.from('repas').insert({
-        user_id: user.id,
-        nom: name,
-        calories,
-        proteines: protein,
-        glucides: carbs,
-        lipides: fat,
-        nutriscore: nutriscore || null,
-        type_repas: mealType || null,
-      }).select().single()
-
-      if (error) {
-        console.error('[App] addMeal: insert into repas failed', error)
-      } else if (data) {
-        meal = mealFromRow(data)
-      }
+      const { data } = await writeWithQueue({
+        table: 'repas',
+        op: 'insert',
+        returning: true,
+        payload: {
+          user_id: user.id,
+          nom: name,
+          calories,
+          proteines: protein,
+          glucides: carbs,
+          lipides: fat,
+          nutriscore: nutriscore || null,
+          type_repas: mealType || null,
+        },
+      })
+      if (data) meal = mealFromRow(data)
     }
 
     // Raw float addition (0.1 + 0.2-style JS rounding error) — reported
@@ -608,8 +626,14 @@ export function AppProvider({ children }) {
   // mistake is delete-then-re-add) and subtracts it from today's totals.
   async function deleteMeal(mealId) {
     if (user?.id) {
-      const { error } = await supabase.from('repas').delete().eq('id', mealId).eq('user_id', user.id)
-      if (error) console.error('[App] deleteMeal: delete from repas failed', error)
+      // Rejouable sans risque : supprimer une ligne déjà supprimée est un
+      // no-op. Un repas effacé qui "revient" au rafraîchissement était le
+      // symptôme inverse du même bug (audit 2026-08-10, point 02).
+      await writeWithQueue({
+        table: 'repas',
+        op: 'delete',
+        match: { id: mealId, user_id: user.id },
+      })
     }
     setAppData(prev => {
       const meal = prev.meals.find(m => m.id === mealId)
