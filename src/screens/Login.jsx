@@ -57,30 +57,30 @@ export default function Login() {
     if (!firstName || !se || !sp || !confirm || !code) { setSignupError('Tous les champs sont requis'); return }
     if (sp !== confirm) { setSignupError(t('passwords_no_match')); return }
     setSigningUp(true)
-    let gymId = null
     try {
+      // Pure UX pre-check (2026-08-10 suite 90) — just tells the user
+      // "code invalide" before an account is even created. Does NOT
+      // resolve gym_id anymore: register() re-validates the same code
+      // server-side, authenticated, right after signUp() — this call has
+      // no session yet, so api/invite.js treats it as the public
+      // validate-only path (see that file for the dispatch logic).
       const codeRes = await fetch('/api/invite', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code }),
       })
-      // gym_id resolved from the code itself (multi-tenant foundation,
-      // 2026-08-10) — the same lookup that validates the code also tells
-      // us which gym this new member is joining, threaded through to
-      // register() so profiles.gym_id is set correctly from the start.
-      const { valid, gym_id } = await codeRes.json()
+      const { valid } = await codeRes.json()
       if (!valid) {
         setSigningUp(false)
         setSignupError(t('invalid_code'))
         return
       }
-      gymId = gym_id
     } catch {
       setSigningUp(false)
       setSignupError("Erreur lors de la vérification du code")
       return
     }
-    const result = await register(firstName, se, sp, {}, gymId)
+    const result = await register(firstName, se, sp, {}, code)
     setSigningUp(false)
     if (result.success) {
       setSignupSuccess(true)

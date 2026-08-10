@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react'
-import { supabase } from '../lib/supabase'
+import { supabase, authHeader } from '../lib/supabase'
 
 const AuthContext = createContext(null)
 
@@ -127,14 +127,20 @@ export function AuthProvider({ children }) {
     return { success: true, user: u, role: u.role }
   }
 
-  // gymId comes from api/invite.js's response — the invite code
-  // resolves both "is this valid" AND "which gym", so the new profile can
-  // be scoped to the right gym from the start (multi-tenant foundation,
-  // 2026-08-10). Optional param so any other caller of register() that
-  // hasn't been updated yet doesn't break — a null gym_id just means the
-  // member won't be visible to any coach's same-gym RLS policies until
-  // fixed, which is loud/obviously-broken rather than a silent leak.
-  async function register(firstName, email, password, extraMeta = {}, gymId = null) {
+  // `inviteCode` is the raw code the user typed (Login.jsx), not a gym_id —
+  // as of 2026-08-10 (suite 90) gym_id is never trusted from the client
+  // anywhere. This function's own profile upsert below deliberately never
+  // sets gym_id (a BEFORE INSERT trigger would null it out even if it
+  // tried to, see supabase_schema.sql); api/invite.js's complete-signup
+  // path re-validates the code server-side and sets gym_id itself, right
+  // after this signUp() succeeds — closing the gap where a raw REST insert
+  // could previously self-declare membership in an arbitrary gym.
+  //
+  // Optional param so any other caller of register() that hasn't been
+  // updated yet doesn't break — no code just means the member won't be
+  // visible to any coach's same-gym RLS policies until fixed by hand,
+  // which is loud/obviously-broken rather than a silent leak.
+  async function register(firstName, email, password, extraMeta = {}, inviteCode = null) {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -147,16 +153,33 @@ export function AuthProvider({ children }) {
       return { success: false, error: error.message }
     }
 
-    // Insert profile row
+    // Insert profile row — gym_id is never included here on purpose (see
+    // above), only what a member is genuinely allowed to set about
+    // themselves.
     if (data.user) {
       const { error: profileError } = await supabase.from('profiles').upsert({
         user_id: data.user.id,
         prenom: firstName,
         email,
-        gym_id: gymId,
       }, { onConflict: 'user_id' })
       if (profileError) {
         console.error('[Auth] register: profiles upsert failed', profileError)
+      }
+
+      if (inviteCode) {
+        try {
+          const res = await fetch('/api/invite', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
+            body: JSON.stringify({ code: inviteCode }),
+          })
+          if (!res.ok) {
+            const body = await res.json().catch(() => ({}))
+            console.error('[Auth] register: complete-signup (gym join) failed', body.error || res.status)
+          }
+        } catch (err) {
+          console.error('[Auth] register: complete-signup (gym join) threw', err)
+        }
       }
     } else {
       console.error('[Auth] register: signUp returned no error but data.user is null — no profile row created')

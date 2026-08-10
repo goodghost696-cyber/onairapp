@@ -91,10 +91,13 @@ create table if not exists profiles (
   -- Same idea, written by api/cron/streak-nudge.js — one streak nudge per
   -- day max, compared by date (not timestamp) against `today` in that job.
   last_streak_nudge_at timestamptz,
-  -- Which gym this profile belongs to (see `gyms` above). Set at signup
-  -- from the invite code (api/validate-invite.js resolves code -> gym_id,
-  -- threaded through AuthContext.register()). Backfilled on 2026-08-10 for
-  -- every profile that predates this column, to the one gym that existed.
+  -- Which gym this profile belongs to (see `gyms` above). Never trusted
+  -- from the client (trg_prevent_self_privilege_insert below forces it
+  -- null on any authenticated insert, and it's not in the UPDATE column
+  -- GRANT allowlist either) — set only by api/complete-signup.js
+  -- (service_role, re-validates the invite code server-side itself) or
+  -- api/create-gym.js for coaches. Backfilled on 2026-08-10 for every
+  -- profile that predates this column, to the one gym that existed.
   gym_id     uuid references gyms(id),
   -- Cross-gym platform-superadmin flag (billing/overview, 2026-08-10) —
   -- deliberately NOT the same thing as role='admin' above: that role is
@@ -249,18 +252,14 @@ revoke execute on function public.prevent_self_role_escalation() from anon, auth
 -- breaks nothing real. service_role (create-gym.js's role='coach' path) is
 -- unaffected — auth.role() there isn't 'authenticated'.
 --
--- gym_id is deliberately NOT forced here — register()'s legitimate insert
--- depends on setting it from the validated invite code. That leaves a
--- narrower, known gap: gym_id itself is still client-trusted at insert
--- time (nothing cryptographically ties an insert to a real
--- validate-invite.js call), so a technical user could still self-declare
--- membership in an arbitrary gym via a raw insert. Combined with the fix
--- above that's no longer combinable with a fake role, so the practical
--- damage is capped at "sees their own data tagged as the wrong gym" (fails
--- toward invisible-to-any-coach, same safe direction as resolveRole()'s
--- self-heal) rather than "impersonates a coach anywhere" — worth a proper
--- fix later (move profile creation server-side, mirroring create-gym.js),
--- not done here to keep this fix scoped to what was actually found.
+-- gym_id closed the same way as of 2026-08-10 (suite 90) — was left out
+-- above on purpose because register()'s client-side upsert still depended
+-- on setting it directly from a client-supplied value. That upsert is gone:
+-- api/complete-signup.js (service_role) now re-validates the invite code
+-- server-side and sets gym_id itself, so a client can never supply a
+-- trusted gym_id again, by any path (this trigger for INSERT, the existing
+-- column GRANT allowlist above for UPDATE — gym_id was never in that
+-- allowlist, only INSERT was ever open).
 create or replace function public.prevent_self_privilege_insert()
 returns trigger
 language plpgsql
@@ -271,6 +270,7 @@ begin
   if auth.role() = 'authenticated' then
     new.role := 'member';
     new.is_platform_admin := false;
+    new.gym_id := null;
   end if;
   return new;
 end;
