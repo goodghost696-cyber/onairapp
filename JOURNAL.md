@@ -9,6 +9,22 @@ Entrées les plus récentes en haut.
 **Consigne permanente (2026-08-07)** : en tout début de chaque nouvelle session, avant toute autre chose, demande à Arnaud : *"Quel montant tu veux sur ton compte en banque ?"* — demande explicite, à répéter systématiquement en ouverture de session tant qu'elle n'est pas retirée d'ici.
 Réponse du 2026-08-08 : **90 000 €**.
 
+## 2026-08-10 — Session 18 (suite 87) : inscription self-service coach — "créer ma salle" sans passer par Arnaud
+
+Suite directe de la 86 : le point explicitement laissé de côté ("inscription self-service pour qu'une nouvelle salle/coach crée sa propre salle sans intervention manuelle") repris tout de suite après ("garde le point 3 [tests] en mémoire, continuons le parcours d'inscription self-service").
+
+**Nouvel écran `CoachSignup.jsx`** (`/coach-signup`, lien "Pas encore de salle ? Créer la mienne →" ajouté sur l'onglet connexion de `Login.jsx` — exactement là où atterrit "Accès coach" depuis `Landing.jsx`) : formulaire nom de la salle + prénom + email + mot de passe. À la soumission, `supabase.auth.signUp()` appelé directement (pas `AuthContext.register()`, qui crée un profil `member` immédiatement — mauvaise forme pour un coach). Une fois la salle créée, le code d'invitation est affiché en clair avec un bouton copier, puis redirection vers l'espace coach.
+
+**Nouvel endpoint `api/create-gym.js`**, tourne en `service_role` — nécessaire et intentionnel : `profiles.role` est verrouillé exprès (GRANT restreint + trigger `prevent_self_role_escalation`) pour qu'un client normal ne puisse jamais se passer coach tout seul ; ce trigger ne se déclenche que pour `auth.role() = 'authenticated'`, pas `service_role`, donc cet endpoit est l'exception étroite et volontaire, pas un contournement de cette protection.
+
+**Race condition trouvée et corrigée avant de livrer, pas après coup** : `AuthContext.resolveRole()` auto-répare un profil manquant dès qu'une session devient active — ce qui arrive immédiatement après `signUp()`, potentiellement AVANT que `create-gym.js` n'ait eu le temps de tourner. Ce self-heal crée un profil "coquille" (`role='member'` par défaut de la table, `gym_id` null) qui aurait fait échouer la vérification initiale "ce compte a déjà un profil" de `create-gym.js` avec un 409, cassant tout le flow. Corrigé : la vérification ne rejette que si le profil existant a déjà un vrai `gym_id` ou un `role` différent de `'member'` — une coquille auto-réparée est écrasée par l'upsert plutôt que de bloquer.
+
+**Génération du code d'invitation** : 8 caractères aléatoires (alphabet sans O/0/I/1 pour rester lisible à l'oral), colonne `unique`, retry (jusqu'à 5 fois) sur collision plutôt que de garantir l'unicité à l'avance — la salle n'est créée qu'une fois qu'un code réellement libre est trouvé. Si l'upsert du profil échoue après coup, rollback best-effort de la salle créée (pas de vraie transaction entre deux appels REST séparés, mais un filet plutôt que rien).
+
+**`api/invite-code.js`/`CoachSettings.jsx` : aucun changement supplémentaire nécessaire** — l'un a déjà été rescopé par salle en suite 86, l'autre appelle déjà cet endpoint sans savoir que le code vient maintenant d'une vraie table plutôt que d'un env var.
+
+**Vérifié** : `npm run build` passe, `node --check` sur `api/create-gym.js`. "Créer ma salle", "Pas encore de salle", "Code d'invitation" et la route `coach-signup` confirmés dans le bundle compilé. **Pas de test de bout en bout réel** (créerait un vrai compte auth) — la logique a été relue attentivement (notamment la race condition ci-dessus) plutôt que devinée, mais honnêtement pas exécutée en conditions réelles dans ce lot.
+
 ## 2026-08-10 — Session 18 (suite 86) : fondations multi-salles — table `gyms`, `gym_id`, RLS rescopé partout où un coach voyait "tout"
 
 Point 1 du plan acté en suite 84 : corriger la vraie faille de sécurité identifiée avant d'ajouter un 2ᵉ coach (n'importe quel coach voyait tous les membres, sans filtre de salle, faute de notion de salle dans le schéma).

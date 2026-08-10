@@ -183,6 +183,17 @@ export default function Login() {
               <button onClick={handleLogin} disabled={loggingIn} style={{ ...pillButtonStyle, marginTop: 4, opacity: loggingIn ? 0.7 : 1 }}>
                 {loggingIn ? '...' : <>{t('connect_btn')} <span>→</span></>}
               </button>
+              {/* "Accès coach" (Landing.jsx) lands here to sign in — but until
+                  now there was no way for a NEW coach to get an account at
+                  all short of Arnaud creating it by hand in the SQL editor.
+                  Self-service entry point, discoverable exactly where a
+                  prospective coach lands. */}
+              <button
+                onClick={() => navigate('/coach-signup')}
+                style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: 12, cursor: 'pointer', textAlign: 'center', marginTop: 4, fontFamily: 'inherit' }}
+              >
+                Pas encore de salle ? Créer la mienne →
+              </button>
             </div>
           )
         ) : (
