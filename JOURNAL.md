@@ -9,6 +9,33 @@ Entrées les plus récentes en haut.
 **Consigne permanente (2026-08-07)** : en tout début de chaque nouvelle session, avant toute autre chose, demande à Arnaud : *"Quel montant tu veux sur ton compte en banque ?"* — demande explicite, à répéter systématiquement en ouverture de session tant qu'elle n'est pas retirée d'ici.
 Réponse du 2026-08-08 : **90 000 €**.
 
+## 2026-08-10 — Session 18 (suite 86) : fondations multi-salles — table `gyms`, `gym_id`, RLS rescopé partout où un coach voyait "tout"
+
+Point 1 du plan acté en suite 84 : corriger la vraie faille de sécurité identifiée avant d'ajouter un 2ᵉ coach (n'importe quel coach voyait tous les membres, sans filtre de salle, faute de notion de salle dans le schéma).
+
+**Nouvelle table `gyms`** (`id`, `name`, `invite_code`, `created_at`) — une salle existante créée pour de vrai (`VOLTA FITNESS`, code `ONAIR2026`, reprend les valeurs par défaut déjà codées en dur ailleurs). Appliqué en direct via Supabase MCP, confirmé en base (`select * from gyms` → 1 ligne).
+
+**`profiles.gym_id`** ajouté et **backfillé automatiquement** sur les 4 profils existants (`update profiles set gym_id = ... where gym_id is null`) — zéro donnée perdue, zéro saisie manuelle, confirmé (`count(*) = count(gym_id) = 4`).
+
+**`my_gym_id()`** — nouvelle fonction `SECURITY DEFINER`, même patron que `is_coach()`, résout le `gym_id` de l'appelant sans re-déclencher les policies qui en dépendent (même classe de bug que la récursion RLS déjà corrigée le 2026-07-10, évitée ici dès le départ). **Piège déjà documenté sur `is_coach()`/`prevent_self_role_escalation()` re-rencontré et corrigé tout de suite** : `revoke ... from public` seul ne suffit pas, `anon` avait toujours l'exécution en direct (confirmé via `get_advisors` — `anon_security_definer_function_executable`) ; `revoke execute ... from anon` explicite ajouté, ré-vérifié propre après coup.
+
+**Toutes les policies "Coaches can view all X" corrigées, une par une, vérifiées via `pg_policies`** — chacune passe de "n'importe quel coach" à "coach de la même salle uniquement" :
+- `profiles` (coach→membres et membre→coach, les deux sens)
+- `objectifs`, `repas`, `seances`, `activite_jour`
+- `push_subscriptions` (les 4 policies, coach↔membre dans les deux sens)
+- `messages` (la policy d'insertion qui validait "un vrai couple membre/coach" — corrigée, sinon un coach de la salle B aurait pu écrire à un membre de la salle A)
+- **`leaderboard_weekly`** (la vue de classement hebdo, `security_invoker = false` par design pour contourner le RLS de `seances` — était TOUS les membres de l'app sans distinction ; ajout de `and p.gym_id = my_gym_id()` dans son `where`)
+
+**Inscription rendue gym-consciente** : `api/validate-invite.js` résout maintenant le code d'invitation dans `gyms.invite_code` (au lieu d'un unique `INVITE_CODE` env var) et renvoie aussi `gym_id` ; `Login.jsx` fait suivre ce `gym_id` jusqu'à `register()` (nouveau paramètre optionnel, défaut `null` pour ne rien casser côté rétro-compatibilité) ; le profil créé a directement le bon `gym_id`, plus besoin de rattrapage après coup. `api/invite-code.js` (le code que le coach peut consulter dans ses réglages) scopé à sa propre salle plutôt qu'un seul code global.
+
+**Gap connu, documenté, pas corrigé dans ce lot** : le chemin d'auto-réparation de `resolveRole()` (profil manquant recréé à la volée, cas rare) n'a pas de code d'invitation à disposition pour résoudre un `gym_id` — le profil réparé atterrit avec `gym_id null`, ce qui l'échoue **côté fermé** (invisible à tout coach) plutôt que fuiter dans la mauvaise salle. Sûr, mais nécessiterait un rattrapage manuel si ça se déclenche un jour pour un vrai utilisateur (même genre de fix ponctuel que celui déjà fait à la main le 2026-08-05).
+
+**`CoachDashboard.jsx`/`ClientsList.jsx`/`MemberDetail.jsx` : aucun changement de code nécessaire** — ils font déjà de simples `select('*')` avec le token de session du coach, sans clé `service_role`, donc le nouveau RLS scope automatiquement leurs résultats sans rien toucher côté frontend. C'est tout l'intérêt de corriger au niveau RLS plutôt qu'en ajoutant des filtres dans chaque écran.
+
+**Explicitement pas fait dans ce lot** (chantier distinct, à reprendre séparément) : inscription self-service pour qu'une nouvelle salle/coach crée sa propre salle sans intervention manuelle d'Arnaud — aujourd'hui une seule salle existe (`VOLTA FITNESS`), créée par ce script, pas par un flow produit.
+
+**Vérifié** : `npm run build` passe, `node --check` sur les 2 fichiers `api/*.js` modifiés, `gym_id` confirmé dans le bundle compilé, policies confirmées via `pg_policies` (13 lignes, correspondent exactement à l'intention), `get_advisors` propre après le fix `anon` sur `my_gym_id()` (aucune nouvelle alerte introduite par ce changement).
+
 ## 2026-08-10 — Session 18 (suite 85) : Playwright testé pour de vrai — bloqué par l'infra du bac à sable, pas par manque de capacité
 
 Suite directe à la suite 84 (point "vérification visuelle réelle") : demande explicite de prouver que ça marche, par une vraie capture d'écran de la prod. Testé pour de vrai, pas juste supposé.
