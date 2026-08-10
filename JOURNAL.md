@@ -9,6 +9,38 @@ Entrées les plus récentes en haut.
 **Consigne permanente (2026-08-07)** : en tout début de chaque nouvelle session, avant toute autre chose, demande à Arnaud : *"Quel montant tu veux sur ton compte en banque ?"* — demande explicite, à répéter systématiquement en ouverture de session tant qu'elle n'est pas retirée d'ici.
 Réponse du 2026-08-08 : **90 000 €**.
 
+## 2026-08-10 — Session 18 (suite 91) : compte Stripe créé + audit complet de l'app (points faibles / axes d'ouverture)
+
+**Compte Stripe créé par Arnaud** (annoncé en début d'échange). Reste donc à faire, côté configuration, avant que la facturation fonctionne réellement : créer le produit + prix récurrent mensuel dans ce compte, configurer le webhook vers `https://onairapp.vercel.app/api/stripe-billing`, et poser les 3 variables dans Vercel (`STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID`, `STRIPE_WEBHOOK_SECRET`). **Toujours pas de test de bout en bout du paiement** tant que ces 3 variables ne sont pas en place. Arnaud a explicitement classé ce sujet comme "un ajustement" et demandé de passer à plus prioritaire : un audit complet.
+
+**Audit complet demandé et réalisé** — lecture réelle du code, du schéma, et de la base de production (advisors Supabase sécurité + performance, requêtes de comptage, inspection du bundle compilé). Rendu sous forme d'artifact consultable. **9 points faibles** (2 critiques, 2 élevés, 5 moyens) et **5 axes d'ouverture**. Résumé pour reprise :
+
+**Ce qui va bien (vérifié, pas supposé)** : aucune faille de sécurité ouverte trouvée, aucun secret exposé, le cloisonnement multi-salles tient (toutes les policies rescopées en suite 86 + la faille `gym_id` fermée en suite 90), tous les endpoints sont authentifiés et rate-limités, les crons sont protégés par `CRON_SECRET`, la suppression de compte cascade correctement, et `coachStats.js` groupe bien ses requêtes (pas de N+1 sur la liste des membres).
+
+**CRITIQUE 01 — Aucune couche légale/RGPD.** Zéro CGU, zéro politique de confidentialité, zéro consentement explicite, zéro export de données. Or VOLTA stocke poids/taille/âge/repas/sommeil (= données de santé au sens du RGPD) et les partage avec un tiers (le coach) sans accord explicite du membre. En plus : `coach_notes` (schema:542-549) — le coach écrit des notes *sur* un membre, aucune policy ne donne accès à ce membre, alors que ce sont ses données personnelles (droit d'accès, art. 15). **C'est le vrai prérequis pour facturer une salle, avant même Stripe.** La suppression de compte, elle, est conforme (droit à l'effacement couvert).
+
+**CRITIQUE 02 — Perte de données silencieuse.** `AppContext.jsx:584-588` : si l'insertion d'un repas échoue, `console.error` puis ajout à l'état local quand même — le membre voit son repas enregistré, rafraîchit, il a disparu, et le coach ne l'a jamais vu. Le commentaire ligne 551-553 documente ce choix comme délibéré ("pour que l'interface ne bloque jamais"). Même schéma pour l'eau (`:337`), les pas (`:347`), les km (`:357`). Aggravant : une salle de sport = souvent un sous-sol avec du mauvais réseau.
+
+**ÉLEVÉ 03 — Aucun plafond de coût IA.** `api/claude.js:35` : 15 appels / 5 min **par utilisateur**, pas de budget par salle ni global, et `rateLimit.js` fail-open (`return { ok: true }` si le limiteur lui-même erreur). Avec le modèle acté (abonnement mensuel **fixe** par salle), le revenu est plat et le coût variable → une grosse salle peut coûter plus qu'elle ne rapporte. Invisible à 4 comptes, se découvre sur une facture.
+
+**ÉLEVÉ 04 — Base non préparée à l'échelle.** Advisors Supabase : 28 × `auth_rls_initplan` (les policies recalculent `auth.uid()` à chaque ligne au lieu d'une fois par requête), 40 × `multiple_permissive_policies`, 5 × `unindexed_foreign_keys`. Le plus gênant : **`profiles_gym_id_fkey` sans index** — c'est exactement la colonne que chaque policy "même salle" filtre à chaque lecture. Le cœur du multi-salles tape sur une colonne non indexée.
+
+**MOYEN 05 — Une fonctionnalité factice encore livrée** : `Weekly.jsx:187-197`, section "MA PROGRESSION — Photos semaine par semaine", 4 emplacements avec un "+", aucun `onClick` ni `input` dans tout le fichier. Même classe que l'onglet Course supprimé en suite 82, passée au travers. ("MES CHARGES" juste en dessous est en revanche parfaitement réel.)
+
+**MOYEN 06 — Traduction à moitié câblée** : les 3 langues sont complètes (166 clés chacune en fr/en/es), mais ~122 chaînes françaises sont écrites en dur dans `src/screens/*.jsx` hors de `t()`. Basculer en anglais donne une interface moitié-moitié.
+
+**MOYEN 07 — Salle orpheline** : `gyms` n'a aucune colonne propriétaire. Si le seul coach supprime son compte, la salle survit avec ses membres, son code d'invitation valide et potentiellement un abonnement Stripe toujours facturé — administrable par personne.
+
+**MOYEN 08 — 693 Ko de JS en un seul chunk**, aucun code splitting (sauf `ShaderBackground.jsx`). Deux bibliothèques d'icônes cohabitent : Phosphor (2 fichiers) et Lucide (1 fichier), reliquat d'une migration jamais finie.
+
+**MOYEN 09 — Zéro test, zéro linter, zéro CI.** Seule la compilation tourne. C'est précisément ce qui a laissé passer l'onglet Course et le point 05.
+
+**Les 5 axes d'ouverture** (3 retournent un problème ci-dessus en avantage commercial) : (1) vendre la conformité RGPD comme argument au lieu de la subir — la salle est elle-même responsable devant ses adhérents ; (2) transformer le plafond de coût IA en palier tarifaire (Base avec quota / Pro illimité) → borne le risque **et** crée la première montée en gamme ; (3) le hors-ligne comme argument de vente plutôt que comme rustine (le correctif du point 02 impose de toute façon une file d'attente) ; (4) exploiter la donnée déjà en base en repères inter-salles ("tes membres sont 30 % sous la moyenne sur les protéines") — zéro nouvelle collecte, la vue `leaderboard_weekly` existe déjà ; (5) donner au coach une raison de revenir quotidiennement (le calcul "membre inactif" existe déjà dans `coachStats.js`, le pousser en alerte crée la boucle d'habitude côté payeur — le levier de rétention le moins cher).
+
+**Ordre recommandé** : 02 (rapide, touche la confiance dès aujourd'hui) → 01 (prérequis pour facturer) → 03 (avant d'avoir du volume) → 04 (une heure aujourd'hui vs une semaine de panique plus tard) → le reste au fil de l'eau.
+
+**Limite honnête de cet audit** : aucun test d'intrusion, aucun test de charge, et **aucune vérification visuelle réelle de l'interface** (pas de navigateur fonctionnel dans le bac à sable, limite documentée en suite 85). Tout ce qui est affirmé est vérifiable aux références citées.
+
 ## 2026-08-10 — Session 18 (suite 90) : fermeture de la faille `gym_id` laissée ouverte en suite 88
 
 Repris directement dans la liste de la suite 89 ("qu'est-ce qu'il reste à faire ?") — choisi en premier parce qu'indépendant de Stripe (pas d'action requise côté Arnaud) et que c'était un vrai point de sécurité documenté mais pas fermé.
