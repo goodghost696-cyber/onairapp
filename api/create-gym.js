@@ -72,12 +72,18 @@ export default async function handler(req, res) {
     return code;
   }
 
+  // 14-day free trial from creation — see JOURNAL.md 2026-08-10 for the
+  // business decision (fixed monthly price per gym, coach access blocked
+  // on expiry, members keep theirs). Just a constant: change the "14" here
+  // if the real number ever needs to move.
+  const trialEndsAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
+
   let gym = null;
   for (let attempt = 0; attempt < 5 && !gym; attempt++) {
     const { data, error } = await admin
       .from('gyms')
-      .insert({ name, invite_code: generateCode() })
-      .select('id, name, invite_code')
+      .insert({ name, invite_code: generateCode(), trial_ends_at: trialEndsAt })
+      .select('id, name, invite_code, trial_ends_at')
       .single();
     if (!error) { gym = data; break; }
     // 23505 = unique_violation (invite_code collision) — retry with a new

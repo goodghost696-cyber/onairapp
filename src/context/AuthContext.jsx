@@ -44,13 +44,18 @@ async function resolveRole(u) {
   try {
     const { data, error } = await supabase
       .from('profiles')
-      .select('role')
+      .select('role, gym_id, is_platform_admin')
       .eq('user_id', u.id)
       .maybeSingle()
     if (error) {
       console.error('[Auth] resolveRole: profiles role lookup failed', error)
     } else if (data) {
       u.role = data.role
+      u.gymId = data.gym_id
+      // Cross-gym platform-superadmin flag (billing/overview, 2026-08-10) —
+      // independent of role, see supabase_schema.sql. Only ever true for
+      // Arnaud's own account, set by hand in SQL.
+      u.isPlatformAdmin = data.is_platform_admin
     } else {
       console.error('[Auth] resolveRole: no profile row for', u.id, '— self-healing one now')
       // No gym_id here — this rare self-heal path has no invite code to

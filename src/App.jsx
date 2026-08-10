@@ -3,6 +3,7 @@ import { useAuth } from './context/AuthContext'
 import Landing from './screens/Landing'
 import Login from './screens/Login'
 import CoachSignup from './screens/CoachSignup'
+import PlatformAdmin from './screens/PlatformAdmin'
 import ResetPassword from './screens/ResetPassword'
 import Dashboard from './screens/Dashboard'
 import Nutrition from './screens/Nutrition'
@@ -66,6 +67,16 @@ export default function App() {
           {/* Self-service "créer ma salle" — same public-only guard as
               /login above (a logged-in user has no reason to be here). */}
           <Route path="/coach-signup" element={user ? <Navigate to={user.role === 'coach' || user.role === 'admin' ? '/coach' : '/dashboard'} replace /> : <CoachSignup />} />
+          {/* Platform admin overview (all gyms) — gated on isPlatformAdmin,
+              not role: it's a separate axis from coach/member/admin (see
+              supabase_schema.sql, 2026-08-10), only ever true for Arnaud's
+              own account, set by hand in SQL. Anyone else bounces to their
+              normal home like every other guard in this file. */}
+          <Route path="/admin" element={
+            !user ? <Navigate to="/login" replace /> :
+            user.isPlatformAdmin ? <PlatformAdmin /> :
+            <Navigate to={user.role === 'coach' || user.role === 'admin' ? '/coach' : '/dashboard'} replace />
+          } />
           <Route path="/reset-password" element={<ResetPassword />} />
         </Route>
 

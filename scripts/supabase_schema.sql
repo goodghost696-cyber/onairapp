@@ -31,11 +31,33 @@ create table if not exists gyms (
 
 alter table gyms enable row level security;
 
--- Anyone authenticated can read a gym's name/invite_code — needed to
--- display "tu rejoins TELLE salle" and for validate-invite.js/invite-code.js
--- to resolve a code to a gym. No sensitive data on this table.
-create policy "Authenticated can view gyms"
-  on gyms for select using (auth.role() = 'authenticated');
+-- Was "any authenticated user can read every gym's row" — tightened
+-- 2026-08-10 when billing columns landed below (a member of gym A could
+-- otherwise read gym B's invite_code, stripe_customer_id and subscription
+-- status). Confirmed via grep that no frontend code actually relied on the
+-- broad version: validate-invite.js/invite-code.js/create-gym.js all use
+-- SUPABASE_SERVICE_ROLE_KEY, bypassing RLS entirely, so narrowing this
+-- broke nothing. is_platform_admin()/my_gym_id() are both defined further
+-- down this file (SECURITY DEFINER functions, see profiles section) but
+-- referenced here — same forward-reference style already used throughout
+-- this file, it's documentation of a live schema, not a run-in-order script.
+create policy "Users can view their own gym"
+  on gyms for select using (id = public.my_gym_id());
+
+create policy "Platform admins can view all gyms"
+  on gyms for select using (public.is_platform_admin());
+
+-- Billing (Stripe subscriptions, per-gym) — 2026-08-10. One subscription
+-- per gym: coaches pay, members never see or touch this. subscription_status
+-- mirrors Stripe's own subscription.status values ('trialing', 'active',
+-- 'past_due', 'canceled', 'unpaid', ...) written by api/stripe-webhook.js,
+-- never guessed/derived client-side. trial_ends_at is set once at gym
+-- creation (api/create-gym.js) and never touched again.
+alter table gyms add column if not exists stripe_customer_id text;
+alter table gyms add column if not exists stripe_subscription_id text;
+alter table gyms add column if not exists subscription_status text not null default 'trialing';
+alter table gyms add column if not exists trial_ends_at timestamptz;
+alter table gyms add column if not exists current_period_end timestamptz;
 
 -- Seed the one gym that already existed before this migration — idempotent,
 -- only inserts if no gym exists yet at all. Real production data: applied
@@ -44,6 +66,12 @@ create policy "Authenticated can view gyms"
 insert into gyms (name, invite_code)
 select 'VOLTA FITNESS', 'ONAIR2026'
 where not exists (select 1 from gyms);
+
+-- Backfill: gyms created before billing existed (the one above included)
+-- would otherwise read as "trial already expired" the instant the billing
+-- gate ships. Starts every pre-existing gym on a fresh 14-day trial from
+-- the day this migration ran instead.
+update gyms set trial_ends_at = now() + interval '14 days' where trial_ends_at is null;
 
 -- ── profiles ──────────────────────────────────────────────
 create table if not exists profiles (
@@ -68,6 +96,13 @@ create table if not exists profiles (
   -- threaded through AuthContext.register()). Backfilled on 2026-08-10 for
   -- every profile that predates this column, to the one gym that existed.
   gym_id     uuid references gyms(id),
+  -- Cross-gym platform-superadmin flag (billing/overview, 2026-08-10) —
+  -- deliberately NOT the same thing as role='admin' above: that role is
+  -- gym-scoped like a coach (is_coach() checks role in ('coach','admin'),
+  -- and every same-gym RLS policy applies to it the same way). This is a
+  -- second, independent axis for "sees every gym" — never set via any
+  -- self-service flow, SQL-editor only, for Arnaud's own account.
+  is_platform_admin boolean not null default false,
   created_at timestamptz default now(),
   unique(user_id)
 );
@@ -100,6 +135,13 @@ create policy "Members can view own-gym coach profiles"
   on profiles for select
   using (role in ('coach', 'admin') and gym_id = public.my_gym_id());
 
+-- Platform admin (Arnaud only, see is_platform_admin column above) can read
+-- every profile across every gym — the one deliberate bypass of the
+-- same-gym scoping every other policy on this table enforces, needed for
+-- the cross-gym overview screen (PlatformAdmin.jsx).
+create policy "Platform admins can view all profiles"
+  on profiles for select using (public.is_platform_admin());
+
 create or replace function public.is_coach()
 returns boolean language sql security definer set search_path = public stable as $$
   select exists (select 1 from public.profiles where user_id = auth.uid() and role in ('coach','admin'));
@@ -127,6 +169,17 @@ $$;
 revoke execute on function public.my_gym_id() from public;
 revoke execute on function public.my_gym_id() from anon;
 grant execute on function public.my_gym_id() to authenticated;
+
+-- Same SECURITY DEFINER pattern again, same PUBLIC/anon revoke gotcha —
+-- backs both the "Platform admins can view all X" policies (profiles,
+-- gyms) and the frontend's PlatformAdmin.jsx route guard.
+create or replace function public.is_platform_admin()
+returns boolean language sql security definer set search_path = public stable as $$
+  select coalesce((select is_platform_admin from public.profiles where user_id = auth.uid()), false);
+$$;
+revoke execute on function public.is_platform_admin() from public;
+revoke execute on function public.is_platform_admin() from anon;
+grant execute on function public.is_platform_admin() to authenticated;
 
 -- CRITICAL — the actual fix for self-promotion to coach/admin:
 -- A column-level `revoke update (role) ...` does NOT override a broader
@@ -181,6 +234,54 @@ create trigger trg_prevent_self_role_escalation
 -- on the function itself, only table-level UPDATE (already gated above).
 revoke execute on function public.prevent_self_role_escalation() from public;
 revoke execute on function public.prevent_self_role_escalation() from anon, authenticated;
+
+-- Found while adding is_platform_admin this session (2026-08-10) — the
+-- guard above is UPDATE-only. The very first INSERT into profiles
+-- (AuthContext.register()'s own client-side upsert, or literally any raw
+-- REST call carrying a real user's own JWT — RLS's "Users can insert own
+-- profile" policy only checks auth.uid() = user_id, nothing about which
+-- columns are set) was completely unguarded: role and is_platform_admin
+-- have no column-level INSERT grant restriction (only UPDATE was ever
+-- locked down that way), so a payload with role: 'coach' or
+-- is_platform_admin: true would go straight through. No legitimate client
+-- flow ever sets either column on insert (role defaults to 'member',
+-- is_platform_admin is SQL-editor-only) so forcing both unconditionally
+-- breaks nothing real. service_role (create-gym.js's role='coach' path) is
+-- unaffected — auth.role() there isn't 'authenticated'.
+--
+-- gym_id is deliberately NOT forced here — register()'s legitimate insert
+-- depends on setting it from the validated invite code. That leaves a
+-- narrower, known gap: gym_id itself is still client-trusted at insert
+-- time (nothing cryptographically ties an insert to a real
+-- validate-invite.js call), so a technical user could still self-declare
+-- membership in an arbitrary gym via a raw insert. Combined with the fix
+-- above that's no longer combinable with a fake role, so the practical
+-- damage is capped at "sees their own data tagged as the wrong gym" (fails
+-- toward invisible-to-any-coach, same safe direction as resolveRole()'s
+-- self-heal) rather than "impersonates a coach anywhere" — worth a proper
+-- fix later (move profile creation server-side, mirroring create-gym.js),
+-- not done here to keep this fix scoped to what was actually found.
+create or replace function public.prevent_self_privilege_insert()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if auth.role() = 'authenticated' then
+    new.role := 'member';
+    new.is_platform_admin := false;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_prevent_self_privilege_insert on public.profiles;
+create trigger trg_prevent_self_privilege_insert
+  before insert on public.profiles
+  for each row execute function public.prevent_self_privilege_insert();
+revoke execute on function public.prevent_self_privilege_insert() from public;
+revoke execute on function public.prevent_self_privilege_insert() from anon, authenticated;
 
 -- ── objectifs ─────────────────────────────────────────────
 create table if not exists objectifs (
