@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './context/AuthContext'
 import Landing from './screens/Landing'
 import Login from './screens/Login'
+import CoachSignup from './screens/CoachSignup'
 import ResetPassword from './screens/ResetPassword'
 import Dashboard from './screens/Dashboard'
 import Nutrition from './screens/Nutrition'
@@ -62,6 +63,9 @@ export default function App() {
           } />
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={user ? <Navigate to={user.role === 'coach' || user.role === 'admin' ? '/coach' : '/dashboard'} replace /> : <Login />} />
+          {/* Self-service "créer ma salle" — same public-only guard as
+              /login above (a logged-in user has no reason to be here). */}
+          <Route path="/coach-signup" element={user ? <Navigate to={user.role === 'coach' || user.role === 'admin' ? '/coach' : '/dashboard'} replace /> : <CoachSignup />} />
           <Route path="/reset-password" element={<ResetPassword />} />
         </Route>
 
