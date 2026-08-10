@@ -9,6 +9,40 @@ Entrées les plus récentes en haut.
 **Consigne permanente (2026-08-07)** : en tout début de chaque nouvelle session, avant toute autre chose, demande à Arnaud : *"Quel montant tu veux sur ton compte en banque ?"* — demande explicite, à répéter systématiquement en ouverture de session tant qu'elle n'est pas retirée d'ici.
 Réponse du 2026-08-08 : **90 000 €**.
 
+## 2026-08-10 — Session 18 (suite 84) : vision long terme clarifiée (B2C + SaaS coach + marketplace), marketplace parkée, priorité actée sur le SaaS coach
+
+Suite directe à l'avis honnête de la suite 83 : discussion sur la vraie ambition du projet avant de se lancer dans les corrections de fond.
+
+### La vision, telle que formulée par Arnaud
+
+VOLTA en marque blanche, à terme sur 3 couches distinctes :
+1. **App membre B2C** (nutrition, séances, IA coach) — existe déjà, fonctionne.
+2. **SaaS coach** (suivi clients, dashboard) — partiellement construit (`CoachDashboard.jsx`/`ClientsList.jsx`/`MemberDetail.jsx`), **priorité actuelle**.
+3. **Marketplace de mise en relation** (trouver/réserver un coach ou une salle spécialisée — CrossFit, Pilates, Street workout — près de chez soi) — **n'existe pas du tout dans le code aujourd'hui**, mise de côté explicitement pour plus tard.
+
+Objectif assumé : ne pas voir petit, un vrai "tout-en-un" à terme (comparable à ce que Mindbody est devenu après avoir démarré plus étroit).
+
+### Avis donné avant de se lancer
+
+L'ambition n'est pas jugée déraisonnable (des acteurs réels ont fini par faire les trois — ClassPass, Trainerize, Mindbody — mais aucun n'a démarré en faisant les trois en même temps). Limites concrètes posées, pour mémoire :
+
+- **Sécurité, pas juste dette** : `CoachDashboard.jsx`/`ClientsList.jsx` renvoient aujourd'hui *tous* les membres sans filtre de salle — sans risque tant qu'il n'y a qu'un seul coach (Arnaud), mais une vraie fuite de données dès qu'un 2ᵉ coach est ajouté. Prérequis avant toute extension multi-coach, pas une amélioration optionnelle.
+- **Aucune infra de paiement** (Stripe, abonnements, facturation) — nécessaire pour la marketplace ET pour un vrai SaaS coach payant.
+- **Aucune brique de découverte/confiance** (recherche géolocalisée, filtres par spécialité, avis, vérification de certifications) — bloquant spécifiquement pour la marketplace.
+- **Responsabilité civile/légal** : mettre en relation des inconnus pour du sport physique engage une question d'assurance qui ne se résout pas en code — nécessite un avis juridique/assurance en amont, pas construite ici.
+- **Problème de démarrage à froid** propre aux marketplaces (besoin d'offre ET de demande simultanément) — structurellement le go-to-market le plus dur des trois couches.
+- **Méthode de construction actuelle** (une personne + une IA, zéro test, zéro revue humaine à part Arnaud, zéro vérification visuelle jusqu'à ce soir) : suffisante pour un MVP mono-salle testé par son propre créateur, pas pour opérer en sécurité une marketplace avec paiement et responsabilité physique entre inconnus.
+
+### Décision actée
+
+- **Marketplace explicitement parkée** — gardée ici pour mémoire, pas de travail dessus tant que ce n'est pas redemandé.
+- **Priorité confirmée : terminer le SaaS coach d'abord.** Ce qui inclut, dans l'ordre proposé et non encore commencé à la fin de cette suite :
+  1. **Fondations multi-salles** (`gym_id`, RLS corrigé pour scoper un coach à ses vrais membres, vrai lien coach↔membres en base) — utile même si le projet s'arrête au SaaS coach, prérequis strict pour tout le reste.
+  2. **Vérification visuelle réelle** — Chromium/Playwright découverts disponibles dans l'environnement de dev cette session (jamais utilisés jusqu'ici, tout reposait sur grep du bundle compilé) ; à tester concrètement.
+  3. **Tests automatisés** sur la logique critique (streak, calories/macros, bornes de validation).
+
+**Rien codé dans cette suite** — discussion produit uniquement, consignée avant de démarrer le travail effectif à la suite suivante.
+
 ## 2026-08-10 — Session 18 (suite 83) : décision jour de repos + avis honnête sur l'application, demandé directement
 
 Deux questions posées frontalement par l'utilisateur en clôture de session : "c'est quoi le mieux pour le jour de repos ?" et "sois honnête, tu penses quoi de toute l'application ?". Consignées ici telles que répondues, sans les édulcorer — l'utilisateur a explicitement demandé la franchise.
