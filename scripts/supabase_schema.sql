@@ -91,13 +91,23 @@ create table if not exists profiles (
   age        int,
   role       text not null default 'member',
   objectif   text,
-  -- Server-only, written by api/cron/inactivity-nudge.js to send one push
-  -- per inactivity episode rather than daily spam — nothing in the app
-  -- reads or writes this from the client.
+  -- Server-only, written by api/cron/nudges.js (job=inactivity) to send one
+  -- push per inactivity episode rather than daily spam — nothing in the
+  -- app reads or writes this from the client.
   last_inactivity_nudge_at timestamptz,
-  -- Same idea, written by api/cron/streak-nudge.js — one streak nudge per
-  -- day max, compared by date (not timestamp) against `today` in that job.
+  -- Same idea, written by api/cron/nudges.js (job=streak) — one streak
+  -- nudge per day max, compared by date (not timestamp) against `today` in
+  -- that job.
   last_streak_nudge_at timestamptz,
+  -- Veille produit 2026-08-11, proposition n°2 : le statut ON TRACK/AT
+  -- RISK/INACTIVE (computeStatus() côté client, dupliqué côté serveur dans
+  -- api/cron/nudges.js pour la même raison d'import Vite que les 2
+  -- colonnes ci-dessus) calculé au dernier passage du job `at-risk`. Sert
+  -- uniquement à détecter la BASCULE vers AT RISK (et non le fait d'y
+  -- rester) pour notifier le coach une fois par épisode, pas tous les
+  -- jours. Réécrit à chaque passage du job, que la notification parte ou
+  -- non — nothing in the app reads or writes this from the client.
+  last_status_snapshot text,
   -- Which gym this profile belongs to (see `gyms` above). Never trusted
   -- from the client (trg_prevent_self_privilege_insert below forces it
   -- null on any authenticated insert, and it's not in the UPDATE column
