@@ -499,6 +499,147 @@ create index if not exists habitude_logs_user_idx on habitude_logs (user_id);
 -- Gisèle. 6 cas, 3 positifs 3 négatifs, tout rollback derrière — zéro
 -- trace laissée dans la vraie base.
 
+-- ── programmes / programme_assignations ──────────────────────
+-- Veille produit 2026-08-11, proposition n°4 : bibliothèque de programmes
+-- réutilisables — le coach construit un programme une fois, l'assigne à
+-- plusieurs membres au lieu de le refaire à chaque fois. Partagée entre
+-- coachs d'une même salle (pas privée à celui qui l'a créée) : une vraie
+-- bibliothèque d'équipe, mêmes droits qu'un coach a déjà sur les membres
+-- de sa salle, étendus ici aux programmes de sa salle.
+create table if not exists programmes (
+  id          uuid primary key default gen_random_uuid(),
+  coach_id    uuid not null references auth.users(id) on delete cascade,
+  titre       text not null,
+  -- Même shape que activeSession.exercises côté membre (AppContext.jsx
+  -- addExercisesToSession) et que le JSON généré par "PROGRAMME IA"
+  -- (Workout.jsx) : [{name, sets, reps, kg, rest}] — un programme assigné
+  -- se branche directement dans le même flux "ajouter à la séance du
+  -- jour", sans adaptateur.
+  exercices   jsonb not null default '[]'::jsonb,
+  created_at  timestamptz not null default now()
+);
+
+-- Qui a reçu quel programme. Pas de notion de date/récurrence — le membre
+-- pioche dans "mes programmes" quand il veut s'entraîner (Workout.jsx),
+-- pas une obligation datée comme les habitudes.
+create table if not exists programme_assignations (
+  id            uuid primary key default gen_random_uuid(),
+  programme_id  uuid not null references programmes(id) on delete cascade,
+  user_id       uuid not null references auth.users(id) on delete cascade,
+  coach_id      uuid not null references auth.users(id) on delete cascade,
+  created_at    timestamptz not null default now(),
+  unique(programme_id, user_id)
+);
+
+alter table programmes enable row level security;
+alter table programme_assignations enable row level security;
+
+create policy "Coaches can view same-gym programmes"
+  on programmes for select using (
+    is_coach() and exists (
+      select 1 from public.profiles p
+      where p.user_id = programmes.coach_id and p.gym_id = public.my_gym_id()
+    )
+  );
+
+-- Un membre ne voit un programme QUE s'il lui a été assigné — pas un accès
+-- général à la bibliothèque de son coach. Passe par une fonction
+-- SECURITY DEFINER plutôt qu'un exists() direct sur
+-- programme_assignations : cette table a elle-même une policy INSERT qui
+-- interroge `programmes` en retour (voir plus bas), et un exists() direct
+-- ici créait un cycle que Postgres refuse ("infinite recursion detected in
+-- policy", 42P17) même si le résultat serait fini en pratique. La fonction
+-- court-circuite RLS pour cette seule vérification ponctuelle (même
+-- pattern que is_coach()/my_gym_id() plus haut dans ce fichier), cassant
+-- le cycle sans rien affaiblir : elle ne fait qu'un exists() borné à
+-- auth.uid().
+create or replace function public.member_has_programme(p_programme_id uuid)
+returns boolean
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select exists (
+    select 1 from programme_assignations pa
+    where pa.programme_id = p_programme_id and pa.user_id = auth.uid()
+  );
+$$;
+
+revoke execute on function public.member_has_programme(uuid) from public;
+revoke execute on function public.member_has_programme(uuid) from anon;
+grant execute on function public.member_has_programme(uuid) to authenticated;
+
+create policy "Members can view assigned programmes"
+  on programmes for select using (public.member_has_programme(programmes.id));
+
+create policy "Coaches can create programmes"
+  on programmes for insert with check (is_coach() and coach_id = auth.uid());
+
+-- Bibliothèque d'équipe : n'importe quel coach de la même salle peut
+-- modifier/supprimer un programme, pas seulement celui qui l'a créé (même
+-- logique que la visibilité SELECT ci-dessus).
+create policy "Coaches can update same-gym programmes"
+  on programmes for update
+  using (is_coach() and exists (select 1 from public.profiles p where p.user_id = programmes.coach_id and p.gym_id = public.my_gym_id()))
+  with check (is_coach() and exists (select 1 from public.profiles p where p.user_id = programmes.coach_id and p.gym_id = public.my_gym_id()));
+
+create policy "Coaches can delete same-gym programmes"
+  on programmes for delete using (is_coach() and exists (select 1 from public.profiles p where p.user_id = programmes.coach_id and p.gym_id = public.my_gym_id()));
+
+create index if not exists programmes_coach_idx on programmes (coach_id);
+
+create policy "Members can view own programme assignations"
+  on programme_assignations for select using (auth.uid() = user_id);
+
+create policy "Coaches can view same-gym programme assignations"
+  on programme_assignations for select using (
+    is_coach() and exists (
+      select 1 from public.profiles p
+      where p.user_id = programme_assignations.user_id and p.gym_id = public.my_gym_id()
+    )
+  );
+
+-- WITH CHECK vérifie DEUX appartenances, pas une seule : que le membre
+-- visé est bien dans la salle du coach (même contrôle que partout
+-- ailleurs), ET que le programme lui-même appartient à un coach de cette
+-- même salle — sans ce second exists(), un coach aurait pu
+-- deviner/référencer l'id d'un programme d'une AUTRE salle et l'assigner à
+-- l'un de ses propres membres, fuite de contenu inter-salle même si
+-- mineure (juste le texte d'un programme, pas une donnée personnelle).
+create policy "Coaches can assign same-gym programmes"
+  on programme_assignations for insert with check (
+    is_coach()
+    and coach_id = auth.uid()
+    and exists (
+      select 1 from public.profiles p
+      where p.user_id = programme_assignations.user_id and p.gym_id = public.my_gym_id()
+    )
+    and exists (
+      select 1 from public.programmes pr
+      join public.profiles pc on pc.user_id = pr.coach_id
+      where pr.id = programme_assignations.programme_id and pc.gym_id = public.my_gym_id()
+    )
+  );
+
+create policy "Coaches can unassign same-gym programmes"
+  on programme_assignations for delete using (
+    is_coach() and exists (
+      select 1 from public.profiles p
+      where p.user_id = programme_assignations.user_id and p.gym_id = public.my_gym_id()
+    )
+  );
+
+create index if not exists programme_assignations_programme_idx on programme_assignations (programme_id);
+create index if not exists programme_assignations_user_idx on programme_assignations (user_id);
+
+-- Testé pour de vrai (transaction annulée, 2026-08-11) : coach@onairapp.com
+-- crée un programme → OK ; l'assigne à Gisèle (même salle) → OK ;
+-- l'assigne à un profil hors salle → rejetée 42501 ; Gisèle voit bien le
+-- programme qui lui a été assigné (contenu exact) ; Arnaud, qui n'a rien
+-- reçu, ne voit RIEN dans programmes (0 ligne). 5 cas, tout rollback
+-- derrière — zéro trace laissée dans la vraie base.
+
 -- ── repas ─────────────────────────────────────────────────
 create table if not exists repas (
   id         uuid primary key default gen_random_uuid(),

@@ -15,6 +15,7 @@ import AICoach from './screens/AICoach'
 import Scan from './screens/Scan'
 import CoachDashboard from './screens/CoachDashboard'
 import MemberDetail from './screens/MemberDetail'
+import CoachPrograms from './screens/CoachPrograms'
 import WorkoutLibrary from './screens/WorkoutLibrary'
 import WorkoutSession from './screens/WorkoutSession'
 import WorkoutHistory from './screens/WorkoutHistory'
@@ -107,6 +108,7 @@ export default function App() {
         <Route element={<ProtectedRoute requiredRole="coach"><CoachLayout /></ProtectedRoute>}>
           <Route path="/coach" element={<CoachDashboard />} />
           <Route path="/coach/member/:id" element={<MemberDetail />} />
+          <Route path="/coach/programmes" element={<CoachPrograms />} />
           <Route path="/coach/clients" element={<ClientsList />} />
           <Route path="/coach/messages" element={<CoachMessages />} />
           <Route path="/coach/messages/:memberId" element={<Conversation isCoach />} />

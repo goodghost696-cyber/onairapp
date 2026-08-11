@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { useAuth } from '../context/AuthContext'
 import { useLanguage } from '../context/LanguageContext'
+import { fetchMemberPrograms } from '../utils/programs'
 import '../styles/Workout.css'
 import { authHeader } from '../lib/supabase'
 
@@ -17,6 +18,20 @@ export default function Workout() {
   const [program, setProgram] = useState(null)
   const [loading, setLoading] = useState(false)
   const [generated, setGenerated] = useState(false)
+  // Programmes assignés par le coach — veille produit 2026-08-11, prop. 4.
+  const [coachPrograms, setCoachPrograms] = useState([])
+
+  useEffect(() => {
+    if (!user?.id) return
+    let cancelled = false
+    fetchMemberPrograms(user.id).then(p => { if (!cancelled) setCoachPrograms(p) })
+    return () => { cancelled = true }
+  }, [user?.id])
+
+  function startCoachProgram(programme) {
+    addExercisesToSession(programme.exercices)
+    navigate('/workout/session')
+  }
 
   const sections = [
     { key: 'maison', name: t('home_exercises'), sub: t('bodyweight') },
@@ -155,6 +170,27 @@ Donne exactement 4-5 exercices adaptés à l'objectif.`
             )}
           </button>
         </div>
+
+        {/* Programmes assignés par le coach — veille produit 2026-08-11,
+            prop. 4. Un tap charge le programme dans la séance du jour,
+            même flux que "COMMENCER CETTE SÉANCE" ci-dessous pour le
+            programme IA (addExercisesToSession, même shape d'exercice). */}
+        {coachPrograms.length > 0 && (
+          <>
+            <div className="section-label">MES PROGRAMMES</div>
+            {coachPrograms.map((p, i) => (
+              <div key={p.id} className="card card-animated" style={{ '--delay': `${i * 60}ms`, cursor: 'pointer', marginBottom: 8 }} onClick={() => startCoachProgram(p)}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <div className="text-base bold">{p.titre}</div>
+                    <div className="text-sm text-muted">{p.exercices.length} exercice{p.exercices.length > 1 ? 's' : ''}</div>
+                  </div>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+                </div>
+              </div>
+            ))}
+          </>
+        )}
 
         {generated && program && (
           <div className="ai-program-card">

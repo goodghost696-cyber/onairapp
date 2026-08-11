@@ -45,6 +45,28 @@ Il existait déjà une "charte ON AIR Neon" documentée plus bas dans ce journal
 - `@phosphor-icons/react` uniquement pour la nav (bottom nav membre + nav coach) — son prop `weight` donne un état actif "plein" vs "contour" sans changement de couleur
 - Emoji conservés à quelques endroits précis et délibérés après itération (météo du Dashboard, sélecteur d'eau, toast de bienvenue) — jamais comme icône UI générique, seulement là où un pictogramme dessiné n'apportait rien de mieux (voir suites 77-81 pour l'historique de l'icône eau, 5 itérations avant 🥛)
 
+## 2026-08-11 — Session 18 (suite 100) : proposition n°4 livrée — bibliothèque de programmes réutilisables
+
+**Demande directe d'Arnaud, suite au point 3** : *"on continue sur le point 4"*.
+
+**Constat de départ** : "Programme" n'existait que comme génération IA éphémère — le bouton "✦ PROGRAMME IA" de `Workout.jsx` demande à Claude un programme du jour, jamais sauvegardé nulle part. Aucune notion de bibliothèque, aucun moyen pour le coach de construire un programme une fois et de le réutiliser sur plusieurs membres — exactement le point relevé dans la veille.
+
+**Modèle de données, 2 nouvelles tables (migration `add_programmes`, appliquée en base réelle)** :
+- `programmes` (titre + `exercices` jsonb) — **bibliothèque d'équipe**, pas un carnet personnel : n'importe quel coach de la salle peut voir/modifier/assigner un programme, pas seulement celui qui l'a créé. Différence assumée avec `habitudes`/`coach_notes` qui restent scopées à un seul coach.
+- `programme_assignations` (qui a reçu quel programme) — pas de date/récurrence : le membre pioche dans "mes programmes" quand il veut s'entraîner, contrairement aux habitudes qui sont une obligation quotidienne.
+- Le champ `exercices` reprend **exactement** la shape déjà utilisée par `AppContext.addExercisesToSession` et le JSON généré par "PROGRAMME IA" (`[{name, sets, reps, kg, rest}]`) — un programme assigné se branche directement dans le flux "ajouter à la séance du jour" existant, zéro adaptateur à écrire.
+
+**Incident RLS rencontré et corrigé pendant le test, pas après coup** : la policy SELECT "un membre voit un programme qui lui est assigné" interroge `programme_assignations`, et la policy INSERT de `programme_assignations` interroge `programmes` en retour — Postgres détecte ça comme un cycle et refuse (`42P17 infinite recursion detected in policy`), même si le résultat serait fini en pratique. Corrigé avec une fonction `SECURITY DEFINER` (`member_has_programme()`, même pattern que `is_coach()`/`my_gym_id()` déjà dans ce fichier) qui court-circuite RLS pour cette seule vérification ponctuelle, cassant le cycle sans rien affaiblir.
+
+**Testé pour de vrai, 5 cas, transaction annulée** : coach crée un programme → OK ; l'assigne à Gisèle (même salle) → OK ; l'assigne à un profil fictif hors salle → rejeté 42501 ; Gisèle voit bien le programme assigné (contenu exact vérifié) ; Arnaud, qui n'a rien reçu, ne voit rien dans `programmes` (0 ligne, confirmant que la bibliothèque du coach n'est pas visible en général — seulement ce qui est explicitement assigné). Tout rollback derrière.
+
+**Code** :
+- `src/utils/programs.js` (nouveau) : `fetchProgramLibrary`, `createProgram`, `deleteProgram`, `assignProgram`/`unassignProgram` (multi-membres d'un coup), `fetchMemberPrograms`.
+- `src/screens/CoachPrograms.jsx` (nouveau, route `/coach/programmes`) : bibliothèque avec création (titre + lignes d'exercices dynamiques), assignation multi-membres (sélecteur avec cases à cocher, membres déjà assignés grisés), suppression (confirmation à deux taps, pas de `window.confirm` — cohérent avec le reste de l'app qui n'en utilise nulle part). Accessible par un bouton sur `CoachDashboard`, pas un 5ᵉ onglet de nav (`CoachNav.jsx` reste volontairement à 4 onglets fixes).
+- `src/screens/Workout.jsx` (membre) : nouvelle section "MES PROGRAMMES" — un tap charge le programme dans la séance du jour via `addExercisesToSession`, même bouton d'action que le programme généré par IA.
+
+**Vérifié** : `npm run build` passe, 11 fonctions serverless (inchangé), `mcp__Supabase__get_advisors` (sécurité) : une nouvelle alerte attendue (fonction `member_has_programme` appelable par `authenticated`, même famille que `is_coach()`/`my_gym_id()`, intentionnel), rien d'autre.
+
 ## 2026-08-11 — Session 18 (suite 99) : proposition n°3 livrée — le coach assigne une habitude/un défi à un membre
 
 **Demande directe d'Arnaud, suite au point 2** : *"on continue sur le point 3"*.
