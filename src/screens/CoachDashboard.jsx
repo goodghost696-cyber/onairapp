@@ -99,8 +99,15 @@ export default function CoachDashboard() {
             ))}
           </div>
 
-          <button className="btn-ghost" onClick={() => navigate('/coach/clients')} style={{ marginBottom: 20 }}>
+          <button className="btn-ghost" onClick={() => navigate('/coach/clients')} style={{ marginBottom: 8 }}>
             VOIR TOUS MES CLIENTS →
+          </button>
+
+          {/* Veille produit 2026-08-11, proposition n°4 : bibliothèque de
+              programmes réutilisables. Bouton plutôt qu'un 5ᵉ onglet de nav
+              (voir CoachPrograms.jsx). */}
+          <button className="btn-ghost" onClick={() => navigate('/coach/programmes')} style={{ marginBottom: 20 }}>
+            BIBLIOTHÈQUE DE PROGRAMMES →
           </button>
 
           {/* Activity trend — the dashboard used to be 4 numbers + lists,
