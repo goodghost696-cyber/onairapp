@@ -203,8 +203,24 @@ export function AuthProvider({ children }) {
     return { success: true }
   }
 
+  // Bug réel signalé par Arnaud (2026-08-11) : déconnexion côté membre,
+  // puis clic sur "Accès coach" (Landing → /login) renvoyait directement
+  // dans l'espace membre au lieu du formulaire de connexion. Root cause :
+  // cette fonction ne mettait jamais `user` à null elle-même — elle
+  // dépendait entièrement du listener onAuthStateChange (déclenché par
+  // supabase.auth.signOut()) pour le faire, et les 3 boutons "se
+  // déconnecter" de l'app appelaient logout() sans l'attendre avant de
+  // naviguer. Selon le timing exact de la notification interne du SDK,
+  // `user` pouvait donc être encore peuplé au moment où la garde de route
+  // de App.jsx réévaluait /login. Corrigé à deux niveaux : les 3 boutons
+  // attendent maintenant logout() (Settings.jsx/CoachSettings.jsx/
+  // CoachDashboard.jsx), et cette fonction vide `user` elle-même,
+  // explicitement et synchrone à son retour, plutôt que de dépendre
+  // uniquement du timing du listener (qui continuera de le refaire aussi,
+  // sans effet — idempotent).
   async function logout() {
     await supabase.auth.signOut()
+    setUser(null)
     // Clear all onair localStorage keys
     Object.keys(localStorage).filter(k => k.startsWith('onair_')).forEach(k => localStorage.removeItem(k))
   }

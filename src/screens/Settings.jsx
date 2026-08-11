@@ -402,7 +402,14 @@ export default function Settings() {
         <button className="btn-ghost" onClick={replayTour} style={{ marginBottom: 8 }}>
           Revoir le didacticiel
         </button>
-        <button onClick={() => { logout(); navigate('/') }} style={{ width: '100%', padding: 16, background: 'transparent', border: '2px solid var(--danger)', color: 'var(--danger)', fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', borderRadius: 12, cursor: 'pointer', marginBottom: 12 }}>
+        {/* logout() était appelé sans await — navigate('/') partait avant que
+            supabase.auth.signOut() (et donc AuthContext.user) n'ait fini de
+            se vider. Se déconnecter puis cliquer vite sur "Accès coach"
+            (Landing.jsx → /login) retombait sur la garde de route de
+            App.jsx avec un `user` encore membre, qui redirige direct vers
+            /dashboard — l'app semblait "reconnecter" tout seule. Signalé
+            directement par Arnaud (2026-08-11). */}
+        <button onClick={async () => { await logout(); navigate('/') }} style={{ width: '100%', padding: 16, background: 'transparent', border: '2px solid var(--danger)', color: 'var(--danger)', fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', borderRadius: 12, cursor: 'pointer', marginBottom: 12 }}>
           {t('logout')}
         </button>
         <DeleteAccountButton />

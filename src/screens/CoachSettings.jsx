@@ -244,7 +244,10 @@ export default function CoachSettings() {
         <button className="btn-ghost" onClick={replayTour} style={{ marginBottom: 8 }}>
           Revoir le didacticiel
         </button>
-        <button onClick={() => { logout(); navigate('/') }} style={{ width: '100%', padding: 16, background: 'transparent', border: '2px solid var(--danger)', color: 'var(--danger)', fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', borderRadius: 12, cursor: 'pointer', marginBottom: 12 }}>
+        {/* Même course que Settings.jsx (côté membre) — logout() doit être
+            attendu avant navigate(), sinon AuthContext.user est encore
+            peuplé au moment où /login réévalue sa garde de route. */}
+        <button onClick={async () => { await logout(); navigate('/') }} style={{ width: '100%', padding: 16, background: 'transparent', border: '2px solid var(--danger)', color: 'var(--danger)', fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', borderRadius: 12, cursor: 'pointer', marginBottom: 12 }}>
           SE DÉCONNECTER
         </button>
         <DeleteAccountButton />
