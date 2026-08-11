@@ -45,6 +45,50 @@ Il existait déjà une "charte ON AIR Neon" documentée plus bas dans ce journal
 - `@phosphor-icons/react` uniquement pour la nav (bottom nav membre + nav coach) — son prop `weight` donne un état actif "plein" vs "contour" sans changement de couleur
 - Emoji conservés à quelques endroits précis et délibérés après itération (météo du Dashboard, sélecteur d'eau, toast de bienvenue) — jamais comme icône UI générique, seulement là où un pictogramme dessiné n'apportait rien de mieux (voir suites 77-81 pour l'historique de l'icône eau, 5 itérations avant 🥛)
 
+## 2026-08-11 — Session 18 (suite 97) : veille concurrentielle SaaS coach + proposition n°1 livrée (coach fixe l'objectif d'un membre)
+
+**Demande d'Arnaud** : *"On doit optimiser la partie coach, on a passé beaucoup de temps sur la partie membre. Je veux qu'on s'attaque au produit lui-même : une veille de tous les SaaS sport/health qui existent, classés par pertinence, pour proposer THE saas qui simplifie la vie du coach."* Consigne explicite de poser des questions avant de commencer — première série de questions non répondue (session interrompue), reposée mot pour mot sur demande d'Arnaud ("Repose tes questions"), puis répondue : scope **élargi** (pas que le fitness pur), regard **international avec un œil sur la France**, angle **fonctionnalités coach en priorité**.
+
+**Veille livrée en artefact** (`veille-saas-coach.html`) + résumé dans le fil. Concurrents classés par pertinence :
+- **Tier S (coaching en ligne, le plus proche de VOLTA)** : Trainerize, TrueCoach, Everfit, PT Distinction, My PT Hub — tous avec un pattern commun : le coach *assigne* (programme/habitude/objectif) plutôt que le membre s'auto-dirige, et un système d'alerte "membre à risque" plus ou moins visible.
+- **Tier A (généralistes/enterprise)** : Exercise.com, TrainHeroic, Hevy, Kahunas, Virtuagym.
+- **Tier B (adjacents — gestion de salle, pas coaching individuel)** : Glofox, Mindbody, Zen Planner — retenu leur fonctionnalité "at-risk member insights" (Glofox) et système d'alerte "feu tricolore" (PT Distinction traffic-light alerts), directement comparables au statut ON TRACK/à risque déjà dans VOLTA.
+- **IA fitness** : Fitbod, JuggernautAI, Arvo — ajustement *continu* du programme par l'IA (vs génération one-shot).
+- **Francophone/Québec** : Hexfit, Odyn, Fit'Distance — marché de niche, aucun ne semble aller aussi loin que VOLTA sur l'IA conversationnelle.
+
+**4 constats croisés avec le code réel de VOLTA** (pas juste "voici ce qui existe ailleurs" — vérifié que VOLTA a ou n'a pas déjà chaque chose) :
+1. Les meilleurs outils laissent le coach *écrire* dans la fiche du membre (objectif, programme, habitude) — VOLTA n'avait jusqu'ici que de la lecture seule (`coach_notes` mis à part) côté fiche membre.
+2. Alertes proactives "membre qui décroche" — VOLTA a déjà `computeStatus()` (ON TRACK/à risque) mais seulement affiché passivement, jamais poussé activement au coach.
+3. Habitudes/défis assignables avec streaks (Trainerize) — rien d'équivalent dans VOLTA aujourd'hui.
+4. Mémoire longue de l'IA sur le programme d'un membre (ajustement continu vs génération one-shot) — le Coach IA de VOLTA génère mais ne réajuste pas dans la durée.
+
+**5 propositions, par ordre de priorité** :
+1. **Le coach fixe l'objectif calorique/hebdo d'un membre depuis sa fiche** — *implémenté ci-dessous.*
+2. Notification quand un membre bascule "à risque" (constat n°2 ci-dessus).
+3. Le coach assigne une habitude/un défi à un membre (constat n°3).
+4. Bibliothèque de programmes réutilisables (créer une fois, assigner à plusieurs membres).
+5. Mémoire de programme pour l'IA Coach (constat n°4).
+
+Arnaud a validé le point 1 et demandé de l'implémenter (*"on commence par le point 1"*) — les points 2 à 5 restent à faire, pas commencés, pas de date.
+
+---
+
+### Point 1 livré : le coach peut fixer l'objectif d'un membre depuis sa fiche
+
+Jusqu'ici la table `objectifs` n'avait que des policies RLS d'auto-accès (le membre lit/écrit son propre objectif) plus une policy de lecture seule pour le coach — avec un commentaire explicite dans `supabase_schema.sql` disant que le coach ne modifie *jamais* l'objectif d'un membre, seulement le consulte. Décision produit d'aujourd'hui : ce commentaire est délibérément inversé.
+
+**RLS ajoutée** (migration `coach_can_set_objectifs`, appliquée en base réelle) : deux nouvelles policies, `"Coaches can set same-gym objectifs"` (INSERT) et `"Coaches can update same-gym objectifs"` (UPDATE), toutes deux avec `WITH CHECK` — sans lui, un coach pourrait upserter/déplacer une ligne vers un `user_id` hors de sa salle, exactement la même classe de bug déjà documentée pour `role`/`gym_id` plus tôt dans ce journal.
+
+**Testé pour de vrai, pas juste écrit** : transaction ouverte puis annulée (`begin; ... rollback;`), usurpant `coach@onairapp.com` via `set local request.jwt.claims`. Cas positif : upsert de l'objectif de Gisèle (membre réelle de la même salle) réussit, ligne retournée confirmée (`{"calories_jour":2100,"proteines":150,...}`). Cas négatif : upsert sur un profil fictif rattaché à une autre salle échoue avec l'erreur RLS attendue (`42501`). Après rollback, requêtes fraîches confirmant zéro trace : l'objectif réel de Gisèle est resté `null`, rien n'a persisté du test.
+
+**Code** :
+- `saveMemberObjectifs(memberUserId, values)` ajouté à `coachStats.js` — upsert simple sur `objectifs`, toute la sécurité réelle est côté RLS (ce upsert échoue tout seul si le membre n'est pas dans la salle du coach).
+- `MemberDetail.jsx` : la carte OBJECTIFS (jusqu'ici en lecture seule) a maintenant un bouton "Modifier" qui bascule vers un formulaire (calories/protéines/pas/eau par jour), valeurs bornées via `clamp()`/`BOUNDS` (même garde-fou que l'onboarding et les repas — cf. bug des 10800 kcal/jour et du repas à 222 002 656 161 kcal déjà documentés dans ce journal) avant l'écriture en base.
+
+**Incident de session, transparent** : un premier essai d'ajout de `saveMemberObjectifs` à `coachStats.js` a été perdu suite à une interruption de conversation (le fichier ne contenait plus la fonction alors que `MemberDetail.jsx` l'importait déjà) — `npm run build` a échoué avec une erreur d'import claire, qui a permis de détecter et corriger l'oubli avant tout commit. Aucune donnée ni aucune ligne de RLS affectée par cet incident, seulement du code local pas encore poussé.
+
+**Vérifié** : `npm run build` passe, 12 fonctions serverless (inchangé, aucun nouvel endpoint), `mcp__Supabase__get_advisors` (sécurité) ne signale rien de nouveau après la migration.
+
 ## 2026-08-11 — Session 18 (suite 96) : premières vraies captures d'écran de l'app — 3 correctifs qui en sortent
 
 **Premier vrai retour visuel de toute la session** : Arnaud a envoyé 4 captures d'écran réelles (tableau de bord coach + fiche membre "Gisèle") en demandant "regarde le code, regarde ces screens, est-ce qu'il y a des améliorations". Pas de navigateur ici, mais une capture réelle permet de croiser précisément ce qui est affiché avec le code qui le produit — la première vérification visuelle un tant soit peu fiable depuis le début de cette session.

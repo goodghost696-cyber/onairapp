@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
-import { fetchMemberDetailStats, fetchMemberRecentActivity, fetchCoachNote, saveCoachNote, lastSeenLabel } from '../utils/coachStats'
+import { fetchMemberDetailStats, fetchMemberRecentActivity, fetchCoachNote, saveCoachNote, saveMemberObjectifs, lastSeenLabel } from '../utils/coachStats'
 import CoachNav from '../components/CoachNav'
 import { authHeader } from '../lib/supabase'
+import { BOUNDS, clamp } from '../utils/validation'
 
 function formatShortDate(iso) {
   if (!iso) return ''
@@ -41,6 +42,11 @@ export default function MemberDetail() {
   const [note, setNote] = useState('')
   const [noteSaving, setNoteSaving] = useState(false)
   const [noteSaved, setNoteSaved] = useState(false)
+  // Édition des objectifs par le coach (veille produit 2026-08-11, prop. 1).
+  const [editingObjectifs, setEditingObjectifs] = useState(false)
+  const [objectifsForm, setObjectifsForm] = useState(null)
+  const [objectifsSaving, setObjectifsSaving] = useState(false)
+  const [objectifsSaved, setObjectifsSaved] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -77,6 +83,36 @@ export default function MemberDetail() {
     if (result.success) {
       setNoteSaved(true)
       setTimeout(() => setNoteSaved(false), 1500)
+    }
+  }
+
+  function startEditObjectifs() {
+    const o = stats?.objectifs
+    setObjectifsForm({
+      calorieGoal: o?.calories_jour ?? 2400,
+      proteinGoal: o?.proteines ?? 180,
+      stepsGoal: o?.pas_jour ?? 10000,
+      waterGoal: o?.eau_ml ?? 2500,
+    })
+    setEditingObjectifs(true)
+  }
+
+  async function handleSaveObjectifs() {
+    if (!member?.user_id) return
+    setObjectifsSaving(true)
+    const values = {
+      calories_jour: clamp(objectifsForm.calorieGoal, BOUNDS.calorieGoal),
+      proteines: clamp(objectifsForm.proteinGoal, BOUNDS.proteinGoal),
+      pas_jour: clamp(objectifsForm.stepsGoal, BOUNDS.stepsGoal),
+      eau_ml: clamp(objectifsForm.waterGoal, BOUNDS.waterGoal),
+    }
+    const result = await saveMemberObjectifs(member.user_id, values)
+    setObjectifsSaving(false)
+    if (result.success) {
+      setStats(prev => ({ ...prev, objectifs: { ...prev.objectifs, ...values } }))
+      setEditingObjectifs(false)
+      setObjectifsSaved(true)
+      setTimeout(() => setObjectifsSaved(false), 1500)
     }
   }
 
@@ -159,10 +195,49 @@ export default function MemberDetail() {
           </div>
         </div>
 
-        {/* Objectives — real numeric goals from the objectifs table */}
-        <div className="section-label">OBJECTIFS</div>
+        {/* Objectives — real numeric goals from the objectifs table.
+            Modifiables par le coach depuis le 2026-08-11 (veille produit,
+            proposition n°1 : "le coach observe mais n'agit pas" — c'est le
+            premier vrai geste d'action donné au coach sur un membre). */}
+        <div className="section-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span>OBJECTIFS</span>
+          {!editingObjectifs && (
+            <button onClick={startEditObjectifs} style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}>
+              {objectifsSaved ? '✓ Enregistré' : 'Modifier'}
+            </button>
+          )}
+        </div>
         <div className="card card-animated" style={{ marginBottom: 8, '--delay': '120ms' }}>
-          {stats.objectifs ? [
+          {editingObjectifs ? (
+            <>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
+                {[
+                  { key: 'calorieGoal', label: 'Calories/jour', unit: 'kcal' },
+                  { key: 'proteinGoal', label: 'Protéines/jour', unit: 'g' },
+                  { key: 'stepsGoal', label: 'Pas/jour', unit: 'pas' },
+                  { key: 'waterGoal', label: 'Eau/jour', unit: 'ml' },
+                ].map(f => (
+                  <label key={f.key} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    <span className="text-xs text-muted">{f.label}</span>
+                    <input
+                      type="number"
+                      value={objectifsForm[f.key]}
+                      onChange={e => setObjectifsForm(prev => ({ ...prev, [f.key]: e.target.value }))}
+                      style={{ padding: '10px 12px', fontSize: 14 }}
+                    />
+                  </label>
+                ))}
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button className="btn-accent" onClick={handleSaveObjectifs} disabled={objectifsSaving} style={{ flex: 1, opacity: objectifsSaving ? 0.7 : 1 }}>
+                  {objectifsSaving ? '...' : 'ENREGISTRER'}
+                </button>
+                <button className="btn-ghost" onClick={() => setEditingObjectifs(false)} style={{ flex: 1 }}>
+                  ANNULER
+                </button>
+              </div>
+            </>
+          ) : stats.objectifs ? [
             `${stats.objectifs.calories_jour} kcal/jour`,
             `${stats.objectifs.proteines}g de protéines/jour`,
             `${stats.objectifs.pas_jour?.toLocaleString()} pas/jour`,

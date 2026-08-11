@@ -207,6 +207,19 @@ export async function saveCoachNote(coachId, memberId, content) {
   return { success: true }
 }
 
+// Veille produit 2026-08-11, proposition n°1 : le coach peut fixer l'objectif
+// d'un membre depuis sa fiche. RLS (policies "Coaches can set/update same-gym
+// objectifs") fait le vrai travail de sécurité côté serveur — ce upsert échoue
+// simplement si le membre n'est pas dans la salle du coach. Les valeurs sont
+// déjà bornées côté appelant (clamp + BOUNDS) avant d'arriver ici.
+export async function saveMemberObjectifs(memberUserId, values) {
+  const { error } = await supabase
+    .from('objectifs')
+    .upsert({ user_id: memberUserId, ...values, updated_at: new Date().toISOString() }, { onConflict: 'user_id' })
+  if (error) { console.error('[coachStats] saveMemberObjectifs failed', error); return { success: false } }
+  return { success: true }
+}
+
 // Raw recent rows for a member's page — the averages above are good for a
 // trend, but a coach spotting a specific problem (a bad meal, a skipped
 // session) needs to see the actual entries, not just a number.
