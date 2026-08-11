@@ -343,6 +343,38 @@ create policy "Coaches can view same-gym objectifs"
     )
   );
 
+-- Veille produit 2026-08-11, proposition n°1 : le coach peut fixer
+-- l'objectif d'un membre depuis sa fiche — inverse délibérément le "jamais"
+-- du commentaire au-dessus de la policy SELECT (qui datait d'avant cette
+-- décision produit). WITH CHECK sur les deux : sans lui, un coach pourrait
+-- upsert/déplacer une ligne vers un user_id hors de sa salle (même classe
+-- de bug déjà documentée pour "Users can update own objectifs" plus haut).
+-- Testé pour de vrai (transaction annulée, coach@onairapp.com usurpé) :
+-- upsert sur un membre de sa salle passe, upsert sur un membre fictif
+-- rattaché à une autre salle échoue avec l'erreur RLS attendue (42501).
+create policy "Coaches can set same-gym objectifs"
+  on objectifs for insert with check (
+    is_coach() and exists (
+      select 1 from public.profiles p
+      where p.user_id = objectifs.user_id and p.gym_id = public.my_gym_id()
+    )
+  );
+
+create policy "Coaches can update same-gym objectifs"
+  on objectifs for update
+  using (
+    is_coach() and exists (
+      select 1 from public.profiles p
+      where p.user_id = objectifs.user_id and p.gym_id = public.my_gym_id()
+    )
+  )
+  with check (
+    is_coach() and exists (
+      select 1 from public.profiles p
+      where p.user_id = objectifs.user_id and p.gym_id = public.my_gym_id()
+    )
+  );
+
 -- ── repas ─────────────────────────────────────────────────
 create table if not exists repas (
   id         uuid primary key default gen_random_uuid(),
