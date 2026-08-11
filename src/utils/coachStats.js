@@ -12,19 +12,32 @@ function daysSince(dateStr) {
 
 // ON TRACK / AT RISK / INACTIVE from real recency + volume rather than the
 // mock fields the coach screens used before — no activity in 5+ days reads
-// as inactive, recent + at least 3 sessions this week reads as on track,
+// as inactive, recent + at least 2 sessions this week reads as on track,
 // anything in between is "at risk" (the ambiguous middle ground).
+//
+// Seuil ON TRACK était à 3 séances/semaine — rendait le statut "à risque"
+// quasiment impossible à éviter (2x/semaine est une cadence saine et
+// courante) et donnait un tableau de bord tout en orange dès la première
+// vraie utilisation, confirmé sur capture réelle par Arnaud (2026-08-11,
+// les 2 seuls membres de sa salle tous les deux "à risque"). Discuté
+// directement, abaissé à 2.
 function computeStatus(lastActiveDate, sessionsThisWeek) {
   if (!lastActiveDate) return 'INACTIVE'
   const age = daysSince(lastActiveDate)
   if (age > 5) return 'INACTIVE'
-  if (age <= 2 && sessionsThisWeek >= 3) return 'ON TRACK'
+  if (age <= 2 && sessionsThisWeek >= 2) return 'ON TRACK'
   return 'AT RISK'
 }
 
-// Aggregates recent activity for a list of member user_ids in 2 queries
+// Aggregates recent activity for a list of member user_ids in 3 queries
 // total (not one per member — this is meant to back a coach's full client
 // list, not just a single member page).
+//
+// Repas ajouté à la lecture (2026-08-11) — manquait alors que streak.js
+// (côté membre) compte lui les repas dans "actif ce jour-là". Un membre qui
+// logue ses repas religieusement mais ne touche jamais à l'eau/aux pas/à
+// une séance apparaissait "inactif" côté coach malgré une vraie utilisation
+// quotidienne — trouvé en croisant une vraie capture d'écran avec le code.
 export async function fetchMemberActivitySummaries(userIds) {
   const summaries = {}
   for (const id of userIds) summaries[id] = { lastActiveDate: null, sessionsThisWeek: 0, status: 'INACTIVE' }
@@ -33,12 +46,14 @@ export async function fetchMemberActivitySummaries(userIds) {
   const since = isoDaysAgo(ACTIVITY_WINDOW_DAYS)
   const weekAgo = isoDaysAgo(7)
 
-  const [{ data: seances, error: e1 }, { data: activite, error: e2 }] = await Promise.all([
+  const [{ data: seances, error: e1 }, { data: activite, error: e2 }, { data: repas, error: e3 }] = await Promise.all([
     supabase.from('seances').select('user_id, date').in('user_id', userIds).gte('date', since),
     supabase.from('activite_jour').select('user_id, date').in('user_id', userIds).gte('date', since),
+    supabase.from('repas').select('user_id, date').in('user_id', userIds).gte('date', since),
   ])
   if (e1) console.error('[coachStats] seances fetch failed', e1)
   if (e2) console.error('[coachStats] activite fetch failed', e2)
+  if (e3) console.error('[coachStats] repas fetch failed', e3)
 
   for (const row of seances || []) {
     const s = summaries[row.user_id]
@@ -46,7 +61,7 @@ export async function fetchMemberActivitySummaries(userIds) {
     if (!s.lastActiveDate || row.date > s.lastActiveDate) s.lastActiveDate = row.date
     if (row.date >= weekAgo) s.sessionsThisWeek += 1
   }
-  for (const row of activite || []) {
+  for (const row of [...(activite || []), ...(repas || [])]) {
     const s = summaries[row.user_id]
     if (!s) continue
     if (!s.lastActiveDate || row.date > s.lastActiveDate) s.lastActiveDate = row.date
@@ -152,7 +167,10 @@ export async function fetchMemberDetailStats(userId) {
     ? Math.round(dayTotals.reduce((sum, v) => sum + v, 0) / dayTotals.length)
     : 0
 
-  const lastActiveDate = [...sessionDates, ...activiteRows.map(r => r.date)].sort().pop() || null
+  // Repas inclus (2026-08-11) — même correctif que fetchMemberActivitySummaries
+  // ci-dessus, même raison : `repas` était déjà récupéré ici (pour la
+  // moyenne calorique) mais jamais compté dans lastActiveDate.
+  const lastActiveDate = [...sessionDates, ...activiteRows.map(r => r.date), ...(repas || []).map(r => r.date)].sort().pop() || null
 
   return {
     objectifs,

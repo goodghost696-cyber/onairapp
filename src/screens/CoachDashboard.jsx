@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import { fetchMemberActivitySummaries, fetchGymWeeklyActivity, lastSeenLabel } from '../utils/coachStats'
 import CoachNav from '../components/CoachNav'
+import Icon from '../components/Icon'
 
 const STATUS_COLORS = { 'ON TRACK': 'var(--success)', 'AT RISK': 'var(--warning)', 'INACTIVE': 'var(--danger)' }
 
@@ -71,7 +72,13 @@ export default function CoachDashboard() {
           </button>
         </div>
 
-        <h1 className="text-xl bold" style={{ marginBottom: 20, color: '#FFFFFF' }}>📋 Tableau de bord</h1>
+        {/* Était l'emoji 📋 — contredisait la charte (emoji réservés à
+            quelques usages précis, jamais comme icône UI générique,
+            voir JOURNAL.md), repéré en revoyant une vraie capture d'écran
+            (2026-08-11). Icon.jsx a déjà "clipboard" dans son set. */}
+        <h1 className="text-xl bold" style={{ marginBottom: 20, color: '#FFFFFF', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Icon name="clipboard" size={20} /> Tableau de bord
+        </h1>
 
         {/* .coach-stats caps this at a sane width on desktop — left
             unwrapped, these 4 tiles would stretch to the full ~1600px
