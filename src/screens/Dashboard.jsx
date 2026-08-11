@@ -7,6 +7,7 @@ import { save } from '../utils/storage'
 import { BOUNDS, clamp } from '../utils/validation'
 import { dailyRemainingCalories } from '../utils/metabolism'
 import { fetchStreakDetails } from '../utils/streak'
+import { fetchHabitsWithProgress, checkHabitToday, uncheckHabitToday } from '../utils/habits'
 import { useSwipeToDismiss } from '../hooks/useSwipeToDismiss'
 import '../styles/dashboard.css'
 
@@ -116,6 +117,10 @@ export default function Dashboard() {
   const [streak, setStreak] = useState(0)
   const [restDayAvailable, setRestDayAvailable] = useState(false)
   const weather = useWeather()
+  // Habitudes assignées par le coach (veille produit 2026-08-11, prop. 3) —
+  // rien à afficher tant qu'aucune n'est assignée, section entière masquée
+  // plutôt qu'un état vide de plus sur un dashboard déjà dense.
+  const [habits, setHabits] = useState([])
 
   useEffect(() => {
     if (!user?.id) return
@@ -125,8 +130,25 @@ export default function Dashboard() {
       setStreak(streak)
       setRestDayAvailable(restDayAvailable)
     })
+    fetchHabitsWithProgress(user.id).then(h => { if (!cancelled) setHabits(h) })
     return () => { cancelled = true }
   }, [user?.id])
+
+  // Optimiste : la coche/décoche est reflétée tout de suite dans l'état
+  // local, l'écriture réelle (avec sa propre file d'attente hors-ligne côté
+  // checkHabitToday) se fait derrière sans bloquer le tap.
+  async function toggleHabitToday(habit) {
+    const willBeDone = !habit.doneToday
+    setHabits(prev => prev.map(h => h.id !== habit.id ? h : {
+      ...h,
+      doneToday: willBeDone,
+      last7Days: [...h.last7Days.slice(0, -1), willBeDone],
+      countThisWeek: h.countThisWeek + (willBeDone ? 1 : -1),
+    }))
+    navigator.vibrate && navigator.vibrate(8)
+    if (willBeDone) await checkHabitToday(habit.id, user.id)
+    else await uncheckHabitToday(habit.id, user.id)
+  }
 
   const hour = new Date().getHours()
   const greeting = hour < 12 ? t('greeting_morning') : hour < 18 ? t('greeting_afternoon') : t('greeting_evening')
@@ -414,6 +436,47 @@ export default function Dashboard() {
             <div style={{ width: `${Math.min((appData.weeklyWorkouts / appData.weeklyGoal) * 100, 100)}%`, height: '100%', background: 'var(--accent)', borderRadius: 2, transition: 'width 600ms ease' }} />
           </div>
         </div>
+
+        {/* Habitudes assignées par le coach — veille produit 2026-08-11,
+            proposition n°3. Tap sur la carte pour cocher/décocher le jour,
+            même geste simple que les bottles d'eau au-dessus. */}
+        {habits.length > 0 && (
+          <>
+            <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 12 }}>Habitudes</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 40 }}>
+              {habits.map((h, i) => (
+                <div
+                  key={h.id}
+                  className="card card-animated"
+                  style={{ '--delay': `${360 + i * 40}ms`, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12 }}
+                  onClick={() => toggleHabitToday(h)}
+                >
+                  <div
+                    style={{
+                      width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
+                      border: h.doneToday ? 'none' : '2px solid var(--border)',
+                      background: h.doneToday ? 'var(--accent)' : 'transparent',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      color: 'var(--accent-ink)', fontSize: 16, fontWeight: 800,
+                      transition: 'background 200ms ease',
+                    }}
+                  >
+                    {h.doneToday ? '✓' : ''}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p className="text-sm bold" style={{ marginBottom: 4 }}>{h.titre}</p>
+                    <div style={{ display: 'flex', gap: 3 }}>
+                      {h.last7Days.map((done, j) => (
+                        <div key={j} style={{ width: 14, height: 14, borderRadius: 4, background: done ? 'var(--accent)' : 'var(--surface-2)' }} />
+                      ))}
+                    </div>
+                  </div>
+                  <span className="text-xs text-muted" style={{ flexShrink: 0 }}>{h.countThisWeek}/{h.frequenceParSemaine}</span>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
       {/* Bottom sheet for editing */}

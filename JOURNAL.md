@@ -45,6 +45,26 @@ Il existait déjà une "charte ON AIR Neon" documentée plus bas dans ce journal
 - `@phosphor-icons/react` uniquement pour la nav (bottom nav membre + nav coach) — son prop `weight` donne un état actif "plein" vs "contour" sans changement de couleur
 - Emoji conservés à quelques endroits précis et délibérés après itération (météo du Dashboard, sélecteur d'eau, toast de bienvenue) — jamais comme icône UI générique, seulement là où un pictogramme dessiné n'apportait rien de mieux (voir suites 77-81 pour l'historique de l'icône eau, 5 itérations avant 🥛)
 
+## 2026-08-11 — Session 18 (suite 99) : proposition n°3 livrée — le coach assigne une habitude/un défi à un membre
+
+**Demande directe d'Arnaud, suite au point 2** : *"on continue sur le point 3"*.
+
+**Constat de départ** : rien n'existait — vérifié par grep sur tout `src/`, "habitude"/"défi"/"challenge" n'apparaissaient que dans des chaînes de texte sans rapport (un exemple de prompt AI Coach, un commentaire de style). Toute la fonctionnalité était à construire, contrairement aux points 1 et 2 qui s'appuyaient sur du code déjà là (`objectifs`, `computeStatus()`).
+
+**Modèle de données, 2 nouvelles tables (migration `add_habitudes`, appliquée en base réelle)** :
+- `habitudes` (le coach assigne : titre, fréquence visée/semaine, actif/archivé) — même séparation de rôle qu'`objectifs` (point 1) mais inversée : ici c'est le coach qui écrit sur une ressource *du* membre, alors que côté logs c'est le membre qui écrit sur une ressource *créée par* le coach.
+- `habitude_logs` (le membre coche : un jour = une ligne, contrainte `unique(habitude_id, date)`).
+- RLS : coach limité aux membres de sa salle (même jointure `gym_id` que partout ailleurs), membre limité à ses propres pointages — avec un `WITH CHECK` qui vérifie en plus que l'habitude pointée lui appartient bien (sans ça, `user_id = auth.uid()` seul aurait empêché de cocher au nom de quelqu'un d'autre, mais pas de cocher sa propre complétion sur l'`habitude_id` de quelqu'un d'autre — bruit/usurpation de progression sur une ressource qui n'est pas la sienne).
+
+**Testé pour de vrai, 6 cas (3 positifs, 3 négatifs), transaction annulée** : coach assigne à Gisèle (même salle) → OK ; coach assigne à un profil fictif hors salle → rejeté 42501 ; Gisèle tente de s'auto-assigner une habitude en contournant le coach → rejeté (aucune policy INSERT pour les membres) ; Gisèle coche sa propre habitude → OK ; Arnaud tente de cocher l'habitude de Gisèle en son propre nom → rejeté ; le coach voit bien l'habitude + le pointage de Gisèle. Tout rollback derrière, zéro trace en base.
+
+**Code** :
+- `src/utils/habits.js` (nouveau, même esprit que `coachStats.js`/`streak.js` — un seul module partagé, pas une copie par écran) : `fetchHabitsWithProgress(userId)` (habitudes actives + bande de 7 jours + compteur de la semaine, même shape utilisée côté coach et côté membre), `assignHabit`/`archiveHabit` (coach), `checkHabitToday`/`uncheckHabitToday` (membre — la coche passe par `writeWithQueue`, la file d'attente hors-ligne déjà utilisée pour repas/séances, pour la même raison : une salle de sport c'est souvent un sous-sol avec du mauvais réseau).
+- `MemberDetail.jsx` (coach) : nouvelle carte HABITUDES entre OBJECTIFS et les repas/séances récents — liste des habitudes actives avec bande de progression 7 jours, bouton "+ Assigner" (titre + fréquence 1-7x/semaine) et "Archiver" par habitude.
+- `Dashboard.jsx` (membre) : nouvelle section HABITUDES sous la carte "Séances cette semaine" — chaque habitude est une carte tapable (coche/décoche optimiste, vibration au tap comme les bottles d'eau), section entière masquée si aucune habitude n'est assignée plutôt que d'ajouter un état vide de plus sur un dashboard déjà dense.
+
+**Vérifié** : `npm run build` passe, 11 fonctions serverless (inchangé, aucun endpoint touché), `mcp__Supabase__get_advisors` (sécurité) : rien de nouveau.
+
 ## 2026-08-11 — Session 18 (suite 98) : proposition n°2 livrée — le coach est notifié quand un membre bascule "à risque"
 
 **Demande directe d'Arnaud, suite au point 1** : *"continue sur le point 2"* (notification quand un membre passe à risque).

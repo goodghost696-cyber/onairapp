@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { fetchMemberDetailStats, fetchMemberRecentActivity, fetchCoachNote, saveCoachNote, saveMemberObjectifs, lastSeenLabel } from '../utils/coachStats'
+import { fetchHabitsWithProgress, assignHabit, archiveHabit } from '../utils/habits'
 import CoachNav from '../components/CoachNav'
 import { authHeader } from '../lib/supabase'
 import { BOUNDS, clamp } from '../utils/validation'
@@ -47,6 +48,12 @@ export default function MemberDetail() {
   const [objectifsForm, setObjectifsForm] = useState(null)
   const [objectifsSaving, setObjectifsSaving] = useState(false)
   const [objectifsSaved, setObjectifsSaved] = useState(false)
+  // Habitudes assignées par le coach (veille produit 2026-08-11, prop. 3).
+  const [habits, setHabits] = useState([])
+  const [assigningHabit, setAssigningHabit] = useState(false)
+  const [newHabitTitre, setNewHabitTitre] = useState('')
+  const [newHabitFreq, setNewHabitFreq] = useState(7)
+  const [habitSaving, setHabitSaving] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -60,20 +67,40 @@ export default function MemberDetail() {
         return
       }
       setMember(profile)
-      const [detail, activity, existingNote] = await Promise.all([
+      const [detail, activity, existingNote, memberHabits] = await Promise.all([
         fetchMemberDetailStats(profile.user_id),
         fetchMemberRecentActivity(profile.user_id),
         user?.id ? fetchCoachNote(user.id, profile.user_id) : Promise.resolve(''),
+        fetchHabitsWithProgress(profile.user_id),
       ])
       if (cancelled) return
       setStats(detail)
       setRecent(activity)
       setNote(existingNote)
+      setHabits(memberHabits)
       setLoading(false)
     }
     load()
     return () => { cancelled = true }
   }, [id, user?.id])
+
+  async function handleAssignHabit() {
+    if (!user?.id || !member?.user_id || !newHabitTitre.trim()) return
+    setHabitSaving(true)
+    const result = await assignHabit(user.id, member.user_id, newHabitTitre, Number(newHabitFreq))
+    setHabitSaving(false)
+    if (result.success) {
+      setNewHabitTitre('')
+      setNewHabitFreq(7)
+      setAssigningHabit(false)
+      setHabits(await fetchHabitsWithProgress(member.user_id))
+    }
+  }
+
+  async function handleArchiveHabit(habitudeId) {
+    const result = await archiveHabit(habitudeId)
+    if (result.success) setHabits(prev => prev.filter(h => h.id !== habitudeId))
+  }
 
   async function handleSaveNote() {
     if (!user?.id || !member?.user_id) return
@@ -248,6 +275,71 @@ export default function MemberDetail() {
             </div>
           )) : (
             <p className="text-sm text-muted">Aucun objectif enregistré pour ce membre.</p>
+          )}
+        </div>
+
+        {/* Habitudes/défis assignés — veille produit 2026-08-11, proposition
+            n°3 : le coach assigne, le membre coche au quotidien depuis son
+            Dashboard. Bande de 7 points façon streak, la plus récente à
+            droite, même lecture visuelle que la grille SÉANCES au-dessus. */}
+        <div className="section-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span>HABITUDES</span>
+          {!assigningHabit && (
+            <button onClick={() => setAssigningHabit(true)} style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}>
+              + Assigner
+            </button>
+          )}
+        </div>
+        <div className="card card-animated" style={{ marginBottom: 8, '--delay': '150ms' }}>
+          {assigningHabit && (
+            <div style={{ marginBottom: habits.length > 0 ? 14 : 0, paddingBottom: habits.length > 0 ? 14 : 0, borderBottom: habits.length > 0 ? '2px solid var(--border)' : 'none' }}>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 10 }}>
+                <span className="text-xs text-muted">Habitude ou défi</span>
+                <input
+                  type="text"
+                  value={newHabitTitre}
+                  onChange={e => setNewHabitTitre(e.target.value)}
+                  placeholder="Ex: Boire 2L d'eau par jour"
+                  style={{ padding: '10px 12px', fontSize: 14 }}
+                />
+              </label>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 12 }}>
+                <span className="text-xs text-muted">Fréquence visée</span>
+                <select value={newHabitFreq} onChange={e => setNewHabitFreq(e.target.value)} style={{ padding: '10px 12px', fontSize: 14 }}>
+                  {[1, 2, 3, 4, 5, 6, 7].map(n => (
+                    <option key={n} value={n}>{n}x / semaine</option>
+                  ))}
+                </select>
+              </label>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button className="btn-accent" onClick={handleAssignHabit} disabled={habitSaving || !newHabitTitre.trim()} style={{ flex: 1, opacity: habitSaving ? 0.7 : 1 }}>
+                  {habitSaving ? '...' : 'ASSIGNER'}
+                </button>
+                <button className="btn-ghost" onClick={() => { setAssigningHabit(false); setNewHabitTitre('') }} style={{ flex: 1 }}>
+                  ANNULER
+                </button>
+              </div>
+            </div>
+          )}
+          {habits.length > 0 ? habits.map((h, i) => (
+            <div key={h.id} style={{ padding: '10px 0', borderBottom: i < habits.length - 1 ? '2px solid var(--border)' : 'none' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <span className="text-sm">{h.titre}</span>
+                <button onClick={() => handleArchiveHabit(h.id)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: 10, letterSpacing: 0.5, textTransform: 'uppercase', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}>
+                  Archiver
+                </button>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div style={{ display: 'flex', gap: 3 }}>
+                  {h.last7Days.map((done, j) => (
+                    <div key={j} style={{ width: 16, height: 16, borderRadius: 4, background: done ? 'var(--accent)' : 'var(--border)' }} />
+                  ))}
+                </div>
+                <span className="text-xs text-muted" style={{ marginLeft: 4 }}>{h.countThisWeek}/{h.frequenceParSemaine}</span>
+              </div>
+            </div>
+          )) : !assigningHabit && (
+            <p className="text-sm text-muted">Aucune habitude assignée à ce membre.</p>
           )}
         </div>
 
