@@ -385,6 +385,120 @@ create policy "Coaches can update same-gym objectifs"
     )
   );
 
+-- ── habitudes ─────────────────────────────────────────────
+-- Veille produit 2026-08-11, proposition n°3 : le coach assigne une
+-- habitude/un défi à un membre (pattern Trainerize — habitudes assignées
+-- avec streaks, associé à une meilleure rétention dans la veille). Le
+-- coach crée/archive, le membre coche au quotidien (habitude_logs
+-- ci-dessous) — séparation inverse de objectifs (point 1) : là le coach
+-- écrit dans les données du membre, ici c'est le membre qui écrit son
+-- propre suivi sur une ressource que le coach a créée.
+create table if not exists habitudes (
+  id                     uuid primary key default gen_random_uuid(),
+  user_id                uuid not null references auth.users(id) on delete cascade,
+  coach_id               uuid not null references auth.users(id) on delete cascade,
+  titre                  text not null,
+  frequence_par_semaine  int not null default 7,
+  active                 boolean not null default true,
+  created_at             timestamptz not null default now()
+);
+
+alter table habitudes enable row level security;
+
+create policy "Members can view own habitudes"
+  on habitudes for select using (auth.uid() = user_id);
+
+-- Same-gym join, same shape as objectifs (point 1, suite 97).
+create policy "Coaches can view same-gym habitudes"
+  on habitudes for select using (
+    is_coach() and exists (
+      select 1 from public.profiles p
+      where p.user_id = habitudes.user_id and p.gym_id = public.my_gym_id()
+    )
+  );
+
+-- WITH CHECK on both INSERT and UPDATE — without it a coach could
+-- assign/move a row onto a user_id outside their own gym, same class of
+-- bug documented repeatedly in this file (profiles.role, objectifs).
+create policy "Coaches can assign same-gym habitudes"
+  on habitudes for insert with check (
+    is_coach() and coach_id = auth.uid() and exists (
+      select 1 from public.profiles p
+      where p.user_id = habitudes.user_id and p.gym_id = public.my_gym_id()
+    )
+  );
+
+create policy "Coaches can update same-gym habitudes"
+  on habitudes for update
+  using (
+    is_coach() and exists (
+      select 1 from public.profiles p
+      where p.user_id = habitudes.user_id and p.gym_id = public.my_gym_id()
+    )
+  )
+  with check (
+    is_coach() and exists (
+      select 1 from public.profiles p
+      where p.user_id = habitudes.user_id and p.gym_id = public.my_gym_id()
+    )
+  );
+
+create index if not exists habitudes_user_idx on habitudes (user_id);
+create index if not exists habitudes_coach_idx on habitudes (coach_id);
+
+-- ── habitude_logs ─────────────────────────────────────────
+-- Un pointage = un jour coché "fait" pour une habitude. Le membre est seul
+-- à écrire ici (coche/décoche lui-même), le coach lit seulement (suivi de
+-- progression depuis la fiche membre).
+create table if not exists habitude_logs (
+  id           uuid primary key default gen_random_uuid(),
+  habitude_id  uuid not null references habitudes(id) on delete cascade,
+  user_id      uuid not null references auth.users(id) on delete cascade,
+  date         date not null default current_date,
+  created_at   timestamptz not null default now(),
+  unique(habitude_id, date)
+);
+
+alter table habitude_logs enable row level security;
+
+create policy "Members can view own habitude logs"
+  on habitude_logs for select using (auth.uid() = user_id);
+
+-- WITH CHECK vérifie aussi que l'habitude référencée appartient bien à
+-- l'appelant — sans ce second exists(), user_id = auth.uid() seul
+-- empêcherait de cocher une habitude AU NOM de quelqu'un d'autre, mais pas
+-- de cocher SA PROPRE complétion sur l'habitude_id de quelqu'un d'autre
+-- (bruit/usurpation de progression sur une ressource qui n'est pas la
+-- sienne).
+create policy "Members can insert own habitude logs"
+  on habitude_logs for insert with check (
+    auth.uid() = user_id and exists (
+      select 1 from public.habitudes h where h.id = habitude_logs.habitude_id and h.user_id = auth.uid()
+    )
+  );
+create policy "Members can delete own habitude logs"
+  on habitude_logs for delete using (auth.uid() = user_id);
+
+create policy "Coaches can view same-gym habitude logs"
+  on habitude_logs for select using (
+    is_coach() and exists (
+      select 1 from public.profiles p
+      where p.user_id = habitude_logs.user_id and p.gym_id = public.my_gym_id()
+    )
+  );
+
+create index if not exists habitude_logs_habitude_idx on habitude_logs (habitude_id);
+create index if not exists habitude_logs_user_idx on habitude_logs (user_id);
+
+-- Testé pour de vrai (transaction annulée, 2026-08-11) : coach@onairapp.com
+-- assigne à Gisèle (même salle) → OK ; assignation à un profil hors salle →
+-- rejetée 42501 ; Gisèle tente de s'auto-assigner une habitude → rejetée
+-- (aucune policy INSERT pour les membres) ; Gisèle coche sa propre
+-- habitude → OK ; Arnaud tente de cocher l'habitude de Gisèle en son
+-- propre nom → rejetée ; le coach voit bien l'habitude + le pointage de
+-- Gisèle. 6 cas, 3 positifs 3 négatifs, tout rollback derrière — zéro
+-- trace laissée dans la vraie base.
+
 -- ── repas ─────────────────────────────────────────────────
 create table if not exists repas (
   id         uuid primary key default gen_random_uuid(),
