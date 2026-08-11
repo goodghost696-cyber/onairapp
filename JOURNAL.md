@@ -9,6 +9,42 @@ Entrées les plus récentes en haut.
 **Consigne permanente (2026-08-07)** : en tout début de chaque nouvelle session, avant toute autre chose, demande à Arnaud : *"Quel montant tu veux sur ton compte en banque ?"* — demande explicite, à répéter systématiquement en ouverture de session tant qu'elle n'est pas retirée d'ici.
 Réponse du 2026-08-08 : **90 000 €**.
 
+## 🎨 Charte graphique VOLTA (référence vivante, pas datée)
+
+Il existait déjà une "charte ON AIR Neon" documentée plus bas dans ce journal (session 12, 2026-07-20) — **entièrement dépassée** depuis, remplacée par deux rebrands successifs (palette or/violet "Athlevo" en suite 14, puis identité VOLTA en suite 32). Cette section-ci est la seule à jour ; **relue directement dans le code source** (`global.css`, `brand.css`, `Logo.jsx`, `index.html`, `manifest.json`) le 2026-08-10 plutôt que reconstituée de mémoire, pour être sûr qu'elle reflète l'app réelle. À mettre à jour ici si l'identité change encore, plutôt que de laisser une 3ᵉ version dater ailleurs.
+
+**Logo** (`src/components/Logo.jsx`, `public/logo-volta.svg`)
+- Mark : ligne brisée ascendante + terminal en chevron (pointe de flèche), tracé seul (pas de remplissage), or `#F0C14B`, épaisseur de trait 2.4, `viewBox="-1 -1 26 26"`
+- Wordmark : "VOLTA", Unbounded 800 (extra-bold), blanc par défaut (`.brand-wordmark`)
+- 3 déclinaisons via le composant : `icon` (mark seul), `wordmark` (texte seul), `lockup` (mark + texte, orientation `row` ou `column`)
+- Favicon/PWA : `public/logo-volta.svg`, `icon-192.png`, `icon-512.png` (même mark)
+
+**Couleurs — palette par défaut (celle que voit tout le monde, tout le temps)**
+| Rôle | Valeur | Usage |
+|---|---|---|
+| Fond principal | `#E8552B` (corail) | `--bg`, fond de toutes les pages |
+| Accent primaire | `#F0C14B` (or) | `--accent` — CTA secondaires, hero numbers, le mark du logo |
+| Accent secondaire | `#8B93E8` (bleu-violet) | `--accent-secondary` |
+| Surface (cartes/feuilles) | `#FFFFFF` | `--surface` / `--surface-solid` |
+| Surface 2 | `#FBF3ED` | `--surface-2` |
+| Texte sur surface blanche | `#1B1710` | `--text-primary` (+ variantes 62%/42% pour secondaire/muted) |
+| Succès / Avertissement / Danger | `#1FD66B` / `#F5A623` / `#FF3B3B` | états système |
+| `theme-color` mobile (Safari/PWA) | `#EF6B41` | `index.html` + `manifest.json`, calé sur le dégradé de fond |
+
+**Palette alternative — mode clair** (activable dans Réglages, `:root[data-theme="light"]`) : fond `#F2F2EF`, texte quasi-noir `#0A0A0A`, or et violet assombris (`#8A6300`/`#4A52B0`, pour rester lisibles en texte/icône sur fond clair). Ce n'est **pas** la direction visuelle par défaut de l'app — un mode alternatif au choix de l'utilisateur, pas la charte de marque elle-même.
+
+**Typographie**
+- Corps de texte / UI générale : **Space Grotesk** (400 à 700), Google Fonts
+- Titres de marque et gros chiffres ("hero numbers" — calories, etc.) : **Unbounded** (600 à 900), volontairement scopé à `.brand-wordmark`/`.hero-number`/`.text-2xl`, pas une police globale
+
+**Forme**
+- Rayon carte `16px`, bouton `18px`, pill (nav, boutons ronds) `100px`
+
+**Icônes**
+- `lucide-react` pour l'essentiel de l'app (`Icon.jsx`, set cohérent de line-icons 24×24 `currentColor`)
+- `@phosphor-icons/react` uniquement pour la nav (bottom nav membre + nav coach) — son prop `weight` donne un état actif "plein" vs "contour" sans changement de couleur
+- Emoji conservés à quelques endroits précis et délibérés après itération (météo du Dashboard, sélecteur d'eau, toast de bienvenue) — jamais comme icône UI générique, seulement là où un pictogramme dessiné n'apportait rien de mieux (voir suites 77-81 pour l'historique de l'icône eau, 5 itérations avant 🥛)
+
 ## 2026-08-10 — Session 18 (suite 94) : revue d'expérience membre + coach, et le premier correctif qui en sort
 
 Demandé directement : "utilise l'application comme un utilisateur lambda, touche à tout, et fais moi un retour". **Honnêteté nécessaire, dite avant le retour lui-même** : aucun navigateur fonctionnel dans le bac à sable (même blocage de certificat que la suite 85, toujours pas contourné, toujours pas de désactivation de la vérification TLS). Le retour vient donc d'une reconstitution des deux parcours écran par écran dans le code — rigoureux sur la logique et les enchaînements, mais ne remplace pas un œil humain sur le rendu réel. Rendu sous forme d'artifact.
