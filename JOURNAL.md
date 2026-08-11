@@ -45,6 +45,20 @@ Il existait déjà une "charte ON AIR Neon" documentée plus bas dans ce journal
 - `@phosphor-icons/react` uniquement pour la nav (bottom nav membre + nav coach) — son prop `weight` donne un état actif "plein" vs "contour" sans changement de couleur
 - Emoji conservés à quelques endroits précis et délibérés après itération (météo du Dashboard, sélecteur d'eau, toast de bienvenue) — jamais comme icône UI générique, seulement là où un pictogramme dessiné n'apportait rien de mieux (voir suites 77-81 pour l'historique de l'icône eau, 5 itérations avant 🥛)
 
+## 2026-08-11 — Session 18 (suite 96) : premières vraies captures d'écran de l'app — 3 correctifs qui en sortent
+
+**Premier vrai retour visuel de toute la session** : Arnaud a envoyé 4 captures d'écran réelles (tableau de bord coach + fiche membre "Gisèle") en demandant "regarde le code, regarde ces screens, est-ce qu'il y a des améliorations". Pas de navigateur ici, mais une capture réelle permet de croiser précisément ce qui est affiché avec le code qui le produit — la première vérification visuelle un tant soit peu fiable depuis le début de cette session.
+
+**1. Statut "à risque" quasiment impossible à éviter — confirmé sur les captures.** `computeStatus()` exigeait `sessionsThisWeek >= 3` pour "ON TRACK", donc en dessous de 3 séances/semaine (une cadence pourtant saine et courante) un membre reste "à risque" pour toujours. Exactement ce que montrait la capture : les 2 seuls membres de la salle étaient **tous les deux** à risque, 0% sur la bonne voie — un coach qui ouvre l'app pour la première fois voit tout en orange, ce qui décourage plus que ça n'aide. **Discuté directement**, seuil abaissé à `>= 2` séances/semaine.
+
+**2. "Dernière activité" ignorait les repas — trouvaille de cohérence entre deux modules.** `fetchMemberActivitySummaries()` et `fetchMemberDetailStats()` (`coachStats.js`, utilisés par ClientsList/CoachDashboard/MemberDetail) ne lisaient que `seances` et `activite_jour` pour calculer la dernière activité d'un membre — jamais `repas`, alors que `fetchMemberDetailStats` récupère déjà cette table (pour la moyenne calorique) sans jamais l'utiliser pour la date. Un membre qui logue ses repas religieusement sans toucher à l'eau/aux pas/à une séance apparaissait "inactif" côté coach. Et ce n'était même pas cohérent en interne : `utils/streak.js` (côté membre, pour les streaks) inclut lui les repas dans son propre calcul d'activité — les deux modules "activité" de l'app n'étaient pas d'accord entre eux. Corrigé : `repas` est maintenant récupéré et compté dans `lastActiveDate` aux deux endroits.
+
+**3. Emoji 📋 dans "Tableau de bord"** — contredisait la charte tout juste consolidée (emoji réservés à quelques usages précis, jamais comme icône UI générique). Remplacé par `<Icon name="clipboard" />` — déjà dans le set `Icon.jsx`, aucun nouvel import.
+
+**Vérifié pendant l'analyse, pas corrigé (pas assez de certitude)** : les 4 profils de la salle (Ghost, Coach, Arnaud, Gisèle) ont tous `poids`/`taille`/`age` null en base, alors que 2 d'entre eux (Ghost, Arnaud) ont de vrais objectifs caloriques (2938/2400 kcal) qui ne peuvent normalement être calculés qu'à partir d'un poids saisi à l'onboarding. Relu tout le chemin `Onboarding.jsx` → `updateUserProfile()` → upsert `profiles` : structurellement correct (bons noms de champs, colonnes bien dans l'allowlist de GRANT). Plus probablement des comptes de test anciens/créés à la main que des inscriptions passées par ce flow — mais pas assez de certitude pour trancher sans un vrai test en direct. **À surveiller à la prochaine vraie inscription.**
+
+**Vérifié** : `npm run build` passe, `📋` absent du bundle compilé, `computeStatus` a un seul point de définition (`coachStats.js`), utilisé par les deux fonctions d'agrégation — pas de logique dupliquée à corriger ailleurs.
+
 ## 2026-08-11 — Session 18 (suite 95) : bug de déconnexion réel signalé par Arnaud, corrigé
 
 **Signalé directement** : "je viens de me déconnecter de la partie membre, je voulais regarder la partie coach mais j'ai pu [me re]connecter à mon espace membre en appuyant sur 'Accès coach'."
