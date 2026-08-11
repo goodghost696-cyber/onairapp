@@ -45,6 +45,24 @@ Il existait déjà une "charte ON AIR Neon" documentée plus bas dans ce journal
 - `@phosphor-icons/react` uniquement pour la nav (bottom nav membre + nav coach) — son prop `weight` donne un état actif "plein" vs "contour" sans changement de couleur
 - Emoji conservés à quelques endroits précis et délibérés après itération (météo du Dashboard, sélecteur d'eau, toast de bienvenue) — jamais comme icône UI générique, seulement là où un pictogramme dessiné n'apportait rien de mieux (voir suites 77-81 pour l'historique de l'icône eau, 5 itérations avant 🥛)
 
+## 2026-08-11 — Session 18 (suite 95) : bug de déconnexion réel signalé par Arnaud, corrigé
+
+**Signalé directement** : "je viens de me déconnecter de la partie membre, je voulais regarder la partie coach mais j'ai pu [me re]connecter à mon espace membre en appuyant sur 'Accès coach'."
+
+**Root cause confirmée dans le code, pas devinée** : `AuthContext.logout()` appelait `supabase.auth.signOut()` mais ne mettait jamais `user` à `null` lui-même — ça dépendait entièrement du listener `onAuthStateChange` (déclenché en interne par `signOut()`) pour le faire. Et les 3 boutons "se déconnecter" de l'app (`Settings.jsx`, `CoachSettings.jsx`, `CoachDashboard.jsx`) appelaient `logout()` **sans l'attendre** avant de naviguer : `onClick={() => { logout(); navigate('/') }}`. Résultat, selon le timing exact de la notification interne du SDK Supabase, `user` pouvait rester peuplé (rôle membre) au moment précis où "Accès coach" (`Landing.jsx` → `navigate('/login', ...)`) faisait réévaluer la garde de route de `App.jsx` :
+```js
+<Route path="/login" element={user ? <Navigate to={user.role === 'coach' ... ? '/coach' : '/dashboard'} replace /> : <Login />} />
+```
+Avec un `user` encore membre, cette garde redirige direct vers `/dashboard` au lieu d'afficher le formulaire de connexion — exactement le symptôme décrit, pas une reconnexion automatique mais une session jamais réellement vidée à temps.
+
+**Corrigé à deux niveaux, pas un pansement sur un seul symptôme** :
+- Les 3 boutons attendent maintenant `logout()` avant de naviguer (`onClick={async () => { await logout(); navigate('/') }}`)
+- `AuthContext.logout()` vide `user` lui-même, explicitement et de façon synchrone à son retour (`setUser(null)`), plutôt que de dépendre uniquement du timing du listener — le listener continuera de le refaire aussi de son côté, sans effet (idempotent)
+
+**Mot de passe du compte coach de test réinitialisé** (demandé directement, l'ancien n'a jamais été noté nulle part — bonne pratique déjà en place, pas un oubli) : `coach@onairapp.com` / `Volta2026Coach!`, appliqué en base réelle via `pgcrypto` (`extensions.crypt(..., extensions.gen_salt('bf'))`, le mécanisme que Supabase Auth utilise lui-même pour le hash bcrypt — confirmé installé sur le projet avant de l'utiliser). Compte vérifié : `role='coach'`, rattaché à la salle VOLTA FITNESS.
+
+**Vérifié** : `npm run build` passe. **Pas de test réel du parcours déconnexion→reconnexion en conditions réelles** — pas de navigateur fonctionnel dans le bac à sable (limite déjà documentée). La correction du bug lui-même vient d'une lecture précise du code (le `onClick` sans `await`, la garde de route exacte dans `App.jsx`), pas d'une supposition.
+
 ## 2026-08-10 — Session 18 (suite 94) : revue d'expérience membre + coach, et le premier correctif qui en sort
 
 Demandé directement : "utilise l'application comme un utilisateur lambda, touche à tout, et fais moi un retour". **Honnêteté nécessaire, dite avant le retour lui-même** : aucun navigateur fonctionnel dans le bac à sable (même blocage de certificat que la suite 85, toujours pas contourné, toujours pas de désactivation de la vérification TLS). Le retour vient donc d'une reconstitution des deux parcours écran par écran dans le code — rigoureux sur la logique et les enchaînements, mais ne remplace pas un œil humain sur le rendu réel. Rendu sous forme d'artifact.
