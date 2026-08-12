@@ -45,6 +45,14 @@ Il existait déjà une "charte ON AIR Neon" documentée plus bas dans ce journal
 - `@phosphor-icons/react` uniquement pour la nav (bottom nav membre + nav coach) — son prop `weight` donne un état actif "plein" vs "contour" sans changement de couleur
 - Emoji conservés à quelques endroits précis et délibérés après itération (météo du Dashboard, sélecteur d'eau, toast de bienvenue) — jamais comme icône UI générique, seulement là où un pictogramme dessiné n'apportait rien de mieux (voir suites 77-81 pour l'historique de l'icône eau, 5 itérations avant 🥛)
 
+## 2026-08-12 — Décision : achat nom de domaine différé, email transactionnel toujours en sandbox
+
+**Décision** : achat d'un nom de domaine différé — pas encore le bon moment.
+
+**Conséquence directe** : Resend reste en mode sandbox (`resend.dev`), donc l'envoi d'email transactionnel est limité à l'adresse du compte Resend uniquement (aucun email réel vers de vrais membres externes). **Pas de solution SMTP fonctionnelle pour de vrais membres externes tant que ce point n'est pas traité** — pertinent notamment pour "Confirm email" (voir entrée juste en dessous, préparée mais pas activable en pratique tant que ce blocage persiste : le lien de confirmation ne pourrait pas atteindre un vrai membre).
+
+---
+
 ## 2026-08-12 — Préparation "Confirm email" Supabase Auth (flux différé signup, toggle pas encore activé)
 
 **Contexte** : `register()` (`AuthContext.jsx`) et `CoachSignup.jsx` supposaient tous les deux qu'une session existe immédiatement après `signUp()` — vrai seulement tant que "Confirm email" reste désactivé dans Supabase Auth. Dès que ce toggle est activé, `data.session` est `null` jusqu'au clic sur le lien de confirmation, et le code actuel plantait silencieusement (upsert profil + `/api/invite`/`/api/create-gym` tentés sans session → bloqués par RLS). Objectif de cette session : gérer proprement les deux cas **sans activer le toggle** — préparation seule, testée par construction (voir "Vérification" ci-dessous).
