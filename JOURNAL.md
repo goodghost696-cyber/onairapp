@@ -45,6 +45,27 @@ Il existait déjà une "charte ON AIR Neon" documentée plus bas dans ce journal
 - `@phosphor-icons/react` uniquement pour la nav (bottom nav membre + nav coach) — son prop `weight` donne un état actif "plein" vs "contour" sans changement de couleur
 - Emoji conservés à quelques endroits précis et délibérés après itération (météo du Dashboard, sélecteur d'eau, toast de bienvenue) — jamais comme icône UI générique, seulement là où un pictogramme dessiné n'apportait rien de mieux (voir suites 77-81 pour l'historique de l'icône eau, 5 itérations avant 🥛)
 
+## 2026-08-12 — Code-splitting du bundle JS (lazy loading des écrans)
+
+**Contexte** : `npm run build` affichait l'avertissement Vite "Some chunks are larger than 500 kB" — un seul chunk `index-*.js` de **716 KB** minifié, tous les écrans (27 imports dans `src/App.jsx`) chargés statiquement dès le premier chargement de l'app, peu importe l'écran réellement visité.
+
+**Fait** : conversion en `React.lazy()` + `<Suspense>` des 26 composants écran importés dans `src/App.jsx` — `Landing`, `Login`, `CoachSignup`, `PlatformAdmin`, `ResetPassword`, `Dashboard`, `Nutrition`, `Workout`, `Hydration`, `Sleep`, `Weekly`, `AICoach`, `Scan`, `CoachDashboard`, `MemberDetail`, `CoachPrograms`, `WorkoutLibrary`, `WorkoutSession`, `WorkoutHistory`, `ClientsList`, `Messages`, `Conversation`, `CoachMessages`, `Settings`, `CoachSettings`, `Onboarding`, `AppTour`. Les layouts (`MemberLayout`, `CoachLayout`, `PublicLayout`) et `ProtectedRoute` restent en import statique, comme prévu — ce sont eux qui décident quel écran afficher, pas des écrans eux-mêmes.
+
+`<Routes>...</Routes>` enveloppé dans `<Suspense fallback={<RouteLoadingFallback />}>`. Pas de composant de loading réutilisable trouvé dans `src/components` avant de coder — vérifié par recherche (`spinner`/`loading`/`loader`) avant d'en écrire un. Le fallback réutilise le langage visuel déjà existant dans l'app (anneau avec bordure `--border` + haut `--accent`, animation `spin` déjà définie dans `global.css`, le même motif que `.btn-spinner`/`.scan-loading-ring`) plutôt que d'inventer un nouveau style — implémenté en style inline dans `App.jsx`, aucune CSS touchée.
+
+Aucun changement de logique de routes, de guards, d'ordre de routes ni de commentaires existants dans `App.jsx` — uniquement le remplacement `import X from …` → `const X = lazy(() => import(…))` et l'ajout du `Suspense`. `Sleep` conservé tel quel malgré l'absence de route `/sleep` active (dette connue, non traitée ici).
+
+**Résultat mesuré** (`npm run build`) :
+- Avant : 1 chunk principal `index-*.js` de **716 KB** minifié — warning Vite "chunks larger than 500 kB"
+- Après : chunk principal `index-DcM4qxfF.js` à **455.64 KB** (gzip 133.17 KB) — **plus de warning**, 41 fichiers `.js` distincts dans `dist/assets` (un par écran/route + chunks partagés), chacun chargé à la demande à la navigation
+- Build : 6476 modules transformés, réussi sans erreur en ~23s
+
+**Vérification** : `npm run build` OK, warning disparu, `Get-ChildItem dist\assets -Filter *.js` confirme la présence des chunks séparés (`Dashboard-*.js`, `Nutrition-*.js`, `Workout-*.js`, `Login-*.js`, `Landing-*.js`, `CoachDashboard-*.js`, etc.). Comme toujours, aucune vérification visuelle possible dans ce sandbox — validation visuelle sur téléphone à faire par l'utilisateur avant merge.
+
+**Commit** : `perf: lazy-load screen components to reduce main bundle size`, poussé sur `claude/charming-mendel-dj1GQ`. PR ouverte en draft, passée en ready après statut Vercel vert — **pas mergée**, merge laissé à l'utilisateur après validation visuelle.
+
+---
+
 ## 2026-08-11 — Session 18 (suite 100) : proposition n°4 livrée — bibliothèque de programmes réutilisables
 
 **Demande directe d'Arnaud, suite au point 3** : *"on continue sur le point 4"*.

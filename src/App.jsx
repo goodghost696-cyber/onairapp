@@ -1,35 +1,56 @@
+import { lazy, Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './context/AuthContext'
-import Landing from './screens/Landing'
-import Login from './screens/Login'
-import CoachSignup from './screens/CoachSignup'
-import PlatformAdmin from './screens/PlatformAdmin'
-import ResetPassword from './screens/ResetPassword'
-import Dashboard from './screens/Dashboard'
-import Nutrition from './screens/Nutrition'
-import Workout from './screens/Workout'
-import Hydration from './screens/Hydration'
-import Sleep from './screens/Sleep'
-import Weekly from './screens/Weekly'
-import AICoach from './screens/AICoach'
-import Scan from './screens/Scan'
-import CoachDashboard from './screens/CoachDashboard'
-import MemberDetail from './screens/MemberDetail'
-import CoachPrograms from './screens/CoachPrograms'
-import WorkoutLibrary from './screens/WorkoutLibrary'
-import WorkoutSession from './screens/WorkoutSession'
-import WorkoutHistory from './screens/WorkoutHistory'
-import ClientsList from './screens/ClientsList'
-import Messages from './screens/Messages'
-import Conversation from './screens/Conversation'
-import CoachMessages from './screens/CoachMessages'
-import Settings from './screens/Settings'
-import CoachSettings from './screens/CoachSettings'
-import Onboarding from './screens/Onboarding'
-import AppTour from './screens/AppTour'
+const Landing = lazy(() => import('./screens/Landing'))
+const Login = lazy(() => import('./screens/Login'))
+const CoachSignup = lazy(() => import('./screens/CoachSignup'))
+const PlatformAdmin = lazy(() => import('./screens/PlatformAdmin'))
+const ResetPassword = lazy(() => import('./screens/ResetPassword'))
+const Dashboard = lazy(() => import('./screens/Dashboard'))
+const Nutrition = lazy(() => import('./screens/Nutrition'))
+const Workout = lazy(() => import('./screens/Workout'))
+const Hydration = lazy(() => import('./screens/Hydration'))
+const Sleep = lazy(() => import('./screens/Sleep'))
+const Weekly = lazy(() => import('./screens/Weekly'))
+const AICoach = lazy(() => import('./screens/AICoach'))
+const Scan = lazy(() => import('./screens/Scan'))
+const CoachDashboard = lazy(() => import('./screens/CoachDashboard'))
+const MemberDetail = lazy(() => import('./screens/MemberDetail'))
+const CoachPrograms = lazy(() => import('./screens/CoachPrograms'))
+const WorkoutLibrary = lazy(() => import('./screens/WorkoutLibrary'))
+const WorkoutSession = lazy(() => import('./screens/WorkoutSession'))
+const WorkoutHistory = lazy(() => import('./screens/WorkoutHistory'))
+const ClientsList = lazy(() => import('./screens/ClientsList'))
+const Messages = lazy(() => import('./screens/Messages'))
+const Conversation = lazy(() => import('./screens/Conversation'))
+const CoachMessages = lazy(() => import('./screens/CoachMessages'))
+const Settings = lazy(() => import('./screens/Settings'))
+const CoachSettings = lazy(() => import('./screens/CoachSettings'))
+const Onboarding = lazy(() => import('./screens/Onboarding'))
+const AppTour = lazy(() => import('./screens/AppTour'))
 import MemberLayout from './layouts/MemberLayout'
 import CoachLayout from './layouts/CoachLayout'
 import PublicLayout from './layouts/PublicLayout'
+
+// Fallback shown while a lazy-loaded screen chunk is fetched. Reuses the
+// app's existing ring-spinner visual language (see .btn-spinner in
+// Workout.css / .scan-loading-ring in global.css: border ring + accent
+// top-border + the global `spin` keyframe from global.css) instead of
+// introducing a new loading pattern.
+function RouteLoadingFallback() {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+      <div style={{
+        width: 32,
+        height: 32,
+        border: '2px solid var(--border)',
+        borderTopColor: 'var(--accent)',
+        borderRadius: '50%',
+        animation: 'spin 800ms linear infinite',
+      }} />
+    </div>
+  )
+}
 
 function ProtectedRoute({ children, requiredRole }) {
   const { user } = useAuth()
@@ -45,6 +66,7 @@ export default function App() {
   const { user, loading } = useAuth()
   if (loading) return null
   return (
+    <Suspense fallback={<RouteLoadingFallback />}>
     <Routes>
         {/* Landing/Login/ResetPassword/Onboarding/AppTour — the only 5
             routes that sit outside MemberLayout/CoachLayout, so they never
@@ -117,5 +139,6 @@ export default function App() {
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+    </Suspense>
   )
 }
