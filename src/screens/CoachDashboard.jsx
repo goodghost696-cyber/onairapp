@@ -67,7 +67,7 @@ export default function CoachDashboard() {
           </div>
           {/* Même course que Settings.jsx/CoachSettings.jsx — logout() doit
               être attendu avant navigate(). */}
-          <button style={{ background: 'none', border: 'none', cursor: 'pointer' }} onClick={async () => { await logout(); navigate('/') }}>
+          <button className="icon-btn" onClick={async () => { await logout(); navigate('/') }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
           </button>
         </div>
@@ -202,7 +202,7 @@ export default function CoachDashboard() {
                 <div style={{ flex: 1 }}>
                   <div className="flex justify-between items-center">
                     <span className="text-base bold">{m.prenom}</span>
-                    <span style={{ fontSize: 10, color: STATUS_COLORS[m.status] || 'var(--text-muted)', border: `1px solid ${STATUS_COLORS[m.status] || 'var(--border)'}`, padding: '2px 6px', borderRadius: 4, letterSpacing: 0.5 }}>{m.status || '-'}</span>
+                    <span className="status-badge" style={{ color: STATUS_COLORS[m.status] || 'var(--text-muted)' }}>{m.status || '-'}</span>
                   </div>
                   <div className="text-xs text-muted" style={{ marginTop: 2 }}>
                     {activeToday.length > 0

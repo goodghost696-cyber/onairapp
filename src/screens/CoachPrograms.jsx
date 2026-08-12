@@ -115,7 +115,7 @@ export default function CoachPrograms() {
     <div className="app-wrapper">
       <div className="screen coach-narrow">
         <div className="screen-header" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '20px 0 8px' }}>
-          <button style={{ background: 'none', border: 'none', cursor: 'pointer' }} onClick={() => navigate('/coach')}>
+          <button className="icon-btn" onClick={() => navigate('/coach')}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" strokeWidth="1.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
           </button>
           <h1 className="text-xl bold" style={{ flex: 1 }}>Programmes</h1>
@@ -182,7 +182,7 @@ export default function CoachPrograms() {
               <div key={p.id} className="card card-animated" style={{ marginBottom: 8, '--delay': `${60 + i * 40}ms` }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                   <span className="text-sm bold">{p.titre}</span>
-                  <button onClick={() => handleDelete(p.id)} style={{ background: 'none', border: 'none', color: confirmDeleteId === p.id ? 'var(--danger)' : 'var(--text-muted)', fontSize: 10, letterSpacing: 0.5, textTransform: 'uppercase', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}>
+                  <button className="text-action-btn" onClick={() => handleDelete(p.id)} style={{ color: confirmDeleteId === p.id ? 'var(--danger)' : 'var(--text-muted)' }}>
                     {confirmDeleteId === p.id ? 'Confirmer ?' : 'Supprimer'}
                   </button>
                 </div>

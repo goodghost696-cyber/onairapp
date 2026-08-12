@@ -45,6 +45,37 @@ Il existait déjà une "charte ON AIR Neon" documentée plus bas dans ce journal
 - `@phosphor-icons/react` uniquement pour la nav (bottom nav membre + nav coach) — son prop `weight` donne un état actif "plein" vs "contour" sans changement de couleur
 - Emoji conservés à quelques endroits précis et délibérés après itération (météo du Dashboard, sélecteur d'eau, toast de bienvenue) — jamais comme icône UI générique, seulement là où un pictogramme dessiné n'apportait rien de mieux (voir suites 77-81 pour l'historique de l'icône eau, 5 itérations avant 🥛)
 
+## 2026-08-12 — Unification UI des écrans coach (badges, boutons-texte, bouton danger, boutons icône)
+
+**Contexte** : les écrans coach (`CoachDashboard.jsx`, `ClientsList.jsx`, `MemberDetail.jsx`, `CoachPrograms.jsx`, `CoachSettings.jsx`) répétaient les mêmes éléments d'UI (badges de statut, boutons-texte d'action, bouton de déconnexion, pills de filtre, boutons icône nus) en styles inline légèrement différents à chaque occurrence. Objectif : converger vers des classes CSS réutilisables dans `src/styles/global.css`, sans toucher aux tokens existants (`--accent`, `--border`, `--radius-btn`, `--danger`, etc.), sans changer palette/police/layout desktop (`coach.css` intact).
+
+**4 classes ajoutées dans `global.css`** (à la suite de `.goal-chip`, aucune variable `:root` touchée) :
+- `.status-badge` — badge coloré (statut membre ou objectif). Basé sur la version la plus complète trouvée (`MemberDetail.jsx` ligne 191) : `font-size: 9px`, `padding: 3px 8px`, `border-radius: 4px`, `letter-spacing: 1px`, `text-transform: uppercase`, `font-weight: 700`. Bordure en `1px solid currentColor` plutôt qu'une propriété `border-color` séparée, pour qu'un seul `style={{ color }}` inline gère à la fois le texte et la bordure (couleur toujours dynamique selon `STATUS_COLORS`/`GOAL_COLORS`, comme demandé).
+- `.text-action-btn` (+ modificateur `.muted`) — boutons-texte d'action (Modifier/+ Assigner/Archiver/Supprimer). Base `color: var(--accent)`, `.muted` passe en `var(--text-muted)`. Couleur dynamique (ex. Supprimer qui vire au rouge en confirmation) gérée en `style` inline par-dessus la classe, même pattern que `.status-badge`.
+- `.btn-danger` — bouton pleine largeur pour action destructive, basé sur le bouton de déconnexion de `CoachSettings.jsx` pour la couleur (`border: 2px solid var(--danger)`, `color: var(--danger)`, `background: transparent`) et sur `.btn-ghost` pour toute la géométrie (`padding: 19px 16px`, `border-radius: var(--radius-btn)`, `font-size: 13px`, `letter-spacing: 0.1em`, `text-transform: uppercase`, `width: 100%`).
+- `.icon-btn` — boutons icône nus (flèche retour, déconnexion). `padding: 10px` (zone de tap 40×40 exact pour les icônes 20px déjà présentes, 44×44 pour les 24px — voir choix ci-dessous).
+
+**Choix tranchés faute de précision dans la consigne (à vérifier)** :
+1. `.text-action-btn` — les occurrences se répartissaient à égalité (2 vs 2) entre `font-size: 11px`/`letter-spacing: 1px` (Modifier, + Assigner) et `font-size: 10px`/`letter-spacing: 0.5px` (Archiver, Supprimer) — aucune majorité. Tranché en faveur de la variante **accent** (11px/1px) comme valeur de base, puisque la consigne la présente comme "la variante par défaut" et que seule la couleur devait varier via `.muted`.
+2. `.icon-btn` — la consigne demandait un "padding cohérent" pour un minimum 40×40, mais les icônes existantes ne font pas toutes la même taille (20px sur le bouton déconnexion de `CoachDashboard.jsx`, 24px sur les flèches retour). Un seul `padding: 10px` a été choisi plutôt qu'une largeur/hauteur fixe, car il garantit exactement 40×40 pour la plus petite icône du lot (20px) sans avoir à forcer un `display: inline-flex` supplémentaire — 44×44 pour les icônes 24px, toujours ≥ 40×40.
+3. `.btn-danger` — la consigne ne précisait pas si le `font-weight: 700` et le `letter-spacing: 2px` du bouton de déconnexion d'origine devaient être conservés. Comme la consigne ancre explicitement cette classe sur la géométrie de `.btn-ghost` ("même padding/radius/uppercase que .btn-ghost"), et que `.btn-ghost` ne définit ni `font-weight` ni ce `letter-spacing` élargi, les deux ont été alignés sur `.btn-ghost` (poids par défaut, `letter-spacing: 0.1em`) plutôt que conservés tels quels — cohérence avec les autres boutons pleine largeur plutôt que fidélité pixel-perfect à l'ancien style.
+4. Le bouton "✕" de suppression de ligne d'exercice dans `CoachPrograms.jsx` (`removeRow`) n'a **pas** été converti en `.icon-btn` : sa consigne ne visait que le pattern répété "tel quel" (`background:none, border:none, cursor:pointer`), or ce bouton a un padding déjà différent (`8px 4px`) et un état désactivé (curseur/opacité conditionnels) propre à sa logique — laissé inchangé pour ne pas risquer d'altérer ce comportement.
+
+**Écrans modifiés** (ordre demandé, build vérifié après chacun) :
+- `MemberDetail.jsx` : 1 `.icon-btn` (flèche retour), 1 `.status-badge` (statut membre en en-tête), 2 `.text-action-btn` (Modifier objectifs, + Assigner habitude), 1 `.text-action-btn.muted` (Archiver habitude)
+- `CoachPrograms.jsx` : 1 `.icon-btn` (flèche retour), 1 `.text-action-btn` (Supprimer programme, couleur dynamique gardée en inline)
+- `ClientsList.jsx` : pills de filtre (TOUS/ON TRACK/AT RISK/INACTIVE) basculées sur `.goal-chip`/`.goal-chip.active` déjà existant (demandé explicitement, pas de nouvelle classe) ; badge objectif membre → `.status-badge`
+- `CoachDashboard.jsx` : 1 `.icon-btn` (déconnexion), 1 `.status-badge` (statut membre dans la liste "Actifs/Activité récente")
+- `CoachSettings.jsx` : bouton "SE DÉCONNECTER" → `.btn-danger`
+
+Aucune logique JS touchée (état, fonctions, appels Supabase, navigation) — uniquement `className`/`style` du JSX de présentation. Aucune prop/id/state renommé.
+
+**Vérification** : `npm run build` relancé après l'étape 1 (CSS seule) puis après **chaque** écran individuellement (5 builds au total) — tous passés sans erreur.
+
+**Commit** : `style: unify coach screen UI elements (badges, action buttons, icon buttons) into reusable classes`, poussé directement sur `claude/charming-mendel-dj1GQ` (branche unique, pas de PR possible — établi en session précédente). Déploiement Vercel vérifié après coup.
+
+---
+
 ## 2026-08-12 — Code-splitting du bundle JS (lazy loading des écrans)
 
 **Contexte** : `npm run build` affichait l'avertissement Vite "Some chunks are larger than 500 kB" — un seul chunk `index-*.js` de **716 KB** minifié, tous les écrans (27 imports dans `src/App.jsx`) chargés statiquement dès le premier chargement de l'app, peu importe l'écran réellement visité.

@@ -184,11 +184,11 @@ export default function MemberDetail() {
     <div className="app-wrapper">
       <div className="screen coach-narrow">
         <div className="screen-header" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '20px 0 8px' }}>
-          <button style={{ background: 'none', border: 'none', cursor: 'pointer' }} onClick={() => navigate('/coach')}>
+          <button className="icon-btn" onClick={() => navigate('/coach')}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" strokeWidth="1.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
           </button>
           <h1 className="text-xl bold" style={{ flex: 1 }}>{member.prenom}</h1>
-          <span style={{ border: `1px solid ${color}`, color, fontSize: 9, padding: '3px 8px', borderRadius: 4, letterSpacing: 1, textTransform: 'uppercase', fontWeight: 700 }}>{stats.status}</span>
+          <span className="status-badge" style={{ color }}>{stats.status}</span>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
@@ -229,7 +229,7 @@ export default function MemberDetail() {
         <div className="section-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span>OBJECTIFS</span>
           {!editingObjectifs && (
-            <button onClick={startEditObjectifs} style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}>
+            <button className="text-action-btn" onClick={startEditObjectifs}>
               {objectifsSaved ? '✓ Enregistré' : 'Modifier'}
             </button>
           )}
@@ -285,7 +285,7 @@ export default function MemberDetail() {
         <div className="section-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span>HABITUDES</span>
           {!assigningHabit && (
-            <button onClick={() => setAssigningHabit(true)} style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}>
+            <button className="text-action-btn" onClick={() => setAssigningHabit(true)}>
               + Assigner
             </button>
           )}
@@ -325,7 +325,7 @@ export default function MemberDetail() {
             <div key={h.id} style={{ padding: '10px 0', borderBottom: i < habits.length - 1 ? '2px solid var(--border)' : 'none' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                 <span className="text-sm">{h.titre}</span>
-                <button onClick={() => handleArchiveHabit(h.id)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: 10, letterSpacing: 0.5, textTransform: 'uppercase', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}>
+                <button className="text-action-btn muted" onClick={() => handleArchiveHabit(h.id)}>
                   Archiver
                 </button>
               </div>

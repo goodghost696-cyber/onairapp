@@ -102,13 +102,7 @@ export default function ClientsList() {
 
         <div style={{ display: 'flex', gap: 8, marginBottom: 16, overflowX: 'auto', paddingBottom: 4 }}>
           {FILTERS.map(f => (
-            <button key={f} onClick={() => setFilter(f)} style={{
-              background: 'none', border: 'none', cursor: 'pointer',
-              fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase',
-              color: filter === f ? 'var(--accent)' : 'var(--text-muted)',
-              borderBottom: filter === f ? '2px solid var(--accent)' : '2px solid transparent',
-              padding: '4px 8px', whiteSpace: 'nowrap', flexShrink: 0,
-            }}>{f}</button>
+            <button key={f} className={`goal-chip${filter === f ? ' active' : ''}`} onClick={() => setFilter(f)} style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>{f}</button>
           ))}
         </div>
 
@@ -153,7 +147,7 @@ export default function ClientsList() {
                 <div style={{ flex: 1 }}>
                   <div className="flex justify-between items-center" style={{ marginBottom: 2 }}>
                     <span className="text-base bold">{m.prenom}</span>
-                    <span style={{ fontSize: 9, border: `1px solid ${GOAL_COLORS[m.objectif] || 'var(--border)'}`, color: GOAL_COLORS[m.objectif] || 'var(--text-muted)', padding: '2px 6px', borderRadius: 4, letterSpacing: 0.5, textTransform: 'uppercase', fontWeight: 700 }}>{m.objectif || '-'}</span>
+                    <span className="status-badge" style={{ color: GOAL_COLORS[m.objectif] || 'var(--text-muted)' }}>{m.objectif || '-'}</span>
                   </div>
                   <div className="text-xs text-muted">
                     Vu {lastSeenLabel(m.lastActiveDate).toLowerCase()} · {m.sessionsThisWeek ?? 0} séance{m.sessionsThisWeek > 1 ? 's' : ''}
