@@ -2676,3 +2676,47 @@ Mais le point dur reste entier : **le pipeline d'inscription ne sauvegarde toujo
 2. Vérifier/désactiver "Require approval" sur Vercel
 3. Test complet iPhone post-fix
 4. Reprendre le redesign Dashboard (déjà cadré : questions résolues sur l'icône logout et la carte séances)
+
+---
+
+## Session du 12/08/2026 — Setup environnement local + nettoyage collision de casse
+
+**Contexte** : première bascule de VOLTA vers Claude Code CLI en local (VS Code), en parallèle du 
+déploiement web existant (Vercel reste la source de vérité en prod, le local sert au dev).
+
+**Réalisé** :
+- Clone du repo en local (`C:\Users\EBM étudiant(e)\repos\onairapp`), branche `claude/charming-mendel-dj1GQ`
+- `npm install` (93 packages, 6 vulnérabilités à auditer plus tard — pas traité cette session)
+- Identité git configurée correctement : `goodghost696-cyber <goodghost696@gmail.com>`
+- CrewAI installé (`v1.15.15`) en vue d'un futur chantier d'automatisation semi-supervisée 
+  (agents proposent des PR, validation humaine avant merge — jamais de commit/push autonome)
+- Création de `CLAUDE.md` à la racine : mémoire persistante lue automatiquement au démarrage de 
+  chaque session Claude Code (stack, workflow de commit/PR, dette technique connue, règle absolue 
+  "app en prod, jamais de changement non vérifié")
+
+**Bug réel trouvé et corrigé** : collision de casse dans le repo. Deux paires de fichiers CSS 
+coexistaient en base — `Weekly.css`/`weekly.css` et `Workout.css`/`workout.css` — non détectable sur 
+Linux/Vercel (sensible à la casse) mais causant un écrasement mutuel sur disque Windows (insensible à 
+la casse). Vérification par `git ls-files` + `Select-String` sur les imports JSX a confirmé que seuls 
+`Weekly.css` (importé par `Weekly.jsx`) et `Workout.css` (importé par `Workout.jsx`) sont réellement 
+utilisés. Les doublons minuscules — morts, jamais importés nulle part — ont été supprimés via 
+`git rm -f`. Le contenu des vrais fichiers a été restauré proprement via `git checkout HEAD` après 
+un incident où la suppression avait temporairement affecté le fichier physique partagé.
+
+Cause racine additionnelle identifiée : `core.autocrlf = true` en config Windows, changé en `input` 
+pour éviter des diffs fantômes futurs sur les fins de ligne.
+
+**Vérification** : `npm run build` passe (6475 modules, 1m02s, aucune erreur). Seul point d'attention : 
+`index-CMFP4szR.js` fait 716 KB après minification, au-dessus du seuil recommandé de 500 KB — 
+candidat pour un futur chantier de code-splitting (`React.lazy`), non traité cette session.
+
+**Commit** : `fe92c17` — "fix: remove duplicate lowercase CSS files (weekly.css, workout.css), 
+add CLAUDE.md", poussé sur `claude/charming-mendel-dj1GQ`.
+
+**Reste à faire** :
+- `npm audit` — 6 vulnérabilités (3 modérées, 3 hautes) jamais traitées
+- Code-splitting du bundle JS (716 KB, warning Vite)
+- CrewAI installé mais pas encore configuré (pas de tool GitHub custom créé — l'intégration native 
+  CrewAI GitHub est Enterprise/payante, l'alternative gratuite via wrapper `gh pr create` reste à coder)
+- Recherche d'emploi (CSM + growth marketing, Paris/IDF) démarrée via Indeed MCP, pas automatisée — 
+  traité manuellement cette session, hors scope VOLTA
