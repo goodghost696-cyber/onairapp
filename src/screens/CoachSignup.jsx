@@ -16,7 +16,7 @@ import { supabase, authHeader } from '../lib/supabase'
 // themselves).
 export default function CoachSignup() {
   const navigate = useNavigate()
-  const [step, setStep] = useState('form') // 'form' | 'done'
+  const [step, setStep] = useState('form') // 'form' | 'needsConfirmation' | 'done'
   const [data, setData] = useState({ gymName: '', firstName: '', email: '', password: '', confirm: '' })
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -36,14 +36,31 @@ export default function CoachSignup() {
     }
     setSubmitting(true)
 
-    const { error: signUpError } = await supabase.auth.signUp({
+    // gymName/firstName also stashed in user_metadata (not just passed
+    // straight to /api/create-gym below) so they can still be read and
+    // replayed later — see AuthContext.jsx's resolveRole() self-heal path
+    // — if Confirm email is active and no session exists yet at this point.
+    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { name: firstName, role: 'coach' } },
+      options: { data: { name: firstName, role: 'coach', gymName: gymName.trim(), firstName: firstName.trim() } },
     })
     if (signUpError) {
       setSubmitting(false)
       setError(signUpError.message || "Erreur lors de l'inscription")
+      return
+    }
+
+    // Confirm email active: no session yet, /api/create-gym (RLS-gated via
+    // requireUser()) can't be called authenticated here. Deferred to
+    // AuthContext.jsx's resolveRole() self-heal path, which reads
+    // user_metadata.gymName/firstName once a real session exists (after the
+    // confirmation link is clicked and the coach logs in). Dead code today
+    // — while Confirm email is off, signUpData.session always exists right
+    // out of signUp().
+    if (!signUpData.session) {
+      setSubmitting(false)
+      setStep('needsConfirmation')
       return
     }
 
@@ -108,6 +125,18 @@ export default function CoachSignup() {
                 J'ai déjà un compte coach
               </button>
             </div>
+          </>
+        ) : step === 'needsConfirmation' ? (
+          <>
+            <h1 style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--text-primary)', margin: '0 0 8px' }}>
+              Vérifie ta boîte mail
+            </h1>
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '0 0 22px' }}>
+              Compte créé — vérifie ta boîte mail pour confirmer ton adresse. Ta salle sera prête dès ta première connexion.
+            </p>
+            <button onClick={() => navigate('/login', { state: { tab: 'login' } })} style={pillButtonStyle}>
+              ALLER À LA CONNEXION <span>→</span>
+            </button>
           </>
         ) : (
           <>

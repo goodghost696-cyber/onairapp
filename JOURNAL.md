@@ -45,6 +45,28 @@ Il existait déjà une "charte ON AIR Neon" documentée plus bas dans ce journal
 - `@phosphor-icons/react` uniquement pour la nav (bottom nav membre + nav coach) — son prop `weight` donne un état actif "plein" vs "contour" sans changement de couleur
 - Emoji conservés à quelques endroits précis et délibérés après itération (météo du Dashboard, sélecteur d'eau, toast de bienvenue) — jamais comme icône UI générique, seulement là où un pictogramme dessiné n'apportait rien de mieux (voir suites 77-81 pour l'historique de l'icône eau, 5 itérations avant 🥛)
 
+## 2026-08-12 — Préparation "Confirm email" Supabase Auth (flux différé signup, toggle pas encore activé)
+
+**Contexte** : `register()` (`AuthContext.jsx`) et `CoachSignup.jsx` supposaient tous les deux qu'une session existe immédiatement après `signUp()` — vrai seulement tant que "Confirm email" reste désactivé dans Supabase Auth. Dès que ce toggle est activé, `data.session` est `null` jusqu'au clic sur le lien de confirmation, et le code actuel plantait silencieusement (upsert profil + `/api/invite`/`/api/create-gym` tentés sans session → bloqués par RLS). Objectif de cette session : gérer proprement les deux cas **sans activer le toggle** — préparation seule, testée par construction (voir "Vérification" ci-dessous).
+
+**`src/context/AuthContext.jsx`** :
+- `register()` : `inviteCode` ajouté à `user_metadata` du `signUp()` (en plus de `name`/`role`/`extraMeta`), pour pouvoir le relire plus tard si la session n'existe pas encore. Après `signUp()`, si `data.session` est `null` : ni l'upsert profil ni l'appel `/api/invite` ne sont tentés (échoueraient sous RLS) — retour direct `{ success: true, needsConfirmation: true, user: { email, name } }`. Si `data.session` existe : comportement strictement inchangé.
+- `resolveRole()` (mécanisme self-heal existant) : signature étendue à `resolveRole(u, sessionUser)` — les deux call sites (`applySession()`, `login()`) passent maintenant `session.user`/`data.session?.user` en plus de l'objet dérivé. Dans la branche self-heal (profil manquant recréé), lit `sessionUser.user_metadata.gymName`/`.inviteCode`/`.firstName` : si `role === 'coach'` et `gymName` présent → appelle `/api/create-gym` ; sinon si `inviteCode` présent → appelle `/api/invite`, exactement comme `register()` le fait aujourd'hui côté membre. Échecs loggés en `console.error`, jamais bloquants pour la connexion.
+
+**`src/screens/Login.jsx`** — `handleSignup()` : nouvel état `needsConfirmation` (distinct de `signupSuccess`, remis à `false` en début de tentative pour éviter qu'un message obsolète persiste). Si `result.needsConfirmation` : affiche *"Compte créé — vérifie ta boîte mail pour confirmer ton adresse avant de te connecter."*, sans `setSignupSuccess`/redirection `/onboarding`. Chemin `result.success` sans confirmation : inchangé.
+
+**`src/screens/CoachSignup.jsx`** — `handleSubmit()` : `gymName`/`firstName` (trimmés) ajoutés à `user_metadata` du `signUp()`. Résultat de `signUp()` renommé `signUpData` (évite l'ombre sur le state local `data` du formulaire, qui porte le même nom). Si `signUpData.session` est `null` : nouvel état d'écran `step: 'needsConfirmation'` — *"Vérifie ta boîte mail — Compte créé — vérifie ta boîte mail pour confirmer ton adresse. Ta salle sera prête dès ta première connexion."* + bouton "ALLER À LA CONNEXION" (ajouté pour cohérence avec le reste de l'écran, pas explicitement demandé mais aucun autre moyen de sortir de cet état). Si session existe : comportement inchangé (`/api/create-gym` direct, écran `'done'`).
+
+**Code mort par construction tant que le toggle reste désactivé** : chaque nouveau chemin est gardé par `if (!data.session)` / `if (!signUpData.session)` — avec "Confirm email" OFF, `data.session` existe toujours en sortie de `signUp()`, donc aucune de ces branches ne s'exécute aujourd'hui. Rien dans le comportement actuel n'a changé (vérifié ligne par ligne dans les diffs, pas seulement supposé).
+
+**`api/create-gym.js` et `api/invite.js` non touchés** — fonctionnent déjà correctement une fois appelés avec une session valide, exactement le cas que `resolveRole()` reproduit dans son nouveau chemin différé.
+
+**Vérification** : `npm run build` relancé après chaque fichier modifié (4 builds : `AuthContext.jsx`, `Login.jsx`, `CoachSignup.jsx`) — tous passés sans erreur.
+
+**Reste à faire (hors scope de cette session, volontairement)** : activer réellement le toggle "Confirm email" dans le dashboard Supabase Auth, puis tester en conditions réelles (signup membre + signup coach, vérifier que le clic sur le lien de confirmation déclenche bien le chemin self-heal de `resolveRole()` et crée effectivement le profil/la salle). Pas fait ici — cette session ne fait que préparer le code pour que l'activation du toggle soit sans risque.
+
+---
+
 ## 2026-08-12 — Unification UI des écrans coach (badges, boutons-texte, bouton danger, boutons icône)
 
 **Contexte** : les écrans coach (`CoachDashboard.jsx`, `ClientsList.jsx`, `MemberDetail.jsx`, `CoachPrograms.jsx`, `CoachSettings.jsx`) répétaient les mêmes éléments d'UI (badges de statut, boutons-texte d'action, bouton de déconnexion, pills de filtre, boutons icône nus) en styles inline légèrement différents à chaque occurrence. Objectif : converger vers des classes CSS réutilisables dans `src/styles/global.css`, sans toucher aux tokens existants (`--accent`, `--border`, `--radius-btn`, `--danger`, etc.), sans changer palette/police/layout desktop (`coach.css` intact).

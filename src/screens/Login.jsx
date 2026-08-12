@@ -18,6 +18,12 @@ export default function Login() {
   const [signupData, setSignupData] = useState({ firstName: '', email: '', password: '', confirm: '', code: '' })
   const [signupError, setSignupError] = useState('')
   const [signupSuccess, setSignupSuccess] = useState(false)
+  // Confirm email active (2026-08-12) — register() returns needsConfirmation
+  // instead of a usable session when Supabase requires the email link to be
+  // clicked first. Distinct from signupSuccess (no session yet, so no
+  // onboarding redirect makes sense). Dead code today while Confirm email
+  // is off — register() always returns a plain success.
+  const [needsConfirmation, setNeedsConfirmation] = useState(false)
   const [signingUp, setSigningUp] = useState(false)
 
   const [forgotMode, setForgotMode] = useState(false)
@@ -53,6 +59,7 @@ export default function Login() {
 
   async function handleSignup() {
     setSignupError('')
+    setNeedsConfirmation(false)
     const { firstName, email: se, password: sp, confirm, code } = signupData
     if (!firstName || !se || !sp || !confirm || !code) { setSignupError('Tous les champs sont requis'); return }
     if (sp !== confirm) { setSignupError(t('passwords_no_match')); return }
@@ -82,7 +89,9 @@ export default function Login() {
     }
     const result = await register(firstName, se, sp, {}, code)
     setSigningUp(false)
-    if (result.success) {
+    if (result.success && result.needsConfirmation) {
+      setNeedsConfirmation(true)
+    } else if (result.success) {
       setSignupSuccess(true)
       localStorage.setItem('onair_just_registered', 'true')
       setTimeout(() => navigate('/onboarding'), 800)
@@ -205,6 +214,7 @@ export default function Login() {
             <input style={inputStyle} type="text" placeholder={t('access_code')} value={signupData.code} onChange={e => setSignupData(d => ({ ...d, code: e.target.value }))} />
             {signupError && <span style={{ fontSize: 11, color: 'var(--danger)' }}>{signupError}</span>}
             {signupSuccess && <span style={{ fontSize: 11, color: 'var(--success)' }}>{t('welcome_toast')} {signupData.firstName} 👋 {t('account_created')}</span>}
+            {needsConfirmation && <span style={{ fontSize: 11, color: 'var(--success)' }}>Compte créé — vérifie ta boîte mail pour confirmer ton adresse avant de te connecter.</span>}
             <button onClick={handleSignup} disabled={signingUp} style={{ ...pillButtonStyle, marginTop: 4, opacity: signingUp ? 0.7 : 1 }}>
               {signingUp ? '...' : <>{t('signup_btn')} <span>→</span></>}
             </button>

@@ -39,7 +39,7 @@ function sessionToUser(session) {
 // 2026-08-05 (one member invisible to her coach, no name, nothing — fixed
 // by hand in the database once, this makes sure it self-repairs from here
 // on instead of needing another manual fix).
-async function resolveRole(u) {
+async function resolveRole(u, sessionUser) {
   if (!u) return u
   try {
     const { data, error } = await supabase
@@ -73,6 +73,47 @@ async function resolveRole(u) {
         email: u.email,
       }, { onConflict: 'user_id' })
       if (healError) console.error('[Auth] resolveRole: self-heal profile upsert failed', healError)
+
+      // Confirm email support (2026-08-12) — finishes the create-gym/join-
+      // gym step that register()/CoachSignup.jsx couldn't run at signUp()
+      // time because no session existed yet (data.session is null until
+      // the confirmation link is clicked). That info was stashed in
+      // user_metadata precisely so it could be replayed here, the first
+      // time a real session exists for this account. authHeader() below
+      // now has a valid token to work with. Dead code today — while
+      // Confirm email is off, data.session always exists right out of
+      // signUp(), so the profile row above is never missing and this
+      // branch never runs for a fresh signup.
+      const meta = sessionUser?.user_metadata || {}
+      if (u.role === 'coach' && meta.gymName) {
+        try {
+          const res = await fetch('/api/create-gym', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
+            body: JSON.stringify({ gymName: meta.gymName, firstName: meta.firstName || u.name }),
+          })
+          if (!res.ok) {
+            const body = await res.json().catch(() => ({}))
+            console.error('[Auth] resolveRole: deferred create-gym failed', body.error || res.status)
+          }
+        } catch (err) {
+          console.error('[Auth] resolveRole: deferred create-gym threw', err)
+        }
+      } else if (u.role !== 'coach' && meta.inviteCode) {
+        try {
+          const res = await fetch('/api/invite', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
+            body: JSON.stringify({ code: meta.inviteCode }),
+          })
+          if (!res.ok) {
+            const body = await res.json().catch(() => ({}))
+            console.error('[Auth] resolveRole: deferred complete-signup (gym join) failed', body.error || res.status)
+          }
+        } catch (err) {
+          console.error('[Auth] resolveRole: deferred complete-signup (gym join) threw', err)
+        }
+      }
     }
   } catch (err) {
     console.error('[Auth] resolveRole: profiles role lookup threw', err)
@@ -90,7 +131,7 @@ export function AuthProvider({ children }) {
     const timeout = setTimeout(() => setLoading(false), 3000)
 
     async function applySession(session) {
-      const u = await resolveRole(sessionToUser(session))
+      const u = await resolveRole(sessionToUser(session), session?.user)
       setUser(u)
     }
 
@@ -123,7 +164,7 @@ export function AuthProvider({ children }) {
   async function login(email, password) {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) return { success: false, error: error.message }
-    const u = await resolveRole(sessionToUser(data.session))
+    const u = await resolveRole(sessionToUser(data.session), data.session?.user)
     return { success: true, user: u, role: u.role }
   }
 
@@ -144,13 +185,29 @@ export function AuthProvider({ children }) {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
+      // inviteCode also stashed in user_metadata (not just threaded through
+      // the profile upsert/api call below) so it can still be read and
+      // replayed later — see resolveRole()'s self-heal path — if
+      // Confirm email is active and no session exists yet at this point.
       options: {
-        data: { name: firstName, role: 'member', ...extraMeta },
+        data: { name: firstName, role: 'member', inviteCode, ...extraMeta },
       },
     })
     if (error) {
       console.error('[Auth] register: signUp failed', error)
       return { success: false, error: error.message }
+    }
+
+    // Confirm email active: data.session is null until the confirmation
+    // link is clicked — no authenticated context yet, so neither the
+    // profile upsert nor /api/invite below (both RLS-gated on auth.uid())
+    // would succeed. Deferred to resolveRole()'s self-heal path, which runs
+    // once a real session exists for this account (right after the coach/
+    // member clicks the email link and logs in). Dead code today — while
+    // Confirm email is off, data.session always exists right out of
+    // signUp(), so this branch never runs.
+    if (!data.session) {
+      return { success: true, needsConfirmation: true, user: { email, name: firstName } }
     }
 
     // Insert profile row — gym_id is never included here on purpose (see
