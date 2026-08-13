@@ -11,6 +11,7 @@ import { resizeImage } from '../utils/image'
 import { estimateFoodsFromText, computeItemsTotal } from '../utils/foodEstimate'
 import NutriscoreBadge from '../components/NutriscoreBadge'
 import SwipeableRow from '../components/SwipeableRow'
+import { useSwipeToDismiss } from '../hooks/useSwipeToDismiss'
 import '../styles/nutrition.css'
 
 const RECIPE_LOADING_MESSAGES = [
@@ -75,6 +76,13 @@ export default function Nutrition() {
   const { user } = useAuth()
   const { t, lang } = useLanguage()
   const [sheetOpen, setSheetOpen] = useState(false)
+  // "Ajouter un aliment" avait 0 moyen de la fermer — ni bouton, ni swipe.
+  // Ce n'est pas le même composant de base que ExerciseModal/Dashboard
+  // (qui utilisent déjà useSwipeToDismiss + .modal-handle) : cette feuille
+  // est un bottom sheet écrit à la main ici, sans jamais avoir eu ce
+  // mécanisme. Même hook réutilisé plutôt que d'en recoder un nouveau —
+  // audit JOURNAL.md.
+  const foodSheetSwipe = useSwipeToDismiss(() => setSheetOpen(false))
   const [step, setStep] = useState(1)
   const [foodSearch, setFoodSearch] = useState('')
   const [foodResults, setFoodResults] = useState([])
@@ -158,6 +166,7 @@ export default function Nutrition() {
   const [recipeSourceLabel, setRecipeSourceLabel] = useState('')
   const [recipeLoadingMsgIndex, setRecipeLoadingMsgIndex] = useState(0)
   const foodSearchInputRef = useRef(null)
+  const foodSheetRef = useRef(null)
   const recipePhotoInputRef = useRef(null)
   // Captures whichever generator produced the current recipeOptions (auto
   // or photo, closed over its own args — e.g. the same File for photo) so
@@ -194,6 +203,19 @@ export default function Nutrition() {
       const timer = setTimeout(() => foodSearchInputRef.current?.focus(), 340)
       return () => clearTimeout(timer)
     }
+  }, [sheetOpen, step])
+
+  // Ce sheet reste monté en permanence (voir commentaire ci-dessus) — sa
+  // propre zone de scroll (overflowY:auto) garde donc son scrollTop d'une
+  // ouverture à l'autre au lieu d'être recréée à zéro. Repro concrète :
+  // scroller dans les résultats de recherche, fermer/rouvrir (ou juste
+  // relancer une recherche qui raccourcit la liste) — le sheet peut
+  // rouvrir déjà scrollé, le titre et le champ de recherche hors-champ
+  // tant qu'on n'a pas remonté à la main. Reset explicite à l'ouverture et
+  // à chaque changement d'étape (recherche -> quantité), plutôt que de
+  // compter sur un remount qui n'arrive jamais.
+  useEffect(() => {
+    if (sheetOpen && foodSheetRef.current) foodSheetRef.current.scrollTop = 0
   }, [sheetOpen, step])
 
   // Opened from the bottom nav's "+" menu ("Nouveau repas") — consume the
@@ -1218,21 +1240,43 @@ Réponds en français.`
       {/* Overlay */}
       {sheetOpen && <div onClick={() => setSheetOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 199 }} />}
 
-      {/* Bottom Sheet */}
-      <div style={{
-        position: 'fixed', bottom: 0, left: '50%',
-        transform: `translateX(-50%) translateY(${sheetOpen ? '0' : '100%'})`,
-        width: '100%', maxWidth: 480,
-        background: 'var(--surface-solid)', backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)',
-        borderRadius: '20px 20px 0 0',
-        borderTop: '1px solid var(--glass-border)',
-        padding: '24px 20px 40px',
-        transition: 'transform 320ms cubic-bezier(0.34,1.56,0.64,1)',
-        zIndex: 200, maxHeight: '80vh', overflowY: 'auto',
-      }}>
+      {/* Bottom Sheet — jusqu'ici aucun moyen de la fermer : ni bouton, ni
+          swipe (contrairement à ExerciseModal.jsx/Dashboard.jsx, qui ont
+          déjà .modal-handle + useSwipeToDismiss). Pas le même composant de
+          base sans le mécanisme activé — un sheet écrit à la main ici, qui
+          ne l'a jamais eu. Même hook réutilisé (foodSheetSwipe) plutôt que
+          d'en recoder un, croix ajoutée à côté du titre pour la fermeture
+          au clic. Audit JOURNAL.md. */}
+      <div
+        ref={foodSheetRef}
+        style={{
+          position: 'fixed', bottom: 0, left: '50%',
+          transform: foodSheetSwipe.dragY > 0
+            ? `translateX(-50%) translateY(${foodSheetSwipe.dragY}px)`
+            : `translateX(-50%) translateY(${sheetOpen ? '0' : '100%'})`,
+          width: '100%', maxWidth: 480,
+          background: 'var(--surface-solid)', backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)',
+          borderRadius: '20px 20px 0 0',
+          borderTop: '1px solid var(--glass-border)',
+          padding: '0 20px 40px',
+          transition: foodSheetSwipe.dragging ? 'none' : 'transform 320ms cubic-bezier(0.34,1.56,0.64,1)',
+          zIndex: 200, maxHeight: '80vh', overflowY: 'auto',
+        }}
+      >
+        <div className="sheet-drag-zone" {...foodSheetSwipe.handlers}>
+          <div className="modal-handle" />
+        </div>
         {step === 1 ? (
           <>
-            <h2 className="text-lg bold" style={{ marginBottom: 16 }}>{t('add_food_title')}</h2>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+              <h2 className="text-lg bold" style={{ margin: 0 }}>{t('add_food_title')}</h2>
+              <button
+                type="button"
+                onClick={() => setSheetOpen(false)}
+                aria-label="Fermer"
+                style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: 20, lineHeight: 1, cursor: 'pointer', padding: 4 }}
+              >✕</button>
+            </div>
             <input
               ref={foodSearchInputRef}
               value={foodSearch}
@@ -1267,7 +1311,13 @@ Réponds en français.`
               <button onClick={() => setStep(1)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" strokeWidth="1.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
               </button>
-              <h2 className="text-lg bold">{selectedFood?.name}</h2>
+              <h2 className="text-lg bold" style={{ flex: 1 }}>{selectedFood?.name}</h2>
+              <button
+                type="button"
+                onClick={() => setSheetOpen(false)}
+                aria-label="Fermer"
+                style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: 20, lineHeight: 1, cursor: 'pointer', padding: 4 }}
+              >✕</button>
             </div>
             <div style={{ marginBottom: 16 }}>
               <label className="text-xs text-muted" style={{ display: 'block', marginBottom: 8 }}>{t('quantity').toUpperCase()}</label>

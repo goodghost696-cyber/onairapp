@@ -45,6 +45,18 @@ Il existait déjà une "charte ON AIR Neon" documentée plus bas dans ce journal
 - `@phosphor-icons/react` uniquement pour la nav (bottom nav membre + nav coach) — son prop `weight` donne un état actif "plein" vs "contour" sans changement de couleur
 - Emoji conservés à quelques endroits précis et délibérés après itération (météo du Dashboard, sélecteur d'eau, toast de bienvenue) — jamais comme icône UI générique, seulement là où un pictogramme dessiné n'apportait rien de mieux (voir suites 77-81 pour l'historique de l'icône eau, 5 itérations avant 🥛)
 
+## 2026-08-13 — "Ajouter un aliment" (Nutrition.jsx) : impossible à fermer, scroll qui perd le champ de recherche
+
+**1 — diagnostic** : ce bottom sheet n'utilise **pas** le même composant de base que la fiche détail d'exercice (`ExerciseModal.jsx`) ou le sheet d'édition d'activité (`Dashboard.jsx`), qui ont déjà `.modal-handle` + le hook `useSwipeToDismiss` fonctionnels. C'est un sheet écrit entièrement à la main dans `Nutrition.jsx`, qui n'a **jamais eu** ce mécanisme (`grep useSwipeToDismiss` ne remontait que Dashboard.jsx et ExerciseModal.jsx avant cette passe) — seul le clic sur l'overlay sombre en arrière-plan fermait la fenêtre, sans aucune affordance visuelle pour le suggérer.
+
+**2 — fermeture ajoutée** :
+- Croix (✕) à côté du titre, sur les deux étapes du sheet (recherche ET écran quantité, qui a son propre titre) — `onClick={() => setSheetOpen(false)}`.
+- Swipe vers le bas : même hook `useSwipeToDismiss` réutilisé (pas recodé), avec la poignée `.modal-handle`/`.sheet-drag-zone` déjà stylée globalement (définie une fois dans `dashboard.css`, réutilisée telle quelle par `ExerciseModal.css` — même approche ici, aucun CSS nouveau à écrire). Le `transform`/`transition` inline du sheet (translateY piloté par `sheetOpen`, pas une classe CSS comme les deux autres sheets) fusionné à la main avec `foodSheetSwipe.dragY`/`.dragging` plutôt que remplacé, pour ne pas perdre l'animation d'ouverture existante.
+
+**3 — scroll qui "perd" le haut de la liste** : ce sheet reste **monté en permanence** (translaté hors écran via CSS transform, jamais démonté — commentaire déjà présent dans le code, pour préserver l'animation d'ouverture). Sa zone de scroll (`overflowY:auto`) gardait donc son `scrollTop` d'une ouverture à l'autre au lieu d'être recréée à zéro : après avoir scrollé dans les résultats puis rouvert le sheet (ou changé d'étape recherche → quantité), il pouvait rouvrir déjà scrollé, le titre et le champ de recherche hors-champ tant qu'on ne remontait pas à la main — correspond exactement au symptôme signalé. Reset explicite de `scrollTop` à l'ouverture et à chaque changement d'étape (`useEffect` sur `[sheetOpen, step]`), plutôt que de compter sur un remount qui n'arrive jamais.
+
+Build vérifié (`npm run build`), grep du bundle compilé confirmant la présence de `.sheet-drag-zone` et du bouton `aria-label="Fermer"` dans `Nutrition-*.js`. **Test manuel réel recommandé** sur le geste de swipe en particulier (comportement tactile, pas vérifiable par lecture de code) — pas bloquant vu que la croix offre déjà un moyen de fermeture fiable en toutes circonstances.
+
 ## 2026-08-13 — Catalogue d'exercices Maison/Salle agrandi via wger.de (suite au rapport d'investigation)
 
 Suite au plan proposé dans le rapport d'investigation du jour (catalogue plafonné à 18/section, limite structurelle du tier gratuit API Ninjas) : implémentation du plan recommandé (fichier JSON statique, source wger).
