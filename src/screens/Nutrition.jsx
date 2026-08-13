@@ -925,42 +925,90 @@ Réponds en français.`
 
         <div className="section-label">{t('today_meals')}</div>
         <p className="text-xs" style={{ marginTop: -4, marginBottom: 10, color: 'rgba(255,255,255,0.7)' }}>Glisse un repas vers la gauche pour le modifier ou le supprimer.</p>
-        {(showAllMeals ? appData.meals : appData.meals.slice(0, 3)).map((meal, i) => (
-          <SwipeableRow
-            key={meal.id}
-            actions={[
-              { label: 'Modifier', color: 'var(--warning)', onClick: () => openEditMeal(meal) },
-              { label: 'Supprimer', color: 'var(--danger)', onClick: () => deleteMeal(meal.id) },
-            ]}
-          >
-            <div className="card card-animated" style={{ marginBottom: 0, '--delay': `${160 + Math.min(i, 6) * 40}ms` }}>
-              <div className="flex justify-between items-center">
-                <div style={{ flex: 1 }}>
-                  <div className="flex items-center gap-8" style={{ marginBottom: 4 }}>
-                    <span className="text-base bold">{meal.name}</span>
-                    <NutriscoreBadge score={meal.nutriscore} />
+        {(() => {
+          // Was a flat chronological list with no visual grouping and a
+          // silent slice(0,3) — a member with several repas logged across
+          // different types (petit-déj/déjeuner/dîner/collation) saw them
+          // interleaved with no indication of which type each belonged to,
+          // and no signal that some were hidden below the fold. Sectioned
+          // by mealType (== repas.type_repas, see AppContext.jsx's
+          // mealFromRow) instead, same MEAL_TYPES order as the chip picker
+          // used everywhere else on this screen.
+          const visibleMeals = showAllMeals ? appData.meals : appData.meals.slice(0, 3)
+          const hiddenCount = appData.meals.length - visibleMeals.length
+          const groups = MEAL_TYPES.map(mt => ({ type: mt, meals: visibleMeals.filter(m => m.mealType === mt) }))
+          // Repas sans mealType reconnu (données antérieures à l'ajout de
+          // type_repas, ou valeur inattendue) — rangés à part plutôt que
+          // silencieusement exclus de l'affichage.
+          const otherMeals = visibleMeals.filter(m => !MEAL_TYPES.includes(m.mealType))
+          if (otherMeals.length > 0) groups.push({ type: 'Autre', meals: otherMeals })
+          const visibleGroups = groups.filter(g => g.meals.length > 0)
+
+          if (appData.meals.length === 0) {
+            return <p className="text-sm" style={{ color: 'rgba(255,255,255,0.7)', padding: '4px 0 8px' }}>Aucun repas enregistré aujourd'hui.</p>
+          }
+
+          return (
+            <>
+              {visibleGroups.map(group => (
+                <div key={group.type} style={{ marginBottom: 16 }}>
+                  <div className="text-xs bold" style={{ textTransform: 'uppercase', letterSpacing: '0.06em', color: 'rgba(255,255,255,0.85)', marginBottom: 8 }}>
+                    {group.type} <span style={{ opacity: 0.65, fontWeight: 400 }}>({group.meals.length})</span>
                   </div>
-                  <span className="text-xs text-muted">{meal.time}</span>
+                  {group.meals.map((meal, i) => (
+                    <SwipeableRow
+                      key={meal.id}
+                      actions={[
+                        { label: 'Modifier', color: 'var(--warning)', onClick: () => openEditMeal(meal) },
+                        { label: 'Supprimer', color: 'var(--danger)', onClick: () => deleteMeal(meal.id) },
+                      ]}
+                    >
+                      <div className="card card-animated" style={{ marginBottom: 8, '--delay': `${160 + Math.min(i, 6) * 40}ms` }}>
+                        <div className="flex justify-between items-center">
+                          <div style={{ flex: 1 }}>
+                            <div className="flex items-center gap-8" style={{ marginBottom: 4 }}>
+                              <span className="text-base bold">{meal.name}</span>
+                              <NutriscoreBadge score={meal.nutriscore} />
+                            </div>
+                            {/* mealType affiché explicitement sur la carte
+                                elle-même — jusqu'ici capturé à l'ajout
+                                (type_repas) mais jamais montré nulle part
+                                dans cette liste. */}
+                            <span className="text-xs text-muted">{meal.time}{meal.mealType ? ` · ${meal.mealType}` : ''}</span>
+                          </div>
+                          <span className="text-sm bold" style={{ marginLeft: 12 }}>{meal.calories} kcal</span>
+                        </div>
+                        <div style={{ display: 'flex', gap: 16, marginTop: 6 }}>
+                          <span className="text-xs text-muted">P: {meal.protein}g</span>
+                          <span className="text-xs text-muted">G: {meal.carbs}g</span>
+                          <span className="text-xs text-muted">L: {meal.fat}g</span>
+                        </div>
+                      </div>
+                    </SwipeableRow>
+                  ))}
                 </div>
-                <span className="text-sm bold" style={{ marginLeft: 12 }}>{meal.calories} kcal</span>
-              </div>
-              <div style={{ display: 'flex', gap: 16, marginTop: 6 }}>
-                <span className="text-xs text-muted">P: {meal.protein}g</span>
-                <span className="text-xs text-muted">G: {meal.carbs}g</span>
-                <span className="text-xs text-muted">L: {meal.fat}g</span>
-              </div>
-            </div>
-          </SwipeableRow>
-        ))}
-        {!showAllMeals && appData.meals.length > 3 && (
-          <button
-            type="button"
-            onClick={() => setShowAllMeals(true)}
-            style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.85)', fontSize: 12, fontWeight: 600, padding: '10px 0', cursor: 'pointer', display: 'block', width: '100%', textAlign: 'center' }}
-          >
-            Voir tout ({appData.meals.length} repas) →
-          </button>
-        )}
+              ))}
+              {/* Remplace l'ancien lien texte discret en bas de liste — le
+                  troncage à 3 repas restait invisible tant qu'on ne
+                  scrollait pas jusqu'en bas. Badge visible, au même niveau
+                  que les sections plutôt qu'enterré dessous. */}
+              {!showAllMeals && hiddenCount > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setShowAllMeals(true)}
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                    width: '100%', background: 'rgba(255,255,255,0.16)', border: '1px solid rgba(255,255,255,0.3)',
+                    borderRadius: 50, color: '#FFFFFF', fontSize: 12, fontWeight: 700,
+                    padding: '10px 16px', cursor: 'pointer', marginBottom: 8,
+                  }}
+                >
+                  +{hiddenCount} repas non affiché{hiddenCount > 1 ? 's' : ''} — voir tout →
+                </button>
+              )}
+            </>
+          )
+        })()}
       </div>
 
       {/* Edit meal (grams) overlay */}
@@ -1222,15 +1270,29 @@ Réponds en français.`
                     {describeResult.items.map((item, i) => (
                       <div key={i} style={{ padding: '10px 0', borderBottom: '0.5px solid var(--border)' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                          <span>
-                            {item.name}
-                            <span
-                              title={item.verified ? 'Valeurs vérifiées (Open Food Facts)' : 'Estimation IA — non vérifiée'}
-                              style={{ marginLeft: 6, fontSize: 11, color: item.verified ? 'var(--success)' : 'var(--text-secondary)' }}
-                            >
-                              {item.verified ? '✓' : '≈'}
+                          <div>
+                            <span>
+                              {item.name}
+                              <span
+                                title={item.verified ? 'Valeurs vérifiées (Open Food Facts)' : 'Estimation IA — non vérifiée'}
+                                style={{ marginLeft: 6, fontSize: 11, color: item.verified ? 'var(--success)' : 'var(--text-secondary)' }}
+                              >
+                                {item.verified ? '✓' : '≈'}
+                              </span>
                             </span>
-                          </span>
+                            {/* Jusqu'ici le badge "✓ vérifié" ne disait pas
+                                QUEL produit OFF avait été retenu — impossible
+                                de repérer un mauvais matching avant d'ajouter
+                                le repas. lookupOFF() (foodEstimate.js)
+                                renvoie maintenant le nom du produit
+                                effectivement sélectionné parmi les
+                                candidats. */}
+                            {item.verified && item.offName && (
+                              <div className="text-xs text-muted" style={{ marginTop: 2 }}>
+                                Correspondance OFF : {item.offName}
+                              </div>
+                            )}
+                          </div>
                           <span>{Math.round(item.kcal100 * item.grams / 100)} kcal</span>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>

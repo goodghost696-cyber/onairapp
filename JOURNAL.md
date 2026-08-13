@@ -45,6 +45,20 @@ Il existait déjà une "charte ON AIR Neon" documentée plus bas dans ce journal
 - `@phosphor-icons/react` uniquement pour la nav (bottom nav membre + nav coach) — son prop `weight` donne un état actif "plein" vs "contour" sans changement de couleur
 - Emoji conservés à quelques endroits précis et délibérés après itération (météo du Dashboard, sélecteur d'eau, toast de bienvenue) — jamais comme icône UI générique, seulement là où un pictogramme dessiné n'apportait rien de mieux (voir suites 77-81 pour l'historique de l'icône eau, 5 itérations avant 🥛)
 
+## 2026-08-13 — Nutrition : regroupement des repas par type + meilleure sélection Open Food Facts
+
+Suite à l'investigation Nutrition (regroupement des repas + précision OFF, fuseau DB confirmé UTC — piste écartée) :
+
+**Regroupement des repas** (`Nutrition.jsx`) — la liste "REPAS D'AUJOURD'HUI" était plate, triée par heure, avec un troncage silencieux à 3 éléments (lien texte discret en bas) et sans jamais afficher le `type_repas` sur les cartes. Remplacé par :
+- Sections groupées par type (Petit-déjeuner/Déjeuner/Dîner/Collation, + "Autre" pour tout repas sans `mealType` reconnu — aucun repas exclu silencieusement).
+- `mealType` affiché sur chaque carte (`{heure} · {type}`).
+- Badge visible "+N repas non affichés — voir tout" à la place de l'ancien lien texte en bas de liste.
+- Colonne `type` (orpheline en base, confirmée non lue/écrite par aucun code client) **non touchée** dans cette passe — reste une dette à traiter séparément (suppression de colonne).
+
+**Sélection Open Food Facts** (`utils/foodEstimate.js`, `lookupOFF`) — le lookup automatique (flux "Décrire un repas") prenait le tout premier résultat OFF (`page_size=1`) sans aucune vérification. Passé à `page_size=5` + scoring simple (complétude des 4 macros prioritaire sur la simple proximité du nom, similarité de nom basique en tie-break, pas de NLP). Le nom du produit OFF effectivement retenu est maintenant affiché dans le détail de chaque aliment détecté (`Nutrition.jsx`, à côté du badge "✓ vérifié"), pour repérer un mauvais matching avant de valider le repas. Calcul proportionnel (`calcNutrition`/`computeItemsTotal`) et estimation du grammage par l'IA non touchés — hors scope, déjà jugés corrects/hors sujet respectivement.
+
+Build vérifié (`npm run build`), grep du bundle compilé confirmant la présence des nouvelles chaînes ("repas non affiché", "Correspondance OFF", `page_size=5`). Test manuel en conditions réelles (comptes avec repas de types variés) non réalisable dans cet environnement — pas d'accès à une instance de l'app avec de vraies données Supabase ; vérification faite par relecture de la logique de regroupement/scoring et par le build/bundle.
+
 ## 2026-08-13 — Nettoyage suite audit : suppression de Sleep.jsx (écran orphelin) et de la clé heart_rate
 
 Suite au rapport d'audit ci-dessous : `src/screens/Sleep.jsx` (aucune route déclarée, doublon du sommeil déjà affiché dans `Weekly.jsx`) supprimé, avec son import lazy dans `App.jsx` et le stub `src/styles/sleep.css` qu'il laissait derrière lui. Clé de traduction `heart_rate` (FR/EN/ES, `LanguageContext.jsx`) supprimée — reliquat de l'ancien onglet Course, plus consommée nulle part. Commentaire dans `weeklyStats.js` mis à jour (ne mentionne plus Sleep.jsx comme consommateur).

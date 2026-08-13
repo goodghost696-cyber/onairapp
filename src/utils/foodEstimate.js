@@ -2,6 +2,53 @@ import { authHeader } from '../lib/supabase'
 
 const LANG_NAMES = { fr: 'français', en: 'English', es: 'español' }
 
+// Strips accents/case so "Oeuf" and "œuf" (or an OFF entry in a slightly
+// different form) compare equal — no need for a real i18n string library
+// for this one comparison.
+function normalize(s) {
+  return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim()
+}
+
+// Basic word-overlap similarity, not real NLP/fuzzy matching — good enough
+// to give a slight edge to a product name that actually resembles the
+// searched term over one that only matched OFF's own text search loosely.
+function nameSimilarity(query, candidateName) {
+  const q = normalize(query)
+  const c = normalize(candidateName)
+  if (!q || !c) return 0
+  if (c === q) return 1
+  if (c.includes(q) || q.includes(c)) return 0.7
+  const qWords = q.split(/\s+/).filter(Boolean)
+  if (qWords.length === 0) return 0
+  const cWords = new Set(c.split(/\s+/).filter(Boolean))
+  const overlap = qWords.filter(w => cWords.has(w)).length
+  return (overlap / qWords.length) * 0.5
+}
+
+function hasCompleteMacros(p) {
+  const n = p.nutriments || {}
+  return n['energy-kcal_100g'] != null && n.proteins_100g != null && n.carbohydrates_100g != null && n.fat_100g != null
+}
+
+// Picks the best candidate among several OFF hits instead of trusting
+// whichever came back first from search-a-licious's own relevance ranking
+// (which optimizes for text match, not data completeness). A hit with all
+// 4 macros filled in is preferred outright over one merely matching the
+// name better but missing proteins/carbs/fat (those would silently read as
+// 0 downstream) — name similarity only breaks ties within the same
+// completeness tier.
+function pickBestMatch(hits, query) {
+  const candidates = (hits || []).filter(p => p.product_name && p.nutriments?.['energy-kcal_100g'])
+  if (candidates.length === 0) return null
+  let best = null
+  let bestScore = -Infinity
+  for (const p of candidates) {
+    const score = (hasCompleteMacros(p) ? 10 : 0) + nameSimilarity(query, p.product_name)
+    if (score > bestScore) { bestScore = score; best = p }
+  }
+  return best
+}
+
 // Look up real per-100g nutrition for a food name via Open Food Facts.
 // Returns null if no usable match is found (caller falls back to the AI
 // estimate). Moved here from Scan.jsx so Nutrition.jsx's own multi-food
@@ -10,13 +57,15 @@ export async function lookupOFF(name) {
   try {
     // Server-side proxy (api/food-search.js) calls the fast search-a-licious
     // API on our behalf — that endpoint has no CORS support for browsers,
-    // so we can't call it directly from here.
+    // so we can't call it directly from here. page_size raised from 1 to 5
+    // so pickBestMatch above has real candidates to score instead of
+    // blindly trusting whatever OFF's own ranking put first.
     const res = await fetch(
-      `/api/food-search?q=${encodeURIComponent(name)}&page_size=1&fields=product_name,nutriments`,
+      `/api/food-search?q=${encodeURIComponent(name)}&page_size=5&fields=product_name,nutriments`,
       { headers: await authHeader() }
     )
     const data = await res.json()
-    const p = data.hits?.[0]
+    const p = pickBestMatch(data.hits, name)
     const kcal = p?.nutriments?.['energy-kcal_100g']
     if (!p || !kcal) return null
     return {
@@ -24,6 +73,11 @@ export async function lookupOFF(name) {
       prot100: Math.round((p.nutriments.proteins_100g || 0) * 10) / 10,
       carb100: Math.round((p.nutriments.carbohydrates_100g || 0) * 10) / 10,
       fat100: Math.round((p.nutriments.fat_100g || 0) * 10) / 10,
+      // Exposed so callers can show the user which OFF product was actually
+      // matched (see Nutrition.jsx's "Décrire un repas" item list) — the
+      // old single-hit lookup never surfaced this, so a wrong auto-match
+      // was invisible until the calories looked off.
+      productName: p.product_name,
     }
   } catch {
     return null
@@ -96,6 +150,11 @@ Réponds en ${langName}. Les noms des aliments doivent être en ${langName}.`
       carb100: off?.carb100 ?? item.carbs_100g ?? 0,
       fat100: off?.fat100 ?? item.fats_100g ?? 0,
       verified: !!off,
+      // Which OFF product lookupOFF actually matched — shown next to the
+      // "✓ vérifié" badge in Nutrition.jsx so a bad auto-match is visible
+      // before the meal is saved, instead of only showing "vérifié" without
+      // saying against what.
+      offName: off?.productName || null,
     }
   }))
   return { meal_name: parsed.meal_name, items }
