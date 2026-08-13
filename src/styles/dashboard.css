@@ -84,22 +84,21 @@ body.dashboard-body-bg {
    .dashboard-redesign est le screen actuellement monté juste avant elle
    dans le DOM.
 
-   Root cause trouvée par debugging systématique (2026-08-14, suite au
-   rapport de régression) sur la tentative précédente qui ajoutait
-   `bottom: calc(env(safe-area-inset-bottom) + 10px)` : le mécanisme CSS
-   marchait bien (vérifié par getComputedStyle sur un rendu réel des
-   feuilles de style compilées — bottom: 10px effectivement appliqué), le
-   bug était dans la VALEUR. nav.css documente que le défaut global est
-   déjà "le vrai minimum... zéro marge, pas même un plancher"
-   (`bottom: env(safe-area-inset-bottom)`, choix délibéré, non touché
-   ici). Ajouter +10px par-dessus ce zéro éloignait la pill du bord au
-   lieu de la rapprocher — impossible d'aller plus près du bord que ce
-   défaut sans franchir le plancher safe-area-inset-bottom (interdit).
-   Donc aucun override n'est nécessaire : le défaut global de nav.css
-   satisfait déjà "quasiment collée au bord, espace minime" — la
-   respiration visible dans la maquette vient du padding propre de la
-   pill (10px 12px, nav.css), pas d'une marge extérieure. Règle retirée
-   plutôt que remise à une valeur différente. */
+   Historique (2026-08-14) : un premier essai ajoutait
+   `bottom: calc(env(safe-area-inset-bottom) + 10px)`, corrigé ensuite en
+   supprimant carrément l'override sur l'hypothèse que le défaut global de
+   nav.css (`bottom: env(safe-area-inset-bottom)`, documenté comme "le
+   vrai minimum") suffisait déjà — rapporté sur test réel qu'un espace
+   visible persistait malgré ça. Règle explicite remise en place plutôt
+   que de recompter sur le défaut hérité : matérialise noir sur blanc,
+   scopé au Dashboard, la même valeur que le plancher de sécurité iOS,
+   sans aucun padding/marge additionnelle au-dessus — vérifié par
+   getComputedStyle sur un rendu réel des feuilles de style compilées
+   (voir JOURNAL.md) que c'est bien cette valeur, et aucune autre, qui
+   s'applique. */
+.dashboard-redesign ~ .bottom-nav {
+  bottom: env(safe-area-inset-bottom);
+}
 
 /* Fond opaque sombre (.bottom-nav) — la maquette de référence veut une
    pill opaque noir/charbon sur le Dashboard restylé, mais le fond global
