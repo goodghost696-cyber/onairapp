@@ -82,17 +82,58 @@ body.dashboard-body-bg {
    rendue en sibling de l'écran actif dans MemberLayout.jsx (<Outlet/> puis
    <BottomNav/>). Le sélecteur sibling ci-dessous ne matche donc que quand
    .dashboard-redesign est le screen actuellement monté juste avant elle
-   dans le DOM — scopé au restyle sans toucher nav.css ni la position par
-   défaut des autres écrans (bottom: env(safe-area-inset-bottom), zéro
-   marge, un choix délibéré ailleurs — voir nav.css). Sur la maquette de
-   référence (capture fournie, 2026-08-14) la pill est quasiment collée au
-   bord bas, avec un espace minime plutôt que la marge plus généreuse
-   qu'un premier essai avait donnée ici. env(safe-area-inset-bottom) reste
-   le plancher impératif dans les deux cas — jamais retiré, seulement un
-   petit espace ajouté par-dessus, pour ne jamais finir sous la barre de
-   gestes iOS. */
+   dans le DOM.
+
+   Root cause trouvée par debugging systématique (2026-08-14, suite au
+   rapport de régression) sur la tentative précédente qui ajoutait
+   `bottom: calc(env(safe-area-inset-bottom) + 10px)` : le mécanisme CSS
+   marchait bien (vérifié par getComputedStyle sur un rendu réel des
+   feuilles de style compilées — bottom: 10px effectivement appliqué), le
+   bug était dans la VALEUR. nav.css documente que le défaut global est
+   déjà "le vrai minimum... zéro marge, pas même un plancher"
+   (`bottom: env(safe-area-inset-bottom)`, choix délibéré, non touché
+   ici). Ajouter +10px par-dessus ce zéro éloignait la pill du bord au
+   lieu de la rapprocher — impossible d'aller plus près du bord que ce
+   défaut sans franchir le plancher safe-area-inset-bottom (interdit).
+   Donc aucun override n'est nécessaire : le défaut global de nav.css
+   satisfait déjà "quasiment collée au bord, espace minime" — la
+   respiration visible dans la maquette vient du padding propre de la
+   pill (10px 12px, nav.css), pas d'une marge extérieure. Règle retirée
+   plutôt que remise à une valeur différente. */
+
+/* Fond opaque sombre (.bottom-nav) — la maquette de référence veut une
+   pill opaque noir/charbon sur le Dashboard restylé, mais le fond global
+   de nav.css (--nav-glass: rgba(255,255,255,0.28), glass "frost léger"
+   délibéré, voir nav.css) n'a jamais été touché par les fixs précédents
+   (vérifié : aucun diff sur nav.css/global.css dans les 3 commits
+   précédents) — ce n'est pas une régression introduite ici, c'est ce
+   glass translucide préexistant qui devient gênant maintenant que la
+   grille d'activité a des cartes pastel pleines (Eau lavande, Sommeil
+   rose) derrière. Override scopé au Dashboard uniquement, pas touché
+   ailleurs. Couleur en dur (pas var(--db-ink)) : les custom properties de
+   .dashboard-redesign n'atteignent pas .bottom-nav, qui est un sibling,
+   pas un descendant — même contrainte que le fix du fond de <body>
+   plus haut ; #1C1A17 doit rester en sync manuel avec --db-ink. */
 .dashboard-redesign ~ .bottom-nav {
-  bottom: calc(env(safe-area-inset-bottom) + 10px);
+  background: #1C1A17;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* Conséquence directe du fond opaque sombre ci-dessus, pas un changement à
+   part : .nav-btn svg (nav.css) est colorée en var(--text-secondary)/
+   var(--text-primary), de l'encre foncée pensée pour rester lisible sur le
+   glass clair — sur fond #1C1A17 ces icônes deviendraient quasi
+   invisibles. Repassées en clair (crème --db-cream, en dur pour la même
+   raison de sibling que ci-dessus), même logique que .dashboard-cta-btn
+   plus bas dans ce fichier (fond encre, texte crème). Le glow corail de
+   l'onglet actif (nav.css, non touché) reste inchangé — il ressort mieux
+   sur fond sombre, pas moins bien. */
+.dashboard-redesign ~ .bottom-nav .nav-btn svg {
+  color: rgba(247,241,230,0.55);
+}
+.dashboard-redesign ~ .bottom-nav .nav-btn.active svg {
+  color: #F7F1E6;
 }
 
 .dashboard-screen {
