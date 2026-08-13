@@ -44,3 +44,15 @@ Jamais de changement non vérifié : chaque étape du workflow (section 2) doit 
 ## 5. Historique
 
 Voir `JOURNAL.md` à la racine pour l'historique détaillé session par session.
+
+## 6. Superpowers — usage restreint
+
+Le plugin Superpowers est installé (user scope) mais NE DOIT PAS remplacer le workflow standard
+de ce projet. Pour toute session VOLTA, c'est le workflow défini plus haut dans ce fichier
+(édition → build → grep → commit → PR → poll Vercel → merge) qui prime sur les skills génériques
+de Superpowers (TDD, brainstorming, debugging systématique, code-reviewer).
+
+N'invoque un skill Superpowers QUE si l'instruction le demande explicitement dans le prompt
+(ex: "utilise le skill de debugging systématique de Superpowers sur ce bug", "utilise l'agent
+code-reviewer avant de commit"). Par défaut, sans mention explicite, ignore Superpowers et
+applique le workflow standard.
