@@ -2,6 +2,15 @@ import { useRef, useState } from 'react'
 
 // Reveals action buttons (e.g. "Modifier"/"Supprimer") by swiping the row
 // left, instead of always-visible buttons cluttering the card.
+//
+// IMPORTANT: `children` must not carry its own bottom margin. The root div
+// below is overflow:hidden with no explicit height, so it auto-sizes from
+// `children`'s rendered box INCLUDING any trailing margin — but the
+// absolutely-positioned actions bar (top:0/bottom:0) stretches to fill that
+// same auto-height. A child margin makes the actions bar taller than the
+// child's own visible box, so the buttons peek out below the row at rest,
+// with no swipe involved (see JOURNAL.md, 2026-08-13). Use SwipeableRow's
+// own marginBottom (8px, below) for spacing between rows instead.
 export default function SwipeableRow({ children, actions }) {
   const [dragX, setDragX] = useState(0)
   const dragging = useRef(false)

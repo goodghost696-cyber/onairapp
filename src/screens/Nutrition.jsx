@@ -108,6 +108,16 @@ export default function Nutrition() {
   const [describeError, setDescribeError] = useState('')
   const [describeResult, setDescribeResult] = useState(null)
   const [describeMealType, setDescribeMealType] = useState('Déjeuner')
+  // "Corriger l'aliment" — lookupOFF() (foodEstimate.js) picks its best
+  // guess automatically, but a wrong auto-match (ex: "Riz cuit" matched to
+  // "Craquelins de riz cuits au four") had no way to be fixed short of
+  // deleting the item and re-describing the whole meal. correctingIndex is
+  // the describeResult.items index currently showing its search field (null
+  // = none open — only one item's correction UI is shown at a time).
+  const [correctingIndex, setCorrectingIndex] = useState(null)
+  const [correctionQuery, setCorrectionQuery] = useState('')
+  const [correctionResults, setCorrectionResults] = useState([])
+  const [correctionLoading, setCorrectionLoading] = useState(false)
   const [mealType, setMealType] = useState('Déjeuner')
   const [toast, setToast] = useState('')
   // Guards every "add this meal" button (recherche manuelle, décrire un
@@ -318,6 +328,7 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant ou après, avec exactement 
     setDescribeError('')
     setDescribeResult(null)
     setDescribeMealType('Déjeuner')
+    closeItemCorrection()
   }
 
   async function estimateMultipleFoods() {
@@ -349,7 +360,79 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant ou après, avec exactement 
   // pêche mais je ne peux pas") — fixed here and mirrored in Scan.jsx.
   function removeDescribeItem(index) {
     setDescribeResult(prev => ({ ...prev, items: prev.items.filter((_, i) => i !== index) }))
+    // Indices shift after a removal — closing rather than risking a stale
+    // correctingIndex silently correcting the wrong (now shifted) item.
+    closeItemCorrection()
   }
+
+  function openItemCorrection(index) {
+    setCorrectingIndex(index)
+    setCorrectionQuery('')
+    setCorrectionResults([])
+  }
+
+  function closeItemCorrection() {
+    setCorrectingIndex(null)
+    setCorrectionQuery('')
+    setCorrectionResults([])
+  }
+
+  // Applies a manually-picked OFF product to describeResult.items[correctingIndex]
+  // — grams stays exactly as already entered (not re-asked, per the fix
+  // request), only the per-100g values + displayed name change. The item's
+  // total (grams * kcal100/100, rendered inline) and the sheet's overall
+  // total (computeItemsTotal(describeResult.items), recomputed at render
+  // time from the same array) both pick up the correction automatically.
+  function applyItemCorrection(candidate) {
+    setDescribeResult(prev => {
+      const items = [...prev.items]
+      items[correctingIndex] = {
+        ...items[correctingIndex],
+        offName: candidate.name,
+        kcal100: candidate.kcal100,
+        prot100: candidate.prot100,
+        carb100: candidate.carb100,
+        fat100: candidate.fat100,
+        verified: true,
+      }
+      return { ...prev, items }
+    })
+    closeItemCorrection()
+  }
+
+  // Same debounce/proxy pattern as the manual food search above (api/food-search.js)
+  // — reuses the exact endpoint lookupOFF() itself calls, just with more
+  // results (5) shown so the member can pick in full knowledge (name +
+  // kcal/100g) instead of trusting a single auto-picked match.
+  useEffect(() => {
+    if (correctingIndex === null) return
+    const q = correctionQuery.trim()
+    if (q.length < 2) { setCorrectionResults([]); return }
+    const timer = setTimeout(async () => {
+      setCorrectionLoading(true)
+      try {
+        const res = await fetch(
+          `/api/food-search?q=${encodeURIComponent(q)}&page_size=5&fields=product_name,nutriments`,
+          { headers: await authHeader() }
+        )
+        const data = await res.json()
+        const results = (data.hits || [])
+          .filter(p => p.product_name && p.nutriments?.['energy-kcal_100g'])
+          .map(p => ({
+            name: p.product_name,
+            kcal100: Math.round(p.nutriments['energy-kcal_100g']),
+            prot100: Math.round((p.nutriments.proteins_100g || 0) * 10) / 10,
+            carb100: Math.round((p.nutriments.carbohydrates_100g || 0) * 10) / 10,
+            fat100: Math.round((p.nutriments.fat_100g || 0) * 10) / 10,
+          }))
+        setCorrectionResults(results)
+      } catch {
+        setCorrectionResults([])
+      }
+      setCorrectionLoading(false)
+    }, 400)
+    return () => clearTimeout(timer)
+  }, [correctionQuery, correctingIndex])
 
   async function addDescribedMeal() {
     if (!describeResult || isAddingMeal) return
@@ -1002,7 +1085,17 @@ Réponds en français.`
                         { label: 'Supprimer', color: 'var(--danger)', onClick: () => deleteMeal(meal.id) },
                       ]}
                     >
-                      <div className="card card-animated" style={{ marginBottom: 8, '--delay': `${160 + Math.min(i, 6) * 40}ms` }}>
+                      {/* marginBottom must stay 0 here — SwipeableRow's own
+                          root already carries marginBottom:8 for the gap
+                          between rows (SwipeableRow.jsx). Adding a second
+                          margin on the card INSIDE the swipe-clipped area
+                          made the outer wrapper's auto-height (which the
+                          absolutely-positioned action buttons stretch to
+                          fill) taller than the card's own visible box —
+                          the extra strip wasn't covered by anything, so the
+                          orange/red buttons peeked out below the card at
+                          rest, with no swipe involved. */}
+                      <div className="card card-animated" style={{ marginBottom: 0, '--delay': `${160 + Math.min(i, 6) * 40}ms` }}>
                         <div className="flex justify-between items-center">
                           <div style={{ flex: 1 }}>
                             <div className="flex items-center gap-8" style={{ marginBottom: 4 }}>
@@ -1329,6 +1422,60 @@ Réponds en français.`
                             {item.verified && item.offName && (
                               <div className="text-xs text-muted" style={{ marginTop: 2 }}>
                                 Correspondance OFF : {item.offName}
+                              </div>
+                            )}
+                            {/* Discret par défaut — un lien texte, pas un
+                                champ toujours visible, pour ne pas alourdir
+                                une liste déjà dense. Révèle la recherche
+                                seulement au clic, pour CET item précis. */}
+                            {correctingIndex !== i ? (
+                              <button
+                                type="button"
+                                onClick={() => openItemCorrection(i)}
+                                style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: 11, fontWeight: 600, cursor: 'pointer', padding: 0, marginTop: 4, display: 'block' }}
+                              >
+                                Corriger l'aliment
+                              </button>
+                            ) : (
+                              <div style={{ marginTop: 6 }}>
+                                <input
+                                  autoFocus
+                                  type="text"
+                                  value={correctionQuery}
+                                  onChange={e => setCorrectionQuery(e.target.value)}
+                                  placeholder="Chercher un autre produit..."
+                                  style={{ width: '100%', padding: '8px 10px', fontSize: 13, marginBottom: 6 }}
+                                />
+                                {correctionLoading && <p className="text-xs text-muted" style={{ margin: '0 0 6px' }}>Recherche...</p>}
+                                {!correctionLoading && correctionResults.length > 0 && (
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginBottom: 6 }}>
+                                    {correctionResults.map((c, ci) => (
+                                      <button
+                                        key={ci}
+                                        type="button"
+                                        onClick={() => applyItemCorrection(c)}
+                                        style={{
+                                          textAlign: 'left', display: 'flex', justifyContent: 'space-between', gap: 8,
+                                          background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 8,
+                                          padding: '6px 10px', cursor: 'pointer', color: 'var(--text-primary)', fontSize: 12,
+                                        }}
+                                      >
+                                        <span>{c.name}</span>
+                                        <span className="text-muted" style={{ flexShrink: 0 }}>{c.kcal100} kcal/100g</span>
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
+                                {!correctionLoading && correctionQuery.trim().length >= 2 && correctionResults.length === 0 && (
+                                  <p className="text-xs text-muted" style={{ margin: '0 0 6px' }}>Aucun résultat.</p>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={closeItemCorrection}
+                                  style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: 11, cursor: 'pointer', padding: 0 }}
+                                >
+                                  Annuler
+                                </button>
                               </div>
                             )}
                           </div>
