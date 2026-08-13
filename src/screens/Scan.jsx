@@ -47,6 +47,11 @@ export default function Scan() {
   const [error, setError] = useState(null)
   const [result, setResult] = useState(null)
   const [selectedMeal, setSelectedMeal] = useState('Déjeuner')
+  // Same class of bug as Nutrition.jsx's add buttons — the button wasn't
+  // disabled while addMeal() was in flight, so a double-tap before the
+  // first insert resolved (and before the navigate('/nutrition') below)
+  // could insert the same meal twice.
+  const [adding, setAdding] = useState(false)
   // Photo and Code-barres used to be 2 separate full-width buttons that
   // looked identical until tapped — both just open the same native camera
   // capture input, only the mode (and therefore the prompt sent to Claude)
@@ -207,18 +212,23 @@ export default function Scan() {
   }
 
   async function handleAddToMeal() {
-    if (!result) return
-    const t2 = computeItemsTotal(result.data.items)
-    await addMeal({
-      name: result.data.meal_name,
-      calories: Math.round(t2.kcal),
-      protein: Math.round(t2.proteins),
-      carbs: Math.round(t2.carbs),
-      fat: Math.round(t2.fats),
-      nutriscore: result.data.nutriscore || 'B',
-      mealType: selectedMeal,
-    })
-    navigate('/nutrition')
+    if (!result || adding) return
+    setAdding(true)
+    try {
+      const t2 = computeItemsTotal(result.data.items)
+      await addMeal({
+        name: result.data.meal_name,
+        calories: Math.round(t2.kcal),
+        protein: Math.round(t2.proteins),
+        carbs: Math.round(t2.carbs),
+        fat: Math.round(t2.fats),
+        nutriscore: result.data.nutriscore || 'B',
+        mealType: selectedMeal,
+      })
+      navigate('/nutrition')
+    } finally {
+      setAdding(false)
+    }
   }
 
   return (
@@ -400,8 +410,8 @@ export default function Scan() {
                 </button>
               ))}
             </div>
-            <button className="scan-add-btn" onClick={handleAddToMeal} disabled={result.data.items.length === 0}>
-              {t('add_to_meal')}
+            <button className="scan-add-btn" onClick={handleAddToMeal} disabled={result.data.items.length === 0 || adding}>
+              {adding ? 'Ajout...' : t('add_to_meal')}
             </button>
             <button className="scan-retry-btn" onClick={() => { setResult(null); setError(null) }}>
               {t('retry')}

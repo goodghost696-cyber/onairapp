@@ -19,6 +19,13 @@ const RECIPE_LOADING_MESSAGES = [
   'Presque prêt...',
 ]
 
+// Shown instead of whatever the API/proxy actually said (rate limit, quota,
+// a validation error like "max_tokens must be between 1 and 1500"...) — none
+// of that is meaningful to a member, and surfacing it raw reads as the app
+// being broken. The real message is still console.error'd at each call site
+// for debugging.
+const GENERIC_AI_ERROR = 'Une erreur est survenue, réessaie.'
+
 // Left with nothing but a calorie/macro budget and a meal type, the model
 // converges on the same "safe" answer every time (protéiné + léger →
 // systématiquement œufs/épinards) — nutritionally fine, but it reads as
@@ -103,6 +110,13 @@ export default function Nutrition() {
   const [describeMealType, setDescribeMealType] = useState('Déjeuner')
   const [mealType, setMealType] = useState('Déjeuner')
   const [toast, setToast] = useState('')
+  // Guards every "add this meal" button (recherche manuelle, décrire un
+  // repas, recette IA) — none of them disabled themselves while addMeal()
+  // was in flight, so several taps/clicks before the first insert resolved
+  // fired one addMeal() call each, landing the same meal 2-3x in `repas`.
+  // One shared flag is enough: only one of these sheets is ever open/usable
+  // at a time.
+  const [isAddingMeal, setIsAddingMeal] = useState(false)
   // "REPAS D'AUJOURD'HUI" showed every meal unconditionally — fine early
   // in the day, becomes an endless scroll by evening. Show the 3 most
   // recent directly (still visible at a glance, no tap needed) with a
@@ -338,20 +352,25 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant ou après, avec exactement 
   }
 
   async function addDescribedMeal() {
-    if (!describeResult) return
-    const total = computeItemsTotal(describeResult.items)
-    await addMeal({
-      name: describeResult.meal_name,
-      calories: Math.round(total.kcal),
-      protein: Math.round(total.proteins),
-      carbs: Math.round(total.carbs),
-      fat: Math.round(total.fats),
-      nutriscore: 'B',
-      mealType: describeMealType,
-    })
-    setDescribeSheetOpen(false)
-    setToast(`Ajouté au ${describeMealType}`)
-    setTimeout(() => setToast(''), 2000)
+    if (!describeResult || isAddingMeal) return
+    setIsAddingMeal(true)
+    try {
+      const total = computeItemsTotal(describeResult.items)
+      await addMeal({
+        name: describeResult.meal_name,
+        calories: Math.round(total.kcal),
+        protein: Math.round(total.proteins),
+        carbs: Math.round(total.carbs),
+        fat: Math.round(total.fats),
+        nutriscore: 'B',
+        mealType: describeMealType,
+      })
+      setDescribeSheetOpen(false)
+      setToast(`Ajouté au ${describeMealType}`)
+      setTimeout(() => setToast(''), 2000)
+    } finally {
+      setIsAddingMeal(false)
+    }
   }
 
   function openRecipeSheet(source) {
@@ -468,13 +487,19 @@ Réponds en français.`
         headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
         body: JSON.stringify({
           model: 'claude-haiku-4-5-20251001',
-          max_tokens: 2200,
+          // Was 2200 — above the proxy's own MAX_TOKENS_CAP (api/claude.js,
+          // 1500), so every call here failed its server-side validation and
+          // surfaced the raw "max_tokens must be between 1 and 1500" error
+          // straight to the member. 3 concise JSON recipes fit comfortably
+          // under 1500.
+          max_tokens: 1500,
           messages: [{ role: 'user', content: prompt }],
         }),
       })
       if (!res.ok) {
-        const err = await res.json()
-        throw new Error(err.error || `HTTP ${res.status}`)
+        const err = await res.json().catch(() => ({}))
+        console.error('[Nutrition] generateRecipe: /api/claude request failed', res.status, err.error)
+        throw new Error(GENERIC_AI_ERROR)
       }
       const data = await res.json()
       const raw = data.content?.[0]?.text || ''
@@ -550,7 +575,9 @@ Réponds en français.`
         headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
         body: JSON.stringify({
           model: 'claude-haiku-4-5-20251001',
-          max_tokens: 2200,
+          // Same fix as generateRecipe above — was 2200, over the proxy's
+          // 1500 cap (api/claude.js).
+          max_tokens: 1500,
           messages: [{
             role: 'user',
             content: [
@@ -561,8 +588,9 @@ Réponds en français.`
         }),
       })
       if (!res.ok) {
-        const err = await res.json()
-        throw new Error(err.error || `HTTP ${res.status}`)
+        const err = await res.json().catch(() => ({}))
+        console.error('[Nutrition] generateRecipeFromPhoto: /api/claude request failed', res.status, err.error)
+        throw new Error(GENERIC_AI_ERROR)
       }
       const data = await res.json()
       const raw = data.content?.[0]?.text || ''
@@ -658,8 +686,9 @@ Réponds en français.`
         }),
       })
       if (!res.ok) {
-        const err = await res.json()
-        throw new Error(err.error || `HTTP ${res.status}`)
+        const err = await res.json().catch(() => ({}))
+        console.error('[Nutrition] generateRecipeFromLink: /api/claude request failed', res.status, err.error)
+        throw new Error(GENERIC_AI_ERROR)
       }
       const data = await res.json()
       const raw = data.content?.[0]?.text || ''
@@ -680,35 +709,45 @@ Réponds en français.`
   }
 
   async function addRecipeAsMeal() {
-    if (!recipe) return
-    await addMeal({
-      name: recipe.recipe_name,
-      calories: recipe.kcal,
-      protein: recipe.proteins,
-      carbs: recipe.carbs,
-      fat: recipe.fats,
-      nutriscore: 'B',
-      mealType: recipeMealType,
-    })
-    setRecipeSheetOpen(false)
-    setToast('Recette ajoutée à ton journal')
-    setTimeout(() => setToast(''), 2000)
+    if (!recipe || isAddingMeal) return
+    setIsAddingMeal(true)
+    try {
+      await addMeal({
+        name: recipe.recipe_name,
+        calories: recipe.kcal,
+        protein: recipe.proteins,
+        carbs: recipe.carbs,
+        fat: recipe.fats,
+        nutriscore: 'B',
+        mealType: recipeMealType,
+      })
+      setRecipeSheetOpen(false)
+      setToast('Recette ajoutée à ton journal')
+      setTimeout(() => setToast(''), 2000)
+    } finally {
+      setIsAddingMeal(false)
+    }
   }
 
   async function addFood() {
-    if (!selectedFood || !preview) return
-    await addMeal({
-      name: `${selectedFood.name} (${grams}g)`,
-      calories: preview.kcal,
-      protein: preview.proteins,
-      carbs: preview.carbs,
-      fat: preview.fats,
-      nutriscore: selectedFood.nutriscore || 'B',
-      mealType,
-    })
-    setSheetOpen(false)
-    setToast(`Ajouté au ${mealType}`)
-    setTimeout(() => setToast(''), 2000)
+    if (!selectedFood || !preview || isAddingMeal) return
+    setIsAddingMeal(true)
+    try {
+      await addMeal({
+        name: `${selectedFood.name} (${grams}g)`,
+        calories: preview.kcal,
+        protein: preview.proteins,
+        carbs: preview.carbs,
+        fat: preview.fats,
+        nutriscore: selectedFood.nutriscore || 'B',
+        mealType,
+      })
+      setSheetOpen(false)
+      setToast(`Ajouté au ${mealType}`)
+      setTimeout(() => setToast(''), 2000)
+    } finally {
+      setIsAddingMeal(false)
+    }
   }
 
   function openEditMeal(meal) {
@@ -1210,7 +1249,7 @@ Réponds en français.`
                 }}>{mt}</button>
               ))}
             </div>
-            <button className="btn-accent" onClick={addFood}>{t('add')}</button>
+            <button className="btn-accent" onClick={addFood} disabled={isAddingMeal}>{isAddingMeal ? 'Ajout...' : t('add')}</button>
           </>
         )}
       </div>
@@ -1334,7 +1373,7 @@ Réponds en français.`
                       }}>{mt}</button>
                     ))}
                   </div>
-                  <button className="btn-accent" onClick={addDescribedMeal} disabled={describeResult.items.length === 0}>{t('add')}</button>
+                  <button className="btn-accent" onClick={addDescribedMeal} disabled={describeResult.items.length === 0 || isAddingMeal}>{isAddingMeal ? 'Ajout...' : t('add')}</button>
                 </>
               )
             })()
@@ -1505,7 +1544,7 @@ Réponds en français.`
                   <div className="text-xs text-muted" style={{ marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Préparation</div>
                   <p className="text-sm text-primary" style={{ margin: 0, lineHeight: 1.5 }}>{recipe.instructions}</p>
                 </div>
-                <button className="btn-accent" onClick={addRecipeAsMeal} style={{ marginBottom: 8 }}>Ajouter ce repas</button>
+                <button className="btn-accent" onClick={addRecipeAsMeal} disabled={isAddingMeal} style={{ marginBottom: 8 }}>{isAddingMeal ? 'Ajout...' : 'Ajouter ce repas'}</button>
                 {recipeOptions.length > 1 && (
                   <button className="scan-retry-btn" style={{ marginBottom: 8 }} onClick={() => setRecipe(null)}>← Revoir les autres options</button>
                 )}

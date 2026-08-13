@@ -45,6 +45,16 @@ Il existait déjà une "charte ON AIR Neon" documentée plus bas dans ce journal
 - `@phosphor-icons/react` uniquement pour la nav (bottom nav membre + nav coach) — son prop `weight` donne un état actif "plein" vs "contour" sans changement de couleur
 - Emoji conservés à quelques endroits précis et délibérés après itération (météo du Dashboard, sélecteur d'eau, toast de bienvenue) — jamais comme icône UI générique, seulement là où un pictogramme dessiné n'apportait rien de mieux (voir suites 77-81 pour l'historique de l'icône eau, 5 itérations avant 🥛)
 
+## 2026-08-13 — Deux bugs de test manuel : soumission en double + erreur API brute affichée
+
+Deux bugs remontés en test réel, corrigés dans cette passe (matching Open Food Facts et swipe des cartes non touchés, traités séparément) :
+
+**Bug 1 — soumission en double sur les boutons "+ AJOUTER"** — aucun des 4 boutons d'ajout de repas (recherche manuelle `addFood`, "Décrire un repas" `addDescribedMeal`, recette IA `addRecipeAsMeal` dans `Nutrition.jsx`, et `handleAddToMeal` dans `Scan.jsx`) ne se désactivait pendant l'insertion — plusieurs clics avant la fin du premier appel réseau créaient autant de repas identiques en base. Ajout d'un état `isAddingMeal` (partagé, un seul flux d'ajout actif à la fois) dans `Nutrition.jsx` et `adding` dans `Scan.jsx` : les fonctions ignorent les appels tant qu'un ajout est en cours, les boutons sont désactivés avec un texte "Ajout..." pendant ce temps.
+
+**Bug 2 — erreur API brute affichée ("Erreur : max_tokens must be between 1 and 1500")** — `generateRecipe` et `generateRecipeFromPhoto` ("Idée recette" / "recette depuis mon frigo", `Nutrition.jsx`) envoyaient `max_tokens: 2200`, au-dessus du plafond serveur (`api/claude.js`, `MAX_TOKENS_CAP = 1500`) — chaque appel échouait donc systématiquement à la validation, avec le message brut de l'API remonté tel quel à l'écran. Ramené à `1500` pour les deux. Ajouté un message générique côté client ("Une erreur est survenue, réessaie.") pour toute erreur technique venant de `/api/claude`, appliqué aux 3 fonctions recette de `Nutrition.jsx` et à `estimateFoodsFromText` (`utils/foodEstimate.js`, flux "Décrire un repas") — le détail réel reste loggé en `console.error` pour le débogage. Les messages déjà curés côté serveur (ex: `api/recipe-from-link.js` — "Lien invalide", "Impossible de lire cette vidéo...") ne sont pas touchés, ils restent utiles tels quels.
+
+Build vérifié (`npm run build`), grep du bundle compilé confirmant l'absence de `2200`, la présence de `1500` (x2), du message générique, et des 3 occurrences de "Ajout..." dans `Nutrition-*.js` + 1 dans `Scan-*.js`.
+
 ## 2026-08-13 — Nutrition : regroupement des repas par type + meilleure sélection Open Food Facts
 
 Suite à l'investigation Nutrition (regroupement des repas + précision OFF, fuseau DB confirmé UTC — piste écartée) :

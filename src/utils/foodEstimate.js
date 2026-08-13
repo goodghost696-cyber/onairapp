@@ -2,6 +2,10 @@ import { authHeader } from '../lib/supabase'
 
 const LANG_NAMES = { fr: 'français', en: 'English', es: 'español' }
 
+// Same reasoning as Nutrition.jsx's own GENERIC_AI_ERROR — a raw proxy/API
+// error (rate limit, quota, validation...) isn't meaningful to a member.
+const GENERIC_AI_ERROR = 'Une erreur est survenue, réessaie.'
+
 // Strips accents/case so "Oeuf" and "œuf" (or an OFF entry in a slightly
 // different form) compare equal — no need for a real i18n string library
 // for this one comparison.
@@ -132,8 +136,9 @@ Réponds en ${langName}. Les noms des aliments doivent être en ${langName}.`
     }),
   })
   if (!response.ok) {
-    const err = await response.json()
-    throw new Error(err.error || `HTTP ${response.status}`)
+    const err = await response.json().catch(() => ({}))
+    console.error('[foodEstimate] estimateFoodsFromText: /api/claude request failed', response.status, err.error)
+    throw new Error(GENERIC_AI_ERROR)
   }
   const data = await response.json()
   const raw = data.content?.[0]?.text || ''
