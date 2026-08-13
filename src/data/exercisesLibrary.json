@@ -1,0 +1,1769 @@
+{
+  "source": "wger.de API v2 — https://wger.de/api/v2/",
+  "license": "CC-BY-SA 4.0 — https://creativecommons.org/licenses/by-sa/4.0/",
+  "generated": "2026-08-13T18:43:54.600Z",
+  "maison": [
+    {
+      "id": "w_abduction_de_hanche_en_decubitus_lateral",
+      "name": "Abduction de hanche en décubitus latéral",
+      "muscles": "Jambes",
+      "type": "Jambes",
+      "instructions": "- Commencez allongé sur le côté, la jambe supérieure tendue et la jambe inférieure fléchie pour le soutien.\n\n- Soulevez votre jambe supérieure du sol\n\n- (facultatif) - Maintenez la position en haut\n\nRessources :\n\n- Vidéo YouTube de 40 secondes : https://www.youtube.com/watch?v=g9FtnmsIYgI",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_abduction_debout",
+      "name": "Abduction debout",
+      "muscles": "Jambes",
+      "type": "Jambes",
+      "instructions": "Travailler une posture stable, principalement sur une seule jambe, est essentiel pour les deux côtés. D'une part, cela prévient les inconforts et, d'autre part, cela établit une base solide. Le pratiquant adopte la position debout habituelle et, le haut du corps stable, tente de lever à plusieurs reprises la jambe non chargée, de la fléchir au niveau de la hanche et du genou, puis de la rabaisser. Le mouvement est également répété de l'autre côté. L'exercice travaille la stabilité des muscles entourant la hanche.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_abductors",
+      "name": "Abductors",
+      "muscles": "Fessiers",
+      "type": "Jambes",
+      "instructions": "Based on Abductors Sel. by Technogym.\nPosition yourself on the machine and open your legs as much as possible.\nReturn slowly to the original position.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_adductors",
+      "name": "Adductors",
+      "muscles": "Fessiers",
+      "type": "Jambes",
+      "instructions": "Based on Adductor Sel. by Technogym.\nSit on the machine and set the rest position to a comfortable opening angle.\nClose your legs.\nGently return to the rest position.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_ange_de_neige_inverse",
+      "name": "Ange de neige inversé",
+      "muscles": "Trapèzes · Épaules · Ischio-jambiers · Fessiers · Obliques · Abdos",
+      "type": "Dos",
+      "instructions": "Allongez-vous à plat ventre, les bras tendus devant vous au sol et les jambes posées à plat. Levez vos deux bras et déplacez-les lentement vers vos côtés. Puis ramenez-les en arrière.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_arabesque",
+      "name": "Arabesque",
+      "muscles": "Ischio-jambiers · Fessiers",
+      "type": "Jambes",
+      "instructions": "Reportez tout votre poids sur une seule jambe et maintenez cette position, en gardant les hanches et le bassin à niveau pendant toute la durée du mouvement. Le dos en position neutre, penchez-vous vers l'avant en projetant votre jambe vers l'arrière, puis revenez lentement à la position neutre en contractant vos fessiers.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_band_terminal_knee_extension",
+      "name": "Band Terminal Knee extension",
+      "muscles": "Quadriceps",
+      "type": "Jambes",
+      "instructions": "This is an end range strengthening exercise for the knee extensors. Start by looping a band around the back of one knee and anchoring the other end to a stable surface in front of you. Stand in a split stance with the banded knee bent and placed as the front leg. Straighten the knee to pull against the bands resistance and maintain a contraction in your quadriceps for up to 5 seconds before releasing.",
+      "equipment": "Élastique"
+    },
+    {
+      "id": "w_biceps_au_trx",
+      "name": "Biceps au TRX",
+      "muscles": "Biceps",
+      "type": "Bras",
+      "instructions": "Saisissez les poignées des sangles TRX, inclinez le corps vers l'arrière, bras et jambes tendus, le corps aligné sur une seule ligne droite. (Il s'agit d'un exercice pour les bras, et non pour les abdominaux.)",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_bird_dog_core_l1",
+      "name": "Bird Dog (Core L1)",
+      "muscles": "Abdos",
+      "type": "Abdos",
+      "instructions": "Vasco custom bird dog - foundational contralateral limb coordination and lumbar stability. Teaches hip dissociation from spine, glute activation, and scapular control.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_bobbing_exhale_drill",
+      "name": "Bobbing Exhale Drill",
+      "muscles": "Abdos",
+      "type": "Cardio",
+      "instructions": "Stand in chest-deep water. Take a breath, submerge your face fully, and exhale slowly and completely through your nose and/or mouth the whole time you're underwater — a gentle humming sound can help keep the exhale steady and controlled. Once you're empty of air, lift your head, take a fresh breath, and go back under. Repeat continuously. The goal is training your body that all your exhaling happens underwater, so all you need to do at the surface is inhale.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_body_ups",
+      "name": "Body-Ups",
+      "muscles": "Triceps · Épaules · Abdos",
+      "type": "Bras",
+      "instructions": "- Placez-vous en position de planche au sol. Vous devez supporter le poids de votre corps sur les orteils et les avant-bras, en gardant le torse droit. Vos avant-bras doivent être écartés à la largeur des épaules. Ce sera votre position de départ.\n\n- En appuyant fermement les paumes contre le sol, tendez les coudes pour soulever votre corps du sol. Gardez le torse rigide pendant le mouvement.\n\n- Abaissez lentement les avant-bras vers le sol en laissant les coudes se fléchir.\n\n- Répétez autant de fois que nécessaire.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_box_squat",
+      "name": "Box squat",
+      "muscles": "Fessiers · Quadriceps · Mollets",
+      "type": "Jambes",
+      "instructions": "- Installez la box : Placez la box derrière vous, à environ un mètre d'un rack à squat si vous utilisez une barre. Choisissez une hauteur qui vous permette de descendre en squat et d'effleurer doucement la box avec les fessiers, le dos droit.\n\n- Adoptez une bonne posture : Tenez-vous debout, les pieds écartés à la largeur des épaules, les pointes de pieds légèrement vers l'extérieur. Engagez la sangle abdominale et gardez le dos neutre. Si vous utilisez une barre, placez-la à hauteur d'épaule.\n\n- Descendez : Asseyez-vous vers l'arrière comme pour vous installer sur une chaise, en fléchissant les genoux et en abaissant les hanches vers la box. Gardez la sangle abdominale gainée et le dos droit tout au long du mouvement.\n\n- Descente contrôlée : Descendez de manière contrôlée jusqu'à ce que les fessiers touchent doucement la box. Ne vous laissez pas tomber.\n\n- Pause et poussée : Marquez brièvement une pause en position basse, le dos droit et la sangle abdominale gainée. Poussez ensuite à travers les talons pour vous propulser de nouveau à la position de départ.\n\nAmélioration de la coordination, de l'équilibre et de l'endurance, tonification des muscles des jambes et des fessiers, et augmentation globale de la densité osseuse réduisant le risque d'ostéoporose.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_burpees_4_phases",
+      "name": "Burpees (4 phases)",
+      "muscles": "Pectoraux",
+      "type": "Pectoraux",
+      "instructions": "Position de départ :\n\nTenez-vous droit, les pieds écartés de la largeur des hanches.\n\nÉtapes :\n\n- Accroupissez-vous et prenez appui sur le sol avec les mains entre les genoux et devant les pieds, le dos droit.\n\n- En gardant les mains sur le sol, sautez vos jambes vers l'arrière en position de planche haute.\n\n- Sautez vers l'avant pour revenir à la position de squat.\n\n- Répétez l'exercice.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_burpees_avec_pompes",
+      "name": "Burpees avec pompes",
+      "muscles": "Pectoraux",
+      "type": "Pectoraux",
+      "instructions": "Position de départ :\n\nTenez-vous droit, les pieds écartés de la largeur des hanches.\n\nÉtapes :\n\n- Accroupissez-vous et prenez appui sur le sol avec les mains entre les genoux et devant les pieds, le dos droit.\n\n- En gardant les mains sur le sol, lancez vos jambes vers l'arrière en position de planche haute.\n\n- Effectuez une pompe.\n\n- Remettez vos pieds vers l'avant pour revenir à la position de squat.\n\n- Répétez.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_burpees_sans_saut",
+      "name": "Burpees sans saut",
+      "muscles": "Pectoraux",
+      "type": "Pectoraux",
+      "instructions": "Position de départ :\n\nSe tenir droit, les pieds écartés de la largeur des hanches.\n\nÉtapes:\n\n- Accroupissez-vous et appuyez-vous sur le sol avec vos mains entre les genoux et devant vos pieds, le dos droit.\n\n- En gardant les mains au sol, donnez une impulsion pour envoyer vos jambes vers l'arrière en position de planche haute.\n\n- Donnez une nouvelle impulsion pour revenir à la position accroupie.\n\n- Sautez.\n\n- Répétez.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_butterfly_superman",
+      "name": "Butterfly Superman",
+      "muscles": "Trapèzes",
+      "type": "Dos",
+      "instructions": "Lie on stomach, intertwine fingers behind the head and start raising your head and raise elbows as far as they go.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_cercle_arriere_des_bras",
+      "name": "Cercle arrière des bras",
+      "muscles": "Bras",
+      "type": "Bras",
+      "instructions": "- Tenez-vous debout, le dos droit.\n\n- Gardez vos bras tendus, amenez-les devant vous, levez-les au-dessus de votre tête, puis continuez le mouvement derrière votre dos jusqu'à revenir en position initiale.\n\n- Continuez à faire des cercles comme décrit à l'étape 2.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_cercles_avant_des_bras",
+      "name": "Cercles avant des bras",
+      "muscles": "Bras",
+      "type": "Bras",
+      "instructions": "- Tenez-vous debout, le dos bien droit.\n\n- Gardez vos bras droits, amenez les devant vous, puis vers le bas, puis derrière votre dos, puis au dessus de votre tête, puis ramenez les en position initiale, devant vous.\n\n- Continuez à faire des cercles avec vos bras comme décrit à l'étape 2.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_clamshell_inverse",
+      "name": "Clamshell inversé",
+      "muscles": "Fessiers",
+      "type": "Jambes",
+      "instructions": "Allongez-vous sur le côté, les hanches et les genoux fléchis, en gardant les genoux superposés l'un sur l'autre. Gardez d'abord les pieds joints, puis, tout en gardant les genoux en contact, levez le pied supérieur vers le haut. Abaissez lentement le pied en gardant le contrôle.\n\nLe mouvement doit se faire uniquement au niveau de la hanche ; évitez de basculer le bassin vers l'arrière. Le mouvement doit rester petit, contrôlé et centré sur la rotation de la hanche.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_corde_a_sauter_sauts_de_base",
+      "name": "Corde à sauter : sauts de base",
+      "muscles": "Cardio",
+      "type": "Cardio",
+      "instructions": "Cet exercice nécessite une corde à sauter. Assurez-vous que la longueur de la corde est adaptée à votre taille. Une mamière de vérifier est de saisir les deux poignées d'une main et de se tenir au milieu de la corde suspendue au sol avec un pied. Si la corde (sans les poignées) arrive juste sous votre poitrine, sa longueur est correcte. Une corde plus courte serait dangereuse, car vous risqueriez de vous cogner, et une corde plus longue serait mauvaise pour la forme.\n\n- Rapprochez vos pieds, pliez un peu les genoux, gardez la tête et le corps droits, gardez les coudes rentrés, ouvrez les bras.\n\n- Faites tourner uniquement vos poignets avec suffisamment de force pour faire tourner la corde.\n\n- Sautez juste assez haut pour faire passer la corde sous vos pieds.\n\n- Répétez à partir de l'étape 2.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_curl_biceps_a_un_bras_au_trx",
+      "name": "Curl biceps à un bras au TRX",
+      "muscles": "Biceps · Brachial · Épaules · Trapèzes",
+      "type": "Bras",
+      "instructions": "Étape 1 : Tenez-vous confortablement et saisissez les poignées du système de suspension. Étape 2 : Penchez-vous vers l'arrière en reportant votre poids sur un bras, la colonne vertébrale en position neutre. Étape 3 : Effectuez lentement un curl pour amener le poids de votre corps vers le haut. Tournez le bras en supination et contractez à l'approche de la position finale. Étape 4 : Redescendez et répétez.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_curl_biceps_gorille_au_trx",
+      "name": "Curl biceps gorille au TRX",
+      "muscles": "Brachial · Biceps",
+      "type": "Bras",
+      "instructions": "Nous nous tiendrons face aux sangles du TRX et les saisirons les poings se faisant face, dirigés vers l'avant, les bras complètement tendus et écartés d'environ la largeur des épaules. Nous garderons notre corps droit, incliné vers l'arrière, comme dans les exercices précédents, puisque nous soulèverons notre corps vers les sangles du TRX en activant nos biceps. Notre corps sera droit, les pieds à plat sur le sol. Cette fois, nous placerons nos bras ouverts sur les côtés et à hauteur de poitrine. Le mouvement à réaliser est une contraction vers la poitrine. Pour cela, nous plierons les coudes afin que, en activant nos biceps, nous puissions tirer notre corps vers les sangles.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_curl_marteau_au_trx",
+      "name": "Curl marteau au TRX",
+      "muscles": "Biceps",
+      "type": "Bras",
+      "instructions": "Placez les poignées comme si elles étaient le prolongement des sangles. Nous positionnerons nos bras tendus vers l'avant et notre corps penché vers l'arrière, complètement droit. Les biceps s'activeront lorsque vous plierez les coudes pour rapprocher votre corps des sangles. Le mouvement de contraction se terminera par un léger mouvement des mains vers l'extérieur, du fait de la prise utilisée.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_cyclisme",
+      "name": "Cyclisme",
+      "muscles": "Obliques · Trapèzes · Ischio-jambiers · Brachial · Fessiers · Dos · Quadriceps",
+      "type": "Cardio",
+      "instructions": "Le cyclisme, aussi appelé vélo, désigne l'utilisation de la bicyclette pour le transport, les loisirs, l'exercice ou le sport. Les personnes qui pratiquent le cyclisme sont appelées cyclistes. Outre les bicyclettes à deux roues, le cyclisme inclut également la pratique du monocycle, du tricycle, du quadricycle, du vélo couché et d'autres véhicules à propulsion humaine similaires.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_deadbug",
+      "name": "Deadbug",
+      "muscles": "Abdos · Obliques",
+      "type": "Abdos",
+      "instructions": "Allongez-vous sur le dos, les hanches et les genoux fléchis à 90°. Levez les deux bras vers le plafond. Plaquez le bas de votre dos contre le sol pour supprimer tout espace. Commencez en tendant une jambe et en touchant le sol avec le talon. À mesure que vous tendez une jambe, expirez autant que possible en gardant le bas du dos collé au sol. Lorsque vous ne pouvez plus expirer, ramenez votre genou vers la position de départ. Rendez l'exercice plus difficile en tenant un poids dans les mains, ou en abaissant simultanément le bras et la jambe opposés.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_deadhang",
+      "name": "Deadhang",
+      "muscles": "Bras",
+      "type": "Bras",
+      "instructions": "Deadhang performed on an edge either with or without added weight (adujst edge or weight to adjust difficulty)",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_developpe_incline_a_la_smith_machine",
+      "name": "Développé incliné à la Smith machine",
+      "muscles": "Pectoraux",
+      "type": "Pectoraux",
+      "instructions": "* Exécution * Position de départ :\n\n- Déverrouillez la barre et tenez-la au-dessus du haut de votre poitrine, bras complètement tendus.\n\n- Gardez vos omoplates rétractées et plaquées contre le banc.\n\n- Phase de descente (excentrique) :\n\n- Abaissez lentement la barre jusqu'à juste en dessous de votre clavicule ou du haut de votre poitrine.\n\n- Gardez le contrôle, ne faites pas rebondir la barre.\n\n- Phase de poussée (concentrique) :\n\n- Poussez la barre vers le haut en ligne droite jusqu'à l'extension complète des bras.\n\n- Concentrez-vous sur la contraction du haut de vos pectoraux en haut du mouvement.\n\n- Verrouillez et répétez :\n\n- Terminez vos répétitions, puis reposez la barre en toute sécurité sur les crochets.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_dips_au_sol",
+      "name": "Dips au sol",
+      "muscles": "Triceps · Épaules · Pectoraux",
+      "type": "Bras",
+      "instructions": "Position de départ :\n\nAsseyez-vous, les bras derrière vous pour soutenir le dos. Vos doigts doivent pointer vers l'avant. Vos genoux doivent être fléchis, les pieds joints.\n\nÉtapes :\n\n- Soulevez les hanches du sol en tendant les bras.\n\n- Fléchissez les coudes en abaissant les hanches.\n\n- Tendez les bras pour revenir à la position précédente.\n\n- Répétez les étapes 2 et 3.\n\nNotes :\n\nLa difficulté de l'exercice dépend de la hauteur à laquelle vous montez les hanches.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_easy_continuous_swim_freestyle",
+      "name": "Easy Continuous Swim (Freestyle)",
+      "muscles": "Épaules · Dos · Pectoraux · Ischio-jambiers · Mollets · Fessiers · Quadriceps · Abdos · Triceps",
+      "type": "Cardio",
+      "instructions": "Swim freestyle at a relaxed, steady pace without stopping — think conversation pace, not racing. Focus on smooth, even strokes rather than speed or breathing technique; this is just to get your body moving and your heart rate up.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_elevation_trapeze_inferieur_trap_3",
+      "name": "Élévation trapèze inférieur (Trap-3)",
+      "muscles": "Trapèzes",
+      "type": "Dos",
+      "instructions": "- Penchez-vous vers l'avant et fléchissez légèrement les genoux. Abaissez et rétractez l'épaule que vous allez utiliser. Posez l'autre main sur votre genou.\n\n- Levez la main d'environ 15 degrés au-dessus de la tête, en maintenant la position de votre épaule.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_elevations_vers_le_plafond",
+      "name": "Élévations vers le plafond",
+      "muscles": "Obliques · Abdos",
+      "type": "Abdos",
+      "instructions": "Pour réaliser cet exercice, allongez-vous sur le dos, les bras tendus au-dessus de la tête. Contractez ensuite vos abdominaux et décollez votre torse du sol tout en tendant vos bras vers le plafond afin d'atteindre le plus haut possible. Revenez lentement à la position de départ en contrôlant le mouvement. Ces élévations renforcent les muscles abdominaux et améliorent la souplesse de la colonne vertébrale. Elles peuvent être intégrées à diverses routines d'entraînement pour travailler la force et la stabilité de la sangle abdominale.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_enrouleur_de_poignet_debout",
+      "name": "Enrouleur de poignet debout",
+      "muscles": "Bras",
+      "type": "Bras",
+      "instructions": "Saisissez un enrouleur de poignet à deux mains, debout, les pieds écartés à environ la largeur des épaules. Si votre salle ne dispose pas d'un enrouleur de poignet, vous pouvez facilement en fabriquer un. Il vous suffit d'un disque de 2 à 5 kg, d'une corde fine et solide d'environ 1 mètre de long, et d'un bâton ou d'une barre de 15 à 20 cm. Fixez solidement la corde au milieu de la barre ou du bâton, puis attachez l'autre extrémité de la corde au disque. Pour commencer cet exercice, saisissez la barre ou le bâton à deux mains en prise pronation. Tendez les deux bras droit devant vous, parallèlement au sol. Enroulez ensuite le poids depuis le sol en faisant tourner rapidement la barre ou le bâton avec les mains et les poignets. Une fois que le poids atteint le sommet, abaissez lentement le disque jusqu'au sol en inversant le mouvement des mains et des poignets. Répétez (si vous le pouvez !).",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_escaladeurs_de_montagne",
+      "name": "Escaladeurs de montagne",
+      "muscles": "Pectoraux",
+      "type": "Pectoraux",
+      "instructions": "Position de départ :\n\nCommencez par la position debout des pompes ou de la planche haute.Les mains doivent se trouver directement sous vos épaules.Gardez la tête dans le prolongement du dos, face au sol.Les pieds doivent être écartés d'environ la largeur des hanches.\n\nÉtapes :\n\n- Déplacez un genou vers le centre de votre corps, vers vos coudes, en gardant l'autre jambe tendue.\n\n- Dans un mouvement de saut rapide, redressez la jambe pliée et tirez l'autre genou vers votre corps.\n\n- Répétez l'étape 2 en alternant les jambes.\n\nRemarques :\n\nTout au long de l'exercice, votre dos doit rester aussi droit que possible – évitez d'avoir une bosse ou un dos affaissé.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_etirement_de_l_angulaire_de_l_omoplate_gauche",
+      "name": "Étirement de l'angulaire de l'omoplate gauche",
+      "muscles": "Dos",
+      "type": "Dos",
+      "instructions": "Position de départ :\n\nCommencez debout ou assis. Tournez la tête vers la gauche, d'environ 45 degrés ou juste au-dessus du mamelon. Placez la main droite dans le dos ou asseyez-vous dessus. Avec la main gauche, tenez l'arrière de votre tête. Penchez légèrement la tête vers le bas.\n\nÉtapes :\n\n- Une fois la position de départ adoptée, appuyez la tête contre la main gauche avec une légère force. Votre main doit résister avec une force égale, de sorte que la tête ne bouge pas. Maintenez cette position.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_etirement_des_triceps_a_droite",
+      "name": "Étirement des triceps à droite",
+      "muscles": "Triceps",
+      "type": "Bras",
+      "instructions": "Placez votre main droite dans votre dos, utilisez votre main gauche pour saisir votre coude droit et tirez-le doucement. Maintenez cette position pendant quelques secondes.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_etirement_des_triceps_a_gauche",
+      "name": "Étirement des triceps à gauche",
+      "muscles": "Triceps",
+      "type": "Bras",
+      "instructions": "Placez votre main gauche dans votre dos, utilisez votre main droite pour saisir votre coude gauche et tirez-le doucement. Maintenez cette position pendant quelques secondes.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_etirement_du_cou_a_droite",
+      "name": "Étirement du cou à droite",
+      "muscles": "Épaules",
+      "type": "Épaules",
+      "instructions": null,
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_etirement_du_cou_a_gauche",
+      "name": "Étirement du cou à gauche",
+      "muscles": "Épaules",
+      "type": "Épaules",
+      "instructions": null,
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_exercices_au_mur",
+      "name": "Exercices au mur",
+      "muscles": "Quadriceps · Mollets",
+      "type": "Jambes",
+      "instructions": "Exercices pour renforcer la musculature du genou et de la jambe.\n\n- Exercices latéraux au mur, marche - https://youtu.be/9RiTlJ6Mmek\n\n- Exercices latéraux au mur, ouverture - https://youtu.be/ADRlN8-Wfdg\n\n- Exercices latéraux au mur, croisement - https://youtu.be/hGH2sj0Tzu4",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_exercise_band_dorsiflexion",
+      "name": "Exercise Band Dorsiflexion",
+      "muscles": "Mollets",
+      "type": "Jambes",
+      "instructions": "This exercise uses an exercise band. It targets the Soleus and Tibialis anterior.",
+      "equipment": "Élastique"
+    },
+    {
+      "id": "w_extensions_de_la_hanche",
+      "name": "Extensions de la hanche",
+      "muscles": "Fessiers · Ischio-jambiers",
+      "type": "Jambes",
+      "instructions": "- Mettez-vous à quatre pattes\n\n- Poussez un pied en arrière jusqu'à ce qu'il soit complètement étendu, en vous concentrant sur les muscles fessiers\n\n- Restez une seconde, puis revenez à la position initiale\n\n- Répétez, en alternant les pieds",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_extensions_des_mollets_jambe_gauche",
+      "name": "Extensions des mollets, jambe gauche",
+      "muscles": "Mollets",
+      "type": "Mollets",
+      "instructions": "- Tenez-vous au sol ou sur le bord d'une marche pour augmenter l'amplitude de mouvement.\n\n- Levez un pied.\n\n- Soulevez votre talon jusqu'à vous tenir sur la pointe des pieds.\n\n- (variable) Restez dans cette position pendant trois secondes\n\n- Redescendez lentement votre pied jusqu'à presque toucher le sol avec votre talon ; ne laissez pas claquer votre pied !",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_extensions_lombaires_hyperextensions",
+      "name": "Extensions lombaires (hyperextensions)",
+      "muscles": "Trapèzes",
+      "type": "Dos",
+      "instructions": "Allongez-vous sur le coussin du banc à lombaires, le nombril au niveau du bord avant, en laissant le haut du corps pendre librement. Contractez tous les muscles de votre dos et relevez le buste jusqu'à l'horizontale, mais pas plus haut. Redescendez lentement, en maintenant une contraction musculaire régulière et continue.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_fentes_laterales_droites",
+      "name": "Fentes latérales droites",
+      "muscles": "Jambes",
+      "type": "Jambes",
+      "instructions": "- Tenez-vous droit et faites une large foulée latérale, juste supérieure à la largeur des épaules\n\n- Pliez un genou jusqu'à ce que votre cuisse soit parallèle au sol. Le genou plié doit être aligné avec le pied\n\n- Revenez à la position de départ et répétez.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_fentes_laterales_gauches",
+      "name": "Fentes latérales gauches",
+      "muscles": "Jambes",
+      "type": "Jambes",
+      "instructions": "- Tenez-vous droit et faites une large foulée latérale, juste supérieure à la largeur des épaules\n\n- Pliez un genou jusqu'à ce que votre cuisse soit parallèle au sol. Le genou plié doit être aligné avec le pied\n\n- Revenez à la position de départ et répétez.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_fingerboard_20_mm_edge",
+      "name": "Fingerboard 20 mm edge",
+      "muscles": "Bras",
+      "type": "Bras",
+      "instructions": "Hang for 10 seconds on a fingerboard with a 20 mm edge",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_flexion_du_cou",
+      "name": "Flexion du cou",
+      "muscles": "Dos",
+      "type": "Dos",
+      "instructions": null,
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_forearm_plank_core_l1",
+      "name": "Forearm Plank (Core L1)",
+      "muscles": "Mollets",
+      "type": "Abdos",
+      "instructions": "Vasco custom forearm plank - foundational anterior core stability exercise. Teaches full-body tension, breath control, and anti-extension. Prerequisite for all advanced core work.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_genoux_hauts",
+      "name": "Genoux hauts",
+      "muscles": "Cardio",
+      "type": "Cardio",
+      "instructions": "- Courez sur place, en plaçant les genoux aussi haut que possible et en changeant de jambe à un rythme rapide",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_glissements_muraux",
+      "name": "Glissements muraux",
+      "muscles": "Biceps · Ischio-jambiers · Pectoraux · Trapèzes · Triceps",
+      "type": "Dos",
+      "instructions": "Tenez-vous debout, les talons, les épaules, l'arrière de la tête et les hanches en contact avec le mur. Commencez avec les bras tendus sur les côtés et les coudes pliés à 90 degrés. Tendez les bras tout en restant contre le mur, sans décoller le dos du mur en le cambrant, en imitant un mouvement de développé épaules.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_hand_grip",
+      "name": "Hand Grip",
+      "muscles": "Bras",
+      "type": "Bras",
+      "instructions": "chrome Hand Flex Grip to build up forearms muscles",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_hollow_body_hold_core_l1",
+      "name": "Hollow Body Hold (Core L1)",
+      "muscles": "Mollets · Fessiers · Obliques · Épaules · Biceps · Brachial · Dos",
+      "type": "Cardio",
+      "instructions": "Vasco custom hollow body hold - foundational anti-extension core stability. Teaches global anterior chain tension, breath control under load, and positional awareness for gymnastics/calisthenics.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_hollow_hold",
+      "name": "Hollow hold",
+      "muscles": "Obliques · Abdos",
+      "type": "Abdos",
+      "instructions": "Installez-vous sur un tapis et allongez-vous sur le dos. Contractez les abdominaux, tendez les bras et les jambes et levez-les (votre tête et vos épaules sont également relevées). Veillez à ce que le bas de votre dos reste en contact avec le tapis.",
+      "equipment": "Tapis de sol"
+    },
+    {
+      "id": "w_inclinaisons_de_la_tete",
+      "name": "Inclinaisons de la tête",
+      "muscles": "Dos",
+      "type": "Dos",
+      "instructions": "Position de départ :\n\nAsseyez-vous ou tenez-vous debout, le dos droit.\n\nÉtapes :\n\n- Inclinez la tête d'un côté et maintenez un instant.\n\n- Ramenez la tête en position neutre et maintenez un instant.\n\n- Inclinez la tête de l'autre côté et maintenez un instant.\n\n- Ramenez à nouveau la tête en position neutre et maintenez un instant.\n\n- Répétez.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_incline_skull_crush",
+      "name": "Incline Skull Crush",
+      "muscles": "Triceps",
+      "type": "Bras",
+      "instructions": "Siting in a 45 Degree Angle, using DB to do Incline Skull Crush",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_jogging",
+      "name": "Jogging",
+      "muscles": "Cardio",
+      "type": "Cardio",
+      "instructions": "Get your shoes on, go outside and start running at a moderate pace.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_lever_du_mollet_droit",
+      "name": "Lever du mollet droit",
+      "muscles": "Mollets",
+      "type": "Mollets",
+      "instructions": "- Tenez-vous debout sur le sol ou sur le bord d'une marche pour augmenter l'amplitude des mouvements. Levez un pied en plaçant la partie supérieure sur votre mollet\n\n- Soulevez vos talons jusqu'à ce que vous soyez debout sur les orteils\n\n- Restez dans cette position pendant trois secondes, puis abaissez votre pied sans toucher le sol avec votre talon.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_low_row",
+      "name": "Low row",
+      "muscles": "Trapèzes · Biceps · Dos",
+      "type": "Dos",
+      "instructions": "Based on Low Row Sel. by Technogym. In this version, you use it with two arms.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_marche_de_l_ours_2",
+      "name": "Marche de l'ours 2",
+      "muscles": "Épaules · Mollets · Pectoraux · Abdos · Dentelé antérieur · Triceps · Fessiers · Dos · Obliques · Quadriceps · Trapèzes",
+      "type": "Pectoraux",
+      "instructions": "-Répartissez votre poids sur les paumes et la plante des pieds, à la manière d'une position de pompe classique.\n\n-Déplacez-vous en avançant la paume droite et le pied gauche, puis la paume gauche et le pied droit. En gros, marchez comme un ours pesant.\n\n-Déplacez-vous aussi vite que possible. Mesurez vos répétitions/séries en distance (par exemple 40 mètres) ou en temps (par exemple 45 secondes).\n\n-Sollicite les pectoraux, les deltoïdes, les triceps, les trapèzes, le grand dorsal, les abdominaux et le bas du dos, les fléchisseurs de la hanche, les quadriceps, les fessiers et les mollets.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_medicine_ball_booklet_crunch",
+      "name": "Medicine ball booklet crunch",
+      "muscles": "Abdos",
+      "type": "Abdos",
+      "instructions": "Using a medicine ball as an overload will make the exercise heavier.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_montees_de_genoux_sur_place",
+      "name": "Montées de genoux sur place",
+      "muscles": "Quadriceps · Mollets · Fessiers · Abdos",
+      "type": "Jambes",
+      "instructions": "Un exercice de cardio et de mobilité à faible impact qui renforce les fléchisseurs de la hanche et améliore l'équilibre.\n\n- Mouvement : Tenez-vous bien droit et levez un genou vers la poitrine, aussi haut que possible et confortablement.\n\n- Bras : Balancez le bras opposé vers l'avant à mesure que vous levez le genou, comme lors de la marche.\n\n- Gainage : Gardez les abdominaux engagés pour maintenir une posture droite.\n\n- Rythme : Effectuez le mouvement avec contrôle, en alternant les jambes de façon rythmée.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_nordic_curl",
+      "name": "Nordic Curl",
+      "muscles": "Ischio-jambiers · Fessiers",
+      "type": "Jambes",
+      "instructions": "Le Nordic curl (leg curl nordique) est l'un des meilleurs exercices pour le bas du corps afin de développer la force de la chaîne postérieure des jambes, d'améliorer la santé des genoux et de prévenir les blessures.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_obliques_au_trx",
+      "name": "Obliques au TRX",
+      "muscles": "Obliques · Abdos · Dentelé antérieur · Épaules · Pectoraux",
+      "type": "Abdos",
+      "instructions": "- Placez vos pieds dans les sangles et adoptez une position de planche haute, les mains directement sous les épaules.\n\n- Ramenez vos genoux vers votre coude droit, puis repoussez-les vers l'extérieur et vers le centre.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_pas_chasses_squats",
+      "name": "Pas chassés + squats",
+      "muscles": "Quadriceps · Mollets · Fessiers",
+      "type": "Jambes",
+      "instructions": "Les pieds un peu plus écartés que la largeur des épaules et en restant bas pour imiter une position défensive, vous devez avancer avec votre jambe directrice et pousser avec votre jambe d'appui.\nAprès trois pas chassés, faites pivoter votre corps de 180 degrés sur la jambe directrice (extérieure) et effectuez un squat. Continuez.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_pendular_hack",
+      "name": "Pendular hack",
+      "muscles": "Jambes",
+      "type": "Jambes",
+      "instructions": "Pendulum hack, made on a pendulum machine",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_planche_haute",
+      "name": "Planche haute",
+      "muscles": "Abdos · Épaules · Obliques · Triceps",
+      "type": "Pectoraux",
+      "instructions": null,
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_planche_laterale_droite",
+      "name": "Planche latérale droite",
+      "muscles": "Abdos · Obliques",
+      "type": "Abdos",
+      "instructions": "- Allongez-vous sur le côté, le coude inférieur à angle droit, le bras dépassant\n\n- Soulevez votre bassin du sol en soulevant votre épaule inférieure, en gardant l'avant-bras sur le sol ; votre tête, votre bassin et vos pieds doivent être en ligne droite\n\n- Maintenez cette position",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_planche_laterale_dynamique",
+      "name": "Planche latérale dynamique",
+      "muscles": "Obliques · Abdos",
+      "type": "Abdos",
+      "instructions": "La planche latérale dynamique consiste à se positionner sur le côté, en appui sur un coude et sur le côté du pied, puis à abaisser et relever les hanches tout en gardant le corps en ligne droite.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_plantarflexion_stretch_with_band",
+      "name": "Plantarflexion Stretch with Band",
+      "muscles": "Jambes",
+      "type": "Jambes",
+      "instructions": "This stretch is for the ankles, as well as Tibialis anterior.",
+      "equipment": "Élastique"
+    },
+    {
+      "id": "w_pompe_prise_large",
+      "name": "Pompe prise large",
+      "muscles": "Pectoraux · Abdos · Triceps",
+      "type": "Pectoraux",
+      "instructions": "Une variante de la pompe avec une position des mains plus large pour accentuer le travail des pectoraux externes et des épaules.\n\n- Installation : Placez les mains au sol, plus écartées que la largeur des épaules.\n\n- Descente : Descendez jusqu'à ce que la poitrine effleure presque le sol, en gardant la sangle abdominale gainée.\n\n- Poussée : Poussez à travers les paumes pour revenir à la position de départ.\n\n- Technique : Ne laissez pas le bas du dos s'affaisser ; conservez une ligne droite de la tête aux talons.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_pompes_avec_rotation",
+      "name": "Pompes avec rotation",
+      "muscles": "Pectoraux · Triceps · Épaules · Obliques",
+      "type": "Bras",
+      "instructions": "- Faites une pompe standard :\n\n1.a Allongez-vous sur le ventre1.b Placez vos mains près de vos oreilles1.c Utilisez vos bras pour soulever votre ventre jusqu'à ce que les bras soient droits, en gardant le dos droit1.d Pliez les bras jusqu'à ce que la poitrine touche presque le sol, en vous assurant que le dos est droit1.e Soulevez à nouveau votre ventre et revenez à l'étape 1.c\n\n- Faites pivoter votre corps sur le côté pour que le dos soit droit, que la main inférieure soutenant le corps soit complètement étendue et que seuls la main et le pied inférieurs touchent le sol\n\n- Répétez, en changeant de côté à chaque fois",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_pompes_prise_serree",
+      "name": "Pompes prise serrée",
+      "muscles": "Brachial · Dos · Pectoraux · Trapèzes · Épaules · Biceps · Triceps",
+      "type": "Pectoraux",
+      "instructions": "Placez-vous dans une position de planche solide, en rapprochant les mains jusqu'à ce qu'elles se touchent presque (image 1). Pliez les coudes pour amener lentement votre poitrine vers le sol (image 2). Gardez les coudes près du corps tout en poussant de manière explosive pour remonter. Répétez. Veillez à prendre votre temps à la descente de chaque répétition, en gardant une exécution irréprochable.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_pont_fessier_au_sol",
+      "name": "Pont fessier au sol",
+      "muscles": "Fessiers · Ischio-jambiers",
+      "type": "Dos",
+      "instructions": "Allongé sur le dos, les pieds bien à plat sur le sol. Soulevez les hanches de façon régulière aussi haut que possible et maintenez la position aussi longtemps que vous le pouvez.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_position_de_l_enfant",
+      "name": "Position de l'enfant",
+      "muscles": "Dos",
+      "type": "Dos",
+      "instructions": null,
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_posterior_pelvic_tilt",
+      "name": "Posterior Pelvic Tilt",
+      "muscles": "Abdos · Fessiers · Obliques",
+      "type": "Abdos",
+      "instructions": "Lie on your back with knees bent, feet flat on the floor. Flatten your lower back against the floor by tilting your pelvis posteriorly, engaging your abs and glutes. Hold 5 seconds, release. This retrains pelvic positioning to counter anterior pelvic tilt.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_pulley_low_with_triangle",
+      "name": "Pulley (low, with triangle)",
+      "muscles": "Biceps · Dos · Trapèzes",
+      "type": "Dos",
+      "instructions": "This exercise is based on Technogym Pulley Sel. Hold the triangle with both hands and bring the weight towards your belly.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_pullup_on_fingerboard",
+      "name": "Pullup on fingerboard",
+      "muscles": "Biceps · Dos · Brachial · Trapèzes",
+      "type": "Bras",
+      "instructions": "Pullup on a choosen edge of a fingerboard / hangboard",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_rentre_de_menton",
+      "name": "Rentré de menton",
+      "muscles": "Dos",
+      "type": "Dos",
+      "instructions": "Position de départ :\n\nAsseyez-vous ou tenez-vous debout, le dos droit.\n\nÉtapes :\n\n- À l'aide des doigts posés sur le menton, rentrez lentement le menton en ramenant la tête vers l'arrière pour l'aligner avec la colonne vertébrale.\n\n- Maintenez pendant 5 secondes.\n\n- Revenez à la position normale de la tête et répétez.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_retraction_des_omoplates_a_plat_ventre_bras_le_long_du_corps",
+      "name": "Rétraction des omoplates à plat ventre - bras le long du corps",
+      "muscles": "Trapèzes",
+      "type": "Dos",
+      "instructions": "Allongé sur le ventre, la tête posée sur une serviette.\n\nTendez les bras bien droit sur les côtés.\n\nLevez lentement les bras en rapprochant les omoplates l'une de l'autre, et maintenez la position pendant 3 secondes.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_reverse_nordic_curl",
+      "name": "Reverse Nordic Curl",
+      "muscles": "Quadriceps · Fessiers · Abdos",
+      "type": "Jambes",
+      "instructions": "Natural Leg Extension is alternative to Leg Extension machine with no equipment.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_rotation_avec_ballon_medicinal",
+      "name": "Rotation avec ballon médicinal",
+      "muscles": "Obliques · Abdos",
+      "type": "Abdos",
+      "instructions": "En position assise, le buste pivote d'un côté à l'autre sans forcer, en s'approchant des genoux et en faisant toucher le sol au ballon de temps en temps.",
+      "equipment": "Swiss Ball"
+    },
+    {
+      "id": "w_rotation_de_l_epaule_vers_l_arriere",
+      "name": "Rotation de l'épaule vers l'arrière",
+      "muscles": "Dos",
+      "type": "Dos",
+      "instructions": null,
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_rotation_de_l_epaule_vers_l_avant",
+      "name": "Rotation de l'épaule vers l'avant",
+      "muscles": "Dos",
+      "type": "Dos",
+      "instructions": null,
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_rotation_thoracique_a_demi_genou",
+      "name": "Rotation thoracique à demi-genou",
+      "muscles": "Abdos",
+      "type": "Abdos",
+      "instructions": "- Commencez en position de demi-genou, la jambe éloignée du mur étant stabilisée contre le mur à l'aide d'un ballon.\n\n- Les deux mains tendues directement devant vous, ouvrez un bras en rotation en cherchant à atteindre le mur derrière vous.\n\n- Expirez pendant la rotation, inspirez en revenant à la position neutre, puis répétez.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_rowing_inverse",
+      "name": "Rowing inversé",
+      "muscles": "Biceps · Dos · Pectoraux · Abdos · Trapèzes",
+      "type": "Pectoraux",
+      "instructions": "Gardez le corps droit, rétractez vos omoplates et tirez votre poitrine vers la barre pour un entraînement efficace du dos et du haut du corps.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_run",
+      "name": "Run",
+      "muscles": "Cardio",
+      "type": "Cardio",
+      "instructions": "Running or jogging outside in a park, on the tracks,...",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_saut_a_la_corde_standard",
+      "name": "Saut à la corde - Standard",
+      "muscles": "Mollets",
+      "type": "Cardio",
+      "instructions": "Effectuez un seul saut à pieds joints à chaque tour de corde.\n\nTravaillez un mouvement fluide et rythmé, en rebondissant légèrement sur la pointe des pieds.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_sauts_en_etoile",
+      "name": "Sauts en étoile",
+      "muscles": "Quadriceps",
+      "type": "Jambes",
+      "instructions": "- Debout, pieds joints et bras le long du corps\n\n- Sauter jusqu'à une position où les jambes sont écartées et les mains se touchent au-dessus de la tête.\n\n- Répétez",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_sauts_genoux_hauts",
+      "name": "Sauts genoux hauts",
+      "muscles": "Ischio-jambiers · Mollets · Quadriceps · Obliques · Abdos · Dentelé antérieur",
+      "type": "Cardio",
+      "instructions": "- Commencez avec les jambes légèrement plus écartées que la largeur des épaules\n\n- Descendez en squat au poids du corps\n\n- Arrivé au point bas du squat, propulsez-vous explosivement vers le haut en sautant tout en ramenant simultanément les genoux vers la poitrine en plein vol. Gardez les genoux ramenés jusqu'au sommet de votre saut.\n\n- Réceptionnez-vous sur les deux pieds, en veillant à ne pas verrouiller les genoux afin d'éviter une tension excessive sur vos articulations. Enchaînez sur la répétition suivante aussi rapidement que possible, mais toujours avec contrôle.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_single_leg_hamstring_curl",
+      "name": "Single-leg hamstring curl",
+      "muscles": "Ischio-jambiers · Fessiers",
+      "type": "Jambes",
+      "instructions": "Specifically, the muscles involved are: biceps femoris, semimembranosus and semitendinosus.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_sloper_hanging",
+      "name": "Sloper hanging",
+      "muscles": "Bras",
+      "type": "Bras",
+      "instructions": "Hanging on sloper holds of a fingerboard for a amount of seconds",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_smr_glutes_lax_ball",
+      "name": "SMR Glutes (lax ball)",
+      "muscles": "Jambes",
+      "type": "Jambes",
+      "instructions": "SMR Glutes (lax ball)\nPart of: Limber 11\nSource: Joe DeFranco\nPrescription: 30 sec-2 min\nType: soft_tissue",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_souleve_de_terre_roumain_sur_une_jambe",
+      "name": "Soulevé de terre roumain sur une jambe",
+      "muscles": "Ischio-jambiers · Fessiers",
+      "type": "Jambes",
+      "instructions": "- Tenez-vous droit et tenez des charges dans les deux mains si vous utilisez du poids.\n\n- Gainez vos abdominaux et décollez une jambe du sol.\n\n- Gardez le dos droit, basculez au niveau des hanches en abaissant votre torse vers l'avant, en veillant à ne pas faire pivoter vos hanches.\n\n- Descendez jusqu'à sentir un étirement dans l'ischio-jambier de votre jambe d'appui, puis revenez en position debout. Répétez des deux côtés.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_speed_deadlift",
+      "name": "Speed Deadlift",
+      "muscles": "Ischio-jambiers · Fessiers · Quadriceps · Trapèzes",
+      "type": "Jambes",
+      "instructions": "Deadlift with short (less than one 1min) rest between sets.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_squat_lent",
+      "name": "Squat lent",
+      "muscles": "Quadriceps · Ischio-jambiers · Fessiers · Abdos",
+      "type": "Jambes",
+      "instructions": "Un squat basé sur le tempo qui utilise un mouvement contrôlé pour augmenter la tension musculaire et améliorer la stabilité du bas du corps.\n\n- Descente : Descendez lentement pendant 3 secondes.\n\n- Pause : Maintenez la position basse pendant 1 seconde.\n\n- Remontée : Revenez à la position de départ à un rythme normal.\n\n- Technique : Gardez la poitrine ouverte et le poids dans les talons.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_stationary_bike",
+      "name": "Stationary Bike",
+      "muscles": "Cardio",
+      "type": "Cardio",
+      "instructions": "Ride a Stationary Bike with various tensions.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_step_jack",
+      "name": "Step Jack",
+      "muscles": "Quadriceps · Épaules · Fessiers · Obliques · Abdos",
+      "type": "Cardio",
+      "instructions": "Le Step Jack est un mouvement pliométrique à faible impact qui apporte des bénéfices cardiovasculaires sans le stress articulaire des sauts. Il sollicite l'ensemble du corps, en ciblant plus particulièrement les jambes, la sangle abdominale et les épaules. Ce mouvement est idéal pour les débutants, les personnes ayant des sensibilités articulaires, ou comme échauffement dynamique pour élever progressivement la fréquence cardiaque.\nNotes (Instructions) :\n\n- Tenez-vous droit, les pieds joints et les bras le long du corps.\n\n- Faites un pas sur le côté avec le pied droit tout en balançant simultanément les deux bras au-dessus de la tête.\n\n- Ramenez le pied droit au centre et abaissez les bras.\n\n- Répétez immédiatement le mouvement en faisant un pas sur le côté avec le pied gauche.\n\n- Continuez en alternant les côtés à un rythme régulier et soutenu.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_suspended_crossess",
+      "name": "Suspended crossess",
+      "muscles": "Pectoraux",
+      "type": "Cardio",
+      "instructions": "Suspension exercise with trx for chest training",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_swimming_50m_sprints",
+      "name": "Swimming 50m sprints",
+      "muscles": "Cardio",
+      "type": "Cardio",
+      "instructions": "50m swimming sprints at 1min",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_tibialis_raises",
+      "name": "Tibialis raises",
+      "muscles": "Mollets",
+      "type": "Mollets",
+      "instructions": "- Stand up straight\n\n- Lift the balls of your feet, resting on your heels.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_tour_de_tete",
+      "name": "Tour de tête",
+      "muscles": "Épaules",
+      "type": "Épaules",
+      "instructions": "Position de départ :\n\nAsseyez-vous ou tenez-vous debout, le dos droit et les épaules basses.\n\nÉtapes :\n\n- Asseyez-vous ou tenez-vous debout, le dos droit. Épaules baissées.\n\n- Tournez la tête vers la gauche aussi loin que possible. Arrêtez-vous lorsque vous rencontrez un obstacle et maintenez cette position pendant 5 secondes.\n\n- Revenez à la position centrale.\n\n- Répétez en changeant de côté.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_tricep_pull_down",
+      "name": "Tricep Pull-Down",
+      "muscles": "Triceps · Pectoraux",
+      "type": "Bras",
+      "instructions": "Secure Band above you.\n\n- Stand facing band, with feet hip-width apart.\n\n- Bend your knees slightly to engage your core.\n\n- Keep your chest up, pin your shoulder blades back, and tuck your elbows tightly to the sides of your torso.\n\n- Exhale and pull the band straight down toward your thighs.\n\n- Inhale and slowly control the band as you let your arms return upwards to their starting position.",
+      "equipment": "Élastique"
+    },
+    {
+      "id": "w_triceps_a_la_machine",
+      "name": "Triceps à la machine",
+      "muscles": "Triceps",
+      "type": "Bras",
+      "instructions": "Asseyez-vous et saisissez fermement la barre avec les mains. Poussez maintenant le poids vers le haut (sans tendre complètement les bras), puis abaissez-le lentement. Comme pour les autres exercices de triceps, il est important de ne pas bouger les bras.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_trx_rows",
+      "name": "TRX Rows",
+      "muscles": "Épaules · Biceps · Dos",
+      "type": "Dos",
+      "instructions": "This exercise serves as a lead-up to Pull Ups.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_velo_elliptique",
+      "name": "Vélo elliptique",
+      "muscles": "Fessiers · Quadriceps · Trapèzes · Biceps · Abdos · Triceps",
+      "type": "Cardio",
+      "instructions": "Il améliore la tonification musculaire, renforce les muscles des jambes (quadriceps, fessiers, mollets), favorise la vascularisation et augmente l'endurance. Le vélo elliptique est également très utile si vous cherchez à perdre du poids.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_walking",
+      "name": "Walking",
+      "muscles": "Ischio-jambiers · Mollets · Fessiers · Dos · Obliques · Quadriceps · Abdos",
+      "type": "Cardio",
+      "instructions": "Walking outdoor or indoor, try keeping a pace of at list 100 steps per minute.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_wall_angels_anges_au_mur",
+      "name": "Wall angels (anges au mur)",
+      "muscles": "Trapèzes · Épaules",
+      "type": "Épaules",
+      "instructions": "L'exercice des wall angels cible principalement les muscles du haut du dos et des épaules, ce qui aide à améliorer la posture, la mobilité des épaules et le contrôle des omoplates.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_wall_hold_rotation",
+      "name": "Wall-Hold Rotation",
+      "muscles": "Obliques · Abdos",
+      "type": "Cardio",
+      "instructions": "Hold the pool wall or edge with one hand, body horizontal at the surface, legs kicking gently behind you. Keep your face in the water, exhaling continuously, then rotate your head to the side — not lifting it up — so one goggle stays in the water while the other clears the surface. Take a quick breath, then rotate your face back down to neutral. This isolates the head-rotation motion without any arm strokes to think about.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_ytw_raises",
+      "name": "YTW Raises",
+      "muscles": "Épaules",
+      "type": "Épaules",
+      "instructions": "The YTW exercise for scapular retraction is designed to strengthen the inter-scapular muscles between your shoulder blades, to help retract or pull your shoulders back, helping to maintain proper upright posture.",
+      "equipment": "Aucun"
+    },
+    {
+      "id": "w_zone_2_running",
+      "name": "Zone 2 Running",
+      "muscles": "Cardio",
+      "type": "Cardio",
+      "instructions": "Zone two Cardio for endurance, you should be able to speak while running",
+      "equipment": "Aucun"
+    }
+  ],
+  "salle": [
+    {
+      "id": "w_2_handed_kettlebell_swing",
+      "name": "2 Handed Kettlebell Swing",
+      "muscles": "Ischio-jambiers · Fessiers · Quadriceps · Abdos",
+      "type": "Abdos",
+      "instructions": "Two Handed Russian Style Kettlebell swing",
+      "equipment": "Kettlebell"
+    },
+    {
+      "id": "w_accroupi",
+      "name": "Accroupi",
+      "muscles": "Quadriceps · Fessiers",
+      "type": "Jambes",
+      "instructions": "- Debout, les pieds écartés à la largeur des épaules\n\n- Déplacez les hanches vers l'arrière et pliez les genoux et les hanches pour abaisser le torse.\n\n- Répétez",
+      "equipment": "Barre"
+    },
+    {
+      "id": "w_adduction_debout_poulie",
+      "name": "Adduction debout (poulie)",
+      "muscles": "Jambes",
+      "type": "Jambes",
+      "instructions": "Gardez les hanches bien parallèles et immobiles, en tirant le câble en travers de votre jambe opposée en utilisant uniquement l'intérieur de la cuisse.\n\nNe laissez pas votre buste s'incliner ou pivoter : pas d'inclinaison latérale pour vous aider dans la répétition.",
+      "equipment": "Poulie"
+    },
+    {
+      "id": "w_adductor_side_plank",
+      "name": "Adductor Side Plank",
+      "muscles": "Ischio-jambiers · Fessiers",
+      "type": "Jambes",
+      "instructions": "Set up next to a bench in a  90° angle on your side. One leg goes up on the bench with the side of your calf touching it. The other leg goes below the bench. Forearm closer to the ground is at a 90° angle, hand pointing front. Now push off the floor with the forearm closer to the ground, upper side of your body should be completely straight, level with the bench (it's a side plank after all). Hold that position.",
+      "equipment": "Banc"
+    },
+    {
+      "id": "w_axe_hold",
+      "name": "Axe Hold",
+      "muscles": "Bras",
+      "type": "Bras",
+      "instructions": "Grab dumbbells and extend arms to side and hold as long as you can",
+      "equipment": "Haltères"
+    },
+    {
+      "id": "w_barbell_hack_squats",
+      "name": "Barbell Hack Squats",
+      "muscles": "Quadriceps · Ischio-jambiers · Fessiers",
+      "type": "Jambes",
+      "instructions": "Perform leg squats with barbell behind your legs",
+      "equipment": "Barre"
+    },
+    {
+      "id": "w_barbell_lunges_walking",
+      "name": "Barbell Lunges Walking",
+      "muscles": "Fessiers · Quadriceps · Ischio-jambiers · Mollets",
+      "type": "Jambes",
+      "instructions": null,
+      "equipment": "Barre"
+    },
+    {
+      "id": "w_blaze",
+      "name": "Blaze",
+      "muscles": "Épaules · Fessiers · Pectoraux · Quadriceps · Biceps · Ischio-jambiers · Dos · Abdos",
+      "type": "Cardio",
+      "instructions": "BLAZE est un entraînement HIIT pour tout le corps, conçu pour dynamiser votre condition cardiovasculaire et votre force. Dispensé dans un studio spécialement aménagé, BLAZE est un mélange unique d'arts martiaux, de cardio intense et de renforcement musculaire.",
+      "equipment": "Banc, Haltères, Kettlebell"
+    },
+    {
+      "id": "w_cable_shrug_in",
+      "name": "Cable Shrug-In",
+      "muscles": "Trapèzes",
+      "type": "Épaules",
+      "instructions": "Attach two D-Handles to two low cables and shrug in using your upper traps.",
+      "equipment": "Poulie"
+    },
+    {
+      "id": "w_crunch_leste",
+      "name": "Crunch lesté",
+      "muscles": "Obliques",
+      "type": "Abdos",
+      "instructions": "Le Crunch lesté cible principalement les grands droits de l'abdomen (les fameuses \"tablettes de chocolat\").",
+      "equipment": "Haltères"
+    },
+    {
+      "id": "w_crunchs_a_la_poulie",
+      "name": "Crunchs à la poulie",
+      "muscles": "Abdos",
+      "type": "Abdos",
+      "instructions": "Prenez le câble dans vos mains et tenez-le près de vos tempes. Mettez-vous à genoux, gardez le haut du corps droit et penchez-vous vers l'avant. Descendez d'un mouvement rapide en enroulant le dos (vos coudes pointent vers vos genoux). Une fois en bas, revenez lentement à la position initiale.",
+      "equipment": "Poulie"
+    },
+    {
+      "id": "w_crunchs_avec_haltere",
+      "name": "Crunchs avec haltère",
+      "muscles": "Abdos · Obliques",
+      "type": "Abdos",
+      "instructions": "Les crunchs avec haltère sont une variante lestée des crunchs classiques, conçue pour solliciter plus intensément les muscles abdominaux. Allongez-vous sur le dos, les genoux fléchis et les pieds à plat au sol. Tenez un haltère à deux mains près de votre poitrine ou au-dessus de votre tête. Décollez les épaules et le haut du dos du sol dans un mouvement de crunch en contractant la sangle abdominale. Redescendez lentement à la position de départ. Veillez à garder des mouvements contrôlés tout au long de l'exercice pour éviter toute tension.",
+      "equipment": "Haltères"
+    },
+    {
+      "id": "w_crunchs_sur_banc_incline",
+      "name": "Crunchs sur banc incliné",
+      "muscles": "Abdos",
+      "type": "Abdos",
+      "instructions": "Allongez-vous sur le dos sur un banc incliné, les pieds à une extrémité du banc. Demandez à un partenaire ou utilisez un autre moyen (une barre, etc.) pour les maintenir en place, vos mains derrière la tête. À partir de cette position, relevez le haut du corps jusqu'à ce que votre tête ou vos coudes touchent vos genoux. Effectuez ce mouvement en enroulant le dos.",
+      "equipment": "Banc incliné"
+    },
+    {
+      "id": "w_curl_biceps_avec_haltere",
+      "name": "Curl biceps avec haltère",
+      "muscles": "Brachial · Biceps",
+      "type": "Bras",
+      "instructions": "Cet exercice consiste à tenir un haltère dans une main et à le lever (ou le \"curler\") vers l'épaule tout en gardant le haut du bras immobile. Il cible principalement le muscle biceps.",
+      "equipment": "Haltères"
+    },
+    {
+      "id": "w_curl_de_muneca_con_barra",
+      "name": "Curl De Muñeca Con Barra",
+      "muscles": "Bras",
+      "type": "Bras",
+      "instructions": "This is a variation of the flat bench press designed to emphasize the clavicular head of the pectoralis major (the upper portion). By tilting the torso, the angle of the push changes, shifting more tension to the upper chest and shoulders, which helps achieve a more aesthetic, balanced, and three-dimensional development of the torso.\n\n- \nStarting Position: Grip a bar with an overhand grip (palms facing up) at a width similar to your shoulders.\n\n- \nPosition on the Bench: Kneel in front of a flat bench and rest the backs of your forearms on it. Your wrists and hands should extend slightly beyond the edge of the bench to allow for a full range of motion.\n\n- \nEccentric Phase (Lowering): Lower the bar in a controlled manner by extending your wrists toward the floor. At the bottom of the movement, slightly spread your fingers to let the bar roll down a bit, maximizing the stretch.\n\n- \nConcentric Phase (Lift): First, close your fingers to secure the bar, then flex your wrists upward explosively but in a controlled manner, bringing the bar as high as possible. Strongly contract your forearms at the top position for one second.\n\n- \nForm: Keep your forearms firmly pressed against the bench throughout the exercise; only your wrists and fingers should move.",
+      "equipment": "Barre, Banc"
+    },
+    {
+      "id": "w_curl_des_poignets_halteres",
+      "name": "Curl des poignets, haltères",
+      "muscles": "Bras",
+      "type": "Bras",
+      "instructions": "- Assis sur un banc, saisissez l'haltère, les paumes tournées vers le haut\net les mains écartées à la largeur des épaules. Posez vos avant-bras sur vos cuisses\net laissez vos poignets dépasser au-delà de vos genoux.\n\n- Effectuez le mouvement en\nenroulant vos paumes et vos poignets vers votre visage.\n\n- (facultatif/variable) Marquez une pause en haut.\n\n- Revenez lentement à la position de départ.",
+      "equipment": "Haltères"
+    },
+    {
+      "id": "w_curl_inverse_des_poignets_a_la_barre",
+      "name": "Curl inversé des poignets à la barre",
+      "muscles": "Bras",
+      "type": "Bras",
+      "instructions": "Assis sur un banc, saisissez une barre, paumes tournées vers le bas et mains écartées à la largeur des épaules. Posez vos avant-bras sur vos cuisses et laissez vos poignets dépasser au-delà de vos genoux.\n\nEnroulez vos phalanges vers votre visage en soulevant la barre. Marquez une pause en position haute, puis ramenez lentement la barre à la position de départ.",
+      "equipment": "Barre, Banc"
+    },
+    {
+      "id": "w_curls_a_une_main_a_la_kettlebell",
+      "name": "Curls à une main à la kettlebell",
+      "muscles": "Biceps",
+      "type": "Bras",
+      "instructions": "Debout, la kettlebell dans une main et le coude fléchi, partez d'une position complètement tendue jusqu'à ce que la main atteigne la hauteur de l'épaule. Pour exécuter le mouvement correctement, essayez de ne pas pousser avec le dos ni avec le corps.",
+      "equipment": "Kettlebell"
+    },
+    {
+      "id": "w_curls_au_pupitre",
+      "name": "Curls au pupitre",
+      "muscles": "Brachial",
+      "type": "Bras",
+      "instructions": "Placez la barre EZ sur les supports devant le banc Larry Scott. Penchez-vous au-dessus du banc et saisissez la barre EZ, paumes vers le haut. Asseyez-vous sur le siège du banc Larry Scott de sorte que vos bras reposent sur le coussin et que votre poitrine soit appuyée contre le coussin. Abaissez le poids jusqu'à ce que vos coudes soient déployés et vos bras tendus. Remontez le poids jusqu'au point de départ en contractant les biceps. Répétez.",
+      "equipment": "Barre EZ"
+    },
+    {
+      "id": "w_curls_biceps_alternes",
+      "name": "Curls biceps alternés",
+      "muscles": "Biceps · Brachial",
+      "type": "Bras",
+      "instructions": "Position de départ :\n\nCommencez debout, un haltère dans chaque main, le dos droit et les pieds écartés à la largeur des hanches. Vos bras doivent être détendus et pointer vers le bas. Vos genoux doivent être légèrement fléchis, les abdominaux contractés et les épaules basses.\n\nÉtapes :\n\n- Fléchissez un bras au niveau du coude en ramenant l'haltère vers l'épaule. Le haut de votre bras doit rester immobile pendant ce mouvement.\n\n- Abaissez l'haltère jusqu'à ce que le bras retrouve sa position détendue de départ.\n\n- Répétez en changeant de bras.",
+      "equipment": "Haltères"
+    },
+    {
+      "id": "w_db_floor_press_5kg_single_arm",
+      "name": "DB Floor Press (5kg Single Arm)",
+      "muscles": "Pectoraux · Épaules · Obliques",
+      "type": "Pectoraux",
+      "instructions": "Vasco custom single-arm DB floor press for 5kg dumbbell home training. Unilateral work for symmetry and core anti-rotation. Part of Monday Push day.",
+      "equipment": "Haltères"
+    },
+    {
+      "id": "w_developpe_couche_assis",
+      "name": "Développé couché assis",
+      "muscles": "Pectoraux",
+      "type": "Pectoraux",
+      "instructions": "Réglez la machine de développé pectoral de sorte que les poignées soient alignées avec le bas de votre poitrine lorsque vous êtes assis. Veillez à être assis le dos bien plaqué contre le dossier. Saisissez une poignée dans chaque main, sortez la poitrine et gardez la tête appuyée contre l'appui-tête. Respirez profondément et poussez lentement les poignées vers l'avant jusqu'à ce que vos bras soient presque complètement tendus. Marquez une pause juste avant le verrouillage des coudes, puis ramenez lentement les poignées à la position de départ. Marquez une pause juste avant que les poignées ne s'immobilisent complètement, puis effectuez une autre répétition.",
+      "equipment": "Banc"
+    },
+    {
+      "id": "w_developpe_couche_serre_aux_halteres",
+      "name": "Développé couché serré aux haltères",
+      "muscles": "Pectoraux · Triceps",
+      "type": "Bras",
+      "instructions": "Allongez-vous sur le dos sur un banc plat. Tenez un haltère dans chaque main. Levez vos bras vers le plafond, les paumes se faisant face et les haltères pressés l'un contre l'autre.\nAbaissez lentement les haltères vers votre poitrine, puis poussez-les lentement vers le haut. Répétez l'exercice.",
+      "equipment": "Haltères"
+    },
+    {
+      "id": "w_developpe_epaules_unilateral_a_l_haltere",
+      "name": "Développé épaules unilatéral à l'haltère",
+      "muscles": "Épaules · Abdos · Dentelé antérieur · Trapèzes · Triceps",
+      "type": "Épaules",
+      "instructions": "Poussez l'haltère verticalement au-dessus de la tête dans un mouvement contrôlé jusqu'à ce que le bras soit complètement tendu, sans verrouiller le coude. Abaissez lentement l'haltère vers la position de départ, à hauteur d'épaule.",
+      "equipment": "Haltères"
+    },
+    {
+      "id": "w_developpe_trapezes",
+      "name": "Développé trapèzes",
+      "muscles": "Trapèzes",
+      "type": "Épaules",
+      "instructions": "Allongé à plat, le bras pointé droit vers le haut et le coude complètement tendu, utilisez uniquement l'épaule pour soulever le poids aussi haut que possible sans inconfort, puis revenez à la position de repos.",
+      "equipment": "Barre, Banc, Haltères"
+    },
+    {
+      "id": "w_dumbbell_deadlift",
+      "name": "Dumbbell Deadlift",
+      "muscles": "Ischio-jambiers · Fessiers · Quadriceps · Trapèzes",
+      "type": "Jambes",
+      "instructions": "- Controlled execution\n\n- Don't use momentum\n\n- Slow execution",
+      "equipment": "Haltères"
+    },
+    {
+      "id": "w_dumbbell_farmer_s_carry",
+      "name": "Dumbbell farmer's carry",
+      "muscles": "Jambes",
+      "type": "Jambes",
+      "instructions": "Grab half your body weight in each hand and walk.",
+      "equipment": "Haltères"
+    },
+    {
+      "id": "w_dumbbell_lunges_standing",
+      "name": "Dumbbell Lunges Standing",
+      "muscles": "Quadriceps · Fessiers",
+      "type": "Jambes",
+      "instructions": ".",
+      "equipment": "Haltères"
+    },
+    {
+      "id": "w_dumbbells_on_scott_machine",
+      "name": "Dumbbells on Scott Machine",
+      "muscles": "Biceps",
+      "type": "Bras",
+      "instructions": null,
+      "equipment": "Haltères"
+    },
+    {
+      "id": "w_ecarte_a_la_poulie_cable_cross_over",
+      "name": "Écarté à la poulie (cable cross-over)",
+      "muscles": "Pectoraux · Épaules",
+      "type": "Pectoraux",
+      "instructions": "Commencez avec les câbles à environ hauteur d'épaules, un dans chaque main. Faites un pas en avant de manière à ce qu'un pied soit devant l'autre, pour la stabilité et pour que les câbles soient sous tension. Amenez les mains l'une vers l'autre devant vous. Essayez de faire en sorte que vos mains se chevauchent (de façon à ce que les câbles se croisent) de quelques centimètres.",
+      "equipment": "Poulie"
+    },
+    {
+      "id": "w_ecarte_a_la_poulie_basse",
+      "name": "Écarté à la poulie basse",
+      "muscles": "Pectoraux · Épaules",
+      "type": "Pectoraux",
+      "instructions": "Réglez la machine à poulie : positionnez la poulie au réglage le plus bas possible.\nChoisissez vos poignées : vous pouvez utiliser des poignées à prise neutre (paumes se faisant face) ou des poignées droites selon votre préférence. La prise neutre est peut-être plus douce pour vos poignets.\nTenez-vous avec une bonne posture : tenez-vous debout, les pieds écartés de la largeur des épaules, les genoux légèrement fléchis et la sangle abdominale engagée. Conservez une légère cambrure dans le bas du dos tout au long de l'exercice.\nSaisissez les poignées : prenez les poignées avec la prise choisie et reculez d'un petit pas ou deux jusqu'à obtenir une légère tension sur les câbles.\nAmorcez le mouvement : gardez vos coudes légèrement fléchis tout au long de l'exercice. Imaginez que vous faites un grand câlin à quelqu'un. Contractez vos pectoraux en rapprochant vos mains devant votre poitrine.\nContrôlez le mouvement : concentrez-vous sur la contraction de vos pectoraux plutôt que sur l'utilisation de vos bras pour tirer les poignées.\nContraction maximale : maintenez brièvement la contraction au sommet du mouvement, les mains jointes à hauteur de poitrine.\nRevenez lentement : relâchez lentement la tension et ramenez les poignées vers le bas, à la position de départ, les bras légèrement tendus mais non verrouillés.",
+      "equipment": "Poulie"
+    },
+    {
+      "id": "w_echauffement_en_fentes_3d",
+      "name": "Échauffement en fentes 3D",
+      "muscles": "Cardio",
+      "type": "Cardio",
+      "instructions": "Pour l'échauffement, utilisez des haltères légers, un dans chaque main. Effectuez des fentes dans des directions alternées : vers l'avant, sur le côté, vers l'arrière et à 45 degrés.",
+      "equipment": "Haltères"
+    },
+    {
+      "id": "w_elevation_des_mollets_halteres_assis",
+      "name": "Élévation des mollets haltères assis",
+      "muscles": "Mollets",
+      "type": "Mollets",
+      "instructions": "L'élévation des mollets avec haltères en position assise est un exercice ciblé pour renforcer les muscles du bas de la jambe. Il suit le même schéma de mouvement que la version avec machine : vous placez le poids sur vos genoux, et en étendant et en fléchissant vos chevilles, vous déplacez le poids.",
+      "equipment": "Haltères"
+    },
+    {
+      "id": "w_epaule_developpe_a_la_barre",
+      "name": "Épaulé-développé à la barre",
+      "muscles": "Épaules · Pectoraux",
+      "type": "Épaules",
+      "instructions": "Cet exercice consiste à soulever une barre du sol jusqu'aux épaules, puis à la pousser au-dessus de la tête. C'est un mouvement composé qui sollicite plusieurs groupes musculaires, notamment les jambes, le dos, les épaules et les bras. Il est souvent utilisé dans les programmes de force et de conditionnement physique pour améliorer la puissance globale et les qualités athlétiques.",
+      "equipment": "Haltères"
+    },
+    {
+      "id": "w_epaules_jetes_en_puissance_avec_halteres_depuis_la_suspension",
+      "name": "Épaulés-jetés en puissance avec haltères depuis la suspension",
+      "muscles": "Ischio-jambiers · Fessiers · Mollets · Quadriceps · Trapèzes",
+      "type": "Dos",
+      "instructions": "Debout, tenez-vous bien droit avec vos haltères, en les maintenant le long du corps. Effectuez une charnière au niveau des hanches pour les abaisser jusqu'aux genoux (image 1). Redressez-vous avec un léger saut, en utilisant l'élan pour tirer les haltères jusqu'à vos épaules (image 2). Tenez-vous bien droit, puis redescendez les haltères le long du corps de façon contrôlée et répétez. Gardez le mouvement rapide et explosif ; si votre fréquence cardiaque ne grimpe pas en flèche, c'est que vous les exécutez mal.",
+      "equipment": "Haltères"
+    },
+    {
+      "id": "w_extension_des_avant_bras_avec_haltere",
+      "name": "Extension des avant-bras avec haltère",
+      "muscles": "Triceps",
+      "type": "Bras",
+      "instructions": "- Commencez par prendre un haltère dans chaque main, les paumes tournées vers le torse. Gardez le dos droit, pliez légèrement les genoux et penchez-vous vers l'avant au niveau de la taille. Votre torse doit être presque parallèle au sol. Veillez à garder la tête haute. Les parties supérieures des bras doivent être proche du torse et parallèle au sol. Les avant-bras doivent être dirigés vers le sol lorsque vous tenez les haltères. Un angle de 90 degrés doit être formé entre l'avant-bras et le bras. C'est votre position de départ.\n\n- Maintenant, tout en gardant les bras immobiles, expirez et utilisez vos triceps pour soulever les haltères jusqu'à ce que les bras soient complètement tendus. Concentrez-vous sur le mouvement de l'avant-bras.\n\n- Après une brève pause au sommet de la contraction, inspirez et redescendez lentement les haltères jusqu'à la position de départ.\n\n- Répétez le mouvement pour le nombre de répétitions prescrit.\n\nVariantes :\n\n- Cet exercice peut être exécuté avec un seul bras à la fois.\n\n- De plus, si vous aimez la variante à un bras, vous pouvez utiliser une poulie basse au lieu d'un haltère pour une meilleure contraction maximale. Dans ce cas, les paumes doivent être tournées vers le haut plutôt que vers le torse.",
+      "equipment": "Haltères"
+    },
+    {
+      "id": "w_extension_des_fessiers_a_la_poulie",
+      "name": "Extension des fessiers à la poulie",
+      "muscles": "Fessiers",
+      "type": "Jambes",
+      "instructions": "Cet exercice vous permet de travailler la partie supérieure, ou la plus volumineuse, des fessiers. C'est pourquoi il ne devrait jamais manquer dans votre programme d'exercices isolés destinés à entraîner les fessiers.\nTenez-vous debout devant une machine à poulie et repérez la poulie basse. Fixez ensuite la sangle de cheville pour travailler à la poulie basse. Quant à votre posture, vous devez rester droit en permanence. Veillez tout particulièrement à votre dos pour le maintenir droit et éviter les blessures.\nIl est conseillé de vous tenir à la machine pour un meilleur équilibre. Avec la jambe qui supporte la charge du câble, effectuez lentement une extension vers l'arrière sans plier le genou.",
+      "equipment": "Poulie"
+    },
+    {
+      "id": "w_extension_des_poignets_aux_halteres",
+      "name": "Extension des poignets aux haltères",
+      "muscles": "Bras",
+      "type": "Bras",
+      "instructions": "Saisissez deux haltères en prise pronation et posez vos avant-bras sur vos genoux.\n\nLaissez vos poignets fléchir complètement, puis réalisez l'extension des poignets.",
+      "equipment": "Haltères"
+    },
+    {
+      "id": "w_extension_des_triceps_a_la_poulie_rotation_interne",
+      "name": "Extension des triceps à la poulie - rotation interne",
+      "muscles": "Triceps",
+      "type": "Bras",
+      "instructions": "Exercice à un bras, le câble tenu au niveau de l'épaule opposée et le coude fléchi. Tournez vers le câble, puis tendez le coude en travers du corps.",
+      "equipment": "Poulie"
+    },
+    {
+      "id": "w_extension_des_triceps_au_dessus_de_la_tete",
+      "name": "Extension des triceps au-dessus de la tête",
+      "muscles": "Trapèzes",
+      "type": "Bras",
+      "instructions": "Extension des triceps au-dessus de la tête avec barre EZ – Guide rapide\n\nLa position au-dessus de la tête met l'accent sur le chef long des triceps (parce qu'il est étiré sous la charge), mais l'exercice sollicite bien les trois chefs du triceps (long, latéral et médial) dans une certaine mesure pendant l'extension.\n\n- Préparation :\nAsseyez-vous sur un banc (ou tenez-vous debout) et saisissez une barre EZ avec une prise serrée en pronation. Levez la barre au-dessus de la tête, bras complètement tendus. Gardez la sangle abdominale contractée et les coudes près de la tête.\n\n- Exécution :\nAbaissez lentement la barre derrière votre tête en fléchissant les coudes jusqu'à ce qu'ils atteignent environ 90°. Gardez les coudes pointés vers l'avant (sans les écarter).\n\n- Fin : Tendez à nouveau vos bras pour revenir à la position de départ, en contractant vos triceps en haut.\n\nConseils :\n\n- Contrôlez le mouvement pour éviter de solliciter excessivement vos épaules.\n\n- Utilisez une charge modérée pour une amplitude de mouvement complète.\n\n- Gardez le dos droit et évitez de le cambrer.",
+      "equipment": "Barre EZ"
+    },
+    {
+      "id": "w_extension_des_triceps_croisee_a_la_poulie_haute_nb",
+      "name": "Extension des triceps croisée à la poulie haute - NB",
+      "muscles": "Triceps",
+      "type": "Bras",
+      "instructions": "L'extension des triceps croisée à la poulie haute est un exercice d'isolation destiné à cibler les triceps, en particulier le chef long. Elle utilise des câbles et des poignées saisies avec les mains croisées, ce qui permet un mouvement de poussée particulier, efficace pour développer la force des triceps. Contrairement aux exercices qui utilisent une barre droite ou une corde, cette variante peut être plus confortable pour vos poignets et vos coudes.",
+      "equipment": "Poulie"
+    },
+    {
+      "id": "w_extension_triceps_a_la_poulie",
+      "name": "Extension triceps à la poulie",
+      "muscles": "Triceps",
+      "type": "Bras",
+      "instructions": "L'extension triceps à la corde à la poulie est un exercice populaire qui cible les triceps. Il est facile à apprendre et à exécuter, ce qui en fait un favori aussi bien des débutants que des pratiquants confirmés. Il se réalise généralement sur un nombre modéré à élevé de répétitions, par exemple 8 à 12 répétitions ou plus par série, dans le cadre d'un entraînement du haut du corps ou axé sur les bras.",
+      "equipment": "Poulie"
+    },
+    {
+      "id": "w_extension_triceps_poulie_basse_a_un_bras",
+      "name": "Extension Triceps Poulie Basse à Un Bras",
+      "muscles": "Triceps",
+      "type": "Bras",
+      "instructions": "Réglez la poulie au bas de la machine à câble et saisissez-la **sans utiliser d'accessoire**. **Étendez le câble directement au-dessus de votre tête.\n\nTout en gardant votre dos droit et votre bras supérieur immobile, abaissez le câble derrière votre tête jusqu'à ce que vous sentiez un bon étirement dans vos triceps, puis étendez-le à nouveau vers le haut jusqu'à ce que votre **coude soit verrouillé (ou complètement tendu).",
+      "equipment": "Poulie"
+    },
+    {
+      "id": "w_extension_triceps_unilaterale_a_la_poulie",
+      "name": "Extension triceps unilatérale à la poulie",
+      "muscles": "Triceps · Abdos",
+      "type": "Bras",
+      "instructions": "L'extension triceps unilatérale à la poulie est un exercice d'isolation unilatéral qui cible le triceps brachial. En travaillant un bras à la fois, il aide à corriger les déséquilibres de force entre les côtés tout en sollicitant la sangle abdominale pour la stabilité.\nPosition de départ :\nTenez-vous face à la machine à poulie, les pieds écartés à la largeur des épaules. Fixez une poignée individuelle à la poulie haute. Saisissez la poignée d'une main en prise pronation, le coude fléchi à environ 90° et collé contre le corps. Gardez la sangle abdominale gainée et le dos droit.\nExécution :\nPoussez la poignée vers le bas dans un mouvement contrôlé en tendant le coude jusqu'à ce que le bras soit complètement tendu. Maintenez la contraction pendant 1 seconde en position basse, puis revenez lentement à la position de départ.",
+      "equipment": "Poulie"
+    },
+    {
+      "id": "w_fente_arriere_a_la_barre",
+      "name": "Fente arrière à la barre",
+      "muscles": "Quadriceps",
+      "type": "Jambes",
+      "instructions": "Étape 1 : Tenez-vous debout, les pieds écartés de la largeur des hanches, en maintenant une barre sur le haut du dos.\nÉtape 2 : Gardez le dos droit, la poitrine ouverte et la sangle abdominale engagée.\nÉtape 3 : Faites un pas en arrière avec une jambe et abaissez votre corps en pliant les deux genoux. Assurez-vous que le genou arrière touche presque le sol.\nÉtape 4 : Poussez sur le pied arrière pour revenir à la position de départ.\nÉtape 5 : Répétez le mouvement avec l'autre jambe.\nContinuez à alterner les jambes pour le nombre de répétitions souhaité.",
+      "equipment": "Barre"
+    },
+    {
+      "id": "w_fente_arriere_avec_halteres",
+      "name": "Fente arrière avec haltères",
+      "muscles": "Fessiers · Quadriceps · Mollets",
+      "type": "Jambes",
+      "instructions": "Cet exercice consiste à tenir un haltère dans chaque main et à reculer pour se mettre en position de fente (lunge), puis à revenir à la position debout. Il cible principalement les fessiers, les ischio-jambiers et les quadriceps.",
+      "equipment": "Haltères"
+    },
+    {
+      "id": "w_fente_sur_une_jambe_avec_kettlebell",
+      "name": "Fente sur une jambe avec kettlebell",
+      "muscles": "Mollets · Fessiers · Quadriceps",
+      "type": "Jambes",
+      "instructions": "Comment réaliser une fente sur une jambe avec kettlebell\n\nPréparation : Tenez-vous debout, pieds joints. Saisissez le kettlebell des deux mains par la poignée en le gardant près de votre poitrine, ou tenez-le d'une seule main (du même côté que la jambe qui travaille).\n\nPas et descente : Faites un grand pas vers l'avant (ou vers l'arrière, ce qui est plus sûr pour vos genoux) avec une jambe, en abaissant les hanches jusqu'à ce que les deux genoux forment un angle de 90 degrés.\n\nFocalisation : Reportez votre poids sur la jambe avant (ou fléchie), en gardant le dos droit et le buste bien vertical.\n\nRetour : Poussez sur votre jambe avant pour revenir à la position de départ.",
+      "equipment": "Kettlebell"
+    },
+    {
+      "id": "w_fentes_debout_a_la_barre",
+      "name": "Fentes debout à la barre",
+      "muscles": "Quadriceps · Fessiers",
+      "type": "Jambes",
+      "instructions": "Placez la barre sur l'arrière de vos épaules. Tenez-vous droit, puis faites un premier pas en avant. Le pas doit vous amener suffisamment loin pour que le genou de votre jambe d'appui puisse toucher le sol. Redressez-vous ensuite et répétez avec l'autre jambe.\n\nPensez à conserver une bonne posture.",
+      "equipment": "Barre"
+    },
+    {
+      "id": "w_fentes_marchees_avec_halteres",
+      "name": "Fentes marchées avec haltères",
+      "muscles": "Quadriceps · Fessiers",
+      "type": "Jambes",
+      "instructions": "- Position de départ : Tenez-vous debout, les pieds écartés de la largeur des hanches, les mains sur les hanches ou tenant des haltères le long du corps.\n\n- Le pas : Faites un grand pas en avant avec la jambe droite.\n\n- La descente : Abaissez vos hanches jusqu'à ce que les deux genoux soient pliés à environ 90 degrés.\n\n- La transition : Poussez à travers le talon avant pour vous redresser, en ramenant le pied arrière vers l'avant pour enchaîner directement sur la fente suivante.",
+      "equipment": "Haltères"
+    },
+    {
+      "id": "w_flexion_laterale_avec_haltere",
+      "name": "Flexion Latérale avec haltère",
+      "muscles": "Obliques",
+      "type": "Abdos",
+      "instructions": "Cet exercice consiste à tenir un haltère dans une main et à se pencher sur le côté pour travailler les muscles obliques sur le flanc du corps. Il peut être effectué debout ou assis et est souvent utilisé comme exercice de renforcement du tronc (core strengthening).",
+      "equipment": "Haltères"
+    },
+    {
+      "id": "w_flexion_laterale_du_tronc_avec_haltere",
+      "name": "Flexion latérale du tronc avec haltère",
+      "muscles": "Obliques · Abdos",
+      "type": "Abdos",
+      "instructions": "Également appelées flexions latérales avec haltère. Tenez-vous debout dans l'alignement des hanches, les genoux légèrement fléchis, en conservant la courbure naturelle de la colonne vertébrale, un bras tendu le long du corps, et saisissez l'haltère d'une main. Effectuez des flexions latérales du buste, lentes et contrôlées, jusqu'à atteindre un angle d'environ 45°.",
+      "equipment": "Haltères"
+    },
+    {
+      "id": "w_forearm_curls_underhand_grip",
+      "name": "Forearm Curls (underhand grip)",
+      "muscles": "Bras",
+      "type": "Bras",
+      "instructions": "- Engage the muscles\n\n- Don't use momentum\n\n- Controlled movement\n\n- Slow movement",
+      "equipment": "Haltères"
+    },
+    {
+      "id": "w_glute_ham_raise",
+      "name": "Glute-Ham Raise",
+      "muscles": "Ischio-jambiers · Fessiers",
+      "type": "Jambes",
+      "instructions": "Kneel on a glute-ham developer or have a partner hold your ankles. Keeping hips straight, lower your torso toward the floor under control, then curl back up by contracting the hamstrings and glutes.",
+      "equipment": "Banc"
+    },
+    {
+      "id": "w_halteres_de_kettlebell",
+      "name": "Haltères de kettlebell",
+      "muscles": "Ischio-jambiers · Fessiers · Quadriceps · Trapèzes",
+      "type": "Dos",
+      "instructions": null,
+      "equipment": "Kettlebell"
+    },
+    {
+      "id": "w_hanging_leg_raises",
+      "name": "Hanging Leg Raises",
+      "muscles": "Abdos",
+      "type": "Abdos",
+      "instructions": "Hanging from bar or straps, bring legs up with knees extended or flexed",
+      "equipment": "Barre de traction"
+    },
+    {
+      "id": "w_hercules_pillars",
+      "name": "Hercules Pillars",
+      "muscles": "Biceps · Brachial · Triceps · Épaules",
+      "type": "Bras",
+      "instructions": "Grab two cables stand in the middle so both have tension and hold",
+      "equipment": "Poulie"
+    },
+    {
+      "id": "w_hip_airplane",
+      "name": "Hip Airplane",
+      "muscles": "Fessiers · Ischio-jambiers · Mollets",
+      "type": "Jambes",
+      "instructions": "Tenez-vous sur une jambe et inclinez légèrement le haut du corps vers l'avant tout en gardant le dos droit. Tendez la jambe libre derrière vous de sorte que le torse et la jambe forment à peu près une seule ligne. Ouvrez lentement la hanche sur le côté en faisant pivoter le bassin et le haut du corps de manière contrôlée. Refermez ensuite la hanche et revenez à la position de départ.\n\nLe mouvement doit provenir principalement de la hanche. Gardez le pied d'appui stable et évitez de laisser le genou s'affaisser vers l'intérieur.",
+      "equipment": "Kettlebell"
+    },
+    {
+      "id": "w_hip_thrust",
+      "name": "Hip thrust",
+      "muscles": "Fessiers",
+      "type": "Jambes",
+      "instructions": "La barre doit reposer directement sur le haut de vos cuisses, juste en dessous de l'aine. Vos pieds doivent se trouver directement sous vos genoux. Poussez vos hanches vers le haut de manière à former une ligne droite de vos genoux jusqu'à vos épaules. Utilisez un coussin pour plus de confort.",
+      "equipment": "Barre, Banc"
+    },
+    {
+      "id": "w_hip_thrust_avec_haltere",
+      "name": "Hip Thrust avec haltère",
+      "muscles": "Fessiers · Quadriceps",
+      "type": "Jambes",
+      "instructions": "Cet exercice consiste à s'asseoir sur le sol avec un haltère posé sur les hanches, puis à pousser les hanches vers le haut tout en contractant les fessiers. C'est un excellent exercice pour renforcer les fessiers et améliorer la mobilité des hanches.",
+      "equipment": "Haltères"
+    },
+    {
+      "id": "w_jalon_caballero_unialteral",
+      "name": "Jalon caballero unialteral",
+      "muscles": "Brachial · Obliques",
+      "type": "Dos",
+      "instructions": "Pull performed in knight's stance",
+      "equipment": "Haltères"
+    },
+    {
+      "id": "w_jm_press",
+      "name": "JM Press",
+      "muscles": "Triceps · Biceps · Pectoraux",
+      "type": "Bras",
+      "instructions": "Le JM press maintient vos épaules immobiles et repose sur la flexion et l'extension du coude pour déplacer la charge grâce à la force de vos triceps. Cela signifie que vous profitez de tous les avantages des meilleurs exercices de renforcement des triceps sans surmener cette articulation fragile qu'est l'épaule. Un grand classique, gagnant sur tous les plans !",
+      "equipment": "Barre"
+    },
+    {
+      "id": "w_kettlebell_swing",
+      "name": "Kettlebell Swing",
+      "muscles": "Épaules · Fessiers · Quadriceps · Abdos · Trapèzes",
+      "type": "Jambes",
+      "instructions": "Bien que le kettlebell swing soit un exercice pour tout le corps, il cible principalement les muscles de la chaîne postérieure (l'arrière du corps). Les principaux muscles sollicités sont les fessiers, les ischio-jambiers, les érecteurs du rachis et les muscles du haut du dos.",
+      "equipment": "Kettlebell"
+    },
+    {
+      "id": "w_knee_raises",
+      "name": "Knee Raises",
+      "muscles": "Abdos · Obliques",
+      "type": "Abdos",
+      "instructions": "The 90° leg raise on the bar is a very intense exercise that involves all the abdominal muscles.",
+      "equipment": "Barre de traction"
+    },
+    {
+      "id": "w_l_sit_groupe_tuck_l_sit",
+      "name": "L-sit groupé (tuck L-sit)",
+      "muscles": "Abdos · Brachial · Pectoraux · Quadriceps · Trapèzes · Triceps",
+      "type": "Abdos",
+      "instructions": "Le tuck L-sit est un maintien au poids du corps où vous vous soutenez sur des barres parallèles, des parallettes ou le sol avec les bras tendus, tout en ramenant vos genoux vers votre poitrine. Vos hanches restent levées, votre colonne reste droite et vos pieds flottent au-dessus du sol. L'objectif est de garder la sangle abdominale gainée, les épaules abaissées et les bras verrouillés tout en maintenant la position groupée. C'est un maintien statique très exigeant pour les abdominaux et stabilisateur pour les épaules, souvent utilisé comme progression vers le L-sit complet.",
+      "equipment": "Banc"
+    },
+    {
+      "id": "w_leg_raises_pull_up_bar",
+      "name": "Leg raises pull up bar",
+      "muscles": "Abdos · Obliques · Quadriceps",
+      "type": "Abdos",
+      "instructions": "with a firm grip with both hands on the bar, raise your outstretched legs, until you reach a 90° angle with your torso.",
+      "equipment": "Barre de traction"
+    },
+    {
+      "id": "w_lento_avanti_seduto",
+      "name": "lento avanti seduto",
+      "muscles": "Épaules",
+      "type": "Dos",
+      "instructions": "slow controlled seated forward exercise with dumbbells",
+      "equipment": "Haltères"
+    },
+    {
+      "id": "w_lying_dumbbell_row_ss_seated_shrug",
+      "name": "Lying Dumbbell Row SS Seated Shrug",
+      "muscles": "Dos · Trapèzes · Biceps",
+      "type": "Dos",
+      "instructions": "laying on the stomach on a bench with slight angle",
+      "equipment": "Haltères"
+    },
+    {
+      "id": "w_machine_leg_flexion",
+      "name": "Machine Leg Flexion",
+      "muscles": "Ischio-jambiers",
+      "type": "Jambes",
+      "instructions": "Adjust the back seat or pad so your knees align with the side pivot axis.Place the lower roller pad against your lower calves, just above the back of your ankles.Lower the upper thigh restraint pad so your legs stay firmly on the seat.Pick a light weight on the stack with the pin.",
+      "equipment": "Poulie"
+    },
+    {
+      "id": "w_marches",
+      "name": "Marches",
+      "muscles": "Fessiers · Quadriceps · Ischio-jambiers · Mollets",
+      "type": "Jambes",
+      "instructions": "- Tenez-vous debout face à une chaise\n\n- Montez sur la chaise\n\n- Descendez de la chaise\n\n- Répétez",
+      "equipment": "Banc"
+    },
+    {
+      "id": "w_oiseau_sur_banc_incline",
+      "name": "Oiseau sur banc incliné",
+      "muscles": "Épaules · Trapèzes",
+      "type": "Dos",
+      "instructions": "L'oiseau à l'haltère sur banc incliné est un exercice du haut du corps qui cible les deltoïdes postérieurs (arrière de l'épaule), ainsi que les muscles posturaux du haut du dos. Comme il cible de si petits muscles, cet exercice se réalise généralement avec une charge légère et un nombre élevé de répétitions, par exemple 10 à 15 répétitions par série ou plus.",
+      "equipment": "Haltères, Banc incliné"
+    },
+    {
+      "id": "w_pointes_de_pieds_a_la_barre_toes_to_bar",
+      "name": "Pointes de pieds à la barre (toes to bar)",
+      "muscles": "Abdos · Dos · Obliques",
+      "type": "Abdos",
+      "instructions": "Le nom « toes to bar » (pointes de pieds à la barre) dit tout : cet exercice, dans lequel vous êtes suspendu à une barre de traction, consiste à amener vos pointes de pieds vers la barre, en direction de votre visage. Cela sollicite vraiment vos abdominaux. Le « toes to bar » est populaire dans les programmes de fitness fonctionnel comme Freeletics et CrossFit, et c'est un exercice efficace pour travailler la tablette de chocolat.",
+      "equipment": "Barre de traction"
+    },
+    {
+      "id": "w_pompes_inclinees",
+      "name": "Pompes | Inclinées",
+      "muscles": "Pectoraux · Triceps",
+      "type": "Pectoraux",
+      "instructions": "Les pompes inclinées ciblent principalement les muscles de la poitrine (grand et petit pectoral), mais sollicitent aussi, dans une moindre mesure, les triceps, les épaules et la sangle abdominale. Comme le haut du corps est surélevé, la pompe inclinée sollicite moins les triceps que les pompes classiques, ce qui peut être bénéfique pour les personnes souhaitant cibler spécifiquement les muscles de la poitrine.",
+      "equipment": "Banc, Banc incliné"
+    },
+    {
+      "id": "w_pompes_declinees",
+      "name": "Pompes déclinées",
+      "muscles": "Pectoraux · Épaules · Triceps",
+      "type": "Pectoraux",
+      "instructions": "Les pompes déclinées sont une autre version modifiée de la pompe traditionnelle qui sollicite les muscles du haut du corps d'une manière différente. Pour effectuer une pompe déclinée, surélevez vos pieds sur une surface surélevée, telle qu'un banc, une chaise ou une marche, tout en plaçant vos mains au sol en position de pompe. Abaissez votre corps vers le sol tout en maintenant une ligne droite de vos épaules à vos chevilles, puis remontez à la position de départ\nContrairement à la pompe inclinée, la pompe déclinée met davantage l'accent sur les épaules et les triceps, tout en engageant les muscles de la poitrine dans une moindre mesure. En surélevant vos pieds, vous augmentez la difficulté de l'exercice en plaçant plus de poids sur le haut de votre corps, forçant vos épaules et vos triceps à travailler plus fort pour repousser votre corps vers le haut.\nLa pompe déclinée peut être un excellent moyen de mettre à l'épreuve la force de votre haut du corps et d'améliorer votre capacité à effectuer d'autres variations de pompes. Comme pour tout exercice, assurez-vous d'utiliser une forme appropriée et de commencer avec une hauteur adaptée à votre niveau de force et de forme physique.",
+      "equipment": "Banc, Banc incliné"
+    },
+    {
+      "id": "w_poussee_des_triceps_a_la_poulie",
+      "name": "Poussée des triceps à la poulie",
+      "muscles": "Triceps",
+      "type": "Bras",
+      "instructions": "Exercice à un bras qui commence avec la main près de la poitrine, le coude fléchi et écarté vers l'extérieur. Poussez vers l'avant et vers le bas contre le câble en tendant le coude.",
+      "equipment": "Poulie"
+    },
+    {
+      "id": "w_power_clean",
+      "name": "Power Clean",
+      "muscles": "Pectoraux",
+      "type": "Pectoraux",
+      "instructions": "Olympic weight lifting",
+      "equipment": "Barre"
+    },
+    {
+      "id": "w_presse_a_fessiers_laterale_sur_une_jambe",
+      "name": "Presse à fessiers latérale sur une jambe",
+      "muscles": "Mollets · Fessiers · Quadriceps",
+      "type": "Jambes",
+      "instructions": "La presse à fessiers latérale sur une jambe est une variante de la presse à cuisses où vous placez votre corps de côté sur l'appui, un pied posé haut et légèrement incliné pour pousser la charge, ce qui sollicite puissamment le fessier externe (moyen et petit fessier) et les ischio-jambiers pour un développement équilibré des jambes et de la stabilité. L'exercice demande de bien pousser à travers le talon et de garder le contrôle sans verrouiller complètement la jambe.\n\nComment l'exécuter :\n\nMise en place : Asseyez-vous dans la presse à cuisses, pivotez le corps sur une hanche et placez un pied en haut de la plateforme, à environ 45 degrés, les orteils légèrement orientés vers l'extérieur et l'avant.\n\nPositionnement : Gardez la hanche, le genou et la cheville alignés, et veillez à ce que votre bas du dos reste plaqué contre l'appui.\n\nDescente : Abaissez lentement la charge en laissant votre genou fléchir profondément (près de 90 degrés), jusqu'à ressentir un étirement dans le fessier et l'ischio-jambier.\n\nPoussée : Poussez à travers le talon (et non les orteils) pour remonter la charge, en contractant les fessiers et les ischio-jambiers, et arrêtez-vous juste avant l'extension complète de la jambe.\n\nContrôle : Évitez tout rebond et ne laissez pas votre bas du dos se décoller de l'appui ; maintenez la tension tout au long du mouvement.",
+      "equipment": "Banc incliné"
+    },
+    {
+      "id": "w_pullover_avec_haltere_en_travers_du_banc",
+      "name": "Pullover avec haltère en travers du banc",
+      "muscles": "Dos · Pectoraux · Dentelé antérieur",
+      "type": "Pectoraux",
+      "instructions": "Saisissez un haltère de poids modéré de manière à ce que vos paumes soient à plat contre la face inférieure des disques supérieurs et que vos pouces entourent la barre. Allongez-vous sur le dos en travers d'un banc plat, de sorte que seuls le haut de votre dos et vos épaules soient en contact avec le banc. Vos pieds doivent être écartés d'environ la largeur des épaules et votre tête doit pendre légèrement vers le bas. L'haltère étant tenu à bout de bras directement au-dessus de votre poitrine, fléchissez les bras d'environ 15 degrés et gardez-les fléchis pendant tout le mouvement. Abaissez lentement l'haltère vers l'arrière et vers le bas en décrivant un arc de cercle, jusqu'à la position la plus basse confortablement possible. Relevez-le lentement le long du même arc jusqu'au point de départ, puis répétez le nombre de répétitions requis.",
+      "equipment": "Haltères"
+    },
+    {
+      "id": "w_pullover_rowing_a_la_corde",
+      "name": "Pullover/rowing à la corde",
+      "muscles": "Dos",
+      "type": "Dos",
+      "instructions": "Installez un banc devant la machine de tirage à la poulie basse. Penchez-vous au-dessus du banc pour effectuer un rowing/pullover à la corde qui cible le grand dorsal. Voir l'image.",
+      "equipment": "Poulie, Banc incliné"
+    },
+    {
+      "id": "w_releve_de_jambes_sur_banc_decline",
+      "name": "Relevé de jambes sur banc décliné",
+      "muscles": "Abdos",
+      "type": "Abdos",
+      "instructions": "- Installation : Allongez-vous sur un banc décliné, la tête en haut, et saisissez les poignées.\n\n- Le départ : Tendez complètement les jambes en les gardant légèrement surélevées pour engager la sangle abdominale.\n\n- La montée : Soulevez vos jambes vers le plafond à l'aide des abdominaux, sans utiliser l'élan.\n\n- La contraction : Marquez une pause et contractez le bas des abdominaux en position haute.\n\n- Le retour : Abaissez lentement vos jambes vers la position de départ en gardant le contrôle.",
+      "equipment": "Banc incliné"
+    },
+    {
+      "id": "w_reverse_ez_bar_cable_curls",
+      "name": "Reverse EZ Bar Cable Curls",
+      "muscles": "Biceps",
+      "type": "Bras",
+      "instructions": "Standing in front of cable tower using a SZ Bar",
+      "equipment": "Poulie, Barre EZ"
+    },
+    {
+      "id": "w_reverse_preacher_curl_close_grip",
+      "name": "Reverse Preacher Curl (Close Grip)",
+      "muscles": "Biceps",
+      "type": "Bras",
+      "instructions": "Sitting reverse on a Biceps Bench with a close grip",
+      "equipment": "Barre EZ"
+    },
+    {
+      "id": "w_rollout_abdominal_a_la_barre",
+      "name": "Rollout abdominal à la barre",
+      "muscles": "Obliques",
+      "type": "Abdos",
+      "instructions": "Placez une barre au sol, à vos pieds.\n\nEn vous penchant à partir de la taille, saisissez la barre en prise pronation à la largeur des épaules.\n\nDans un mouvement lent et contrôlé, faites rouler la barre vers l'avant jusqu'à ce que votre dos soit droit.\n\nFaites rouler la barre en arrière en relevant les hanches et les fessiers pour revenir à la position de départ.",
+      "equipment": "Barre"
+    },
+    {
+      "id": "w_rotation_interne_en_decubitus_lateral",
+      "name": "Rotation interne en décubitus latéral",
+      "muscles": "Trapèzes",
+      "type": "Épaules",
+      "instructions": "Allongé sur le côté et en utilisant le bras le plus proche du banc, maintenez le coude fléchi à 90 degrés et laissez le poids descendre vers le sol au-delà du banc, aussi bas que possible sans inconfort. Remontez le poids en utilisant uniquement la rotation de l'épaule vers l'épaule opposée.",
+      "equipment": "Barre, Banc, Haltères"
+    },
+    {
+      "id": "w_rotations_du_tronc_a_la_poulie",
+      "name": "Rotations du tronc à la poulie",
+      "muscles": "Obliques",
+      "type": "Abdos",
+      "instructions": "Réglez la poulie à câble légèrement en dessous de la hauteur de la poitrine. Gardez le corps tourné vers l'avant et les hanches stables. Saisissez la poignée de la poulie, tendez complètement les bras et amenez-les vers l'avant en traversant votre corps. Maintenez la position pendant 1 seconde à la fin du mouvement, puis revenez lentement à la position de départ.",
+      "equipment": "Poulie"
+    },
+    {
+      "id": "w_rowing_aux_halteres_sur_banc_incline",
+      "name": "Rowing aux haltères sur banc incliné",
+      "muscles": "Dos",
+      "type": "Dos",
+      "instructions": "- En utilisant une prise neutre, allongez-vous en appui sur un banc incliné.\n\n- Prenez un haltère dans chaque main en prise neutre, en commençant les bras tendus. Ce sera votre position de départ.\n\n- Rétractez les omoplates et fléchissez les coudes pour tirer les haltères vers vos côtés.\n\n- Marquez une pause en haut du mouvement, puis revenez à la position de départ.",
+      "equipment": "Haltères, Banc incliné"
+    },
+    {
+      "id": "w_seated_cable_mid_trap_shrug",
+      "name": "Seated Cable Mid Trap Shrug",
+      "muscles": "Trapèzes",
+      "type": "Dos",
+      "instructions": "seated straight back, slight hold at top",
+      "equipment": "Poulie"
+    },
+    {
+      "id": "w_side_bends_on_machine",
+      "name": "Side Bends on Machine",
+      "muscles": "Obliques · Abdos",
+      "type": "Abdos",
+      "instructions": null,
+      "equipment": "Haltères"
+    },
+    {
+      "id": "w_single_arm_plank_to_row",
+      "name": "Single Arm Plank to Row",
+      "muscles": "Épaules · Biceps · Brachial · Dos · Obliques · Abdos · Dentelé antérieur",
+      "type": "Dos",
+      "instructions": "Start position as row, extend to plank and back. Finish with row and repeat",
+      "equipment": "Kettlebell"
+    },
+    {
+      "id": "w_souleve_de_terre_roumain_avec_halteres",
+      "name": "Soulevé de terre roumain avec haltères",
+      "muscles": "Ischio-jambiers · Fessiers",
+      "type": "Jambes",
+      "instructions": "Cet exercice consiste à tenir un haltère dans chaque main et à se pencher vers l'avant au niveau des hanches tout en gardant le dos droit, puis à revenir à la position debout. Il cible principalement les ischio-jambiers et les fessiers.",
+      "equipment": "Haltères"
+    },
+    {
+      "id": "w_souleve_de_terre_sumo_avec_haltere",
+      "name": "Soulevé de terre sumo avec haltère",
+      "muscles": "Ischio-jambiers · Fessiers · Quadriceps · Trapèzes",
+      "type": "Jambes",
+      "instructions": "Abaissez votre haltère au sol entre vos jambes. Adoptez une position large et, le dos droit, accroupissez-vous. L'haltère posé à la verticale, saisissez-le par le haut de la « tête » (image 1). En gardant la poitrine relevée et la sangle abdominale gainée, repoussez le sol pour vous redresser jusqu'à la position debout (image 2). Répétez. Si vous atteignez facilement 20 à 30 répétitions, utilisez deux haltères.",
+      "equipment": "Haltères"
+    },
+    {
+      "id": "w_souleve_de_terre_unilateral",
+      "name": "Soulevé de terre unilatéral",
+      "muscles": "Fessiers",
+      "type": "Jambes",
+      "instructions": "Cet exercice consiste à tenir un kettlebell (ou une cloche) dans une main et à se tenir sur une jambe tout en se penchant vers l'avant pour toucher le sol avec le kettlebell. Il cible les ischio-jambiers, les fessiers et le bas du dos, tout en améliorant également l'équilibre et la stabilité.",
+      "equipment": "Haltères, Kettlebell"
+    },
+    {
+      "id": "w_squat_avant_avec_halteres",
+      "name": "Squat avant avec haltères",
+      "muscles": "Fessiers · Quadriceps · Épaules · Abdos",
+      "type": "Jambes",
+      "instructions": "Cet exercice consiste à tenir un haltère dans chaque main à hauteur d'épaule et à effectuer un squat. Il cible les muscles du bas du corps, notamment les quadriceps, les ischio-jambiers et les fessiers, tout en engageant également le tronc (le core) et le haut du corps.",
+      "equipment": "Haltères"
+    },
+    {
+      "id": "w_squat_goblet_avec_haltere",
+      "name": "Squat goblet avec haltère",
+      "muscles": "Quadriceps",
+      "type": "Jambes",
+      "instructions": "Saisissez l'haltère des deux mains, au niveau des bords des disques supérieurs. Tenez l'haltère devant la poitrine, près du torse. Placez les pieds à environ la largeur des épaules, en gardant les genoux légèrement fléchis.\n\nDescendez en squat jusqu'à ce que les cuisses soient parallèles au sol. Gardez le dos droit, fléchissez et reculez les hanches pour que les genoux restent au-dessus des pieds. Remontez en gardant les genoux légèrement fléchis. Répétez.\n\nGardez le poids du corps sur les talons et regardez devant vous ou légèrement vers le haut afin de garder le dos droit.",
+      "equipment": "Haltères"
+    },
+    {
+      "id": "w_straight_bar_cable_curls",
+      "name": "Straight Bar Cable Curls",
+      "muscles": "Biceps",
+      "type": "Bras",
+      "instructions": "Standing upright in front of Cable Tower using a straight bar",
+      "equipment": "Poulie"
+    },
+    {
+      "id": "w_straight_bar_cable_front_raise",
+      "name": "Straight Bar Cable Front Raise",
+      "muscles": "Épaules",
+      "type": "Épaules",
+      "instructions": "Back to cable tower, cable between legs, SZ Bar",
+      "equipment": "Poulie, Barre EZ"
+    },
+    {
+      "id": "w_supine_press",
+      "name": "Supine press",
+      "muscles": "Trapèzes",
+      "type": "Dos",
+      "instructions": "Take a close grip and push perpendicular to the bench. Keep back flat.",
+      "equipment": "Barre, Banc"
+    },
+    {
+      "id": "w_t_bar_row",
+      "name": "T-Bar row",
+      "muscles": "Dos · Trapèzes",
+      "type": "Dos",
+      "instructions": "bent over with triangle grip, slightly bent knees",
+      "equipment": "Barre"
+    },
+    {
+      "id": "w_tirage_a_la_face_face_pull",
+      "name": "Tirage à la face (Face pull)",
+      "muscles": "Trapèzes",
+      "type": "Épaules",
+      "instructions": "Fixez une corde à une poulie réglée environ à hauteur de poitrine.\n\nReculez de manière à soutenir la charge bras complètement tendus, et adoptez une position décalée (un pied en avant). Fléchissez légèrement les genoux pour une base stable.\n\nRétractez les omoplates (serrez-les comme pour pincer un doigt entre elles) et tirez le centre de la corde légèrement vers le haut, en direction du visage. Un bon repère consiste à penser à écarter les extrémités de la corde, et non simplement à tirer vers l'arrière.\n\nÀ l'approche de votre visage, effectuez une rotation externe de manière à ce que vos articulations des doigts soient tournées vers le plafond.\n\nMaintenez la position haute pendant une seconde, puis abaissez lentement.",
+      "equipment": "Poulie"
+    },
+    {
+      "id": "w_tirage_a_la_poulie_basse_rowing_bas",
+      "name": "Tirage à la poulie basse (rowing bas)",
+      "muscles": "Dos · Biceps · Brachial",
+      "type": "Dos",
+      "instructions": "Asseyez-vous, posez les pieds sur les cales d'appui et saisissez la barre avec une prise large. Tirez la charge d'un mouvement rapide vers votre nombril, et non plus haut. Pendant le mouvement, gardez les bras et les coudes près du corps. Vos épaules sont resserrées. Laissez redescendre la charge lentement jusqu'à ce que vos bras soient complètement tendus.",
+      "equipment": "Poulie"
+    },
+    {
+      "id": "w_tirage_a_la_poulie_basse_prise_serree",
+      "name": "Tirage à la poulie basse, prise serrée",
+      "muscles": "Dos · Biceps · Brachial",
+      "type": "Dos",
+      "instructions": "L'exercice est identique au tirage classique à la poulie basse, mais avec une prise serrée :\n\nAsseyez-vous, posez les pieds sur les cales d'appui et saisissez la barre avec une prise large. Tirez la charge d'un mouvement rapide vers votre nombril, et non plus haut. Pendant le mouvement, gardez les bras et les coudes près du corps. Vos épaules sont resserrées. Laissez redescendre la charge lentement jusqu'à ce que vos bras soient complètement tendus.",
+      "equipment": "Poulie"
+    },
+    {
+      "id": "w_tirage_a_un_bras",
+      "name": "Tirage à un bras",
+      "muscles": "Dos",
+      "type": "Dos",
+      "instructions": "Assis au sol, utilisez une poulie haute avec une poignée simple pour effectuer des tirages verticaux en mettant l'accent sur un grand étirement du grand dorsal.",
+      "equipment": "Poulie, Banc incliné"
+    },
+    {
+      "id": "w_tirage_haut_sumo_a_la_kettlebell",
+      "name": "Tirage haut sumo à la kettlebell",
+      "muscles": "Trapèzes · Épaules · Ischio-jambiers · Fessiers · Quadriceps",
+      "type": "Dos",
+      "instructions": "Un exercice polyarticulaire combinant des éléments du soulevé de terre sumo et du tirage haut. Il cible la chaîne postérieure, en particulier les fessiers, les ischio-jambiers et le haut du dos. La position sumo augmente l'engagement des hanches, tandis que le tirage haut ajoute une composante explosive qui favorise le développement de la puissance.\n\n- Tenez-vous droit au-dessus d'une kettlebell, les pieds plus écartés que la largeur des épaules et légèrement orientés vers l'extérieur.\n\n- Maintenez la sangle abdominale gainée et la colonne neutre tout au long de l'exercice.\n\n- Faites une charnière des hanches vers l'arrière et tendez les bras pour saisir la kettlebell en double prise pronation.\n\n- Les jambes presque verticales par rapport au sol, étendez les hanches pour soulever la kettlebell coudes hauts, en la gardant proche du corps.\n\n- Une fois la kettlebell à hauteur d'épaule, revenez à la position de départ.",
+      "equipment": "Kettlebell"
+    },
+    {
+      "id": "w_tirage_mentzer",
+      "name": "Tirage Mentzer",
+      "muscles": "Biceps · Dos",
+      "type": "Bras",
+      "instructions": "Tirage vertical face à la machine en prise serrée, en mettant l'accent sur les biceps. Augmente l'activation des biceps sur toute l'amplitude. Évitez de solliciter le grand dorsal.",
+      "equipment": "Poulie, Banc incliné"
+    },
+    {
+      "id": "w_tirage_vertical_a_un_bras",
+      "name": "Tirage vertical à un bras",
+      "muscles": "Dos · Trapèzes · Biceps · Brachial",
+      "type": "Dos",
+      "instructions": "Asseyez-vous à la machine de tirage vertical et saisissez la poignée individuelle en prise neutre. Gardez le torse stable, la poitrine ouverte et les omoplates légèrement rétractées. Commencez bras complètement tendu au-dessus de la tête, puis tirez la poignée vers le haut de la poitrine en suivant une trajectoire contrôlée et légèrement diagonale. Concentrez-vous sur l'engagement du grand dorsal tout en gardant l'épaule basse et en évitant toute rotation du torse. Revenez lentement à la position de départ, en gardant le contrôle tout au long du mouvement.",
+      "equipment": "Poulie"
+    },
+    {
+      "id": "w_tirages_hauts_buste_penche",
+      "name": "Tirages hauts buste penché",
+      "muscles": "Trapèzes",
+      "type": "Épaules",
+      "instructions": "Penchez-vous légèrement vers l'avant en tenant deux haltères. Tirez les haltères vers la poitrine en gardant les coudes aussi hauts que possible.",
+      "equipment": "Haltères"
+    },
+    {
+      "id": "w_traction_en_supination",
+      "name": "Traction en supination",
+      "muscles": "Biceps · Dos · Brachial · Trapèzes",
+      "type": "Dos",
+      "instructions": "La traction en supination est un exercice de musculation. On le pratique fréquemment dans le but de renforcer des muscles comme le grand dorsal et les biceps, qui assurent respectivement l'extension de l'épaule et la flexion du coude. Dans ce mouvement, les paumes sont tournées vers le corps. Il s'agit d'une forme de traction dont l'amplitude de mouvement est définie par rapport au menton de la personne.",
+      "equipment": "Barre de traction"
+    },
+    {
+      "id": "w_tractions_commando",
+      "name": "Tractions commando",
+      "muscles": "Épaules · Biceps · Dos · Trapèzes",
+      "type": "Dos",
+      "instructions": "Variante de la traction, elle s'exécute avec une main en supination et une main en pronation. Ne tordez pas le torse pour revenir de face : la tête passe une fois d'un côté, une fois de l'autre.",
+      "equipment": "Barre de traction"
+    },
+    {
+      "id": "w_triceps_pushdown",
+      "name": "Triceps Pushdown",
+      "muscles": "Triceps",
+      "type": "Bras",
+      "instructions": "Triceps pushdown on cable using lat bar.",
+      "equipment": "Poulie"
+    },
+    {
+      "id": "w_trunk_rotation_with_cable",
+      "name": "Trunk Rotation With Cable",
+      "muscles": "Obliques · Dos",
+      "type": "Abdos",
+      "instructions": "Seated trunk rotation with cable",
+      "equipment": "Poulie"
+    },
+    {
+      "id": "w_upper_external_oblique",
+      "name": "Upper External Oblique",
+      "muscles": "Obliques",
+      "type": "Pectoraux",
+      "instructions": "Exercise for upper external oblique muscles",
+      "equipment": "Barre de traction"
+    }
+  ]
+}

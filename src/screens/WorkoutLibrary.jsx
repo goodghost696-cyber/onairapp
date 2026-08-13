@@ -4,6 +4,7 @@ import { useApp } from '../context/AppContext'
 import { useLanguage } from '../context/LanguageContext'
 import { ExerciseModal } from '../components/ExerciseModal'
 import { useExercises } from '../hooks/useExercises'
+import wgerLibrary from '../data/exercisesLibrary.json'
 
 // Doubled from 8 to 16 per section (was too thin — "pas assez d'exercices
 // proposés"), then +2 per section (maison/salle) to cover cardio machine
@@ -101,10 +102,17 @@ export default function WorkoutLibrary({ section }) {
   // exercise already covered locally.
   const local = LOCAL_EXERCISES[section] || []
   const seenNames = new Set(local.map(e => e.name.toLowerCase()))
+  // Catalogue statique wger.de (src/data/exercisesLibrary.json, généré par
+  // scripts/fetch-wger-exercises.js — voir JOURNAL.md) : Maison/Salle
+  // uniquement, Dehors reste 100% curaté à la main (clé absente du JSON,
+  // `|| []` suffit). Même dédup par nom que l'extra API ci-dessous, dans le
+  // même ordre de priorité (local curaté d'abord, puis wger, puis API live).
+  const wgerExtra = (wgerLibrary[section] || []).filter(e => !seenNames.has(e.name.toLowerCase()))
+  wgerExtra.forEach(e => seenNames.add(e.name.toLowerCase()))
   const apiExtra = (!loading && !error)
     ? apiExercises.filter(e => !seenNames.has(e.name.toLowerCase()))
     : []
-  const baseList = [...local, ...apiExtra]
+  const baseList = [...local, ...wgerExtra, ...apiExtra]
 
   const filtered = baseList.filter(e =>
     e.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -219,6 +227,17 @@ export default function WorkoutLibrary({ section }) {
             ))}
           </div>
         ))}
+
+        {/* Attribution légale — pas de page Mentions légales/À propos dans
+            l'app à ce jour (vérifié avant d'ajouter ceci ici) ; discrète,
+            en pied de la bibliothèque plutôt qu'intrusive. Concerne
+            uniquement Maison/Salle (Dehors reste 100% curaté à la main,
+            aucune donnée wger dedans). */}
+        {section !== 'dehors' && (
+          <p style={{ fontSize: 10, color: 'var(--text-muted)', textAlign: 'center', marginTop: 8, opacity: 0.7 }}>
+            Données d'exercices fournies par wger.de (CC-BY-SA 4.0)
+          </p>
+        )}
       </div>
 
       {selectedExercise && (

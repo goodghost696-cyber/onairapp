@@ -45,6 +45,25 @@ Il existait déjà une "charte ON AIR Neon" documentée plus bas dans ce journal
 - `@phosphor-icons/react` uniquement pour la nav (bottom nav membre + nav coach) — son prop `weight` donne un état actif "plein" vs "contour" sans changement de couleur
 - Emoji conservés à quelques endroits précis et délibérés après itération (météo du Dashboard, sélecteur d'eau, toast de bienvenue) — jamais comme icône UI générique, seulement là où un pictogramme dessiné n'apportait rien de mieux (voir suites 77-81 pour l'historique de l'icône eau, 5 itérations avant 🥛)
 
+## 2026-08-13 — Catalogue d'exercices Maison/Salle agrandi via wger.de (suite au rapport d'investigation)
+
+Suite au plan proposé dans le rapport d'investigation du jour (catalogue plafonné à 18/section, limite structurelle du tier gratuit API Ninjas) : implémentation du plan recommandé (fichier JSON statique, source wger).
+
+**Script one-shot** — `scripts/fetch-wger-exercises.js` (jamais exécuté en prod, jamais appelé au runtime de l'app) : interroge `GET /api/v2/exerciseinfo/` de wger.de (API publique, gratuite, sans clé, sans quota — 863 exercices au total, paginé 100/requête) et `/api/v2/muscle/`, `/api/v2/equipment/` pour les tables de référence.
+- **Répartition Maison/Salle** : par équipement — aucun équipement/tapis/swiss ball/élastique → Maison ; barre/barre EZ/haltères/barre de traction/banc/banc incliné/kettlebell/poulie → Salle. Dehors non concerné (aucune notion "extérieur" côté wger, comme déjà noté dans le rapport — reste 100% curaté à la main dans `LOCAL_EXERCISES`).
+- **Traduction** : privilégie la traduction FR de chaque exercice quand elle existe (présente pour la majorité), repli sur l'EN sinon — même mix FR/EN déjà présent dans `LOCAL_EXERCISES` (ex. "Bench Press", "Deadlift" gardés en anglais).
+- **Mapping musculaire** : réutilise les valeurs FR de `MUSCLE_FR` (`useExercises.js`) pour 11 des 15 muscles wger (ids différents, mêmes libellés FR) ; seuls 4 muscles absents de ce mapping (obliques, dentelé antérieur, brachial, soléaire) reçoivent un libellé propre dans le script plutôt que d'étendre `MUSCLE_FR` lui-même (portée volontairement limitée au script).
+- **Variété** : sélection round-robin par groupe musculaire principal (pas les N premiers de la liste brute) pour éviter qu'une section se retrouve avec des dizaines de variantes du même mouvement et presque rien sur certains groupes.
+- Sortie : `src/data/exercisesLibrary.json` (statique, committé) — **110 exercices Maison + 110 Salle** (220 au total), même forme que `LOCAL_EXERCISES` (`id, name, muscles, type, instructions, equipment`, clé de section = catégorie).
+
+**Intégration (`WorkoutLibrary.jsx`)** — `wgerLibrary[section]` fusionné dans `baseList` entre le local curaté et l'extra API live, même logique de dédup par nom déjà en place (`local` d'abord, puis `wgerExtra` dédupliqué contre `local`, puis `apiExtra` dédupliqué contre les deux). `api/exercises.js`/`useExercises.js` (proxy API Ninjas) non touchés, laissés en l'état — toujours mergés en dernier, désormais rarement nécessaires vu le volume local mais gardés pour la variété/fraîcheur qu'ils apportent encore.
+
+**Attribution légale** — pas de page Mentions légales/À propos dans l'app (vérifié avant d'écrire quoi que ce soit) : mention discrète en pied de la bibliothèque d'exercices elle-même ("Données d'exercices fournies par wger.de (CC-BY-SA 4.0)"), affichée uniquement sur Maison/Salle (Dehors n'a aucune donnée wger).
+
+**Volume final** : 274 exercices au total (54 local + 220 wger) contre 54+API-live avant cette passe — Maison et Salle passent chacune de 18 (+ ce que l'API en direct ajoutait, variable) à 128 exercices garantis, sans dépendance à un quota externe.
+
+Build vérifié (`npm run build`), grep du bundle compilé confirmant : présence d'ids wger (ex. `w_2_handed_kettlebell_swing`) et de la mention d'attribution dans `WorkoutLibrary-*.js`. Chunk `WorkoutLibrary` passé de ~23 Ko à ~122 Ko (gzip ~7,4 Ko → ~35 Ko), cohérent avec le volume ajouté.
+
 ## 2026-08-13 — Flux authentification : 3 corrections issues de l'audit du jour
 
 Suite à l'audit ciblé du flux auth (investigation seule, sans fix, plus tôt dans la journée) : 3 corrections directes, causes déjà identifiées donc pas de re-debug.
