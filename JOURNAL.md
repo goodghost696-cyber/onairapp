@@ -45,6 +45,63 @@ Il existait déjà une "charte ON AIR Neon" documentée plus bas dans ce journal
 - `@phosphor-icons/react` uniquement pour la nav (bottom nav membre + nav coach) — son prop `weight` donne un état actif "plein" vs "contour" sans changement de couleur
 - Emoji conservés à quelques endroits précis et délibérés après itération (météo du Dashboard, sélecteur d'eau, toast de bienvenue) — jamais comme icône UI générique, seulement là où un pictogramme dessiné n'apportait rien de mieux (voir suites 77-81 pour l'historique de l'icône eau, 5 itérations avant 🥛)
 
+## 2026-08-13 — Décision stratégique : pivot vers build & flip
+
+**Contexte** : jusqu'ici VOLTA était pensé comme SaaS marque blanche récurrent (setup fee +
+abonnement mensuel, client cible On Air Fitness Clichy). Décision prise ce jour : abandon du
+modèle récurrent au profit d'une stratégie de build & flip — finir le produit, le vendre en
+one-shot (avec ou sans MRR), réinvestir ailleurs.
+
+**Raison du changement** : pas de contradiction assumable entre construire une infra scalable
+multi-clients et préparer une sortie rapide. Les deux modèles ont des priorités techniques
+incompatibles (multi-tenant utile pour l'un, inutile pour l'autre).
+
+**Fourchette de prix visée** : 1 500 – 4 000$ sans traction, 2 000 – 10 000$ si un engagement
+écrit (LOI ou pilote gratuit) de Clichy est obtenu avant la mise en vente.
+
+**Nouvel ordre de priorité :**
+1. Deadline ferme 3 semaines pour obtenir un engagement écrit de Clichy (LOI ou pilote gratuit,
+   même sans argent). Si pas de réponse concrète sous 3 semaines → abandon de ce levier.
+2. Audit complet anti-mock-data (grep MOCK_MEMBERS et équivalents, vérifier que chaque écran lit
+   des données Supabase réelles). Priorité absolue — un résidu de données fabriquées découvert par
+   un acheteur peut faire échouer la vente (cf. incident RunContent).
+3. Finir le backlog sprint existant : Dashboard → Nutrition → Bilan → Musculation/Run → Settings.
+4. Restyle UI (référence Dribbble Ronas IT — fond crème, pastel, Poppins) : maquettes/validation
+   design AVANT toute implémentation, verrouillé une fois pour éviter le pattern d'itérations
+   cosmétiques déjà documenté dans ce journal (icône eau, 5 itérations en une heure).
+5. Dépôt IDDN via APP (app.legalis.net/tarifs) si le coût reste raisonnable — preuve de
+   paternité du code avant vente.
+6. Listing sur SideProjectors + Microns.io en simultané (gratuit) dès les points 1-4 terminés.
+
+**Chantiers explicitement abandonnés ou mis en pause pour cette stratégie :**
+- Ajout de `gym_id` / architecture multi-tenant — aucune valeur pour un acheteur unique, ne pas
+  construire.
+- Équipe d'agents IA CrewAI (Manager/Marketing/Veille/UX/Product/Contrarian) — pertinent pour un
+  produit exploité sur la durée, pas pour une sortie à court terme. Mis en pause, pas annulé.
+- Suite de tests automatisés complète — hors budget-temps pour ce type de vente, les acheteurs à
+  cette fourchette ne font quasiment jamais d'audit de code profond.
+
+**Délai réaliste de vente une fois listé** : 1 à 3 mois entre mise en ligne et closing, à intégrer
+dans la planification — ne pas repousser le listing en attendant "le bon moment".
+
+---
+
+## 2026-08-12 — Audit post-désactivation "Confirm email" : race condition trouvée, pas corrigée (audit seul, aucun code touché)
+
+**Contexte** : Arnaud a désactivé "Confirm email" dans Supabase Auth (retour au flux session immédiate). Demande explicite : audit seul de `AuthContext.jsx` (`register()`, `resolveRole()`), `Login.jsx`, `CoachSignup.jsx` — aucune modification de code, branche `claude/charming-mendel-dj1GQ` en prod directe donc rien touché sans validation.
+
+**Risque réel trouvé** : le chemin self-heal + replay de `resolveRole()` (ajouté à la session précédente pour gérer le flux "Confirm email" différé) n'est **pas** le "code mort" que ses propres commentaires prétendent tant que le toggle reste désactivé. `onAuthStateChange` (`AuthContext.jsx:148`) déclenche `resolveRole()` en parallèle du code séquentiel de `register()`/`CoachSignup.handleSubmit()`, sans garantie d'ordre — une vraie race, indépendante du toggle. Conséquence :
+- **Côté membre** : bénigne — le doublon d'appel `/api/invite` cible le même `gym_id`, le perdant de la course échoue proprement en 409 (`api/invite.js:119-121`), aucune corruption.
+- **Côté coach** : grave — deux appels concurrents à `/api/create-gym` peuvent tous deux passer le garde-fou `existingProfile` (TOCTOU, `api/create-gym.js:57-64`, confirmé par `trg_prevent_self_privilege_insert` qui force `role='member', gym_id=null` sur tout insert self-heal, `supabase_schema.sql:288-307`) → **risque réel de double création de salle** (`gyms`), une orpheline, avec possible incohérence entre le code d'invitation affiché à l'écran et `profiles.gym_id` réellement persisté.
+
+Racine du problème : `register()` (`AuthContext.jsx:193`) et `CoachSignup.jsx` (`:46`) stashent désormais `inviteCode`/`gymName` en `user_metadata` **inconditionnellement**, y compris en session immédiate — ce qui rend la branche différée de `resolveRole()` (`:87-116`) atteignable même hors du cas "Confirm email ON" qu'elle était censée cibler exclusivement. Les commentaires "dead code today" (`AuthContext.jsx:83-86,206-208`, `CoachSignup.jsx:58-60`) sont trompeurs et à corriger le jour où ce point est traité.
+
+**Point vérifié et jugé correct** : pas de dépendance résiduelle à un événement de confirmation qui ne se déclencherait jamais — `onAuthStateChange` est un listener générique, tiré par tout `SIGNED_IN` réel (immédiat ou post-confirmation), rien n'attend spécifiquement un événement propre à la confirmation.
+
+**Pas corrigé** — audit seul, sur demande explicite. Correctif à discuter/valider avant d'être codé (probable : ne déclencher le replay `/api/create-gym`/`/api/invite` dans `resolveRole()` que si le self-heal vient réellement de créer la ligne `profiles`, combiné à un verrou/idempotence côté `api/create-gym.js` plus robuste qu'un simple check-then-act).
+
+---
+
 ## 2026-08-12 — Décision : achat nom de domaine différé, email transactionnel toujours en sandbox
 
 **Décision** : achat d'un nom de domaine différé — pas encore le bon moment.
