@@ -20,7 +20,11 @@
 }
 .session-sets-header {
   display: grid;
-  grid-template-columns: 24px 1fr 1fr 32px;
+  /* Colonne dédiée (auto, pas 24px comme .session-set-row) — "Série" en
+     majuscules + letter-spacing déborde d'une colonne à 24px et chevauche
+     visuellement "Reps" juste à côté ("SÉRIEREPS"). Voir audit JOURNAL.md
+     du 2026-08-13. */
+  grid-template-columns: auto 1fr 1fr 32px;
   gap: 8px;
   font-size: 10px;
   letter-spacing: 1.5px;
@@ -75,6 +79,15 @@
   background: var(--success);
   border-color: var(--success);
   color: #fff;
+  animation: set-check-pop 300ms ease;
+}
+/* Rebond au moment où le cercle se coche (false → true uniquement — le
+   navigateur ne rejoue l'animation que quand la classe .checked est
+   effectivement ajoutée, pas à chaque re-render). */
+@keyframes set-check-pop {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.25); }
+  100% { transform: scale(1); }
 }
 .add-set-btn {
   width: 100%;

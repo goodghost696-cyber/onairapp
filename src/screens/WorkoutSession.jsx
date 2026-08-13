@@ -22,10 +22,15 @@ export default function WorkoutSession() {
       duration: `${durationMin} min`,
       durationMin,
       totalSets: exercises.reduce((acc, ex) => acc + ex.sets.filter(s => s.done).length, 0),
-      exerciseDetails: exercises.map(ex => ({
-        name: ex.name,
-        sets: ex.sets.filter(s => s.done).map(s => ({ reps: parseInt(s.reps) || 0, kg: parseFloat(s.kg) || 0 }))
-      }))
+      exerciseDetails: exercises
+        .map(ex => ({
+          name: ex.name,
+          sets: ex.sets.filter(s => s.done).map(s => ({ reps: parseInt(s.reps) || 0, kg: parseFloat(s.kg) || 0 }))
+        }))
+        // Un exercice ajouté puis jamais validé (aucune série cochée) ne doit
+        // pas apparaître dans la séance enregistrée — voir audit JOURNAL.md
+        // du 2026-08-13 (cas réel : séance 16/07, Push-up, 0 séries).
+        .filter(ex => ex.sets.length > 0)
     })
     clearActiveSession()
     navigate('/weekly')
@@ -85,14 +90,14 @@ export default function WorkoutSession() {
                   <input
                     className="set-input"
                     type="number" min="1" max="99"
-                    placeholder="12"
+                    placeholder={exercise.suggested?.reps != null ? String(exercise.suggested.reps) : '12'}
                     value={set.reps}
                     onChange={e => updateSet(exIdx, setIdx, 'reps', e.target.value)}
                   />
                   <input
                     className="set-input"
                     type="number" min="0" max="999" step="0.5"
-                    placeholder="80"
+                    placeholder={exercise.suggested?.kg != null ? String(exercise.suggested.kg) : '80'}
                     value={set.kg}
                     onChange={e => updateSet(exIdx, setIdx, 'kg', e.target.value)}
                   />

@@ -45,6 +45,20 @@ Il existait déjà une "charte ON AIR Neon" documentée plus bas dans ce journal
 - `@phosphor-icons/react` uniquement pour la nav (bottom nav membre + nav coach) — son prop `weight` donne un état actif "plein" vs "contour" sans changement de couleur
 - Emoji conservés à quelques endroits précis et délibérés après itération (météo du Dashboard, sélecteur d'eau, toast de bienvenue) — jamais comme icône UI générique, seulement là où un pictogramme dessiné n'apportait rien de mieux (voir suites 77-81 pour l'historique de l'icône eau, 5 itérations avant 🥛)
 
+## 2026-08-13 — Écran de saisie de séance (WorkoutSession.jsx) : 4 corrections issues de l'audit du jour
+
+Suite à l'audit ciblé de l'écran de saisie de séance (investigation seule, sans fix, plus tôt dans la journée) : 4 corrections directes, cause déjà identifiée donc pas de re-debug.
+
+**Tâche 1 — bug prioritaire : exercices persistés avec 0 série validée** — `finishSession()` (`WorkoutSession.jsx`) gardait inconditionnellement chaque exercice ajouté à la séance dans `exerciseDetails`, même quand aucune de ses séries n'avait été cochée (`sets: []` après filtrage sur `done`). Cas réel observé : séance du 16/07, Push-up, 0 séries. Ajouté `.filter(ex => ex.sets.length > 0)` après le mapping — un exercice ajouté puis jamais validé n'apparaît plus du tout dans la séance envoyée en base (colonne `seances.exercices`).
+
+**Tâche 2 — chevauchement visuel "SÉRIEREPS"** — le label "Série" de `.session-sets-header` héritait de `grid-template-columns: 24px 1fr 1fr 32px`, la même grille que les lignes de données où cette 1ʳᵉ colonne (24px) n'est dimensionnée que pour un numéro de série ("1", "2"...). Le mot "SÉRIE" (majuscules + letter-spacing) débordait de cette colonne et chevauchait visuellement "REPS" juste à côté. En-tête passé à `grid-template-columns: auto 1fr 1fr 32px`, indépendant des largeurs de saisie.
+
+**Tâche 3 — placeholders déconnectés des suggestions IA** — le flux IA (`addExercisesToSession`, `AppContext.jsx`) calcule déjà `suggested: { reps, kg, rest }` par exercice, mais `WorkoutSession.jsx` affichait toujours les placeholders fixes "12"/"80" sans jamais le lire. Les deux inputs (reps/kg) utilisent maintenant `exercise.suggested.reps`/`.kg` comme placeholder dynamique quand disponible, avec repli sur "12"/"80" pour les exercices ajoutés manuellement (pas de suggestion IA).
+
+**Tâche 4 — feedback ludique sur validation d'une série** — animation CSS `set-check-pop` (scale 1 → 1.25 → 1, 300ms) ajoutée sur `.set-check-btn.checked`, jouée uniquement au moment où la classe `.checked` est ajoutée (donc au passage non-coché → coché, pas au décoché, pas à chaque re-render). Le retour haptique existait déjà (`navigator.vibrate(8)`, même pattern que Dashboard.jsx) et se déclenchait déjà uniquement au passage `false → true` — laissé tel quel.
+
+Build vérifié (`npm run build`), grep du bundle compilé confirmant les 4 changements : `.filter(s.sets.length>0)`, `grid-template-columns:auto 1fr 1fr 32px`, lecture de `t.suggested` pour les placeholders, et présence de l'animation `set-check-pop`/keyframes. **Test manuel réel indispensable sur la tâche 1 en particulier** (valider en conditions réelles qu'une séance avec un exercice non coché n'enregistre plus cet exercice du tout) — non vérifiable par simple lecture de code, pas d'instance Supabase connectée dans cet environnement.
+
 ## 2026-08-13 — Bilan (Weekly.jsx) : 3 corrections issues de l'audit du jour
 
 Suite à l'audit ciblé de l'écran Bilan (investigation seule, sans fix, plus tôt dans la journée) : 3 corrections directes, cause déjà identifiée donc pas de re-debug.
