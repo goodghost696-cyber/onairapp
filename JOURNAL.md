@@ -45,6 +45,16 @@ Il existait déjà une "charte ON AIR Neon" documentée plus bas dans ce journal
 - `@phosphor-icons/react` uniquement pour la nav (bottom nav membre + nav coach) — son prop `weight` donne un état actif "plein" vs "contour" sans changement de couleur
 - Emoji conservés à quelques endroits précis et délibérés après itération (météo du Dashboard, sélecteur d'eau, toast de bienvenue) — jamais comme icône UI générique, seulement là où un pictogramme dessiné n'apportait rien de mieux (voir suites 77-81 pour l'historique de l'icône eau, 5 itérations avant 🥛)
 
+## 2026-08-13 — Classement masqué (Weekly.jsx) + regroupement par groupe musculaire (WorkoutLibrary.jsx)
+
+Deux sujets indépendants dans cette passe.
+
+**Tâche 1 — masquage du classement de la salle** — section "CLASSEMENT DE LA SALLE" (`Weekly.jsx`) commentée entièrement, même traitement que la section photos déjà masquée le même jour (voir entrée juste en dessous) : bloc JSX gardé tel quel dans un commentaire, avec explication en tête. `fetchWeeklyLeaderboard` (`utils/leaderboard.js`), le state `leaderboard`/`leaderboardLoaded` et la vue SQL `leaderboard_weekly` ne sont pas touchés — juste le rendu qui saute. Décision réversible en décommentant le bloc.
+
+**Tâche 2 — regroupement par groupe musculaire (Exercices Maison/Salle/Dehors)** — `WorkoutLibrary.jsx` affichait `filtered` (recherche + fusion local/API) en liste plate. Ajout d'un regroupement par groupe musculaire principal (1ᵉʳ tag de `ex.muscles`, ex. "Pectoraux · Triceps · Épaules" → "Pectoraux" ; repli sur `ex.type` puis "Autre"), même pattern que le regroupement par type de repas sur Nutrition.jsx (section-label + compteur, groupes vides masqués). Ordre des sections donné par la 1ʳᵉ apparition dans `baseList` (pas alphabétique) pour garder les groupes curatés les plus fournis en tête. La recherche (`search`) continue de filtrer sur nom + muscles *avant* le regroupement, donc reste active à travers toutes les sections. Navigation 3 cartes Maison/Salle/Dehors (`Workout.jsx`) non touchée.
+
+Build vérifié (`npm run build`), grep du bundle compilé confirmant : absence de "CLASSEMENT DE LA SALLE" dans `Weekly-*.js` (rendu bien retiré), présence de la logique de split sur "·" dans `WorkoutLibrary-*.js` (regroupement bien inclus).
+
 ## 2026-08-13 — Écran de saisie de séance (WorkoutSession.jsx) : suppression d'une série
 
 Il était possible d'ajouter une série ("+ SÉRIE") mais pas d'en retirer une une fois ajoutée. Ajout d'un bouton "×" par ligne de série, même pattern visuel que le bouton de suppression d'un aliment sur l'écran Description libre de Nutrition.jsx (icône `✕` seule, sans fond, `color: var(--text-secondary)`).

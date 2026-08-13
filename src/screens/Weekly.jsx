@@ -155,7 +155,12 @@ export default function Weekly() {
             derrière) ni les plateformes B2B (pensées pour des coachs sans
             lien entre leurs clients). N'affiche que les membres avec au
             moins 1 séance cette semaine — voir le commentaire dans
-            utils/leaderboard.js pour pourquoi. */}
+            utils/leaderboard.js pour pourquoi.
+
+            Masquée le 2026-08-13 (demande produit) : décision de ne plus
+            afficher le classement pour l'instant. Code, fetch
+            (fetchWeeklyLeaderboard) et vue SQL leaderboard_weekly gardés
+            intacts pour reprise ultérieure — juste le rendu qui saute.
         {leaderboardLoaded && leaderboard.length > 0 && (
           <>
             <div className="section-label">CLASSEMENT DE LA SALLE — CETTE SEMAINE</div>
@@ -186,6 +191,7 @@ export default function Weekly() {
             </div>
           </>
         )}
+        */}
 
         {/* Section 1 — Progression physique
             Masquée le 2026-08-13 (audit JOURNAL.md) : bloc UI statique non

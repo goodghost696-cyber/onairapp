@@ -111,6 +111,25 @@ export default function WorkoutLibrary({ section }) {
     (e.muscles || '').toLowerCase().includes(search.toLowerCase())
   )
 
+  // Regroupement par groupe musculaire principal (1er tag de `muscles`,
+  // ex. "Pectoraux · Triceps · Épaules" -> "Pectoraux"), même pattern que le
+  // regroupement par type de repas sur Nutrition.jsx : liste plate ->
+  // sections avec compteur, groupes vides masqués, ordre stable donné par
+  // la 1ʳᵉ apparition dans baseList (pas alphabétique — garde les groupes
+  // les plus fournis/curatés en tête plutôt qu'un tri arbitraire).
+  function primaryGroup(ex) {
+    const label = ex.muscles || ex.type || 'Autre'
+    return label.split('·')[0].trim()
+  }
+  const groupOrder = []
+  baseList.forEach(ex => {
+    const g = primaryGroup(ex)
+    if (!groupOrder.includes(g)) groupOrder.push(g)
+  })
+  const groupedFiltered = groupOrder
+    .map(g => ({ group: g, items: filtered.filter(ex => primaryGroup(ex) === g) }))
+    .filter(g => g.items.length > 0)
+
   function addExercise(ex) {
     addExerciseToSession(ex)
     setAdded(prev => ({ ...prev, [ex.id]: true }))
@@ -167,30 +186,37 @@ export default function WorkoutLibrary({ section }) {
           {filtered.length} exercice{filtered.length !== 1 ? 's' : ''}
         </p>
 
-        {filtered.map((ex, i) => (
-          <div
-            key={ex.id}
-            className="card card-animated"
-            style={{ '--delay': `${i * 40}ms`, display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8, padding: '14px 16px', cursor: 'pointer' }}
-            onClick={() => setSelectedExercise(ex)}
-          >
-            <div style={{ flex: 1 }}>
-              <div className="text-base bold">{ex.name}</div>
-              <div className="text-sm text-muted">{ex.muscles || ex.type}</div>
+        {groupedFiltered.map(({ group, items }) => (
+          <div key={group} style={{ marginBottom: 16 }}>
+            <div className="text-xs bold" style={{ textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', marginBottom: 8 }}>
+              {group} <span style={{ opacity: 0.65, fontWeight: 400 }}>({items.length})</span>
             </div>
-            <button
-              onClick={(e) => { e.stopPropagation(); addExercise(ex) }}
-              style={{
-                background: 'transparent',
-                border: `1px solid ${added[ex.id] ? 'var(--success)' : 'var(--accent)'}`,
-                color: added[ex.id] ? 'var(--success)' : 'var(--accent)',
-                fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase',
-                padding: '6px 12px', borderRadius: 8, cursor: 'pointer', flexShrink: 0,
-                transition: 'all 200ms ease',
-              }}
-            >
-              {added[ex.id] ? t('added') : t('add_btn')}
-            </button>
+            {items.map((ex, i) => (
+              <div
+                key={ex.id}
+                className="card card-animated"
+                style={{ '--delay': `${i * 40}ms`, display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8, padding: '14px 16px', cursor: 'pointer' }}
+                onClick={() => setSelectedExercise(ex)}
+              >
+                <div style={{ flex: 1 }}>
+                  <div className="text-base bold">{ex.name}</div>
+                  <div className="text-sm text-muted">{ex.muscles || ex.type}</div>
+                </div>
+                <button
+                  onClick={(e) => { e.stopPropagation(); addExercise(ex) }}
+                  style={{
+                    background: 'transparent',
+                    border: `1px solid ${added[ex.id] ? 'var(--success)' : 'var(--accent)'}`,
+                    color: added[ex.id] ? 'var(--success)' : 'var(--accent)',
+                    fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase',
+                    padding: '6px 12px', borderRadius: 8, cursor: 'pointer', flexShrink: 0,
+                    transition: 'all 200ms ease',
+                  }}
+                >
+                  {added[ex.id] ? t('added') : t('add_btn')}
+                </button>
+              </div>
+            ))}
           </div>
         ))}
       </div>
