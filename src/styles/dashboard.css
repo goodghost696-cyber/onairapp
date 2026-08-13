@@ -78,6 +78,23 @@ body.dashboard-body-bg {
   background: #EFE7D9;
 }
 
+/* Nav pill flottante (.bottom-nav, nav.css) — partagée par tout l'app,
+   rendue en sibling de l'écran actif dans MemberLayout.jsx (<Outlet/> puis
+   <BottomNav/>). Le sélecteur sibling ci-dessous ne matche donc que quand
+   .dashboard-redesign est le screen actuellement monté juste avant elle
+   dans le DOM — scopé au restyle sans toucher nav.css ni la position par
+   défaut des autres écrans (bottom: env(safe-area-inset-bottom), zéro
+   marge, un choix délibéré ailleurs — voir nav.css). Sur la maquette de
+   référence (capture fournie, 2026-08-14) la pill est quasiment collée au
+   bord bas, avec un espace minime plutôt que la marge plus généreuse
+   qu'un premier essai avait donnée ici. env(safe-area-inset-bottom) reste
+   le plancher impératif dans les deux cas — jamais retiré, seulement un
+   petit espace ajouté par-dessus, pour ne jamais finir sous la barre de
+   gestes iOS. */
+.dashboard-redesign ~ .bottom-nav {
+  bottom: calc(env(safe-area-inset-bottom) + 10px);
+}
+
 .dashboard-screen {
   position: relative;
   z-index: 1;

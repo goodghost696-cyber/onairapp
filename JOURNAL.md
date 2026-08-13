@@ -45,6 +45,14 @@ Il existait déjà une "charte ON AIR Neon" documentée plus bas dans ce journal
 - `@phosphor-icons/react` uniquement pour la nav (bottom nav membre + nav coach) — son prop `weight` donne un état actif "plein" vs "contour" sans changement de couleur
 - Emoji conservés à quelques endroits précis et délibérés après itération (météo du Dashboard, sélecteur d'eau, toast de bienvenue) — jamais comme icône UI générique, seulement là où un pictogramme dessiné n'apportait rien de mieux (voir suites 77-81 pour l'historique de l'icône eau, 5 itérations avant 🥛)
 
+## 2026-08-14 — Nav pill flottante rapprochée du bord bas sur le Dashboard restylé
+
+Rapporté sur la maquette de référence (capture fournie, le fichier `VOLTA Redesign.dc.html` du handoff initial n'étant plus retrouvable ni dans le repo ni via `DesignSync` — seul un projet "Design System" vide y est accessible) : la pill de nav est quasiment collée au bord bas, avec un espace minime, alors que le rendu actuel gardait la marge par défaut de `nav.css` (`bottom: env(safe-area-inset-bottom)`, zéro marge additionnelle — un choix délibéré ailleurs dans l'app, cf. commentaire `.bottom-nav` dans `nav.css`, non touché ici).
+
+`.bottom-nav` est un composant partagé (`BottomNav.jsx`, monté par `MemberLayout.jsx` sur tous les écrans membre), donc pas question de changer sa position par défaut globalement. Scopé au restyle via un sélecteur sibling dans `dashboard.css` : `.dashboard-redesign ~ .bottom-nav { bottom: calc(env(safe-area-inset-bottom) + 10px) }` — ne matche que quand `.dashboard-redesign` (le Dashboard) est le screen actuellement monté juste avant la pill dans le DOM (`<Outlet/>` puis `<BottomNav/>`, siblings dans `MemberLayout.jsx`). `env(safe-area-inset-bottom)` reste le plancher impératif dans les deux cas, jamais retiré — seul un petit espace de 10px est ajouté par-dessus, pour ne jamais finir sous la barre de gestes iOS. Valeur de départ suggérée (8-12px), à réajuster visuellement si besoin une fois testée sur device réel.
+
+Build vérifié (`npm run build`), grep du CSS compilé confirmant `.dashboard-redesign~.bottom-nav{bottom:calc(env(safe-area-inset-bottom) + 10px)}` dans `Dashboard-*.css`.
+
 ## 2026-08-14 — Fond crème Dashboard : le fix CSS scopé ne couvrait pas le rubber-band iOS (commit 42acb2a insuffisant)
 
 Suite directe à l'entrée du 2026-08-13 juste en dessous : rapporté sur test réel que le fix CSS (`min-height` + `::before` sur `.dashboard-redesign`) ne suffit pas — en tirant la page au-delà de ses limites (rubber-band/overscroll iOS), le fond orange/rouge d'origine reste visible en haut ET en bas. Cause : ce fond appartient à `<body>` (`global.css`, dégradé corail), pas au wrapper interne du Dashboard qui a été repeint ; au rubber-band on dépasse la boîte de `.dashboard-redesign` et on retombe directement sur `<body>`, qu'aucun CSS statique scopé ne peut atteindre puisque `<body>` est un ancêtre du wrapper, pas un descendant.
