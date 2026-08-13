@@ -61,6 +61,23 @@
   z-index: 0;
 }
 
+/* Pilotée dynamiquement par Dashboard.jsx (useEffect, ajoutée/retirée au
+   montage/démontage) plutôt que scopée à .dashboard-redesign : au rubber-
+   band iOS (tirer la page au-delà de ses limites), on dépasse la boîte du
+   wrapper interne et on retombe directement sur le fond de <body> —
+   rapporté sur un test réel après le premier fix (min-height + ::before
+   ci-dessous), qui ne couvre que le rendu normal, pas ce cas-là. <body>
+   est partagé par tout le reste de l'app (global.css, dégradé corail) donc
+   impossible de le repeindre en CSS statique sans casser les écrans pas
+   encore restylés — d'où le pilotage par classe, actif seulement tant que
+   ce screen est monté. Valeur en dur (pas var(--db-bg)) : les custom
+   properties posées sur .dashboard-redesign n'atteignent pas <body>, qui
+   est un ancêtre, pas un descendant — à garder en sync manuellement avec
+   --db-bg ci-dessus si la couleur change. */
+body.dashboard-body-bg {
+  background: #EFE7D9;
+}
+
 .dashboard-screen {
   position: relative;
   z-index: 1;

@@ -130,6 +130,22 @@ export default function Dashboard() {
     return () => { cancelled = true }
   }, [user?.id])
 
+  // Le fix CSS scopé à .dashboard-redesign (min-height + ::before pour le
+  // notch, voir dashboard.css) couvre le rendu normal, mais pas le
+  // rubber-band iOS : en tirant la page au-delà de ses limites, on dépasse
+  // la boîte du wrapper interne et on retombe sur le fond de <body>
+  // (dégradé corail, global.css) — rapporté directement sur un test réel
+  // (tirer en haut ET en bas). <body> est partagé par tout le reste de
+  // l'app donc on ne peut pas le repeindre statiquement en CSS sans casser
+  // les autres écrans (pas encore restylés) ; on pilote plutôt la couleur
+  // dynamiquement, seulement pendant que ce screen est monté, et on
+  // retire la classe au démontage pour que les autres écrans retrouvent
+  // leur fond d'origine.
+  useEffect(() => {
+    document.body.classList.add('dashboard-body-bg')
+    return () => document.body.classList.remove('dashboard-body-bg')
+  }, [])
+
   // Optimiste : la coche/décoche est reflétée tout de suite dans l'état
   // local, l'écriture réelle (avec sa propre file d'attente hors-ligne côté
   // checkHabitToday) se fait derrière sans bloquer le tap.
