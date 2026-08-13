@@ -45,6 +45,28 @@ Il existait déjà une "charte ON AIR Neon" documentée plus bas dans ce journal
 - `@phosphor-icons/react` uniquement pour la nav (bottom nav membre + nav coach) — son prop `weight` donne un état actif "plein" vs "contour" sans changement de couleur
 - Emoji conservés à quelques endroits précis et délibérés après itération (météo du Dashboard, sélecteur d'eau, toast de bienvenue) — jamais comme icône UI générique, seulement là où un pictogramme dessiné n'apportait rien de mieux (voir suites 77-81 pour l'historique de l'icône eau, 5 itérations avant 🥛)
 
+## 2026-08-13 — Nettoyage suite audit : suppression de Sleep.jsx (écran orphelin) et de la clé heart_rate
+
+Suite au rapport d'audit ci-dessous : `src/screens/Sleep.jsx` (aucune route déclarée, doublon du sommeil déjà affiché dans `Weekly.jsx`) supprimé, avec son import lazy dans `App.jsx` et le stub `src/styles/sleep.css` qu'il laissait derrière lui. Clé de traduction `heart_rate` (FR/EN/ES, `LanguageContext.jsx`) supprimée — reliquat de l'ancien onglet Course, plus consommée nulle part. Commentaire dans `weeklyStats.js` mis à jour (ne mentionne plus Sleep.jsx comme consommateur).
+
+Build vérifié (`npm run build`), grep du bundle compilé confirmant l'absence de `heart_rate` et d'un chunk `Sleep-*`. Aucune autre modification.
+
+## 2026-08-13 — Audit anti-mock avant mise en vente (audit seul, aucun code touché)
+
+**Contexte** : suite à l'incident RunContent.jsx (onglet Course — distance simulée par un minuteur, BPM figé à 142, stats en dur, resté en prod un temps indéterminé avant d'être supprimé), audit complet du repo pour vérifier qu'aucun autre résidu de données fabriquées ne traîne côté production, avant mise en vente du produit à des prospects qui testent activement l'app.
+
+**Méthode** : grep large (`mock`, `dummy`, `fake`, `hardcod*`, `TODO/FIXME.*mock`) sur tout `src/`, croisé avec les routes réellement déclarées dans `App.jsx`, puis lecture ligne à ligne des écrans les plus exposés au risque (Dashboard, Nutrition, Weekly, Workout, CoachDashboard, ClientsList, MemberDetail, Sleep.jsx).
+
+**Résultat : aucun résidu de données fabriquées actif en prod.** Tous les écrans vérifiés lisent des données réelles (Supabase) ou de vrais fallbacks légitimes (valeurs par défaut avant chargement, base d'aliments statique légitime dans `FOOD_DATABASE`, citations d'accroche `QUOTES` — aucune des deux ne se fait passer pour de la donnée utilisateur).
+
+**1 point dormant trouvé** (sans risque en prod, mais à trancher) :
+- `src/screens/Sleep.jsx` est importé (lazy) dans `App.jsx` mais **aucune route `/sleep` n'est déclarée** — écran mort, inaccessible depuis l'UI. Son code est propre (fetch réel via `fetchWeeklyStats`, pas de mock), mais fait doublon avec le sommeil déjà affiché dans `Weekly.jsx`. À trancher : déclarer la route ou supprimer le fichier.
+- Reliquat mineur associé : la clé de traduction `heart_rate` (FR/EN/ES dans `LanguageContext.jsx`) n'est plus consommée nulle part depuis la suppression de l'ancien onglet Course — à nettoyer si besoin, sans impact fonctionnel.
+
+**Confirmations explicites** — écrans suivants relus et propres (données réelles Supabase, pas de résidu mock) : Dashboard, Nutrition, Weekly (Bilan), Workout (Musculation), CoachDashboard, ClientsList, MemberDetail, `AppContext.jsx`, `coachStats.js`. RunContent.jsx n'existe plus dans le repo (suppression confirmée, aucune trace résiduelle).
+
+Aucun fix appliqué dans cette passe — audit seul, en attente de validation avant toute correction (déclarer/supprimer Sleep.jsx, nettoyer `heart_rate`).
+
 ## 2026-08-13 — Décision stratégique : pivot vers build & flip
 
 **Contexte** : jusqu'ici VOLTA était pensé comme SaaS marque blanche récurrent (setup fee +

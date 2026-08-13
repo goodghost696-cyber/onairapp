@@ -14,7 +14,7 @@ function lastNDays(n) {
 }
 
 // Aggregates the last 7 days of repas/activite_jour/seances into the shape
-// Weekly.jsx and Sleep.jsx display (one entry per day, oldest first).
+// Weekly.jsx displays (one entry per day, oldest first).
 export async function fetchWeeklyStats(userId) {
   const days = lastNDays(7)
   const dateStrs = days.map(d => d.toISOString().slice(0, 10))
