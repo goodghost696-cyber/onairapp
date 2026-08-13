@@ -87,12 +87,8 @@ function RotatingQuote() {
   }, [])
 
   return (
-    <div style={{ padding: '12px 0', borderBottom: '0.5px solid rgba(255,255,255,0.25)', marginBottom: 16 }}>
-      <p style={{
-        fontSize: 13, color: 'rgba(255,255,255,0.8)', fontStyle: 'italic', lineHeight: 1.5,
-        opacity: visible ? 1 : 0,
-        transition: 'opacity 300ms ease',
-      }}>
+    <div className="db-quote">
+      <p className="db-quote-text" style={{ opacity: visible ? 1 : 0 }}>
         "{QUOTES[index]}"
       </p>
     </div>
@@ -176,11 +172,15 @@ export default function Dashboard() {
   // Réglages — kmRun/sleep gained real persisted goals for this
   // (objectifs.km_objectif/sommeil_h_objectif) instead of staying a
   // display-only default.
+  // Tints alignés sur la palette du restyle "pastel chaud" (import Claude
+  // Design, 2026-08-13) — Eau garde un badge crème car sa carte entière
+  // passe en fond lavande plein (.activity-card-accent, dashboard.css),
+  // seule carte à fond coloré de la grille dans la maquette.
   const CARDS = [
-    { key: 'steps', label: 'PAS', icon: '👟', tint: '#FDEAD8', value: appData.steps, unit: 'pas', target: stepsGoalVal },
-    { key: 'kmRun', label: 'COURSE', icon: '🏃', tint: '#E3F0FF', value: appData.kmRun, unit: 'km', target: appData.kmRunGoal || 5 },
-    { key: 'water', label: 'EAU', icon: '💧', tint: '#E6F6EE', value: appData.water, unit: 'ml', target: waterGoalMl },
-    { key: 'sleep', label: 'SOMMEIL', icon: '😴', tint: '#F1EAFB', value: appData.sleep?.hours || 0, unit: 'h', target: appData.sleepGoal || 8 },
+    { key: 'steps', label: 'PAS', icon: '👟', tint: '#EBEB7D', value: appData.steps, unit: 'pas', target: stepsGoalVal },
+    { key: 'kmRun', label: 'COURSE', icon: '🏃', tint: '#A3AEFE', value: appData.kmRun, unit: 'km', target: appData.kmRunGoal || 5 },
+    { key: 'water', label: 'EAU', icon: '💧', tint: '#F7F1E6', value: appData.water, unit: 'ml', target: waterGoalMl },
+    { key: 'sleep', label: 'SOMMEIL', icon: '😴', tint: '#FFBEF0', value: appData.sleep?.hours || 0, unit: 'h', target: appData.sleepGoal || 8 },
   ]
   const currentCard = CARDS.find(c => c.key === editingCard)
 
@@ -251,36 +251,22 @@ export default function Dashboard() {
   })
 
   return (
-    <div className="app-wrapper">
-      {/* Direction corail (2026-08-06) — the ring accent from the Behance
-          reference, echoed by the AI nav sphere's own gradient (nav.css)
-          so the two read as one signature instead of two unrelated
-          decorations. Purely decorative: aria-hidden, sits behind content
-          (z-index handled by #root > * already putting real content above
-          it), clipped by #root's overflow-x so it never causes horizontal
-          scroll. */}
-      <div className="dashboard-ring" aria-hidden="true" />
+    <div className="app-wrapper dashboard-redesign">
       <div className="screen dashboard-screen">
-        {/* Header */}
+        {/* Header — restyle VOLTA "pastel chaud" (import Claude Design,
+            2026-08-13) : eyebrow magenta, avatar lavande, texte encre
+            plutôt que blanc (l'écran a maintenant son propre fond crème,
+            plus le dégradé corail derrière). */}
         <div className="screen-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingTop: 56, paddingBottom: 28 }}>
           <div>
-            {/* --text-primary/secondary are DARK by default now (correct
-                for the common case: text inside a white card/sheet) — this
-                header sits directly on the coral bg, so it needs to force
-                light color explicitly rather than rely on those tokens. */}
-            <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.85)', marginBottom: 7 }}>VOLTA</p>
-            <h1 style={{ fontSize: 28, fontWeight: 800, lineHeight: 1.15, color: '#FFFFFF' }}>{greeting}, {user?.name}.</h1>
-            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)', marginTop: 4, textTransform: 'capitalize' }}>
+            <p className="db-eyebrow">VOLTA</p>
+            <h1 className="db-greeting">{greeting}, {user?.name}.</h1>
+            <p className="db-subtitle">
               {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
               {weather && ` · ${weather.emoji} ${weather.temp}°C${weather.place ? ` · ${weather.place}` : ''}`}
             </p>
           </div>
-          {/* Solid --accent → gold gradient, matching the mockup's avatar
-              badge exactly. */}
-          <button
-            onClick={() => navigate('/settings')}
-            style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg, var(--accent), #FBE08A)', color: 'var(--accent-ink)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 54, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
-          >
+          <button onClick={() => navigate('/settings')} className="db-avatar-btn" style={{ marginTop: 4 }}>
             {(user?.name || 'A').charAt(0).toUpperCase()}
           </button>
         </div>
@@ -290,34 +276,22 @@ export default function Dashboard() {
 
         {/* Streak — always present now (direct request: "je veux qu'elle
             soit toujours présente"). At 0, neutral/muted treatment (dimmed
-            flame, no glow) rather than hidden — reads as an invitation, not
-            a failure. From 3 days on (first visual palier, not 30), the
-            card gets the --accent glow treatment to read as an actual
-            badge instead of just a number. */}
-        <div
-          className="card card-animated"
-          style={{
-            marginBottom: 16,
-            '--delay': '0ms',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-            ...(streak >= 3
-              ? { border: '1px solid var(--accent)', boxShadow: '0 0 0 1px var(--accent) inset, 0 4px 20px rgba(240,193,75,0.25)' }
-              : {}),
-          }}
-        >
-          <span style={{ fontSize: 28, lineHeight: 1, opacity: streak > 0 ? 1 : 0.35 }}>🔥</span>
+            flame) rather than hidden — reads as an invitation, not a
+            failure. Restyle "pastel chaud" (2026-08-13) : carte olive
+            plate, plus de bordure/glow dorée — cohérent avec l'esthétique
+            flat de la maquette (aucun effet de glow nulle part ailleurs). */}
+        <div className="db-streak-card card-animated" style={{ '--delay': '0ms' }}>
+          <span className="db-streak-flame" style={{ opacity: streak > 0 ? 1 : 0.35 }}>🔥</span>
           <div>
             <div>
-              <span style={{ fontSize: 20, fontWeight: 800 }}>{streak} jour{streak > 1 ? 's' : ''}</span>
-              <span className="text-sm text-muted" style={{ marginLeft: 6 }}>{streak > 0 ? 'de suite' : "— à toi de commencer aujourd'hui"}</span>
+              <span className="db-streak-count">{streak} jour{streak > 1 ? 's' : ''}</span>
+              <span className="db-streak-sub">{streak > 0 ? 'de suite' : "— à toi de commencer aujourd'hui"}</span>
             </div>
             {/* Palier — only the currently-active streak's highest reached
                 milestone, not a permanent trophy (see STREAK_MILESTONES
                 comment above). */}
             {streakMilestone && (
-              <div className="text-xs" style={{ color: 'var(--accent)', fontWeight: 700, marginTop: 2 }}>
+              <div className="db-streak-milestone">
                 🏅 Palier {streakMilestone} jours
               </div>
             )}
@@ -325,7 +299,7 @@ export default function Dashboard() {
                 silently (calculateStreak's freeze logic), reported
                 directly ("rendre le jour de repos toléré visible"). */}
             {restDayAvailable && (
-              <div className="text-xs text-muted" style={{ marginTop: 2 }}>
+              <div className="db-streak-rest">
                 🛡️ Jour de repos disponible cette semaine
               </div>
             )}
@@ -338,36 +312,37 @@ export default function Dashboard() {
             jour" card and keeping the two calorie displays in the app
             visually consistent with each other. CalorieRing.jsx itself is
             untouched/still available, just not used here anymore. */}
-        <div className="card card-hero card-animated" style={{ marginBottom: 16, '--delay': '0ms' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 4 }}>
+        <div className="db-calorie-card card-animated" style={{ '--delay': '0ms' }}>
+          <div className="db-calorie-top">
             <div>
-              <span className="hero-number" style={{ fontSize: 44, fontWeight: 800, fontVariantNumeric: 'tabular-nums', lineHeight: 1, letterSpacing: '-1.5px' }}>{appData.calories}</span>
-              <span className="text-sm text-muted" style={{ marginLeft: 6 }}>kcal</span>
+              <p className="db-calorie-label">Calories du jour</p>
+              <span className="db-calorie-value">{appData.calories}</span>
+              <span className="db-calorie-unit">kcal</span>
             </div>
-            <div style={{ textAlign: 'right' }}>
-              <div className="text-xs text-muted">Restant</div>
-              <div className="text-base bold">{calsRemaining} kcal</div>
+            <div className="db-calorie-restant">
+              <p className="db-calorie-restant-label">Restant</p>
+              <p className="db-calorie-restant-value">{calsRemaining}</p>
               {activityBurn > 0 && (
-                <div className="text-xs" style={{ opacity: 0.65 }}>dont +{activityBurn} activité</div>
+                <p className="db-calorie-restant-extra">+{activityBurn} activité</p>
               )}
             </div>
           </div>
-          <div style={{ position: 'relative', height: 8, background: 'rgba(26,22,8,0.15)', borderRadius: 4, marginBottom: 16, marginTop: 12, overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${Math.min(appData.calories / (appData.calorieGoal + activityBurn) * 100, 100)}%`, background: '#1A1608', borderRadius: 4, transition: 'width 500ms ease-out' }} />
+          <div className="db-calorie-bar-wrap">
+            <div className="db-calorie-bar-fill" style={{ width: `${Math.min(appData.calories / (appData.calorieGoal + activityBurn) * 100, 100)}%` }} />
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div className="db-macro-list">
             {[
-              { label: 'Protéines', val: appData.protein, goal: appData.proteinGoal, unit: 'g', color: '#0B5AA8' },
-              { label: 'Glucides', val: appData.carbs, goal: appData.carbsGoal, unit: 'g', color: '#8A4600' },
-              { label: 'Lipides', val: appData.fat, goal: appData.fatGoal, unit: 'g', color: '#5B3FA8' },
+              { label: 'Protéines', val: appData.protein, goal: appData.proteinGoal, unit: 'g', color: 'var(--db-lavender)' },
+              { label: 'Glucides', val: appData.carbs, goal: appData.carbsGoal, unit: 'g', color: 'var(--db-carb)' },
+              { label: 'Lipides', val: appData.fat, goal: appData.fatGoal, unit: 'g', color: 'var(--db-pink)' },
             ].map(m => (
               <div key={m.label}>
-                <div className="flex justify-between items-center" style={{ marginBottom: 4 }}>
-                  <span className="text-xs text-muted">{m.label}</span>
-                  <span className="text-xs bold">{m.val}{m.unit} <span className="text-muted">/ {m.goal}{m.unit}</span></span>
+                <div className="db-macro-top">
+                  <span className="db-macro-label">{m.label}</span>
+                  <span className="db-macro-value">{m.val}{m.unit} <span className="db-macro-goal">/ {m.goal}{m.unit}</span></span>
                 </div>
-                <div style={{ height: 4, background: 'rgba(26,22,8,0.15)', borderRadius: 2, overflow: 'hidden' }}>
-                  <div style={{ width: `${Math.min((m.val / m.goal) * 100, 100)}%`, height: '100%', background: m.color, borderRadius: 2, transition: 'width 600ms ease' }} />
+                <div className="db-macro-bar-wrap">
+                  <div className="db-macro-bar-fill" style={{ width: `${Math.min((m.val / m.goal) * 100, 100)}%`, background: m.color }} />
                 </div>
               </div>
             ))}
@@ -382,7 +357,7 @@ export default function Dashboard() {
             instead — the icon now sits in an actual circular badge
             (.activity-card-icon-badge) instead of floating loose, matching
             the mockup's icon-circle language without losing the numbers. */}
-        <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.85)', marginBottom: 12 }}>{t('activity')}</p>
+        <p className="db-section-label">{t('activity')}</p>
         <div className="activity-grid">
           {CARDS.map((card, i) => (
             <div
@@ -424,16 +399,19 @@ export default function Dashboard() {
           <span className="dashboard-cta-icon">🔥</span>
         </button>
 
-        {/* Weekly sessions card */}
-        <div className="card-animated" style={{ background: 'var(--surface)', border: '2px solid var(--border)', borderRadius: 16, padding: 20, marginTop: 16, marginBottom: 40, '--delay': '320ms' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-            <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)' }}>Séances cette semaine</span>
-            <span style={{ fontSize: 22, fontWeight: 800, color: 'var(--accent)', letterSpacing: '-0.5px' }}>
-              {appData.weeklyWorkouts}<span style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 400 }}>/{appData.weeklyGoal}</span>
+        {/* Weekly sessions card — barre continue remplacée par des
+            segments (1 par séance-objectif), même lecture que la maquette. */}
+        <div className="db-weekly-card card-animated" style={{ '--delay': '320ms' }}>
+          <div className="db-weekly-top">
+            <span className="db-weekly-label">Séances cette semaine</span>
+            <span className="db-weekly-count">
+              {appData.weeklyWorkouts}<span className="db-weekly-count-total">/{appData.weeklyGoal}</span>
             </span>
           </div>
-          <div style={{ height: 2, background: 'var(--surface-2)', borderRadius: 2, overflow: 'hidden' }}>
-            <div style={{ width: `${Math.min((appData.weeklyWorkouts / appData.weeklyGoal) * 100, 100)}%`, height: '100%', background: 'var(--accent)', borderRadius: 2, transition: 'width 600ms ease' }} />
+          <div className="db-weekly-segments">
+            {Array.from({ length: appData.weeklyGoal }).map((_, i) => (
+              <div key={i} className={`db-weekly-segment${i < appData.weeklyWorkouts ? ' filled' : ''}`} />
+            ))}
           </div>
         </div>
 
@@ -442,36 +420,27 @@ export default function Dashboard() {
             même geste simple que les bottles d'eau au-dessus. */}
         {habits.length > 0 && (
           <>
-            <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 12 }}>Habitudes</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 40 }}>
+            <p className="db-section-label">Habitudes</p>
+            <div className="db-habits-list">
               {habits.map((h, i) => (
                 <div
                   key={h.id}
-                  className="card card-animated"
-                  style={{ '--delay': `${360 + i * 40}ms`, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12 }}
+                  className="db-habit-card card-animated"
+                  style={{ '--delay': `${360 + i * 40}ms`, '--db-habit-accent': i % 2 === 0 ? 'var(--db-olive)' : 'var(--db-lavender)' }}
                   onClick={() => toggleHabitToday(h)}
                 >
-                  <div
-                    style={{
-                      width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
-                      border: h.doneToday ? 'none' : '2px solid var(--border)',
-                      background: h.doneToday ? 'var(--accent)' : 'transparent',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      color: 'var(--accent-ink)', fontSize: 16, fontWeight: 800,
-                      transition: 'background 200ms ease',
-                    }}
-                  >
+                  <div className={`db-habit-check${h.doneToday ? ' done' : ''}`}>
                     {h.doneToday ? '✓' : ''}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p className="text-sm bold" style={{ marginBottom: 4 }}>{h.titre}</p>
-                    <div style={{ display: 'flex', gap: 3 }}>
+                    <p className="db-habit-title">{h.titre}</p>
+                    <div className="db-habit-days">
                       {h.last7Days.map((done, j) => (
-                        <div key={j} style={{ width: 14, height: 14, borderRadius: 4, background: done ? 'var(--accent)' : 'var(--surface-2)' }} />
+                        <div key={j} className={`db-habit-day${done ? ' done' : ''}`} />
                       ))}
                     </div>
                   </div>
-                  <span className="text-xs text-muted" style={{ flexShrink: 0 }}>{h.countThisWeek}/{h.frequenceParSemaine}</span>
+                  <span className="db-habit-count">{h.countThisWeek}/{h.frequenceParSemaine}</span>
                 </div>
               ))}
             </div>
