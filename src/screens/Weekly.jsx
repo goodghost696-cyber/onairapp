@@ -82,15 +82,19 @@ export default function Weekly() {
   const { t } = useLanguage()
   const [weeklyData, setWeeklyData] = useState([])
   const [sleepData, setSleepData] = useState([])
+  const [weeklySteps, setWeeklySteps] = useState(0)
+  const [weeklyKmRun, setWeeklyKmRun] = useState(0)
   const [liftProgress, setLiftProgress] = useState([])
   const [leaderboard, setLeaderboard] = useState([])
   const [leaderboardLoaded, setLeaderboardLoaded] = useState(false)
 
   useEffect(() => {
     if (!user?.id) return
-    fetchWeeklyStats(user.id).then(({ weeklyData, sleepData }) => {
+    fetchWeeklyStats(user.id).then(({ weeklyData, sleepData, weeklySteps, weeklyKmRun }) => {
       setWeeklyData(weeklyData)
       setSleepData(sleepData)
+      setWeeklySteps(weeklySteps)
+      setWeeklyKmRun(weeklyKmRun)
     })
     fetchLiftProgress(user.id).then(setLiftProgress)
     fetchWeeklyLeaderboard().then(rows => { setLeaderboard(rows); setLeaderboardLoaded(true) })
@@ -136,8 +140,8 @@ export default function Weekly() {
         {[
           { label: t('workouts_done'), val: `${appData.weeklyWorkouts}/${appData.weeklyGoal}` },
           { label: t('avg_sleep'), val: loggedSleepDays.length ? `${avgSleep} h` : '—' },
-          { label: t('distance_run'), val: `${appData.kmRun} km` },
-          { label: t('steps'), val: appData.steps.toLocaleString() },
+          { label: t('distance_run'), val: `${Math.round(weeklyKmRun * 10) / 10} km` },
+          { label: t('steps'), val: weeklySteps.toLocaleString() },
         ].map((r, idx) => (
           <div key={r.label} className="card flex justify-between items-center card-animated" style={{ padding: '14px 16px', '--delay': `${100 + idx * 60}ms` }}>
             <span className="text-sm text-secondary">{r.label}</span>
@@ -183,7 +187,11 @@ export default function Weekly() {
           </>
         )}
 
-        {/* Section 1 — Progression physique */}
+        {/* Section 1 — Progression physique
+            Masquée le 2026-08-13 (audit JOURNAL.md) : bloc UI statique non
+            branché à aucune donnée (4 slots vides, "+" sans onClick, aucune
+            table/upload derrière). Décision produit : fonctionnalité
+            repoussée, pas abandonnée — code gardé pour reprise ultérieure.
         <div className="progress-section">
           <p className="section-label">MA PROGRESSION</p>
           <p className="section-sub">Photos semaine par semaine</p>
@@ -198,6 +206,7 @@ export default function Weekly() {
             ))}
           </div>
         </div>
+        */}
 
         {/* Section 2 — Progression des charges */}
         <div className="lifts-section">

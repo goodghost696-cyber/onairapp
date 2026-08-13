@@ -13,44 +13,43 @@ function lastNDays(n) {
   return days
 }
 
-// Aggregates the last 7 days of repas/activite_jour/seances into the shape
-// Weekly.jsx displays (one entry per day, oldest first).
+// Aggregates the last 7 days of repas/activite_jour into the shape
+// Weekly.jsx displays (one entry per day, oldest first), plus weekly totals
+// for pas/km_courus — these must be a 7-day sum, not appData.steps/kmRun
+// (those are today-only counters shared with the Dashboard, see JOURNAL.md
+// audit du 2026-08-13).
 export async function fetchWeeklyStats(userId) {
   const days = lastNDays(7)
   const dateStrs = days.map(d => d.toISOString().slice(0, 10))
   const fromDate = dateStrs[0]
 
-  const [repasRes, activiteRes, seancesRes] = await Promise.all([
+  const [repasRes, activiteRes] = await Promise.all([
     supabase.from('repas').select('date, calories').eq('user_id', userId).gte('date', fromDate),
-    supabase.from('activite_jour').select('date, pas, sommeil_h').eq('user_id', userId).gte('date', fromDate),
-    supabase.from('seances').select('date').eq('user_id', userId).gte('date', fromDate),
+    supabase.from('activite_jour').select('date, pas, km_courus, sommeil_h').eq('user_id', userId).gte('date', fromDate),
   ])
 
   if (repasRes.error) console.error('[weeklyStats] repas fetch failed', repasRes.error)
   if (activiteRes.error) console.error('[weeklyStats] activite_jour fetch failed', activiteRes.error)
-  if (seancesRes.error) console.error('[weeklyStats] seances fetch failed', seancesRes.error)
 
   const caloriesByDate = {}
   ;(repasRes.data || []).forEach(r => {
     caloriesByDate[r.date] = (caloriesByDate[r.date] || 0) + (r.calories || 0)
   })
 
-  const stepsByDate = {}
   const sleepByDate = {}
+  let weeklySteps = 0
+  let weeklyKmRun = 0
   ;(activiteRes.data || []).forEach(r => {
-    stepsByDate[r.date] = r.pas || 0
     sleepByDate[r.date] = r.sommeil_h != null ? Number(r.sommeil_h) : 0
+    weeklySteps += r.pas || 0
+    weeklyKmRun += r.km_courus != null ? Number(r.km_courus) : 0
   })
-
-  const workoutDates = new Set((seancesRes.data || []).map(s => s.date))
 
   const weeklyData = days.map(d => {
     const ds = d.toISOString().slice(0, 10)
     return {
       day: DAY_LETTERS[d.getDay()],
       calories: caloriesByDate[ds] || 0,
-      steps: stepsByDate[ds] || 0,
-      workout: workoutDates.has(ds),
     }
   })
 
@@ -59,5 +58,5 @@ export async function fetchWeeklyStats(userId) {
     return { day: DAY_LETTERS[d.getDay()], hours: sleepByDate[ds] || 0 }
   })
 
-  return { weeklyData, sleepData }
+  return { weeklyData, sleepData, weeklySteps, weeklyKmRun }
 }
