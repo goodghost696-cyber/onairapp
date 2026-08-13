@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { useLanguage } from '../context/LanguageContext'
 import { supabase } from '../lib/supabase'
 import Logo from '../components/Logo'
+import { mapAuthError } from '../utils/authErrors'
 
 export default function ResetPassword() {
   const navigate = useNavigate()
@@ -41,7 +42,7 @@ export default function ResetPassword() {
       setSuccess(true)
       setTimeout(() => navigate('/login'), 1500)
     } else {
-      setError(result.error || 'Erreur lors de la mise à jour')
+      setError(mapAuthError({ message: result.error }))
     }
   }
 

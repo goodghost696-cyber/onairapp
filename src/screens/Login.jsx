@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useLanguage } from '../context/LanguageContext'
+import { mapAuthError } from '../utils/authErrors'
 
 export default function Login() {
   const navigate = useNavigate()
@@ -37,11 +38,17 @@ export default function Login() {
     setLoggingIn(true)
     const result = await login(email, password)
     setLoggingIn(false)
-    if (result.success) {
-      navigate(result.role === 'coach' || result.role === 'admin' ? '/coach' : '/dashboard')
-    } else {
-      setError(result.error || t('wrong_credentials'))
+    if (!result.success) {
+      setError(mapAuthError({ message: result.error }))
+      return
     }
+    // Pas de navigate() manuel ici — login() (AuthContext.jsx) peuple
+    // désormais `user` lui-même de façon synchrone (setUser), donc la route
+    // /login (App.jsx, déjà réactive à `user`) redirige d'elle-même vers
+    // /coach ou /dashboard. Naviguer ici en plus, sur la base du result.role
+    // local, créait une course avec le listener onAuthStateChange qui
+    // provoquait un flash retour sur /login juste après une connexion
+    // pourtant réussie (surtout visible côté coach) — cf. JOURNAL.md.
   }
 
   async function handleSendReset() {
@@ -53,7 +60,7 @@ export default function Login() {
     if (result.success) {
       setForgotSent(true)
     } else {
-      setForgotError(result.error || "Erreur lors de l'envoi")
+      setForgotError(mapAuthError({ message: result.error }))
     }
   }
 
@@ -96,7 +103,7 @@ export default function Login() {
       localStorage.setItem('onair_just_registered', 'true')
       setTimeout(() => navigate('/onboarding'), 800)
     } else {
-      setSignupError(result.error || "Erreur lors de l'inscription")
+      setSignupError(mapAuthError({ message: result.error }))
     }
   }
 
@@ -217,6 +224,20 @@ export default function Login() {
             {needsConfirmation && <span style={{ fontSize: 11, color: 'var(--success)' }}>Compte créé — vérifie ta boîte mail pour confirmer ton adresse avant de te connecter.</span>}
             <button onClick={handleSignup} disabled={signingUp} style={{ ...pillButtonStyle, marginTop: 4, opacity: signingUp ? 0.7 : 1 }}>
               {signingUp ? '...' : <>{t('signup_btn')} <span>→</span></>}
+            </button>
+            {/* Équivalent symétrique du lien "Pas encore de salle ? Créer la
+                mienne" côté onglet Connexion (ci-dessus) — jusqu'ici absent
+                ici. Le segmented control en haut de page permet déjà de
+                basculer vers Connexion, mais reste un composant de nav
+                générique au-dessus du formulaire, peu visible au moment où
+                un membre déjà inscrit réalise qu'il s'est trompé d'onglet
+                (audit JOURNAL.md). Même state (`tab`) que ce toggle. */}
+            <button
+              type="button"
+              onClick={() => { setTab('login'); setSignupError(''); setError('') }}
+              style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: 12, cursor: 'pointer', textAlign: 'center', marginTop: 4, fontFamily: 'inherit' }}
+            >
+              Déjà un compte ? Connecte-toi →
             </button>
           </div>
         )}

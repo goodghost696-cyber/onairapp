@@ -161,10 +161,28 @@ export function AuthProvider({ children }) {
     }
   }, [user])
 
+  // Miroir du fix logout() ci-dessous (2026-08-11) : jusqu'ici cette
+  // fonction ne faisait jamais setUser() elle-même, entièrement dépendante
+  // du listener onAuthStateChange pour peupler `user`. Login.jsx naviguait
+  // pourtant immédiatement vers /coach ou /dashboard dès que login()
+  // resolvait, sur la base de son propre résultat local (result.role) — une
+  // course entre ce navigate() et le setUser() du listener, ce dernier
+  // ayant sa propre requête resolveRole() indépendante et donc un timing
+  // non garanti. Quand le navigate() gagnait la course, ProtectedRoute
+  // (App.jsx) voyait encore `user === null` et rebondissait sur /login —
+  // flash retour visible surtout sur les comptes coach (résolution de rôle
+  // plus lente, cf. resolveRole ci-dessus). setUser() ici, synchrone au
+  // retour de login(), rend cette fonction elle-même autoritaire — Login.jsx
+  // n'a plus besoin de naviguer manuellement, voir App.jsx (route /login,
+  // déjà réactive à `user`). Le listener refera bien son propre
+  // resolveRole()/setUser() juste après (déclenché par le SIGNED_IN de
+  // signInWithPassword) — redondant mais idempotent, même trade-off déjà
+  // accepté pour logout().
   async function login(email, password) {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) return { success: false, error: error.message }
     const u = await resolveRole(sessionToUser(data.session), data.session?.user)
+    setUser(u)
     return { success: true, user: u, role: u.role }
   }
 
