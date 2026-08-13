@@ -463,6 +463,18 @@ export function AppProvider({ children }) {
     })
   }
 
+  // Retire une série d'un exercice. Toujours au moins 1 série restante — pas
+  // d'effet si l'exercice n'en a qu'une (le bouton × est aussi désactivé côté UI).
+  function removeSetFromExercise(exIdx, setIdx) {
+    setAppData(prev => {
+      const exercises = [...(prev.activeSession?.exercises || [])]
+      if (exercises[exIdx].sets.length <= 1) return prev
+      const sets = exercises[exIdx].sets.filter((_, i) => i !== setIdx)
+      exercises[exIdx] = { ...exercises[exIdx], sets }
+      return { ...prev, activeSession: { ...prev.activeSession, exercises } }
+    })
+  }
+
   // Persists a completed session to `seances` and reflects it in local state.
   // Falls back to the locally-built session (temp id) if the write fails.
   async function addSessionToHistory(session) {
@@ -636,7 +648,7 @@ export function AppProvider({ children }) {
     <AppContext.Provider value={{
       appData, updateData, updateGoal,
       addExerciseToSession, addExercisesToSession,
-      addSetToExercise, toggleSetDone, updateSet,
+      addSetToExercise, toggleSetDone, updateSet, removeSetFromExercise,
       clearActiveSession, addSessionToHistory, logQuickExercise,
       addMeal, deleteMeal,
     }}>

@@ -45,6 +45,16 @@ Il existait déjà une "charte ON AIR Neon" documentée plus bas dans ce journal
 - `@phosphor-icons/react` uniquement pour la nav (bottom nav membre + nav coach) — son prop `weight` donne un état actif "plein" vs "contour" sans changement de couleur
 - Emoji conservés à quelques endroits précis et délibérés après itération (météo du Dashboard, sélecteur d'eau, toast de bienvenue) — jamais comme icône UI générique, seulement là où un pictogramme dessiné n'apportait rien de mieux (voir suites 77-81 pour l'historique de l'icône eau, 5 itérations avant 🥛)
 
+## 2026-08-13 — Écran de saisie de séance (WorkoutSession.jsx) : suppression d'une série
+
+Il était possible d'ajouter une série ("+ SÉRIE") mais pas d'en retirer une une fois ajoutée. Ajout d'un bouton "×" par ligne de série, même pattern visuel que le bouton de suppression d'un aliment sur l'écran Description libre de Nutrition.jsx (icône `✕` seule, sans fond, `color: var(--text-secondary)`).
+
+- **`AppContext.jsx`** — nouvelle fonction `removeSetFromExercise(exIdx, setIdx)`, même forme que `addSetToExercise`/`updateSet` : filtre la série de `activeSession.exercises[exIdx].sets`. No-op si l'exercice n'a plus qu'une série (garde-fou côté état, en plus du bouton désactivé côté UI — défense en profondeur).
+- **`WorkoutSession.jsx`** — bouton `.set-remove-btn` ajouté à chaque `.session-set-row`, `disabled` quand `exercise.sets.length <= 1` pour ne jamais descendre à 0 ligne affichée.
+- **`WorkoutSession.css`** — grille des lignes/en-tête passée de 4 à 5 colonnes (`... 32px 24px`) pour loger le nouveau bouton ; `.set-remove-btn:disabled` mis à `opacity: 0` plutôt que masqué (`display: none`) pour ne pas faire sauter la grille sur la dernière série.
+
+Build vérifié (`npm run build`), grep du bundle compilé confirmant la présence de `.set-remove-btn` (CSS) et du label `aria-label="Supprimer cette série"` (JS).
+
 ## 2026-08-13 — Écran de saisie de séance (WorkoutSession.jsx) : 4 corrections issues de l'audit du jour
 
 Suite à l'audit ciblé de l'écran de saisie de séance (investigation seule, sans fix, plus tôt dans la journée) : 4 corrections directes, cause déjà identifiée donc pas de re-debug.

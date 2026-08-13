@@ -24,7 +24,7 @@
      majuscules + letter-spacing déborde d'une colonne à 24px et chevauche
      visuellement "Reps" juste à côté ("SÉRIEREPS"). Voir audit JOURNAL.md
      du 2026-08-13. */
-  grid-template-columns: auto 1fr 1fr 32px;
+  grid-template-columns: auto 1fr 1fr 32px 24px;
   gap: 8px;
   font-size: 10px;
   letter-spacing: 1.5px;
@@ -35,7 +35,7 @@
 }
 .session-set-row {
   display: grid;
-  grid-template-columns: 24px 1fr 1fr 32px;
+  grid-template-columns: 24px 1fr 1fr 32px 24px;
   gap: 8px;
   align-items: center;
   padding: 6px 2px;
@@ -88,6 +88,20 @@
   0% { transform: scale(1); }
   45% { transform: scale(1.25); }
   100% { transform: scale(1); }
+}
+.set-remove-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1;
+  padding: 4px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.set-remove-btn:disabled {
+  opacity: 0;
+  pointer-events: none;
 }
 .add-set-btn {
   width: 100%;

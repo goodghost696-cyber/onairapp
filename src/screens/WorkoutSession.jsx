@@ -6,7 +6,7 @@ import '../styles/WorkoutSession.css'
 
 export default function WorkoutSession() {
   const navigate = useNavigate()
-  const { appData, addSetToExercise, toggleSetDone, updateSet, clearActiveSession, addSessionToHistory } = useApp()
+  const { appData, addSetToExercise, toggleSetDone, updateSet, removeSetFromExercise, clearActiveSession, addSessionToHistory } = useApp()
   const [showRestTimer, setShowRestTimer] = useState(false)
   const activeSession = appData.activeSession || { exercises: [], startTime: null }
 
@@ -108,6 +108,13 @@ export default function WorkoutSession() {
                       if (!set.done) { setShowRestTimer(true); navigator.vibrate && navigator.vibrate(8) }
                     }}
                   >✓</button>
+                  <button
+                    type="button"
+                    className="set-remove-btn"
+                    onClick={() => removeSetFromExercise(exIdx, setIdx)}
+                    disabled={exercise.sets.length <= 1}
+                    aria-label="Supprimer cette série"
+                  >✕</button>
                 </div>
               ))}
               <button className="add-set-btn" onClick={() => addSetToExercise(exIdx)}>+ SÉRIE</button>
