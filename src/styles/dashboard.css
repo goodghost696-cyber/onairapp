@@ -29,6 +29,36 @@
   --db-track: #EFE7D9;
   --db-border: #F2ECE2;
   font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+  /* Le fond partagé du body (dégradé corail, global.css) transparaît à deux
+     endroits que .dashboard-screen ne peut pas peindre lui-même, vu que ce
+     sont des zones extérieures à sa propre boîte :
+     1) le padding-top de #root (zone statut/notch iOS, safe-area-inset-top)
+        — #root y est transparent par design pour laisser passer le dégradé
+        des autres écrans ;
+     2) l'espace sous le contenu quand celui-ci est plus court que le
+        viewport — #root (le conteneur qui scrolle) n'a alors rien d'autre
+        à peindre en dessous, et c'est justement la zone derrière la pill
+        de nav flottante (position fixed).
+     Les deux corrections ci-dessous ne touchent que .dashboard-redesign
+     (posé uniquement sur le wrapper racine de Dashboard.jsx) — aucun autre
+     écran ne lit ces règles. */
+  min-height: calc(var(--app-height, 100dvh) - env(safe-area-inset-top));
+  background: var(--db-bg);
+  position: relative;
+}
+
+/* Couvre la zone de statut/notch (padding-top de #root, au-dessus de ce
+   wrapper) avec le même crème plutôt que de laisser transparaître le
+   dégradé corail du body. */
+.dashboard-redesign::before {
+  content: '';
+  position: absolute;
+  top: calc(-1 * env(safe-area-inset-top));
+  left: 0;
+  right: 0;
+  height: env(safe-area-inset-top);
+  background: var(--db-bg);
+  z-index: 0;
 }
 
 .dashboard-screen {

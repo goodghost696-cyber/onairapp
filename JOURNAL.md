@@ -45,6 +45,14 @@ Il existait déjà une "charte ON AIR Neon" documentée plus bas dans ce journal
 - `@phosphor-icons/react` uniquement pour la nav (bottom nav membre + nav coach) — son prop `weight` donne un état actif "plein" vs "contour" sans changement de couleur
 - Emoji conservés à quelques endroits précis et délibérés après itération (météo du Dashboard, sélecteur d'eau, toast de bienvenue) — jamais comme icône UI générique, seulement là où un pictogramme dessiné n'apportait rien de mieux (voir suites 77-81 pour l'historique de l'icône eau, 5 itérations avant 🥛)
 
+## 2026-08-13 — Restyle Dashboard "pastel chaud" : fond crème incomplet en haut/bas (notch + derrière la pill)
+
+Suite au restyle crème du Dashboard (entrée juste en dessous) : le fond au-dessus du contenu (zone statut/notch iOS) et en dessous (derrière la pill de nav flottante) restait au dégradé corail partagé au lieu du crème `--db-bg`. Cause : `#root` (global.css) a un `padding-top: env(safe-area-inset-top)` et un fond transparent, pensé pour laisser passer le dégradé du `body` derrière chaque écran — ça fonctionne tant que l'écran garde ce même dégradé, mais le Dashboard a maintenant son propre fond crème peint uniquement sur `.dashboard-screen`, qui ne couvre ni cette zone de padding (extérieure à sa propre boîte) ni l'espace sous le contenu quand celui-ci est plus court que le viewport (le `.member-layout` qui l'englobe n'a pas de hauteur minimale, donc `#root` laisse un vide transparent en dessous, exactement là où flotte la pill).
+
+Corrigé dans `dashboard.css`, scopé à `.dashboard-redesign` (le wrapper racine) comme le reste du restyle — rien touché dans `global.css`/`#root`/`body`, donc aucun autre écran affecté : `min-height: calc(var(--app-height, 100dvh) - env(safe-area-inset-top))` + `background: var(--db-bg)` sur `.dashboard-redesign` pour garantir que le crème couvre toujours au moins tout le viewport visible, et un `::before` positionné en absolu juste au-dessus du wrapper (`top: calc(-1 * env(safe-area-inset-top))`, même hauteur, même couleur) pour repeindre la zone de notch qui appartient au padding de `#root`.
+
+Build vérifié (`npm run build`), grep du CSS compilé confirmant les 3 occurrences de `safe-area-inset-top` dans `Dashboard-*.css`.
+
 ## 2026-08-13 — Restyle VOLTA "pastel chaud" (Dashboard.jsx) — import Claude Design
 
 Import du projet Claude Design "Redesign interface VOLTA" (`VOLTA Redesign.dc.html`, via l'outil `DesignSync`/`/design-login`) — palette Poppins · crème `#EFE7D9` · olive `#EBEB7D` · lavande `#A3AEFE` · rose `#FFBEF0` · encre `#1C1A17` · magenta `#B62472` en micro-touches. **Un écran à la fois, sur demande explicite** : Dashboard.jsx uniquement dans cette passe, à valider avant Nutrition.jsx.
