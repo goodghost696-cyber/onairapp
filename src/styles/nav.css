@@ -54,17 +54,21 @@
 }
 
 /* Phosphor icons fill with currentColor by default. Inactive tabs stay
-   neutral — only the active one gets the coral glow below. */
+   neutral — only the active one gets an accent color below. */
 .nav-btn svg {
   color: var(--text-secondary);
   transition: color 200ms ease, filter 200ms ease;
 }
 
+/* Était un glow corail à deux couches (drop-shadow) derrière l'icône
+   pleine (weight="fill") — rapporté en test réel comme "un carré avec une
+   lueur rouge derrière l'icône active" : le filtre diffusait suffisamment
+   pour donner l'impression d'un bloc plutôt que d'un simple halo. Remplacé
+   par un simple changement de couleur (lavande, palette pastel chaud —
+   voir dashboard.css/nutrition-redesign.css etc.), sans filtre ni nouvelle
+   forme — même mécanisme .nav-btn.active svg qu'avant, juste sa couleur. */
 .nav-btn.active svg {
-  color: var(--text-primary);
-  /* Two-layer soft glow, tight + diffuse — #FF6F59 is a starting point,
-     tune once compared directly against a real reference image. */
-  filter: drop-shadow(0 0 4px #FF6F59) drop-shadow(0 0 10px rgba(255,111,89,0.55));
+  color: #A3AEFE;
 }
 
 .nav-btn:active {
