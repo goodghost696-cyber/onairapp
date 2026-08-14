@@ -1,0 +1,118 @@
+/* ══════════════════════════════════════════════════════════════════════
+   Restyle VOLTA "pastel chaud" — Messages.jsx (liste des conversations
+   membre↔coach), 10e écran. Pas de package de handoff dédié — palette/
+   typo/rayons déduits du système déjà établi dans les 7 CSS précédents
+   (mêmes valeurs hex exactes). Même système à deux fonds que les écrans
+   membre déjà restylés (fond d'app pour le notch/rubber-band, fond
+   d'écran pour le contenu). .bottom-nav non touchée (sujet séparé).
+
+   Conversation.jsx (ouvert au tap sur la carte coach, /messages/coach)
+   explicitement HORS SCOPE de cette passe — écran distinct, pas nommé
+   dans la demande, laissé pour une passe ultérieure. */
+.messages-redesign {
+  --msg-bg: #EFE7D9;
+  --msg-screen-bg: #F7F1E6;
+  --msg-card: #FFFFFF;
+  --msg-ink: #1C1A17;
+  --msg-text-secondary: #4A443C;
+  --msg-text-muted: #736C60;
+  --msg-olive: #EBEB7D;
+  --msg-magenta: #B62472;
+  font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+  min-height: calc(var(--app-height, 100dvh) - env(safe-area-inset-top));
+  background: var(--msg-bg);
+  position: relative;
+}
+
+.messages-redesign::before {
+  content: '';
+  position: absolute;
+  top: calc(-1 * env(safe-area-inset-top));
+  left: 0;
+  right: 0;
+  height: env(safe-area-inset-top);
+  background: var(--msg-bg);
+  z-index: 0;
+}
+
+body.messages-body-bg {
+  background: #EFE7D9;
+}
+
+.messages-screen {
+  position: relative;
+  z-index: 1;
+  background: var(--msg-screen-bg);
+  color: var(--msg-ink);
+  min-height: calc(var(--app-height, 100dvh) - env(safe-area-inset-top));
+}
+
+/* ── En-tête ── */
+.msg-back-btn {
+  display: flex;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: var(--msg-card);
+  border: none;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  padding: 0;
+}
+.msg-title {
+  font-size: 23px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--msg-ink);
+}
+
+.msg-empty {
+  font-size: 13px;
+  color: var(--msg-text-muted);
+}
+
+/* ── Carte conversation ── */
+.messages-redesign .card.msg-conversation-card {
+  background: var(--msg-card);
+  border: none;
+  box-shadow: none;
+  border-radius: 28px;
+  padding: 16px 20px;
+}
+.msg-avatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 999px;
+  background: var(--msg-olive);
+  color: var(--msg-ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.msg-coach-name {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--msg-ink);
+}
+.msg-last-message {
+  font-size: 11.5px;
+  color: var(--msg-text-muted);
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.msg-time {
+  font-size: 10.5px;
+  color: var(--msg-text-muted);
+}
+.msg-unread-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--msg-magenta);
+}
