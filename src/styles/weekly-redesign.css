@@ -1,0 +1,197 @@
+/* ══════════════════════════════════════════════════════════════════════
+   Restyle VOLTA "pastel chaud" (import Claude Design, projet
+   "Redesign interface VOLTA", fichier VOLTA Redesign.dc.html — 2026-08-14).
+   Weekly.jsx (écran Bilan) uniquement dans cette passe — 3e écran après
+   Dashboard.jsx et Nutrition.jsx (voir dashboard.css/nutrition-redesign.css
+   et JOURNAL.md). Même approche que les deux précédents : custom
+   properties scopées à .weekly-redesign (posée sur le wrapper racine),
+   mêmes valeurs de palette que dashboard.css/nutrition-redesign.css pour
+   rester un seul système cohérent plutôt que de réinventer par écran —
+   global.css non touché. weekly-redesign.css n'est importé que par
+   Weekly.jsx, aucune fuite possible ailleurs.
+
+   .bottom-nav délibérément non touchée — sujet séparé. Les sections
+   classement et photos de progression restent commentées dans Weekly.jsx,
+   pas de style ajouté pour elles ici. */
+.weekly-redesign {
+  --wk-bg: #EFE7D9;
+  --wk-card: #FFFFFF;
+  --wk-cream: #F7F1E6;
+  --wk-olive: #EBEB7D;
+  --wk-olive-ink: #6E6A3F;
+  --wk-lavender: #A3AEFE;
+  --wk-lavender-ink: #3F4780;
+  --wk-pink: #FFBEF0;
+  --wk-carb: #D9D95F;
+  --wk-ink: #1C1A17;
+  --wk-magenta: #B62472;
+  --wk-text-secondary: #6E675C;
+  --wk-text-muted: #736C60;
+  --wk-track: #EFE7D9;
+  --wk-border: #F2ECE2;
+  font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+  /* Même fix notch/rubber-band que dashboard.css et nutrition-redesign.css
+     — même cause exacte (fond propre à cet écran vs #root/body transparents
+     ou partagés derrière), voir dashboard.css pour l'explication complète. */
+  min-height: calc(var(--app-height, 100dvh) - env(safe-area-inset-top));
+  background: var(--wk-bg);
+  position: relative;
+}
+
+.weekly-redesign::before {
+  content: '';
+  position: absolute;
+  top: calc(-1 * env(safe-area-inset-top));
+  left: 0;
+  right: 0;
+  height: env(safe-area-inset-top);
+  background: var(--wk-bg);
+  z-index: 0;
+}
+
+/* Pilotée par useEffect (Weekly.jsx) — couvre le rubber-band iOS, voir
+   dashboard.css/nutrition-redesign.css pour la même explication. Valeur en
+   dur (pas var(--wk-bg)) : <body> est un ancêtre, pas un descendant. */
+body.weekly-body-bg {
+  background: #EFE7D9;
+}
+
+.weekly-screen {
+  position: relative;
+  z-index: 1;
+  background: var(--wk-bg);
+  color: var(--wk-ink);
+}
+
+/* ── En-tête ── */
+.wk-eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--wk-magenta);
+  margin-bottom: 6px;
+}
+.wk-title {
+  font-size: 27px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: var(--wk-ink);
+}
+.wk-subtitle {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--wk-text-secondary);
+  margin-top: 6px;
+}
+
+.wk-section-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--wk-text-muted);
+  padding: 0 6px;
+  margin-bottom: 12px;
+}
+.wk-section-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.wk-section-goal {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--wk-text-muted);
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+/* ── Calories / jour ── */
+.wk-calorie-card {
+  background: var(--wk-card);
+  border-radius: 34px;
+  padding: 24px 22px 18px;
+  margin-bottom: 22px;
+}
+.wk-calorie-bars {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  height: 116px;
+}
+.wk-calorie-bar-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-end;
+  height: 100%;
+}
+.wk-calorie-bar-val {
+  font-size: 9.5px;
+  font-weight: 600;
+  color: var(--wk-text-muted);
+}
+.wk-calorie-bar-fill {
+  width: 100%;
+  border-radius: 12px 12px 5px 5px;
+  transition: height 600ms ease;
+}
+.wk-calorie-bar-day {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--wk-text-muted);
+}
+
+/* ── Résumé ── */
+.wk-summary-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
+.wk-summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--wk-card);
+  border-radius: 24px;
+  padding: 16px 22px;
+}
+.wk-summary-label { font-size: 13.5px; font-weight: 500; color: #4A443C; }
+.wk-summary-value { font-size: 17px; font-weight: 700; color: var(--wk-ink); letter-spacing: -0.02em; }
+.wk-summary-unit { font-size: 12.5px; font-weight: 500; color: var(--wk-text-muted); }
+
+/* .section-sub (Weekly.css) tuné pour le thème global (var(--text-muted))
+   — scopé ici pour rester lisible sur le fond crème du restyle. */
+.weekly-redesign .section-sub {
+  color: var(--wk-text-muted);
+}
+
+/* ── Mes charges (courbes) — .lifts-section/.lift-curve-* existent déjà
+   dans Weekly.css (chargé sur ce même écran, pas partagé ailleurs) ;
+   scopés à .weekly-redesign ici pour gagner en spécificité sans dépendre
+   de l'ordre d'import entre les deux fichiers. */
+.weekly-redesign .lifts-section {
+  margin-top: 4px;
+  padding-top: 0;
+  border-top: none;
+  padding-bottom: 40px;
+}
+.weekly-redesign .lift-curve-card {
+  background: var(--wk-card);
+  border: none;
+  border-radius: 30px;
+  padding: 20px 22px 14px;
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+.weekly-redesign .lift-curve-name { color: var(--wk-ink); }
+.weekly-redesign .lift-curve-latest { color: var(--wk-ink); }
+.wk-lift-empty {
+  background: var(--wk-card);
+  border-radius: 30px;
+  padding: 22px 24px;
+  text-align: center;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--wk-text-secondary);
+}
