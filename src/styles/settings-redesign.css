@@ -82,7 +82,17 @@ body.settings-body-bg {
 
 .settings-screen {
   position: relative;
-  z-index: 1;
+  /* z-index: 1 retiré (2026-08-15, investigation JOURNAL.md) — root cause
+     du bouton "Synchroniser mes données" (sheet santé, Settings.jsx,
+     position:fixed zIndex:200) et de la sheet de confirmation de
+     DeleteAccountButton.jsx (position:fixed zIndex:200), toutes deux
+     rendues à l'intérieur de .settings-screen : ce z-index:1 posait un
+     nouveau contexte d'empilement local, donc leur z-index n'était comparé
+     à .bottom-nav (z-index:100, sibling de .settings-redesign au niveau de
+     .member-layout, hors de ce contexte) qu'en tant que bloc entier —
+     c'est .settings-screen dans son ensemble (z-index:1) qui comptait face
+     à la nav, largement battu. Voir dashboard.css pour l'explication
+     complète du même fix sur les 6 autres écrans concernés. */
   background: var(--set-screen-bg);
   color: var(--set-ink);
   min-height: calc(var(--app-height, 100dvh) - env(safe-area-inset-top));

@@ -74,7 +74,9 @@ body.workoutlibrary-body-bg {
 
 .workoutlibrary-screen {
   position: relative;
-  z-index: 1;
+  /* z-index: 1 retiré (2026-08-15) — piégeait les sheets fixed imbriquées
+     ici face à .bottom-nav, voir dashboard.css pour l'explication
+     complète. */
   background: var(--wl-screen-bg);
   color: var(--wl-ink);
   min-height: calc(var(--app-height, 100dvh) - env(safe-area-inset-top));

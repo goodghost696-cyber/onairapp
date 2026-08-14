@@ -140,8 +140,19 @@ body.dashboard-body-bg {
 
 .dashboard-screen {
   position: relative;
-  z-index: 1;
-  /* Peint le fond crème pour cet écran uniquement — body garde son
+  /* z-index: 1 retiré (2026-08-15, investigation JOURNAL.md) : posait un
+     nouveau contexte d'empilement local, dans lequel toute sheet fixed
+     imbriquée ici (.activity-edit-sheet z-index:201, .sheet-overlay
+     z-index:200 plus bas dans ce fichier) n'était comparée à .bottom-nav
+     (z-index:100, sibling de .dashboard-redesign au niveau de
+     .member-layout, hors de ce contexte) qu'en tant que bloc entier —
+     c'est .dashboard-screen dans son ensemble (z-index:1) qui comptait
+     face à la nav, largement battu. Pas de raison positive retrouvée pour
+     ce z-index:1 : DOM order suffit déjà à faire peindre ce bloc après
+     .dashboard-redesign::before (voir plus haut), pas besoin d'empilement
+     explicite pour ça. Retiré sur les 7 écrans restylés concernés (voir
+     JOURNAL.md pour la liste), même raisonnement partout.
+     Peint le fond crème pour cet écran uniquement — body garde son
      dégradé corail partagé par tout le reste de l'app (non touché), il
      est juste recouvert ici par le propre fond de ce bloc de contenu. */
   background: var(--db-bg);

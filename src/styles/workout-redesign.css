@@ -87,7 +87,9 @@ body.workout-body-bg {
 
 .workout-screen {
   position: relative;
-  z-index: 1;
+  /* z-index: 1 retiré (2026-08-15) — piégeait les sheets fixed imbriquées
+     ici face à .bottom-nav, voir dashboard.css pour l'explication
+     complète. */
   background: var(--wh-screen-bg);
   color: var(--wh-ink);
   /* Même fix que .workoutsession-screen (voir workoutsession-redesign.css)
