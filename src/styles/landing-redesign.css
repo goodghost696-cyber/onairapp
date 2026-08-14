@@ -1,0 +1,72 @@
+/* ══════════════════════════════════════════════════════════════════════
+   Restyle VOLTA "pastel chaud" — Landing.jsx (page d'accès membre/coach),
+   9e écran. Pas de package de handoff dédié — palette/typo/rayons déduits
+   du système déjà établi dans les 7 CSS précédents (mêmes valeurs hex
+   exactes). Voir splash-redesign.css : SplashIntro (affiché sur cet
+   écran) bascule sur la même identité, commit séparé.
+
+   Historique à connaître avant de toucher ce fichier (voir landing.css) :
+   le fond corail dégradé ici est un choix DÉLIBÉRÉ et répété deux fois
+   ("la landing n'a rien à voir avec le reste de l'application", direction
+   corail 2026-08-06) — Landing force `data-theme="dark"` sur <html>
+   justement pour rester toujours sur cette identité, indépendamment du
+   thème choisi dans l'app. Avec le restyle pastel chaud qui a maintenant
+   gagné tout le reste de l'app connectée (7 écrans), la même bascule est
+   appliquée ici pour la cohérence de première impression — cette identité
+   crème EST desormais "le reste de l'application", donc l'argument
+   d'origine (rester aligné avec le reste de l'app) va maintenant dans le
+   sens inverse. Pas de maquette pour valider ce choix : à confirmer
+   visuellement en priorité (voir rapport de session).
+
+   Pas de distinction fond d'app/fond d'écran ici : Landing n'est pas dans
+   #root/MemberLayout (route "/" autonome, pas de nav flottante, pas de
+   notch à gérer séparément puisque .landing occupe déjà tout #root via
+   min-height:100% — voir le commentaire dans landing.css). Une seule
+   teinte de fond suffit, comme pour splash-redesign.css. */
+.landing.landing-redesign {
+  background: #EFE7D9;
+  color: #1C1A17;
+  font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+}
+
+/* Pilotée par useEffect (Landing.jsx) — couvre la zone de padding-top de
+   #root (notch/safe-area), toujours peinte par le dégradé corail de
+   <body> sinon (voir global.css) ; valeur en dur, <body> est un ancêtre,
+   pas un descendant de .landing-redesign. */
+body.landing-body-bg {
+  background: #EFE7D9;
+}
+
+.landing-redesign .landing-brand {
+  color: #B62472;
+}
+
+.landing-redesign .landing-city {
+  color: #736C60;
+}
+
+.landing-redesign .landing-kicker {
+  color: #B62472;
+}
+
+.landing-redesign .landing-subtitle {
+  color: #4A443C;
+}
+
+.landing-redesign .landing-footer {
+  color: rgba(28,26,23,0.4);
+}
+
+.landing-redesign .landing-btn-primary {
+  background: #1C1A17;
+  color: #F7F1E6;
+}
+
+/* Secondaire — contour encre plutôt que blanc translucide (qui ne se
+   voit plus sur fond clair), même vocabulaire que les boutons contour
+   déjà établis (Settings' "Enregistrer...", ex-set-outline-btn). */
+.landing-redesign .landing-btn-secondary {
+  background: transparent;
+  color: #1C1A17;
+  border: 2px solid #1C1A17;
+}

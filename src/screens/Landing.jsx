@@ -4,6 +4,7 @@ import { useGymConfig } from '../hooks/useGymConfig'
 import Logo from '../components/Logo'
 import SplashIntro from '../components/SplashIntro'
 import '../styles/landing.css'
+import '../styles/landing-redesign.css'
 
 export default function Landing() {
   const navigate = useNavigate()
@@ -35,8 +36,19 @@ export default function Landing() {
     return () => { html.setAttribute('data-theme', prev || 'dark') }
   }, [])
 
+  // Même fix que les 7 écrans restylés précédents (voir dashboard.css/
+  // JOURNAL.md) : sans ça, la zone de padding-top de #root (safe-area/
+  // notch iOS) laisse transparaître le dégradé corail de <body> (toujours
+  // peint, indépendamment du data-theme forcé ci-dessus) plutôt que le
+  // crème de ce restyle — même bug de seam que sur Dashboard/
+  // WorkoutSession, prévenu ici directement.
+  useEffect(() => {
+    document.body.classList.add('landing-body-bg')
+    return () => document.body.classList.remove('landing-body-bg')
+  }, [])
+
   return (
-    <div className="landing">
+    <div className="landing landing-redesign">
       {showSplash && <SplashIntro onDone={() => setShowSplash(false)} />}
       <div className="landing-topbar">
         <span className="landing-brand">{gym.name}</span>
