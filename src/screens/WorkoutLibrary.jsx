@@ -77,7 +77,7 @@ const LOCAL_EXERCISES = {
   ],
 }
 
-const SECTION_NAMES = { maison: 'Maison', salle: 'Salle', dehors: 'Dehors' }
+const SECTION_NAMES = { maison: 'Maison', salle: 'Salle', dehors: 'Street Workout' }
 
 export default function WorkoutLibrary({ section }) {
   const navigate = useNavigate()
