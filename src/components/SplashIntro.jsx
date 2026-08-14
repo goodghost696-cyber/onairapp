@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import '../styles/splash.css'
+import '../styles/splash-redesign.css'
 
 // Intro animation shown once per visit to Landing (not gated behind
 // localStorage — replays every time someone lands on "/", per what was
@@ -48,7 +49,7 @@ export default function SplashIntro({ onDone }) {
   }, [])
 
   return (
-    <div className={`splash-overlay${fading ? ' fading' : ''}`} onClick={finish} role="presentation">
+    <div className={`splash-overlay splash-redesign${fading ? ' fading' : ''}`} onClick={finish} role="presentation">
       <span className={`splash-mark${drawing ? ' drawing' : ''}`}>
         <svg viewBox="-1 -1 26 26" fill="none" stroke="#F0C14B" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
           <polyline points="1 18 8.5 10.5 13.5 15.5 23 6" pathLength="1" />
