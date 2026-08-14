@@ -105,6 +105,58 @@ function currentWeekRangeLabel() {
   return `Semaine du ${monday.getDate()} au ${sunday.getDate()} ${month}`
 }
 
+// Rapporté en test réel (2026-08-14, investigation JOURNAL.md) : sans état
+// loading, les states initiaux (tableaux vides, zéros) affichaient un écran
+// "vide mais complet" avant résolution des 2 fetchs qui alimentent cet
+// écran (stats + charges), puis tout sautait d'un coup à l'arrivée des
+// données. Ces trois blocs reprennent la forme exacte des cartes réelles
+// (mêmes classes wk-calorie-card/wk-summary-row/lift-curve-card, déjà des
+// cartes crème arrondies) avec des barres pulsantes à la place des vraies
+// valeurs — cohérent avec le restyle pastel plutôt que le spinner générique
+// (RouteLoadingFallback, App.jsx) pensé pour un changement de route, pas un
+// écran déjà monté qui attend ses données. Les libellés statiques (titres
+// de section, sous-titres) restent affichés normalement pendant le
+// chargement — seuls les blocs qui dépendent des données fetchées basculent.
+function CalorieBarsSkeleton() {
+  return (
+    <div className="wk-calorie-bars">
+      {Array.from({ length: 7 }).map((_, i) => (
+        <div key={i} className="wk-calorie-bar-col">
+          <div className="wk-skeleton-block" style={{ width: 20, height: 9 }} />
+          <div className="wk-skeleton-block" style={{ width: '100%', height: 24 + (i % 3) * 14, borderRadius: '12px 12px 5px 5px' }} />
+          <div className="wk-skeleton-block" style={{ width: 16, height: 8 }} />
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function SummaryListSkeleton() {
+  return (
+    <div className="wk-summary-list">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div key={i} className="wk-summary-row card-animated" style={{ '--delay': `${100 + i * 60}ms` }}>
+          <div className="wk-skeleton-block" style={{ width: 100, height: 12 }} />
+          <div className="wk-skeleton-block" style={{ width: 44, height: 14 }} />
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function LiftsSkeleton() {
+  return (
+    <>
+      {[0, 1].map(i => (
+        <div key={i} className="lift-curve-card">
+          <div className="wk-skeleton-block" style={{ width: '55%', height: 13, marginBottom: 14 }} />
+          <div className="wk-skeleton-block" style={{ width: '100%', height: 56, borderRadius: 12 }} />
+        </div>
+      ))}
+    </>
+  )
+}
+
 export default function Weekly() {
   const { appData } = useApp()
   const { user } = useAuth()
@@ -116,16 +168,25 @@ export default function Weekly() {
   const [liftProgress, setLiftProgress] = useState([])
   const [leaderboard, setLeaderboard] = useState([])
   const [leaderboardLoaded, setLeaderboardLoaded] = useState(false)
+  // Couvre les 2 fetchs qui alimentent le contenu visible (calories/résumé
+  // + charges) — pas le leaderboard, masqué côté produit (voir plus bas) et
+  // déjà géré par son propre flag indépendant.
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (!user?.id) return
-    fetchWeeklyStats(user.id).then(({ weeklyData, sleepData, weeklySteps, weeklyKmRun }) => {
-      setWeeklyData(weeklyData)
-      setSleepData(sleepData)
-      setWeeklySteps(weeklySteps)
-      setWeeklyKmRun(weeklyKmRun)
+    setLoading(true)
+    Promise.all([
+      fetchWeeklyStats(user.id),
+      fetchLiftProgress(user.id),
+    ]).then(([stats, lifts]) => {
+      setWeeklyData(stats.weeklyData)
+      setSleepData(stats.sleepData)
+      setWeeklySteps(stats.weeklySteps)
+      setWeeklyKmRun(stats.weeklyKmRun)
+      setLiftProgress(lifts)
+      setLoading(false)
     })
-    fetchLiftProgress(user.id).then(setLiftProgress)
     fetchWeeklyLeaderboard().then(rows => { setLeaderboard(rows); setLeaderboardLoaded(true) })
   }, [user?.id])
 
@@ -158,34 +219,38 @@ export default function Weekly() {
           <span className="wk-section-goal">{t('goal')} : {appData.calorieGoal.toLocaleString('fr-FR')} kcal</span>
         </div>
         <div className="wk-calorie-card card-animated" style={{ '--delay': '0ms' }}>
-          <div className="wk-calorie-bars">
-            {weeklyData.map((d, i) => {
-              const barH = d.calories > 0 ? Math.max(4, Math.round((d.calories / maxCalories) * BAR_MAX_HEIGHT)) : 4
-              return (
-                <div key={i} className="wk-calorie-bar-col">
-                  <span className="wk-calorie-bar-val">{d.calories > 0 ? d.calories.toLocaleString('fr-FR') : '—'}</span>
-                  <div className="wk-calorie-bar-fill" style={{ height: `${barH}px`, background: calBarColor(d.calories, appData.calorieGoal) }} />
-                  <span className="wk-calorie-bar-day">{d.day}</span>
-                </div>
-              )
-            })}
-          </div>
+          {loading ? <CalorieBarsSkeleton /> : (
+            <div className="wk-calorie-bars">
+              {weeklyData.map((d, i) => {
+                const barH = d.calories > 0 ? Math.max(4, Math.round((d.calories / maxCalories) * BAR_MAX_HEIGHT)) : 4
+                return (
+                  <div key={i} className="wk-calorie-bar-col">
+                    <span className="wk-calorie-bar-val">{d.calories > 0 ? d.calories.toLocaleString('fr-FR') : '—'}</span>
+                    <div className="wk-calorie-bar-fill" style={{ height: `${barH}px`, background: calBarColor(d.calories, appData.calorieGoal) }} />
+                    <span className="wk-calorie-bar-day">{d.day}</span>
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
 
         <div className="wk-section-label">{t('summary')}</div>
-        <div className="wk-summary-list">
-          {[
-            { label: t('workouts_done'), val: `${appData.weeklyWorkouts}/${appData.weeklyGoal}` },
-            { label: t('avg_sleep'), val: loggedSleepDays.length ? `${avgSleep} h` : '—' },
-            { label: t('distance_run'), val: `${Math.round(weeklyKmRun * 10) / 10} km` },
-            { label: t('steps'), val: weeklySteps.toLocaleString() },
-          ].map((r, idx) => (
-            <div key={r.label} className="wk-summary-row card-animated" style={{ '--delay': `${100 + idx * 60}ms` }}>
-              <span className="wk-summary-label">{r.label}</span>
-              <span className="wk-summary-value">{r.val}</span>
-            </div>
-          ))}
-        </div>
+        {loading ? <SummaryListSkeleton /> : (
+          <div className="wk-summary-list">
+            {[
+              { label: t('workouts_done'), val: `${appData.weeklyWorkouts}/${appData.weeklyGoal}` },
+              { label: t('avg_sleep'), val: loggedSleepDays.length ? `${avgSleep} h` : '—' },
+              { label: t('distance_run'), val: `${Math.round(weeklyKmRun * 10) / 10} km` },
+              { label: t('steps'), val: weeklySteps.toLocaleString() },
+            ].map((r, idx) => (
+              <div key={r.label} className="wk-summary-row card-animated" style={{ '--delay': `${100 + idx * 60}ms` }}>
+                <span className="wk-summary-label">{r.label}</span>
+                <span className="wk-summary-value">{r.val}</span>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Classement de la salle — audit marché 2026-08-06 (JOURNAL.md
             suite 47) : c'est le seul terrain où Volta n'a aucun concurrent
@@ -256,11 +321,13 @@ export default function Weekly() {
         <div className="lifts-section">
           <p className="wk-section-label" style={{ padding: 0, marginBottom: 4 }}>MES CHARGES</p>
           <p className="section-sub">Évolution sur les 4 dernières séances</p>
-          {liftProgress.length
-            ? liftProgress.map((lift, i) => <LiftCurve key={i} lift={lift} idx={i} />)
-            : <div className="wk-lift-empty">
-                Pas encore assez de séances enregistrées pour un même exercice — reviens après quelques séances.
-              </div>
+          {loading
+            ? <LiftsSkeleton />
+            : liftProgress.length
+              ? liftProgress.map((lift, i) => <LiftCurve key={i} lift={lift} idx={i} />)
+              : <div className="wk-lift-empty">
+                  Pas encore assez de séances enregistrées pour un même exercice — reviens après quelques séances.
+                </div>
           }
         </div>
       </div>

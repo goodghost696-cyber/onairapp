@@ -203,6 +203,17 @@ body.weekly-body-bg {
 }
 .weekly-redesign .lift-curve-name { color: var(--wk-ink); }
 .weekly-redesign .lift-curve-latest { color: var(--wk-ink); }
+/* ── Skeleton de chargement (Weekly.jsx, loading) ── */
+@keyframes wkSkeletonPulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+.wk-skeleton-block {
+  background: var(--wk-track);
+  border-radius: 999px;
+  animation: wkSkeletonPulse 1.4s ease-in-out infinite;
+}
+
 .wk-lift-empty {
   background: var(--wk-card);
   border-radius: 30px;
