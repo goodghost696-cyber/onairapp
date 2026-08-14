@@ -73,6 +73,20 @@ body.workoutsession-body-bg {
   z-index: 1;
   background: var(--ws-screen-bg);
   color: var(--ws-ink);
+  /* Root cause du seam visible sur l'état vide (rapporté sur test réel,
+     2026-08-14) : .workoutsession-redesign (le wrapper) a bien son propre
+     min-height (ci-dessus), mais c'est CET écran-ci qui porte le fond
+     distinct --ws-screen-bg (#F7F1E6, pas --ws-bg #EFE7D9 du wrapper — la
+     nuance à deux fonds documentée par ce handoff, voir plus haut). Sans
+     min-height propre, .workoutsession-screen ne s'étend que sur la
+     hauteur de son contenu ; quand celui-ci est plus court que le
+     viewport (état vide), l'espace restant en dessous appartient au
+     wrapper et laisse transparaître --ws-bg — même classe de bug que le
+     rubber-band de Dashboard.jsx (42acb2a/2edcaf6, dashboard.css/
+     JOURNAL.md), même fix : min-height calc explicite (pas de %, un
+     pourcentage ne se résout pas contre un ancêtre qui n'a lui-même
+     qu'un min-height, pas une height définie). */
+  min-height: calc(var(--app-height, 100dvh) - env(safe-area-inset-top));
   /* Le bouton "Terminer la séance" passe en position fixed (voir plus
      bas) au-dessus de la nav pill partagée (.bottom-nav, non touchée) —
      il faut donc dégager assez de place sous le contenu scrollable pour

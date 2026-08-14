@@ -58,7 +58,19 @@ export default function WorkoutSession() {
           </div>
           <div className="empty-session">
             <p className="empty-session-text">Aucun exercice ajouté.</p>
-            <button className="empty-session-btn" onClick={() => navigate('/workout')}>+ Ajouter des exercices</button>
+            {/* Root cause (debugging, 2026-08-14) : renvoyait vers /workout
+                (le hub), qui n'ajoute rien à la séance active — juste 3
+                cartes "Exercices Maison/Salle/Dehors" à re-taper. Aucune
+                route "bibliothèque générique" n'existe (WorkoutLibrary.jsx
+                a toujours besoin d'une section — maison/salle/dehors, voir
+                App.jsx). "Maison" choisie comme entrée directe par défaut
+                (zéro équipement, le moins de friction) plutôt que de
+                renvoyer au choix — WorkoutLibrary.jsx ajoute déjà
+                correctement à la séance active quel que soit le point
+                d'entrée (addExercise -> addExerciseToSession ->
+                navigate('/workout/session'), AppContext.jsx), donc ce seul
+                changement de route suffit. */}
+            <button className="empty-session-btn" onClick={() => navigate('/workout/maison')}>+ Ajouter des exercices</button>
           </div>
         </div>
       </div>
