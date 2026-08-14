@@ -10,11 +10,16 @@ import { calculateCalorieGoal } from '../utils/metabolism'
 import { isPushSupported, getPushSubscriptionState, subscribeToPush, unsubscribeFromPush, isIOSNotStandalone } from '../utils/push'
 import DeleteAccountButton from '../components/DeleteAccountButton'
 import { storageKey } from '../components/OnboardingTour'
+import '../styles/settings-redesign.css'
 
+// Recoloré pour le restyle "pastel chaud" (2026-08-14, handoff dédié) —
+// piste + pastille en dur via .set-toggle/.set-toggle-knob
+// (settings-redesign.css) plutôt qu'en inline comme avant : mêmes deux
+// classes réutilisables si un autre écran adopte ce composant plus tard.
 function Toggle({ on, onToggle }) {
   return (
-    <div onClick={onToggle} style={{ width: 44, height: 26, background: on ? 'var(--accent)' : 'var(--border)', borderRadius: 13, position: 'relative', cursor: 'pointer', transition: 'background 200ms ease', flexShrink: 0 }}>
-      <div style={{ position: 'absolute', width: 20, height: 20, background: 'white', borderRadius: '50%', top: 3, left: 3, transform: on ? 'translateX(18px)' : 'none', transition: 'transform 200ms ease' }} />
+    <div onClick={onToggle} className={`set-toggle ${on ? 'on' : 'off'}`}>
+      <div className="set-toggle-knob" />
     </div>
   )
 }
@@ -31,10 +36,9 @@ const GOAL_OPTIONS = [
 
 function Field({ label, value, onChange, type = 'text' }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0', borderBottom: '0.5px solid var(--border)' }}>
-      <span className="text-sm text-secondary">{label}</span>
-      <input type={type} value={value} onChange={e => onChange(e.target.value)}
-        style={{ background: 'none', border: 'none', color: 'var(--text-primary)', fontSize: 15, textAlign: 'right', width: 140, outline: 'none', fontFamily: 'inherit' }} />
+    <div className="set-field">
+      <span className="set-field-label">{label}</span>
+      <input type={type} value={value} onChange={e => onChange(e.target.value)} />
     </div>
   )
 }
@@ -56,6 +60,14 @@ export default function Settings() {
   useEffect(() => {
     if (!isPushSupported()) { setPushState('unsupported'); return }
     getPushSubscriptionState().then(setPushState)
+  }, [])
+
+  // Même fix que les 6 écrans précédents (voir dashboard.css/JOURNAL.md) :
+  // couvre le rubber-band iOS. Classe active seulement tant que ce screen
+  // est monté.
+  useEffect(() => {
+    document.body.classList.add('settings-body-bg')
+    return () => document.body.classList.remove('settings-body-bg')
   }, [])
 
   async function handleTogglePush() {
@@ -218,7 +230,7 @@ export default function Settings() {
   }
 
   return (
-    <div className="app-wrapper">
+    <div className="app-wrapper settings-redesign">
       {/* Sync Toast */}
       <div style={{
         position: 'fixed', top: syncToast ? 16 : -60, left: '50%', transform: 'translateX(-50%)',
@@ -227,16 +239,13 @@ export default function Settings() {
         transition: 'top 300ms cubic-bezier(0.34,1.56,0.64,1)',
       }}>Données synchronisées ✓</div>
 
-      <div className="screen">
+      <div className="screen settings-screen">
         <div className="screen-header" style={{ paddingTop: 56, paddingBottom: 20 }}>
-          <button
-            onClick={() => navigate('/dashboard')}
-            style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--surface)', border: '2px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', marginBottom: 16 }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" strokeWidth="2" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+          <button className="set-back-btn" onClick={() => navigate('/dashboard')}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--set-ink)" strokeWidth="1.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
           </button>
-          <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.85)', marginBottom: 7 }}>⚙️ SETTINGS</p>
-          <h1 style={{ fontSize: 28, fontWeight: 800, lineHeight: 1.15, color: 'var(--text-primary)' }}>{t('settings_title')}</h1>
+          <p className="set-eyebrow">RÉGLAGES</p>
+          <h1 className="set-title">{t('settings_title')}</h1>
         </div>
 
         <div className="section-label">{t('profile_section')}</div>
@@ -246,8 +255,8 @@ export default function Settings() {
           <Field label={t('weight')} value={profile.weight} onChange={v => setProfile(p => ({...p, weight: v}))} type="number" />
           <Field label={t('height')} value={profile.height} onChange={v => setProfile(p => ({...p, height: v}))} type="number" />
         </div>
-        <button className="btn-ghost" onClick={saveProfile} disabled={profileSaving} style={{ marginBottom: 8, opacity: profileSaving ? 0.6 : 1 }}>
-          {profileSaving ? '...' : profileSaved ? '✓ ENREGISTRÉ' : 'ENREGISTRER LE PROFIL'}
+        <button className="btn-ghost set-outline-btn" onClick={saveProfile} disabled={profileSaving} style={{ opacity: profileSaving ? 0.6 : 1 }}>
+          {profileSaving ? '...' : profileSaved ? '✓ Enregistré' : 'Enregistrer le profil'}
         </button>
 
         <div className="section-label">{t('goals_section')}</div>
@@ -270,14 +279,14 @@ export default function Settings() {
           {/* Eau/Pas retirés — modifiables directement depuis leur carte
               sur le Dashboard maintenant. */}
         </div>
-        <button className="btn-ghost" onClick={saveGoals} disabled={goalsSaving} style={{ marginBottom: 8, opacity: goalsSaving ? 0.6 : 1 }}>
-          {goalsSaving ? '...' : goalsSaved ? '✓ ENREGISTRÉ' : t('save_goals')}
+        <button className="btn-ghost set-outline-btn" onClick={saveGoals} disabled={goalsSaving} style={{ opacity: goalsSaving ? 0.6 : 1 }}>
+          {goalsSaving ? '...' : goalsSaved ? '✓ Enregistré' : t('save_goals')}
         </button>
 
         <div className="section-label">{t('notifications_section')}</div>
         <div className="card card-animated" style={{ '--delay': '120ms' }}>
           {pushState !== 'unsupported' && (
-            <div className="flex justify-between items-center" style={{ padding: '14px 0', borderBottom: '0.5px solid var(--border)' }}>
+            <div className="flex justify-between items-center" style={{ padding: '14px 0', borderBottom: pushState !== 'unsupported' ? `1px solid var(--set-field-border)` : 'none' }}>
               <div>
                 <div className="text-sm text-secondary">Notifications push</div>
                 {pushState === 'denied' && <div className="text-xs" style={{ color: 'var(--danger)', marginTop: 2 }}>Bloquées dans les réglages du navigateur</div>}
@@ -347,7 +356,7 @@ export default function Settings() {
               <p className="text-sm text-secondary">Synchroniser mes données</p>
               <p className="text-xs text-muted">Pas, sommeil · Intégration Apple Health sur app native</p>
             </div>
-            <span style={{ color: 'var(--text-muted)', fontSize: 18 }}>→</span>
+            <span className="set-arrow">→</span>
           </div>
         </div>
 
@@ -392,14 +401,14 @@ export default function Settings() {
         {user?.isPlatformAdmin && (
           <>
             <div className="section-label">VOLTA</div>
-            <button className="btn-ghost" onClick={() => navigate('/admin')} style={{ marginBottom: 12 }}>
+            <button className="btn-ghost set-outline-btn" onClick={() => navigate('/admin')} style={{ marginBottom: 12 }}>
               Console admin — toutes les salles
             </button>
           </>
         )}
 
         <div className="section-label">{t('account_section')}</div>
-        <button className="btn-ghost" onClick={replayTour} style={{ marginBottom: 8 }}>
+        <button className="btn-ghost set-solid-btn" onClick={replayTour}>
           Revoir le didacticiel
         </button>
         {/* logout() était appelé sans await — navigate('/') partait avant que
@@ -409,7 +418,7 @@ export default function Settings() {
             App.jsx avec un `user` encore membre, qui redirige direct vers
             /dashboard — l'app semblait "reconnecter" tout seule. Signalé
             directement par Arnaud (2026-08-11). */}
-        <button onClick={async () => { await logout(); navigate('/') }} style={{ width: '100%', padding: 16, background: 'transparent', border: '2px solid var(--danger)', color: 'var(--danger)', fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', borderRadius: 12, cursor: 'pointer', marginBottom: 12 }}>
+        <button className="set-logout-btn" onClick={async () => { await logout(); navigate('/') }}>
           {t('logout')}
         </button>
         <DeleteAccountButton />

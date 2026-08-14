@@ -1,0 +1,283 @@
+/* ══════════════════════════════════════════════════════════════════════
+   Restyle VOLTA "pastel chaud" — Settings.jsx (Réglages membre), 7e écran
+   après Dashboard/Nutrition/Weekly/WorkoutSession/Workout/WorkoutLibrary
+   (voir *-redesign.css correspondants et JOURNAL.md). Source : handoff
+   design dédié (dossier local hors repo, "Redesign interface VOLTA (7)/
+   design_handoff_reglages/README.md" + Settings.reference.html).
+
+   Même système à deux fonds, mêmes tokens communs que WorkoutSession/
+   Workout/WorkoutLibrary (le README y renvoie explicitement). min-height
+   posé dès le départ sur le wrapper ET l'écran (leçon du bug de seam).
+
+   Le README demande de garder les sections/l'ordre exacts. Beaucoup de
+   classes utilisées ici sont GLOBALES et partagées avec de nombreux
+   autres écrans non touchés dans ce lot (.card, .card-animated,
+   .section-label, .btn-ghost, .goal-chip/.goal-selector, .lang-btn/
+   .lang-selector — utilisées aussi par CoachSettings/CoachDashboard/
+   ClientsList/CoachPrograms/MemberDetail/Hydration.jsx, vérifié par
+   grep) — jamais retouchées directement, seulement overridées ici,
+   scopées à .settings-redesign.
+
+   Hors scope explicite : DeleteAccountButton.jsx (composant PARTAGÉ avec
+   CoachSettings.jsx, style inline sans classe — impossible à cibler par
+   CSS scopé sans risquer de casser l'écran coach non touché ici ; laissé
+   tel quel, voir JOURNAL.md pour le détail). La sheet de synchro santé
+   n'a pas de spec dédiée dans le README ("interactions inchangées") —
+   laissée sur son habillage global existant. */
+.settings-redesign {
+  --set-bg: #EFE7D9;
+  --set-screen-bg: #F7F1E6;
+  --set-card: #FFFFFF;
+  --set-field-border: #F2ECE2;
+  --set-ink: #1C1A17;
+  --set-text-secondary: #4A443C;
+  --set-text-tertiary: #6E675C;
+  --set-text-muted: #736C60;
+  --set-neutral-chip: #F2ECE2;
+  --set-neutral-chip-ink: #4A443C;
+  --set-olive: #EBEB7D;
+  --set-lavender: #A3AEFE;
+  --set-magenta: #B62472;
+  --set-attribution: #8A8378;
+  font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+  min-height: calc(var(--app-height, 100dvh) - env(safe-area-inset-top));
+  background: var(--set-bg);
+  position: relative;
+}
+
+.settings-redesign::before {
+  content: '';
+  position: absolute;
+  top: calc(-1 * env(safe-area-inset-top));
+  left: 0;
+  right: 0;
+  height: env(safe-area-inset-top);
+  background: var(--set-bg);
+  z-index: 0;
+}
+
+body.settings-body-bg {
+  background: #EFE7D9;
+}
+
+.settings-screen {
+  position: relative;
+  z-index: 1;
+  background: var(--set-screen-bg);
+  color: var(--set-ink);
+  min-height: calc(var(--app-height, 100dvh) - env(safe-area-inset-top));
+}
+
+/* ── En-tête ── */
+.set-back-btn {
+  display: flex;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: var(--set-card);
+  border: none;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 14px;
+}
+.set-eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--set-magenta);
+  margin-bottom: 5px;
+}
+.set-title {
+  font-size: 27px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--set-ink);
+}
+
+.settings-redesign .section-label {
+  color: var(--set-text-muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 0 6px 12px;
+  margin: 0;
+}
+
+/* ── Carte "champ + valeur" ── */
+.settings-redesign .card {
+  background: var(--set-card);
+  border: none;
+  box-shadow: none;
+  border-radius: 32px;
+  padding: 6px 22px;
+  margin-bottom: 10px;
+}
+.set-field {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--set-field-border);
+}
+.set-field:last-child {
+  border-bottom: none;
+}
+.set-field-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--set-text-secondary);
+}
+.set-field input {
+  background: none;
+  border: none;
+  color: var(--set-ink);
+  font-size: 14.5px;
+  font-weight: 600;
+  text-align: right;
+  width: 140px;
+  outline: none;
+  font-family: inherit;
+  padding: 0;
+}
+
+/* Boutons "Enregistrer..." — pilule contour encre. */
+.settings-redesign .btn-ghost.set-outline-btn {
+  background: none;
+  border: 1.5px solid var(--set-ink);
+  color: var(--set-ink);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  padding: 14px 0;
+  margin-bottom: 24px;
+}
+/* "Revoir le didacticiel" — pilule pleine blanche, pas de contour. */
+.settings-redesign .btn-ghost.set-solid-btn {
+  background: var(--set-card);
+  border: none;
+  color: var(--set-ink);
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: normal;
+  text-transform: none;
+  border-radius: 999px;
+  padding: 16px 0;
+  margin-bottom: 10px;
+}
+
+/* ── Chips d'objectif ── */
+.settings-redesign .goal-selector {
+  margin-bottom: 6px;
+}
+.settings-redesign .goal-chip {
+  background: var(--set-neutral-chip);
+  border: none;
+  color: var(--set-neutral-chip-ink);
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 999px;
+  padding: 10px 16px;
+}
+/* Alterne olive/lavande parmi les chips sélectionnées, comme la maquette
+   (n'a pas de sens lié à la donnée — juste de la variété visuelle quand
+   plusieurs objectifs sont cochés à la fois). */
+.settings-redesign .goal-chip.active:nth-of-type(odd) {
+  background: var(--set-olive);
+  color: var(--set-ink);
+  font-weight: 600;
+}
+.settings-redesign .goal-chip.active:nth-of-type(even) {
+  background: var(--set-lavender);
+  color: var(--set-ink);
+  font-weight: 600;
+}
+.settings-redesign p.text-xs.text-muted {
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--set-text-tertiary);
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+/* ── Toggle (Notifications/Apparence) ── */
+.set-toggle {
+  display: flex;
+  width: 46px;
+  height: 27px;
+  border-radius: 999px;
+  align-items: center;
+  padding: 3px;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: background 200ms ease;
+}
+.set-toggle.off {
+  background: var(--set-bg);
+  justify-content: flex-start;
+}
+.set-toggle.on {
+  background: var(--set-olive);
+  justify-content: flex-end;
+}
+.set-toggle-knob {
+  width: 21px;
+  height: 21px;
+  border-radius: 999px;
+  transition: background 200ms ease;
+}
+.set-toggle.off .set-toggle-knob {
+  background: var(--set-card);
+}
+.set-toggle.on .set-toggle-knob {
+  background: var(--set-ink);
+}
+
+/* ── Sélecteur de langue ── */
+.settings-redesign .lang-selector {
+  margin-bottom: 24px;
+}
+.settings-redesign .lang-btn {
+  background: var(--set-card);
+  border: none;
+  color: var(--set-text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 999px;
+  padding: 13px 0;
+}
+.settings-redesign .lang-btn.active {
+  background: var(--set-olive);
+  color: var(--set-ink);
+  font-weight: 600;
+  border-color: transparent;
+}
+
+/* ── Ligne cliquable (Santé & capteurs) ── */
+.set-arrow {
+  color: var(--set-text-muted);
+  font-size: 17px;
+}
+
+/* ── Déconnexion ── */
+.set-logout-btn {
+  background: none;
+  border: 1.5px solid var(--set-magenta);
+  color: var(--set-magenta);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  padding: 15px 0;
+  width: 100%;
+  cursor: pointer;
+  margin-bottom: 12px;
+  font-family: inherit;
+}
