@@ -1,0 +1,313 @@
+/* ══════════════════════════════════════════════════════════════════════
+   Restyle VOLTA "pastel chaud" — WorkoutSession.jsx (écran Saisie de
+   séance), 4e écran après Dashboard.jsx, Nutrition.jsx et Weekly.jsx (voir
+   dashboard.css/nutrition-redesign.css/weekly-redesign.css et JOURNAL.md).
+   Source : handoff design dédié (dossier local hors repo, "Redesign
+   interface VOLTA (1)/design_handoff_workout_session/README.md" +
+   WorkoutSession.reference.html), pas le fichier VOLTA Redesign.dc.html
+   utilisé pour les 3 écrans précédents.
+
+   Différence avec les 3 écrans précédents : le README de ce handoff
+   documente EXPLICITEMENT deux fonds distincts ("Fond d'app (page)"
+   #EFE7D9 vs "Fond d'écran" #F7F1E6), alors que les 3 CSS précédents
+   n'utilisaient que #EFE7D9 pour les deux rôles à la fois (fond de
+   l'écran ET zone de notch/rubber-band). Suivi ici à la lettre pour
+   rester fidèle à ce handoff précis — pas de retouche rétroactive des 3
+   écrans précédents (hors scope de cette passe), à harmoniser plus tard
+   si utile.
+
+   Le README demande explicitement de garder les classes existantes
+   (.session-exercise-card, .session-set-row, .set-input, etc.,
+   WorkoutSession.css) plutôt que d'en créer de nouvelles — ce fichier les
+   redéfinit donc directement, scopées à .workoutsession-redesign pour ne
+   pas dépendre de l'ordre d'import avec WorkoutSession.css. .bottom-nav
+   non touchée. RestTimer.jsx explicitement laissé pour une passe
+   ultérieure (mentionné dans le README lui-même). */
+.workoutsession-redesign {
+  --ws-bg: #EFE7D9;
+  --ws-screen-bg: #F7F1E6;
+  --ws-card: #FFFFFF;
+  --ws-field-done: #F2ECE2;
+  --ws-border: #EFE7D9;
+  --ws-ink: #1C1A17;
+  --ws-text-secondary: #4A443C;
+  --ws-text-tertiary: #6E675C;
+  --ws-text-muted: #736C60;
+  --ws-text-weak: #8A8378;
+  --ws-placeholder: #A9A196;
+  --ws-glyph-inactive: #C4BCAF;
+  --ws-olive: #EBEB7D;
+  --ws-lavender: #A3AEFE;
+  --ws-pink: #FFBEF0;
+  --ws-magenta: #B62472;
+  font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+  /* Même fix notch/rubber-band que les écrans précédents (voir
+     dashboard.css) — ici avec --ws-bg (le "fond d'app", pas le fond
+     d'écran) puisque c'est le rôle documenté par le README pour cette
+     zone. */
+  min-height: calc(var(--app-height, 100dvh) - env(safe-area-inset-top));
+  background: var(--ws-bg);
+  position: relative;
+}
+
+.workoutsession-redesign::before {
+  content: '';
+  position: absolute;
+  top: calc(-1 * env(safe-area-inset-top));
+  left: 0;
+  right: 0;
+  height: env(safe-area-inset-top);
+  background: var(--ws-bg);
+  z-index: 0;
+}
+
+/* Pilotée par useEffect (WorkoutSession.jsx) — couvre le rubber-band iOS,
+   voir dashboard.css pour l'explication complète. Valeur en dur (pas
+   var(--ws-bg)) : <body> est un ancêtre, pas un descendant. */
+body.workoutsession-body-bg {
+  background: #EFE7D9;
+}
+
+.workoutsession-screen {
+  position: relative;
+  z-index: 1;
+  background: var(--ws-screen-bg);
+  color: var(--ws-ink);
+  /* Le bouton "Terminer la séance" passe en position fixed (voir plus
+     bas) au-dessus de la nav pill partagée (.bottom-nav, non touchée) —
+     il faut donc dégager assez de place sous le contenu scrollable pour
+     que la dernière carte d'exercice ne finisse pas cachée derrière les
+     deux éléments fixes empilés (pill + bouton). Le README (pensé pour
+     une maquette isolée sans nav partagée en dessous) donnait 110px ; ici
+     76px (clearance nav pill déjà utilisée ailleurs dans l'app,
+     nav.css/Nutrition.jsx) + la hauteur du bouton + une marge. */
+  padding-bottom: calc(160px + env(safe-area-inset-bottom)) !important;
+}
+
+/* ── En-tête ── */
+.ws-back-btn {
+  display: flex;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: var(--ws-card);
+  border: none;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  padding: 0;
+}
+.ws-header-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 22px 0 18px;
+}
+.ws-eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ws-magenta);
+}
+.ws-title {
+  font-size: 23px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--ws-ink);
+}
+.ws-section-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ws-text-muted);
+  padding: 0 6px 12px;
+}
+
+/* ── Carte d'exercice ── */
+.workoutsession-redesign .session-exercise-card {
+  background: var(--ws-card);
+  border-radius: 32px;
+  padding: 22px 20px 18px;
+  margin-bottom: 12px;
+  box-shadow: none;
+}
+.workoutsession-redesign .session-exercise-name {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ws-ink);
+  margin-bottom: 2px;
+}
+.workoutsession-redesign .session-exercise-muscles {
+  font-size: 11.5px;
+  font-weight: 400;
+  color: var(--ws-text-muted);
+  text-transform: none;
+  letter-spacing: normal;
+  margin-bottom: 16px;
+}
+
+/* ── Tableau des séries ── */
+.workoutsession-redesign .session-sets-header {
+  grid-template-columns: 34px 1fr 1fr 40px 30px;
+  gap: 8px;
+  padding: 0 4px 10px;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ws-text-weak);
+  margin-bottom: 0;
+}
+.workoutsession-redesign .session-sets-header span:nth-child(2),
+.workoutsession-redesign .session-sets-header span:nth-child(3) {
+  text-align: center;
+}
+.workoutsession-redesign .session-sets {
+  display: flex;
+  flex-direction: column;
+}
+.workoutsession-redesign .session-set-row {
+  grid-template-columns: 34px 1fr 1fr 40px 30px;
+  gap: 8px;
+  align-items: center;
+  padding: 0;
+  border-bottom: none;
+  margin-bottom: 8px;
+  opacity: 1;
+}
+.workoutsession-redesign .session-set-row:last-of-type {
+  margin-bottom: 14px;
+}
+.workoutsession-redesign .set-number {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ws-ink);
+}
+
+/* Série non validée (défaut) — README : fond écran + bordure, texte
+   placeholder-ink, padding légèrement réduit pour compenser la bordure
+   (hauteur identique à l'état validé). */
+.workoutsession-redesign .set-input {
+  background: var(--ws-screen-bg);
+  border: 1.5px solid var(--ws-border);
+  border-radius: 14px;
+  color: var(--ws-placeholder);
+  font-size: 14px;
+  font-weight: 500;
+  font-family: inherit;
+  text-align: center;
+  padding: 9.5px 0;
+}
+/* Série validée — fond enfoncé, pas de bordure, texte encre. */
+.workoutsession-redesign .session-set-row.done .set-input {
+  background: var(--ws-field-done);
+  border: none;
+  color: var(--ws-ink);
+  font-weight: 600;
+  padding: 11px 0;
+}
+.workoutsession-redesign .set-input:focus {
+  outline: none;
+  border-color: var(--ws-ink);
+}
+.workoutsession-redesign .session-set-row.done .set-input:focus {
+  outline: 2px solid var(--ws-ink);
+  outline-offset: 1px;
+}
+
+.workoutsession-redesign .set-check-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 1.5px solid var(--ws-border);
+  background: transparent;
+  color: var(--ws-glyph-inactive);
+  font-size: 15px;
+}
+.workoutsession-redesign .set-check-btn.checked {
+  background: var(--ws-olive);
+  border-color: var(--ws-olive);
+  color: var(--ws-ink);
+  font-weight: 700;
+}
+
+.workoutsession-redesign .set-remove-btn {
+  color: var(--ws-placeholder);
+  font-size: 13px;
+  padding: 0;
+}
+/* README : le bouton reste visible (pas masqué) mais atténué quand
+   l'exercice n'a qu'une série — contrairement au comportement précédent
+   (opacity: 0, invisible). */
+.workoutsession-redesign .set-remove-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+  pointer-events: none;
+}
+
+.workoutsession-redesign .add-set-btn {
+  background: var(--ws-field-done);
+  border: none;
+  border-radius: 999px;
+  color: var(--ws-ink);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 13px 0;
+  margin-top: 0;
+}
+
+/* ── Bouton "Terminer la séance" — fixe, au-dessus de la nav pill
+   partagée. Centrage identique à .bottom-nav (nav.css) pour rester
+   aligné avec elle et avec le contenu sur les largeurs desktop
+   (member.css) plutôt que de coller aux bords bruts du viewport. */
+.workoutsession-redesign .finish-session-btn {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 40px);
+  max-width: 440px;
+  /* 76px = clearance nav pill déjà utilisée ailleurs (nav.css, FAB de
+     Nutrition.jsx) — le bouton flotte juste au-dessus, sans jamais
+     chevaucher la pill (non touchée dans cette passe). */
+  bottom: calc(76px + env(safe-area-inset-bottom));
+  background: var(--ws-ink);
+  border-radius: 999px;
+  padding: 19px 0;
+  color: var(--ws-olive);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  box-shadow: 0 18px 34px -12px rgba(28,26,23,0.5);
+  margin: 0;
+  z-index: 90;
+}
+
+/* ── État vide ── */
+.workoutsession-redesign .empty-session {
+  background: var(--ws-card);
+  border-radius: 32px;
+  padding: 32px 24px;
+  gap: 16px;
+}
+.workoutsession-redesign .empty-session-text {
+  font-size: 13px;
+  color: var(--ws-text-tertiary);
+}
+.workoutsession-redesign .empty-session-btn {
+  background: var(--ws-ink);
+  color: var(--ws-olive);
+  border-radius: 999px;
+  padding: 16px 0;
+  width: 100%;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}

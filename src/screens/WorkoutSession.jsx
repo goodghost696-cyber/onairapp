@@ -1,14 +1,24 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { RestTimer } from '../components/RestTimer'
 import { useApp } from '../context/AppContext'
 import '../styles/WorkoutSession.css'
+import '../styles/workoutsession-redesign.css'
 
 export default function WorkoutSession() {
   const navigate = useNavigate()
   const { appData, addSetToExercise, toggleSetDone, updateSet, removeSetFromExercise, clearActiveSession, addSessionToHistory } = useApp()
   const [showRestTimer, setShowRestTimer] = useState(false)
   const activeSession = appData.activeSession || { exercises: [], startTime: null }
+
+  // Même fix que Dashboard.jsx/Nutrition.jsx/Weekly.jsx (voir
+  // dashboard.css/JOURNAL.md) : couvre le rubber-band iOS, où le fond de
+  // <body> (dégradé corail partagé) reste visible au-delà des limites du
+  // wrapper interne. Classe active seulement tant que ce screen est monté.
+  useEffect(() => {
+    document.body.classList.add('workoutsession-body-bg')
+    return () => document.body.classList.remove('workoutsession-body-bg')
+  }, [])
 
   async function finishSession() {
     const exercises = activeSession.exercises
@@ -38,13 +48,13 @@ export default function WorkoutSession() {
 
   if (!activeSession.exercises.length) {
     return (
-      <div className="app-wrapper">
-        <div className="screen">
-          <div className="screen-header" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '20px 0 8px' }}>
-            <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }} onClick={() => navigate('/workout')}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" strokeWidth="1.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+      <div className="app-wrapper workoutsession-redesign">
+        <div className="screen workoutsession-screen">
+          <div className="ws-header-row">
+            <button className="ws-back-btn" onClick={() => navigate('/workout')}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ws-ink)" strokeWidth="1.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
             </button>
-            <h1 className="text-xl bold">Séance</h1>
+            <h1 className="ws-title">Séance</h1>
           </div>
           <div className="empty-session">
             <p className="empty-session-text">Aucun exercice ajouté.</p>
@@ -56,21 +66,19 @@ export default function WorkoutSession() {
   }
 
   return (
-    <div className="app-wrapper">
-      <div className="screen">
-        <div className="screen-header" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '20px 0 8px' }}>
-          <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }} onClick={() => navigate('/workout')}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" strokeWidth="1.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+    <div className="app-wrapper workoutsession-redesign">
+      <div className="screen workoutsession-screen">
+        <div className="ws-header-row">
+          <button className="ws-back-btn" onClick={() => navigate('/workout')}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ws-ink)" strokeWidth="1.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
           </button>
           <div>
-            <p style={{ fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--accent)', fontWeight: 700 }}>
-              SÉANCE EN COURS · {activeSession.startTime}
-            </p>
-            <h1 className="text-xl bold">Entraînement</h1>
+            <p className="ws-eyebrow">SÉANCE EN COURS · {activeSession.startTime}</p>
+            <h1 className="ws-title">Entraînement</h1>
           </div>
         </div>
 
-        <div className="section-label">{activeSession.exercises.length} exercice{activeSession.exercises.length > 1 ? 's' : ''}</div>
+        <div className="ws-section-label">{activeSession.exercises.length} exercice{activeSession.exercises.length > 1 ? 's' : ''}</div>
 
         {activeSession.exercises.map((exercise, exIdx) => (
           <div key={exercise.id} className="session-exercise-card">
@@ -79,9 +87,10 @@ export default function WorkoutSession() {
 
             <div className="session-sets">
               <div className="session-sets-header">
-                <span>Série</span>
+                <span>Sér.</span>
                 <span>Reps</span>
                 <span>Kg</span>
+                <span></span>
                 <span></span>
               </div>
               {exercise.sets.map((set, setIdx) => (
