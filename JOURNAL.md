@@ -45,6 +45,30 @@ Il existait déjà une "charte ON AIR Neon" documentée plus bas dans ce journal
 - `@phosphor-icons/react` uniquement pour la nav (bottom nav membre + nav coach) — son prop `weight` donne un état actif "plein" vs "contour" sans changement de couleur
 - Emoji conservés à quelques endroits précis et délibérés après itération (météo du Dashboard, sélecteur d'eau, toast de bienvenue) — jamais comme icône UI générique, seulement là où un pictogramme dessiné n'apportait rien de mieux (voir suites 77-81 pour l'historique de l'icône eau, 5 itérations avant 🥛)
 
+## 2026-08-15 — Correction : les 2 sheets du Dashboard n'avaient en fait pas le bug z-index (fausse piste de la tâche précédente)
+
+Demande initiale : corriger `.activity-edit-sheet`/`.sheet-overlay` (Dashboard.jsx), citées dans l'entrée juste en dessous comme "touchées par le même bug" que Settings.jsx. En investiguant pour appliquer le correctif, **ce n'était pas le cas** — écarté après vérification, pas de changement fonctionnel appliqué.
+
+### Root cause de la fausse alerte
+L'entrée précédente (tâche 3, z-index générique) avait été écrite en lisant seulement les valeurs `z-index` du CSS compilé (`.activity-edit-sheet { z-index: 201 }`, `.sheet-overlay { z-index: 200 }`, tous deux dans `dashboard.css`), sans vérifier l'imbrication réelle dans le JSX de `Dashboard.jsx`. Or contrairement à Settings.jsx (où la sheet santé et `DeleteAccountButton` sont bien rendues **à l'intérieur** de `.settings-screen`), Dashboard.jsx rend `.sheet-overlay`/`.activity-edit-sheet` en **sibling** de `.dashboard-screen` — les deux sont des enfants directs de `.dashboard-redesign` (le wrapper), pas l'une dans l'autre :
+```
+.app-wrapper.dashboard-redesign
+  ├─ .screen.dashboard-screen         (contenu normal)
+  └─ {editingCard && <>...sheet...</>} (sibling, pas descendant)
+```
+Le bug corrigé sur Settings vient du fait qu'un ancêtre avec `position:relative; z-index:1` **explicite** crée un contexte d'empilement local qui piège ses **descendants** — un sibling n'est jamais concerné, peu importe ses propres valeurs de z-index.
+
+### Vérifié par un vrai test, pas seulement par relecture du CSS
+Cette fois vérifié avec un test réel dans Chrome (deux pages HTML minimales reproduisant exactement la structure DOM + CSS des deux écrans, servies en local, `elementFromPoint()` sur la zone de recouvrement entre la sheet et la nav) :
+- **Reproduction Settings** (sheet imbriquée dans `.xxx-screen { z-index:1 }`) : confirme le bug — `elementFromPoint` sur la zone de recouvrement renvoie `.bottom-nav`, la sheet est bien cachée. Valide que le fix de la tâche précédente était nécessaire et correct.
+- **Reproduction Dashboard** (sheet en sibling de `.dashboard-screen`, structure actuelle) : `elementFromPoint` renvoie `.activity-edit-sheet` — la sheet s'affiche déjà correctement au-dessus de la nav, **avant toute modification de cette session**.
+
+### Ce qui a changé dans le code
+Rien de fonctionnel. Deux commentaires corrigés dans `dashboard.css` (le premier, ajouté par erreur dans la tâche précédente, affirmait à tort que ces deux éléments étaient piégés par `.dashboard-screen` ; un second ajouté sur `.activity-edit-sheet` documente cette investigation pour éviter qu'un futur passage ne reparte de la même fausse piste). `npm run build` relancé pour confirmer que ce changement de commentaires ne casse rien.
+
+### Leçon
+Une affirmation sur un bug de stacking CSS basée uniquement sur la lecture des valeurs `z-index` (sans vérifier l'imbrication réelle des éléments dans le DOM/JSX) n'est qu'une hypothèse, pas une conclusion — à vérifier par un test réel (ici possible malgré le sandbox : reproduction HTML minimale + `elementFromPoint`, pas besoin de faire tourner l'app complète avec authentification) avant de l'écrire comme un fait dans le journal.
+
 ## 2026-08-15 — 4 fixes du rapport d'investigation (Bilan délai, Settings Poids/Taille, z-index nav, toggle Apparence)
 
 4 commits distincts, `npm run build` après chaque tâche, comme demandé. Suite directe de l'investigation du 2026-08-14 (voir entrée juste en dessous) — les 4 sujets remontés en test réel y sont maintenant traités.

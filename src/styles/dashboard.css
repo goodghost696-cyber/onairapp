@@ -141,17 +141,19 @@ body.dashboard-body-bg {
 .dashboard-screen {
   position: relative;
   /* z-index: 1 retiré (2026-08-15, investigation JOURNAL.md) : posait un
-     nouveau contexte d'empilement local, dans lequel toute sheet fixed
-     imbriquée ici (.activity-edit-sheet z-index:201, .sheet-overlay
-     z-index:200 plus bas dans ce fichier) n'était comparée à .bottom-nav
-     (z-index:100, sibling de .dashboard-redesign au niveau de
-     .member-layout, hors de ce contexte) qu'en tant que bloc entier —
-     c'est .dashboard-screen dans son ensemble (z-index:1) qui comptait
-     face à la nav, largement battu. Pas de raison positive retrouvée pour
-     ce z-index:1 : DOM order suffit déjà à faire peindre ce bloc après
-     .dashboard-redesign::before (voir plus haut), pas besoin d'empilement
-     explicite pour ça. Retiré sur les 7 écrans restylés concernés (voir
-     JOURNAL.md pour la liste), même raisonnement partout.
+     nouveau contexte d'empilement local, qui aurait piégé toute sheet
+     fixed imbriquée DEDANS face à .bottom-nav (z-index:100, sibling de
+     .dashboard-redesign au niveau de .member-layout, hors de ce
+     contexte) — même mécanisme que le bug corrigé sur Settings.jsx.
+     .activity-edit-sheet/.sheet-overlay (plus bas dans ce fichier) n'en
+     étaient en fait PAS victimes : elles sont rendues en sibling de
+     .dashboard-screen, pas imbriquées dedans (vérifié dans Dashboard.jsx
+     et confirmé par test réel, voir le commentaire sur .activity-edit-
+     sheet) — retiré ici quand même : aucune raison positive retrouvée
+     pour ce z-index:1, DOM order suffit déjà à faire peindre ce bloc
+     après .dashboard-redesign::before (voir plus haut), pas besoin
+     d'empilement explicite pour ça. Retiré sur les 7 écrans restylés
+     concernés (voir JOURNAL.md pour la liste), même raisonnement partout.
      Peint le fond crème pour cet écran uniquement — body garde son
      dégradé corail partagé par tout le reste de l'app (non touché), il
      est juste recouvert ici par le propre fond de ce bloc de contenu. */
@@ -448,6 +450,20 @@ body.dashboard-body-bg {
 .db-habit-count { font-size: 11.5px; font-weight: 600; color: var(--db-text-muted); flex-shrink: 0; }
 
 /* ── Sheet d'édition (carte activité) ── */
+/* Vérifié (2026-08-15, investigation JOURNAL.md) : PAS touchée par le bug
+   z-index de .xxx-screen corrigé sur les 7 autres écrans (Settings etc.,
+   voir plus haut) — Dashboard.jsx rend .sheet-overlay/.activity-edit-sheet
+   en sibling de .dashboard-screen (toutes deux enfants directes de
+   .dashboard-redesign), pas imbriquées dedans comme sur Settings.jsx. Un
+   ancêtre sans stacking context propre (.dashboard-screen, .dashboard-
+   redesign : position:relative sans z-index) ne piège pas ses enfants —
+   confirmé par test réel (elementFromPoint sur la zone de recouvrement
+   avec .bottom-nav) : cette sheet s'affiche déjà correctement au-dessus
+   de la nav, avant toute modification. Une entrée JOURNAL.md précédente
+   (2026-08-15, tâche 3) affirmait à tort que ces deux éléments étaient
+   "touchés par le même bug" — inférence faite en lisant seulement les
+   valeurs z-index du CSS, sans vérifier l'imbrication réelle dans le
+   JSX ; corrigée ici. */
 .activity-edit-sheet {
   position: fixed;
   bottom: 0;
