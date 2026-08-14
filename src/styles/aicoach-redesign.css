@@ -1,0 +1,137 @@
+/* ══════════════════════════════════════════════════════════════════════
+   Restyle VOLTA "pastel chaud" — AICoach.jsx (chat avec le coach IA),
+   11e et dernier écran de cette passe. Pas de package de handoff dédié —
+   palette/typo/rayons déduits du système déjà établi dans les 10 CSS
+   précédents (mêmes valeurs hex exactes).
+
+   Layout particulier (pas de scroll standard `.screen`) : le wrapper est
+   forcé à height:100vh/100dvh avec overflow:hidden (l'écran entier, pas
+   de contenu plus court que le viewport possible) — seule la liste de
+   messages, positionnée en absolute entre l'en-tête et la barre de
+   saisie fixe, scrolle. Le risque de seam habituel (contenu plus court
+   que le viewport) ne s'applique donc pas ici de la même façon, mais le
+   ::before de couverture du notch reste nécessaire (zone de padding-top
+   de #root, au-dessus du wrapper, inchangée par ce height forcé) — même
+   prudence que sur les 10 écrans précédents, appliquée par défaut plutôt
+   que vérifiée au cas par cas.
+
+   Contrairement aux écrans précédents, la plupart des couleurs ici
+   étaient posées en inline dans AICoach.jsx (pas de classe existante à
+   redéfinir) — retirées de leurs éléments et remplacées par les classes
+   ci-dessous plutôt que surchargées en !important, pour rester cohérent
+   avec la méthode utilisée sur les 10 écrans précédents.
+
+   VoiceMode.jsx (overlay ouvert depuis le bouton micro) explicitement
+   HORS SCOPE — composant séparé, pas nommé dans la demande, laissé pour
+   une passe ultérieure. .bottom-nav non touchée. */
+.aicoach-redesign {
+  --aic-bg: #EFE7D9;
+  --aic-screen-bg: #F7F1E6;
+  --aic-card: #FFFFFF;
+  --aic-border: #F2ECE2;
+  --aic-ink: #1C1A17;
+  --aic-text-secondary: #4A443C;
+  --aic-text-muted: #736C60;
+  --aic-olive: #EBEB7D;
+  --aic-lavender: #A3AEFE;
+  --aic-magenta: #B62472;
+  font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+  min-height: calc(var(--app-height, 100dvh) - env(safe-area-inset-top));
+  background: var(--aic-bg);
+}
+
+.aicoach-redesign::before {
+  content: '';
+  position: absolute;
+  top: calc(-1 * env(safe-area-inset-top));
+  left: 0;
+  right: 0;
+  height: env(safe-area-inset-top);
+  background: var(--aic-bg);
+  z-index: 5;
+}
+
+body.aicoach-body-bg {
+  background: #EFE7D9;
+}
+
+/* ── En-tête ── */
+.aic-header {
+  background: var(--aic-screen-bg);
+  border-bottom: 1px solid var(--aic-border);
+}
+.aic-back-btn {
+  display: flex;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: var(--aic-card);
+  border: none;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  padding: 0;
+}
+.aic-title {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 26px;
+  color: var(--aic-ink);
+}
+.aic-subtitle {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--aic-magenta);
+}
+
+/* ── Zone messages ── */
+.aic-messages {
+  background: var(--aic-screen-bg);
+}
+.aic-bubble-user {
+  background: var(--aic-ink);
+  color: var(--aic-screen-bg);
+}
+.aic-bubble-assistant {
+  background: var(--aic-card);
+  color: var(--aic-ink);
+  border: none;
+}
+.aic-bubble-assistant.aic-bubble-error {
+  border: 1px solid var(--aic-magenta);
+}
+.aic-timestamp {
+  color: var(--aic-text-muted);
+}
+.aic-typing-dot {
+  background: var(--aic-text-muted);
+}
+
+/* ── Barre de saisie fixe ── */
+.aic-input-bar {
+  background: var(--aic-card);
+  border: none;
+  box-shadow: 0 -8px 24px rgba(28,26,23,0.08);
+}
+.aic-quick-prompt {
+  background: var(--aic-bg);
+  border: none;
+  color: var(--aic-text-secondary);
+}
+.aicoach-redesign .aic-input-bar input {
+  background: var(--aic-bg);
+  border: none;
+  color: var(--aic-ink);
+}
+.aic-mic-btn {
+  background: var(--aic-bg);
+  border: none;
+  color: var(--aic-ink);
+}
+.aic-send-btn {
+  background: var(--aic-ink);
+  color: var(--aic-screen-bg);
+}

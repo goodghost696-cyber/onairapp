@@ -7,6 +7,7 @@ import { authHeader } from '../lib/supabase'
 import { isSpeechRecognitionSupported } from '../utils/speech'
 import VoiceMode from '../components/VoiceMode'
 import { BOUNDS, clamp } from '../utils/validation'
+import '../styles/aicoach-redesign.css'
 
 const LANG_NAMES = { fr: 'français', en: 'English', es: 'español' }
 
@@ -92,9 +93,8 @@ function TypingIndicator() {
   return (
     <div style={{ display: 'flex', gap: 4, padding: '12px 16px', alignItems: 'center' }}>
       {[0,1,2].map(i => (
-        <div key={i} style={{
+        <div key={i} className="aic-typing-dot" style={{
           width: 6, height: 6, borderRadius: '50%',
-          background: 'var(--text-muted)',
           animation: `dotPulse 1.2s ${i*0.2}s ease-in-out infinite`,
         }} />
       ))}
@@ -129,6 +129,14 @@ export default function AICoach() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, loading])
+
+  // Même fix que les écrans membre restylés précédemment (voir
+  // dashboard.css/JOURNAL.md) : couvre la zone de notch/safe-area,
+  // toujours peinte par le dégradé corail de <body> sinon.
+  useEffect(() => {
+    document.body.classList.add('aicoach-body-bg')
+    return () => document.body.classList.remove('aicoach-body-bg')
+  }, [])
 
   const quickPrompts = [
     "Comment j'ai géré ma semaine ?",
@@ -297,30 +305,29 @@ ACTIONS CONCRÈTES :
   }
 
   return (
-    <div className="app-wrapper" style={{ position: 'relative', height: '100vh', minHeight: '100dvh', maxHeight: '100dvh', overflow: 'hidden' }}>
+    <div className="app-wrapper aicoach-redesign" style={{ position: 'relative', height: '100vh', minHeight: '100dvh', maxHeight: '100dvh', overflow: 'hidden' }}>
       {/* Header */}
-      <div className="screen-header" style={{
+      <div className="aic-header" style={{
         padding: '20px 16px 12px',
-        borderBottom: '1px solid var(--border)',
         display: 'flex', alignItems: 'center', gap: 12,
         flexShrink: 0,
-        background: 'var(--bg)',
         position: 'sticky', top: 0, zIndex: 10,
       }}>
-        <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }} onClick={() => navigate('/dashboard')}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="var(--text-primary)">
+        <button className="aic-back-btn" onClick={() => navigate('/dashboard')}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="var(--aic-ink)">
             <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
           </svg>
         </button>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, lineHeight: '28px' }}>{t('ai_coach_title')}</h1>
-          <span style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{t('powered_by')}</span>
+          <h1 className="aic-title">{t('ai_coach_title')}</h1>
+          <span className="aic-subtitle">{t('powered_by')}</span>
         </div>
       </div>
 
       {/* Messages */}
       <div
         ref={messagesRef}
+        className="aic-messages"
         style={{
           position: 'absolute',
           top: 73,
@@ -335,24 +342,21 @@ ACTIONS CONCRÈTES :
       >
         {messages.map((m, i) => (
           <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: m.role === 'user' ? 'flex-end' : 'flex-start' }}>
-            <div style={{
+            <div className={m.role === 'user' ? 'aic-bubble-user' : `aic-bubble-assistant${m.error ? ' aic-bubble-error' : ''}`} style={{
               maxWidth: '80%',
               padding: '12px 16px',
               borderRadius: m.role === 'user' ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
-              background: m.role === 'user' ? 'var(--accent)' : 'var(--surface)',
-              border: m.role === 'user' ? 'none' : `1px solid ${m.error ? 'var(--danger)' : 'var(--border)'}`,
-              color: m.role === 'user' ? '#000' : 'var(--text-primary)',
               fontSize: 15,
               lineHeight: '22px',
             }}>
               {m.content}
             </div>
-            <span style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>{fmt(m.ts)}</span>
+            <span className="aic-timestamp" style={{ fontSize: 11, marginTop: 4 }}>{fmt(m.ts)}</span>
           </div>
         ))}
         {loading && (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-            <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '16px 16px 16px 4px' }}>
+            <div className="aic-bubble-assistant" style={{ borderRadius: '16px 16px 16px 4px' }}>
               <TypingIndicator />
             </div>
           </div>
@@ -361,7 +365,7 @@ ACTIONS CONCRÈTES :
       </div>
 
       {/* Input area — fixed above nav */}
-      <div style={{
+      <div className="aic-input-bar" style={{
         position: 'fixed',
         bottom: 100,
         left: '50%',
@@ -373,20 +377,6 @@ ACTIONS CONCRÈTES :
         // phone wider than ~390 CSS px. 448 = 480 - 32, matches the rest.
         maxWidth: 448,
         zIndex: 90,
-        // Was `background: var(--bg)` (#E8552B) — one of the exact stops
-        // in the page's own gradient (global.css), so this bar blended
-        // straight into the background: no visible edge, no visible top or
-        // sides, just the individual floating controls (input/mic/send)
-        // showing through. Read as "the bottom part doesn't take the full
-        // width" — technically the container always did (identical width
-        // formula to the nav pill below it), but nothing made that width
-        // visible. Same glass treatment as the nav pill (nav.css's
-        // --nav-glass/--nav-border) instead, so it now reads as one
-        // coherent bar spanning the same width, consistent with the pill.
-        background: 'var(--nav-glass)',
-        backdropFilter: 'blur(28px) saturate(1.5)',
-        WebkitBackdropFilter: 'blur(28px) saturate(1.5)',
-        border: '1px solid var(--nav-border)',
         borderRadius: 20,
         paddingTop: 12,
         paddingLeft: 12,
@@ -396,10 +386,7 @@ ACTIONS CONCRÈTES :
         {/* Quick prompts */}
         <div style={{ display: 'flex', gap: 8, overflowX: 'auto', marginBottom: 10, paddingBottom: 2 }}>
           {quickPrompts.map(p => (
-            <button key={p} onClick={() => sendMessage(p)} style={{
-              background: 'var(--surface)',
-              border: '1px solid var(--border)',
-              color: 'var(--text-secondary)',
+            <button key={p} className="aic-quick-prompt" onClick={() => sendMessage(p)} style={{
               fontSize: 12,
               padding: '6px 12px',
               borderRadius: 50,
@@ -422,10 +409,7 @@ ACTIONS CONCRÈTES :
               Speech API — no Firefox, spotty on iOS Safari) rather than
               offering a button that would silently do nothing. */}
           {isSpeechRecognitionSupported() && (
-            <button onClick={() => setVoiceModeOpen(true)} aria-label="Dicter un message" style={{
-              background: 'var(--surface)',
-              border: '1px solid var(--border)',
-              color: 'var(--text-primary)',
+            <button className="aic-mic-btn" onClick={() => setVoiceModeOpen(true)} aria-label="Dicter un message" style={{
               width: 40,
               cursor: 'pointer',
               borderRadius: 10,
@@ -440,16 +424,14 @@ ACTIONS CONCRÈTES :
               </svg>
             </button>
           )}
-          <button onClick={() => sendMessage(input)} style={{
-            background: 'var(--accent)',
+          <button className="aic-send-btn" onClick={() => sendMessage(input)} style={{
             border: 'none',
-            color: 'var(--accent-ink)',
             padding: '0 20px',
             cursor: 'pointer',
             borderRadius: 10,
             flexShrink: 0,
           }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--accent-ink)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--aic-screen-bg)">
               <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
             </svg>
           </button>
