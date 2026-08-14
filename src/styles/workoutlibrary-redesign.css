@@ -1,0 +1,206 @@
+/* ══════════════════════════════════════════════════════════════════════
+   Restyle VOLTA "pastel chaud" — WorkoutLibrary.jsx (bibliothèque
+   d'exercices), 6e écran après Dashboard/Nutrition/Weekly/WorkoutSession/
+   Workout (voir *-redesign.css correspondants et JOURNAL.md). Source :
+   handoff design dédié (dossier local hors repo, "Redesign interface
+   VOLTA (6)/design_handoff_bibliotheque/README.md" +
+   WorkoutLibrary.reference.html).
+
+   Même système à deux fonds que WorkoutSession/Workout (tokens communs,
+   le README renvoie explicitement à design_handoff_workout_session).
+   min-height appliqué à la fois sur le wrapper et sur l'écran dès le
+   départ (leçon du bug de seam, voir dashboard.css/JOURNAL.md).
+
+   ExerciseModal.jsx/.css explicitement HORS SCOPE ici — le README lui-
+   même le signale ("à restyler séparément dans le même vocabulaire") et
+   ces classes (.exercise-modal/.modal-*) sont partagées avec
+   CoachPrograms.jsx (écran coach non touché dans ce lot). Pas de nav
+   flottante dans la maquette de cet écran, mais .bottom-nav continue
+   d'être montée par MemberLayout.jsx sur cette route dans la vraie app —
+   non désactivée ici (hors scope), donc le padding-bas de .screen
+   (global.css, clearance pill) reste inchangé plutôt que réduit à la
+   valeur 40px de la maquette (qui suppose l'absence de pill). */
+.workoutlibrary-redesign {
+  --wl-bg: #EFE7D9;
+  --wl-screen-bg: #F7F1E6;
+  --wl-card: #FFFFFF;
+  --wl-ink: #1C1A17;
+  --wl-text-muted: #736C60;
+  --wl-placeholder: #A9A196;
+  --wl-olive: #EBEB7D;
+  --wl-magenta: #B62472;
+  --wl-attribution: #8A8378;
+  font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+  min-height: calc(var(--app-height, 100dvh) - env(safe-area-inset-top));
+  background: var(--wl-bg);
+  position: relative;
+}
+
+.workoutlibrary-redesign::before {
+  content: '';
+  position: absolute;
+  top: calc(-1 * env(safe-area-inset-top));
+  left: 0;
+  right: 0;
+  height: env(safe-area-inset-top);
+  background: var(--wl-bg);
+  z-index: 0;
+}
+
+body.workoutlibrary-body-bg {
+  background: #EFE7D9;
+}
+
+.workoutlibrary-screen {
+  position: relative;
+  z-index: 1;
+  background: var(--wl-screen-bg);
+  color: var(--wl-ink);
+  min-height: calc(var(--app-height, 100dvh) - env(safe-area-inset-top));
+}
+
+/* ── En-tête ── */
+.wl-back-btn {
+  display: flex;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: var(--wl-card);
+  border: none;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  padding: 0;
+}
+.wl-header-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 22px 0 18px;
+}
+.wl-eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--wl-magenta);
+}
+.wl-title {
+  font-size: 23px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--wl-ink);
+}
+.wl-loading {
+  font-size: 11px;
+  color: var(--wl-text-muted);
+  margin-left: auto;
+}
+
+/* ── Recherche ── */
+.wl-search-wrap {
+  position: relative;
+  margin-bottom: 14px;
+}
+.wl-search-wrap input {
+  background: var(--wl-card);
+  border: none;
+  border-radius: 999px;
+  padding: 15px 22px 15px 44px;
+  font-size: 13.5px;
+  color: var(--wl-ink);
+}
+.wl-search-wrap input::placeholder {
+  color: var(--wl-placeholder);
+}
+.wl-search-icon {
+  position: absolute;
+  left: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.wl-count {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--wl-text-muted);
+  letter-spacing: normal;
+  margin-bottom: 16px;
+}
+
+/* ── Groupes musculaires ── */
+.wl-group-label {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--wl-ink);
+  margin-bottom: 8px;
+}
+.wl-group-count {
+  font-weight: 500;
+  color: var(--wl-text-muted);
+  text-transform: none;
+  letter-spacing: normal;
+  opacity: 1;
+}
+
+/* ── Ligne d'exercice ── */
+.workoutlibrary-redesign .card.wl-exercise-row {
+  background: var(--wl-card);
+  border: none;
+  box-shadow: none;
+  border-radius: 26px;
+  padding: 15px 18px;
+  margin-bottom: 8px;
+}
+.workoutlibrary-redesign .card.wl-exercise-row.wl-added {
+  background: var(--wl-ink);
+}
+.wl-exercise-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--wl-ink);
+}
+.wl-exercise-row.wl-added .wl-exercise-name {
+  color: var(--wl-screen-bg);
+}
+.wl-exercise-muscles {
+  font-size: 11px;
+  color: var(--wl-text-muted);
+}
+.wl-exercise-row.wl-added .wl-exercise-muscles {
+  color: rgba(247,241,230,0.6);
+}
+.wl-add-btn {
+  background: var(--wl-olive);
+  border: none;
+  color: var(--wl-ink);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 9px 15px;
+  border-radius: 999px;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: none;
+}
+
+/* ── Toast ── */
+.wl-toast {
+  background: var(--wl-ink);
+  color: var(--wl-olive);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: normal;
+}
+
+.wl-attribution {
+  font-size: 10px;
+  color: var(--wl-attribution);
+  opacity: 0.7;
+}

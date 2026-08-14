@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { useLanguage } from '../context/LanguageContext'
 import { ExerciseModal } from '../components/ExerciseModal'
 import { useExercises } from '../hooks/useExercises'
 import wgerLibrary from '../data/exercisesLibrary.json'
+import '../styles/workoutlibrary-redesign.css'
 
 // Doubled from 8 to 16 per section (was too thin — "pas assez d'exercices
 // proposés"), then +2 per section (maison/salle) to cover cardio machine
@@ -89,6 +90,14 @@ export default function WorkoutLibrary({ section }) {
 
   const { exercises: apiExercises, loading, error } = useExercises(section)
 
+  // Même fix que les 5 écrans précédents (voir dashboard.css/JOURNAL.md) :
+  // couvre le rubber-band iOS. Classe active seulement tant que ce screen
+  // est monté.
+  useEffect(() => {
+    document.body.classList.add('workoutlibrary-body-bg')
+    return () => document.body.classList.remove('workoutlibrary-body-bg')
+  }, [])
+
   // Was: API exercises *replaced* LOCAL_EXERCISES outright whenever the
   // API succeeded, despite the comment above claiming the local list was
   // "the guaranteed baseline regardless of API availability" — it wasn't.
@@ -148,14 +157,12 @@ export default function WorkoutLibrary({ section }) {
   }
 
   return (
-    <div className="app-wrapper">
+    <div className="app-wrapper workoutlibrary-redesign">
       {/* Toast */}
-      <div style={{
+      <div className="wl-toast" style={{
         position: 'fixed', top: toast ? 16 : -60, left: '50%',
         transform: 'translateX(-50%)',
-        background: 'var(--success)', color: '#000',
         padding: '10px 20px', borderRadius: 50,
-        fontSize: 12, fontWeight: 700, letterSpacing: 1,
         zIndex: 300,
         transition: 'top 300ms cubic-bezier(0.34,1.56,0.64,1)',
         whiteSpace: 'nowrap',
@@ -163,63 +170,55 @@ export default function WorkoutLibrary({ section }) {
         Ajouté à ta séance
       </div>
 
-      <div className="screen">
-        <div className="screen-header" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '20px 0 8px' }}>
-          <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }} onClick={() => navigate('/workout')}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" strokeWidth="1.5" strokeLinecap="round">
+      <div className="screen workoutlibrary-screen">
+        <div className="wl-header-row">
+          <button className="wl-back-btn" onClick={() => navigate('/workout')}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--wl-ink)" strokeWidth="1.5" strokeLinecap="round">
               <polyline points="15 18 9 12 15 6"/>
             </svg>
           </button>
-          <h1 className="text-xl bold">{SECTION_NAMES[section]}</h1>
-          {loading && <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 'auto' }}>Chargement...</span>}
+          <h1 className="wl-title">{SECTION_NAMES[section]}</h1>
+          {loading && <span className="wl-loading">Chargement...</span>}
         </div>
 
         {error && (
-          <p style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 8 }}>{error}</p>
+          <p style={{ fontSize: 11, color: 'var(--wl-text-muted)', marginBottom: 8 }}>{error}</p>
         )}
 
-        <div style={{ position: 'relative', marginBottom: 16 }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--text-muted)" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+        <div className="wl-search-wrap">
+          <svg className="wl-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="var(--wl-text-muted)">
             <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
           </svg>
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder={t('search_exercise')}
-            style={{ paddingLeft: 40 }}
           />
         </div>
 
-        <p style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 12, letterSpacing: '0.05em' }}>
+        <p className="wl-count">
           {filtered.length} exercice{filtered.length !== 1 ? 's' : ''}
         </p>
 
         {groupedFiltered.map(({ group, items }) => (
-          <div key={group} style={{ marginBottom: 16 }}>
-            <div className="text-xs bold" style={{ textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', marginBottom: 8 }}>
-              {group} <span style={{ opacity: 0.65, fontWeight: 400 }}>({items.length})</span>
+          <div key={group} style={{ marginBottom: 22 }}>
+            <div className="wl-group-label">
+              {group} <span className="wl-group-count">({items.length})</span>
             </div>
             {items.map((ex, i) => (
               <div
                 key={ex.id}
-                className="card card-animated"
-                style={{ '--delay': `${i * 40}ms`, display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8, padding: '14px 16px', cursor: 'pointer' }}
+                className={`card wl-exercise-row card-animated${added[ex.id] ? ' wl-added' : ''}`}
+                style={{ '--delay': `${i * 40}ms`, display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}
                 onClick={() => setSelectedExercise(ex)}
               >
                 <div style={{ flex: 1 }}>
-                  <div className="text-base bold">{ex.name}</div>
-                  <div className="text-sm text-muted">{ex.muscles || ex.type}</div>
+                  <div className="wl-exercise-name">{ex.name}</div>
+                  <div className="wl-exercise-muscles">{ex.muscles || ex.type}</div>
                 </div>
                 <button
                   onClick={(e) => { e.stopPropagation(); addExercise(ex) }}
-                  style={{
-                    background: 'transparent',
-                    border: `1px solid ${added[ex.id] ? 'var(--success)' : 'var(--accent)'}`,
-                    color: added[ex.id] ? 'var(--success)' : 'var(--accent)',
-                    fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase',
-                    padding: '6px 12px', borderRadius: 8, cursor: 'pointer', flexShrink: 0,
-                    transition: 'all 200ms ease',
-                  }}
+                  className="wl-add-btn"
                 >
                   {added[ex.id] ? t('added') : t('add_btn')}
                 </button>
@@ -234,7 +233,7 @@ export default function WorkoutLibrary({ section }) {
             uniquement Maison/Salle (Dehors reste 100% curaté à la main,
             aucune donnée wger dedans). */}
         {section !== 'dehors' && (
-          <p style={{ fontSize: 10, color: 'var(--text-muted)', textAlign: 'center', marginTop: 8, opacity: 0.7 }}>
+          <p className="wl-attribution" style={{ textAlign: 'center', marginTop: 8 }}>
             Données d'exercices fournies par wger.de (CC-BY-SA 4.0)
           </p>
         )}
