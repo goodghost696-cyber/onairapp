@@ -13,6 +13,7 @@ import NutriscoreBadge from '../components/NutriscoreBadge'
 import SwipeableRow from '../components/SwipeableRow'
 import { useSwipeToDismiss } from '../hooks/useSwipeToDismiss'
 import '../styles/nutrition.css'
+import '../styles/nutrition-redesign.css'
 
 const RECIPE_LOADING_MESSAGES = [
   'Analyse en cours...',
@@ -177,6 +178,15 @@ export default function Nutrition() {
   // window no longer scrolls — #root is the app's real scroll container
   // (see global.css) since the standalone-iOS scroll-stuck fix.
   useEffect(() => { document.getElementById('root')?.scrollTo(0, 0) }, [])
+
+  // Même fix que Dashboard.jsx (voir dashboard.css/JOURNAL.md) : couvre le
+  // rubber-band iOS, où le fond de <body> (dégradé corail partagé) reste
+  // visible au-delà des limites du wrapper interne. Classe active
+  // seulement tant que ce screen est monté.
+  useEffect(() => {
+    document.body.classList.add('nutrition-body-bg')
+    return () => document.body.classList.remove('nutrition-body-bg')
+  }, [])
 
   // Rotates the loading caption while a recipe is generating — the link
   // path in particular does two sequential network calls (fetch transcript,
@@ -890,7 +900,7 @@ Réponds en français.`
   }
 
   return (
-    <div className="app-wrapper">
+    <div className="app-wrapper nutrition-redesign">
       {/* Toast */}
       <div style={{
         position: 'fixed', top: toast ? 16 : -60, left: '50%', transform: 'translateX(-50%)',
@@ -899,71 +909,50 @@ Réponds en français.`
         transition: 'top 300ms cubic-bezier(0.34,1.56,0.64,1)',
       }}>{toast}</div>
 
-      <div className="screen">
-        <div className="screen-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingTop: 56, paddingBottom: 20 }}>
+      <div className="screen nutrition-screen">
+        <div className="screen-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingTop: 56, paddingBottom: 22 }}>
           <div>
-            {/* Direction corail — sits directly on the coral bg, forces
-                light color explicitly (the text tokens are tuned for text
-                inside white cards now, see global.css). */}
-            <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.85)', marginBottom: 7 }}>🍽️ NUTRITION</p>
-            <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)', textTransform: 'capitalize' }}>{new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'short' })}</span>
+            <p className="nu-eyebrow">NUTRITION</p>
+            <h1 className="nu-title">Ton assiette<br />du jour.</h1>
+            <p className="nu-subtitle">{new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'short' })}</p>
           </div>
-          <button
-            onClick={() => navigate('/scan')}
-            style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--surface)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, cursor: 'pointer', color: 'var(--accent)', boxShadow: '0 4px 12px rgba(120,40,10,0.18)' }}
-          >
+          <button onClick={() => navigate('/scan')} className="nu-scan-btn">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h.01M18 14h.01M14 18h.01M18 18h.01M14 14v4h4v-4z" strokeLinejoin="round"/></svg>
           </button>
         </div>
 
-        <div className="card card-hero card-animated" style={{ marginBottom: 16, '--delay': '0ms' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 4 }}>
+        <div className="nu-calorie-card card-animated" style={{ '--delay': '0ms' }}>
+          <div className="nu-calorie-top">
             <div>
-              <span className="hero-number" style={{ fontSize: 44, fontWeight: 800, fontVariantNumeric: 'tabular-nums', lineHeight: 1, letterSpacing: '-1.5px' }}>{appData.calories}</span>
-              <span className="text-sm text-muted" style={{ marginLeft: 6 }}>kcal</span>
+              <p className="nu-calorie-label">Consommé</p>
+              <span className="nu-calorie-value">{appData.calories}</span>
+              <span className="nu-calorie-unit">kcal</span>
             </div>
-            <div style={{ textAlign: 'right' }}>
-              <div className="text-xs text-muted">Restant</div>
-              {/* Was var(--success) — a bright green on the new light gold
-                  gradient card has ~1.1:1 contrast, essentially invisible
-                  (checked the luminance numbers). The mockup itself doesn't
-                  use a colored highlight here either — plain dark ink,
-                  inherited from .card-hero's own color, matches it exactly. */}
-              <div className="text-base bold">{caloriesRemaining}</div>
+            <div className="nu-calorie-restant">
+              <p className="nu-calorie-restant-label">Restant</p>
+              <p className="nu-calorie-restant-value">{caloriesRemaining}</p>
               {activityBurn > 0 && (
-                <div className="text-xs" style={{ opacity: 0.65 }}>dont +{activityBurn} activité</div>
+                <p className="nu-calorie-restant-extra">+{activityBurn} activité</p>
               )}
             </div>
           </div>
-          {/* Track/fill colors below were var(--surface-2)/var(--accent) —
-              both assume a dark card background. var(--surface-2) (translucent
-              white) is invisible on the new light gold card; var(--accent) is
-              gold-on-gold, same problem. Dark, translucent-ink track (matches
-              the mockup's own calorie card exactly) + solid ink fill instead. */}
-          <div style={{ position: 'relative', height: 8, background: 'rgba(26,22,8,0.15)', borderRadius: 4, marginBottom: 16, overflow: 'hidden' }}>
-            {/* Denominator now includes activityBurn too, matching "Restant"
-                above — otherwise the bar could read as nearly full while
-                Restant still shows plenty of room left (earned by activity). */}
-            <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${Math.min(appData.calories/(appData.calorieGoal+activityBurn)*100,100)}%`, background: '#1A1608', borderRadius: 4, transition: 'width 500ms ease-out' }} />
+          <div className="nu-calorie-bar-wrap">
+            {/* Denominator inclut activityBurn, comme "Restant" ci-dessus —
+                sinon la barre pourrait sembler presque pleine alors que
+                Restant montre encore de la marge (gagnée par l'activité). */}
+            <div className="nu-calorie-bar-fill" style={{ width: `${Math.min(appData.calories/(appData.calorieGoal+activityBurn)*100,100)}%` }} />
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div className="nu-macro-grid">
             {[
-              // Darkened versions of the macro-identity colors — the original
-              // (light blue/orange/purple) were picked for a dark card and
-              // some (orange especially, ~1.15:1) nearly disappear against
-              // the new light gold gradient. Same hues, just dark enough to
-              // read as a graphical element (~4:1+) on a light background.
-              { label: 'Protéines', val: appData.protein, goal: appData.proteinGoal, color: '#0B5AA8', delay: '0ms' },
-              { label: 'Glucides',  val: appData.carbs,   goal: appData.carbsGoal,   color: '#8A4600', delay: '80ms' },
-              { label: 'Lipides',   val: appData.fat,     goal: appData.fatGoal,     color: '#5B3FA8', delay: '160ms' },
+              { label: 'Prot.', val: appData.protein, goal: appData.proteinGoal, color: 'var(--nu-lavender)' },
+              { label: 'Gluc.', val: appData.carbs,   goal: appData.carbsGoal,   color: 'var(--nu-carb)' },
+              { label: 'Lip.',  val: appData.fat,     goal: appData.fatGoal,     color: 'var(--nu-pink)' },
             ].map(m => (
-              <div key={m.label}>
-                <div className="flex justify-between items-center" style={{ marginBottom: 4 }}>
-                  <span className="text-xs text-muted">{m.label}</span>
-                  <span className="text-xs bold">{m.val}g <span className="text-muted">/ {m.goal}g</span></span>
-                </div>
-                <div style={{ height: 4, background: 'rgba(26,22,8,0.15)', borderRadius: 2, overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: `${Math.min(m.val/m.goal*100,100)}%`, background: m.color, borderRadius: 2, transition: `width 500ms ease-out ${m.delay}` }} />
+              <div key={m.label} className="nu-macro-card">
+                <p className="nu-macro-label">{m.label}</p>
+                <p className="nu-macro-value">{m.val}<span className="nu-macro-goal">/{m.goal}</span></p>
+                <div className="nu-macro-bar-wrap">
+                  <div className="nu-macro-bar-fill" style={{ width: `${Math.min(m.val/m.goal*100,100)}%`, background: m.color }} />
                 </div>
               </div>
             ))}
@@ -976,18 +965,11 @@ Réponds en français.`
             skyr, 2 c. à soupe de confiture"), unlike the single-item helper
             on the quantity step below, which only knows the one food
             already selected in the search. */}
-        <button
-          onClick={openDescribeSheet}
-          className="card card-animated"
-          style={{
-            display: 'flex', alignItems: 'center', gap: 14, width: '100%',
-            marginBottom: 16, cursor: 'pointer', textAlign: 'left', '--delay': '40ms',
-          }}
-        >
-          <span className="nutrition-recipe-icon">✏️</span>
+        <button onClick={openDescribeSheet} className="nu-action-card card-animated" style={{ '--delay': '40ms' }}>
+          <span className="nu-action-icon" style={{ background: 'var(--nu-olive)' }}>✏️</span>
           <div>
-            <div className="text-base bold">Décrire un repas</div>
-            <div className="text-xs text-muted">"3 c. à soupe de skyr, 2 c. à soupe de confiture..." — pas besoin des grammes</div>
+            <p className="nu-action-title">Décrire un repas</p>
+            <p className="nu-action-sub">"3 c. à soupe de skyr, 2 c. à soupe de confiture..." — pas besoin des grammes</p>
           </div>
         </button>
 
@@ -996,79 +978,44 @@ Réponds en français.`
             options). Aussi forte que "Décrire un repas" côté utilité
             (l'IA propose une recette avec ce qu'il y a vraiment sous la
             main), promue au même niveau. */}
-        <button
-          onClick={() => openRecipeSheet('photo')}
-          className="card card-animated"
-          style={{
-            display: 'flex', alignItems: 'center', gap: 14, width: '100%',
-            marginBottom: 16, cursor: 'pointer', textAlign: 'left', '--delay': '50ms',
-          }}
-        >
-          <span className="nutrition-recipe-icon">📸</span>
+        <button onClick={() => openRecipeSheet('photo')} className="nu-action-card card-animated" style={{ '--delay': '50ms' }}>
+          <span className="nu-action-icon" style={{ background: 'var(--nu-pink)' }}>📸</span>
           <div>
-            <div className="text-base bold">Une recette depuis mon frigo</div>
-            <div className="text-xs text-muted">Prends en photo ce que tu as sous la main, l'IA propose une recette avec</div>
+            <p className="nu-action-title">Une recette depuis mon frigo</p>
+            <p className="nu-action-sub">Prends en photo ce que tu as sous la main, l'IA propose une recette avec</p>
           </div>
         </button>
 
-        <button
-          onClick={() => openRecipeSheet('auto')}
-          className="card card-violet nutrition-recipe-card card-animated"
-          style={{
-            display: 'flex', alignItems: 'center', gap: 14, width: '100%',
-            cursor: 'pointer', textAlign: 'left', '--delay': '60ms',
-          }}
-        >
-          <span className="nutrition-recipe-icon">💡</span>
+        <button onClick={() => openRecipeSheet('auto')} className="nu-action-card nu-action-accent card-animated" style={{ marginBottom: 0, '--delay': '60ms' }}>
+          <span className="nu-action-icon" style={{ background: 'var(--nu-cream)' }}>💡</span>
           <div>
-            {/* Explicit .text-primary rather than relying on inherited
-                color — .card.card-violet .text-primary is the only rule
-                that guarantees dark-navy-on-light-violet here; without it
-                this depends on whatever color happens to cascade down,
-                which is exactly the kind of thing that broke silently
-                once already on this card type (see .card-hero/.card-violet
-                comments above). Reported as unreadable ("noir sur noir")
-                by a real member. */}
-            <div className="text-base bold text-primary">Idée recette</div>
-            <div className="text-xs text-muted">Suggestion IA basée sur ce qu'il te reste aujourd'hui</div>
+            <p className="nu-action-title">Idée recette</p>
+            <p className="nu-action-sub">Suggestion IA basée sur ce qu'il te reste aujourd'hui</p>
           </div>
         </button>
         {/* Moins utilisée que les deux au-dessus (photo/texte) — reste
             accessible en un seul tap plutôt que dans un sous-menu, mais
             sans carte pleine largeur dédiée pour ne pas surcharger l'écran
             de 3 cartes qui se ressemblent. */}
-        <button
-          onClick={() => openRecipeSheet('link')}
-          style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: 12, fontWeight: 600, padding: '8px 4px', cursor: 'pointer', display: 'block', marginBottom: 16 }}
-        >
+        <button onClick={() => openRecipeSheet('link')} className="nu-link-row">
           🔗 ou depuis un lien TikTok / Reel →
         </button>
 
-        {/* New — the mockup shows a meal-type icon row here (Matin/Midi/Soir/
-            Snack) that didn't exist in the app before. Wired to something
-            real rather than purely decorative: tapping one opens "Ajouter
-            un repas" with that type pre-selected instead of the default. */}
-        <div style={{ display: 'flex', gap: 16, marginBottom: 20 }}>
-          {[
-            { type: MEAL_TYPES[0], icon: '🍳', tint: '#FDEAD8', label: 'Matin' },
-            { type: MEAL_TYPES[1], icon: '🥗', tint: '#E6F6EE', label: 'Midi' },
-            { type: MEAL_TYPES[2], icon: '🍽️', tint: '#E3F0FF', label: 'Soir' },
-            { type: MEAL_TYPES[3], icon: '🍎', tint: '#FDE7E9', label: 'Snack' },
-          ].map((m, i) => (
-            <button
-              key={m.label}
-              onClick={() => openSheet(m.type)}
-              className="card-animated"
-              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', flex: 1, '--delay': `${120 + i * 40}ms` }}
-            >
-              <span style={{ width: 50, height: 50, borderRadius: '50%', background: m.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>{m.icon}</span>
-              <span className="text-xs" style={{ letterSpacing: 0, color: 'rgba(255,255,255,0.85)' }}>{m.label}</span>
+        {/* Raccourcis "ajouter au [moment du repas]" — traduits en pills
+            plates (maquette) plutôt qu'en icônes rondes ; même comportement
+            qu'avant (ouvre "Ajouter un repas" avec ce type pré-sélectionné),
+            aucune n'est "active" dans les données donc pas de distinction
+            de couleur entre elles. */}
+        <div className="nu-filter-row" style={{ marginBottom: 20 }}>
+          {MEAL_TYPES.map((mt, i) => (
+            <button key={mt} onClick={() => openSheet(mt)} className="nu-filter-chip card-animated" style={{ '--delay': `${120 + i * 40}ms` }}>
+              {mt}
             </button>
           ))}
         </div>
 
-        <div className="section-label">{t('today_meals')}</div>
-        <p className="text-xs" style={{ marginTop: -4, marginBottom: 10, color: 'rgba(255,255,255,0.7)' }}>Glisse un repas vers la gauche pour le modifier ou le supprimer.</p>
+        <div className="nu-section-label">{t('today_meals')}</div>
+        <p className="nu-section-hint">Glisse un repas vers la gauche pour le modifier ou le supprimer.</p>
         {(() => {
           // Was a flat chronological list with no visual grouping and a
           // silent slice(0,3) — a member with several repas logged across
@@ -1089,57 +1036,50 @@ Réponds en français.`
           const visibleGroups = groups.filter(g => g.meals.length > 0)
 
           if (appData.meals.length === 0) {
-            return <p className="text-sm" style={{ color: 'rgba(255,255,255,0.7)', padding: '4px 0 8px' }}>Aucun repas enregistré aujourd'hui.</p>
+            return <p className="nu-empty-meals">Aucun repas enregistré aujourd'hui.</p>
           }
+
+          // Cycle de couleurs des badges-lettre, même logique que la
+          // maquette (A olive / B jaune-gluc. / C rose, en boucle).
+          const BADGE_COLORS = ['var(--nu-olive)', 'var(--nu-carb)', 'var(--nu-pink)']
 
           return (
             <>
               {visibleGroups.map(group => (
-                <div key={group.type} style={{ marginBottom: 16 }}>
-                  <div className="text-xs bold" style={{ textTransform: 'uppercase', letterSpacing: '0.06em', color: 'rgba(255,255,255,0.85)', marginBottom: 8 }}>
-                    {group.type} <span style={{ opacity: 0.65, fontWeight: 400 }}>({group.meals.length})</span>
+                <div key={group.type} className="nu-meal-group">
+                  <div className="nu-meal-group-top">
+                    <span className="nu-meal-group-title">{group.type}</span>
+                    <span className="nu-meal-group-total">{group.meals.reduce((s, m) => s + m.calories, 0)} kcal</span>
                   </div>
-                  {group.meals.map((meal, i) => (
-                    <SwipeableRow
-                      key={meal.id}
-                      actions={[
-                        { label: 'Modifier', color: 'var(--warning)', onClick: () => openEditMeal(meal) },
-                        { label: 'Supprimer', color: 'var(--danger)', onClick: () => deleteMeal(meal.id) },
-                      ]}
-                    >
-                      {/* marginBottom must stay 0 here — SwipeableRow's own
-                          root already carries marginBottom:8 for the gap
-                          between rows (SwipeableRow.jsx). Adding a second
-                          margin on the card INSIDE the swipe-clipped area
-                          made the outer wrapper's auto-height (which the
-                          absolutely-positioned action buttons stretch to
-                          fill) taller than the card's own visible box —
-                          the extra strip wasn't covered by anything, so the
-                          orange/red buttons peeked out below the card at
-                          rest, with no swipe involved. */}
-                      <div className="card card-animated" style={{ marginBottom: 0, '--delay': `${160 + Math.min(i, 6) * 40}ms` }}>
-                        <div className="flex justify-between items-center">
-                          <div style={{ flex: 1 }}>
-                            <div className="flex items-center gap-8" style={{ marginBottom: 4 }}>
-                              <span className="text-base bold">{meal.name}</span>
+                  <div className="nu-meal-list">
+                    {group.meals.map((meal, i) => (
+                      <SwipeableRow
+                        key={meal.id}
+                        actions={[
+                          { label: 'Modifier', color: 'var(--warning)', onClick: () => openEditMeal(meal) },
+                          { label: 'Supprimer', color: 'var(--danger)', onClick: () => deleteMeal(meal.id) },
+                        ]}
+                      >
+                        <div className="nu-meal-row card-animated" style={{ '--delay': `${160 + Math.min(i, 6) * 40}ms` }}>
+                          <span className="nu-meal-badge" style={{ background: BADGE_COLORS[i % BADGE_COLORS.length] }}>
+                            {String.fromCharCode(65 + (i % 26))}
+                          </span>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div className="flex items-center gap-8" style={{ marginBottom: 2 }}>
+                              <span className="nu-meal-name">{meal.name}</span>
                               <NutriscoreBadge score={meal.nutriscore} />
                             </div>
                             {/* mealType affiché explicitement sur la carte
                                 elle-même — jusqu'ici capturé à l'ajout
                                 (type_repas) mais jamais montré nulle part
                                 dans cette liste. */}
-                            <span className="text-xs text-muted">{meal.time}{meal.mealType ? ` · ${meal.mealType}` : ''}</span>
+                            <span className="nu-meal-meta">{meal.time}{meal.mealType ? ` · ${meal.mealType}` : ''} · P {meal.protein}g · G {meal.carbs}g · L {meal.fat}g</span>
                           </div>
-                          <span className="text-sm bold" style={{ marginLeft: 12 }}>{meal.calories} kcal</span>
+                          <span className="nu-meal-kcal">{meal.calories}</span>
                         </div>
-                        <div style={{ display: 'flex', gap: 16, marginTop: 6 }}>
-                          <span className="text-xs text-muted">P: {meal.protein}g</span>
-                          <span className="text-xs text-muted">G: {meal.carbs}g</span>
-                          <span className="text-xs text-muted">L: {meal.fat}g</span>
-                        </div>
-                      </div>
-                    </SwipeableRow>
-                  ))}
+                      </SwipeableRow>
+                    ))}
+                  </div>
                 </div>
               ))}
               {/* Remplace l'ancien lien texte discret en bas de liste — le
@@ -1147,16 +1087,7 @@ Réponds en français.`
                   scrollait pas jusqu'en bas. Badge visible, au même niveau
                   que les sections plutôt qu'enterré dessous. */}
               {!showAllMeals && hiddenCount > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setShowAllMeals(true)}
-                  style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                    width: '100%', background: 'rgba(255,255,255,0.16)', border: '1px solid rgba(255,255,255,0.3)',
-                    borderRadius: 50, color: '#FFFFFF', fontSize: 12, fontWeight: 700,
-                    padding: '10px 16px', cursor: 'pointer', marginBottom: 8,
-                  }}
-                >
+                <button type="button" onClick={() => setShowAllMeals(true)} className="nu-show-more-btn">
                   +{hiddenCount} repas non affiché{hiddenCount > 1 ? 's' : ''} — voir tout →
                 </button>
               )}
@@ -1169,11 +1100,10 @@ Réponds en français.`
       {editingMeal && (
         <>
           <div onClick={() => setEditingMeal(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 199 }} />
-          <div style={{
+          <div className="nu-sheet" style={{
             position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)',
-            width: '100%', maxWidth: 480, background: 'var(--surface-solid)',
-            backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)',
-            borderRadius: '20px 20px 0 0', borderTop: '1px solid var(--glass-border)',
+            width: '100%', maxWidth: 480,
+            borderRadius: '20px 20px 0 0',
             padding: '24px 20px 40px', zIndex: 200,
           }}>
             <h2 className="text-lg bold" style={{ marginBottom: 16 }}>{editingMeal.name}</h2>
@@ -1196,9 +1126,9 @@ Réponds en français.`
                   type="button"
                   onClick={() => setEditingMeal(prev => ({ ...prev, mealType: mt }))}
                   style={{
-                    background: editingMeal.mealType === mt ? 'var(--accent)' : 'var(--surface-2)',
-                    border: '0.5px solid var(--border)',
-                    color: editingMeal.mealType === mt ? 'var(--accent-ink)' : 'var(--text-secondary)',
+                    background: editingMeal.mealType === mt ? 'var(--nu-olive)' : 'var(--nu-card)',
+                    border: 'none',
+                    color: 'var(--nu-ink)',
                     fontSize: 11, fontWeight: 700, padding: '8px 14px', borderRadius: 50,
                     whiteSpace: 'nowrap', flexShrink: 0, cursor: 'pointer',
                   }}
@@ -1217,7 +1147,7 @@ Réponds en français.`
           z-index), making the two indistinguishable/impossible to tap
           reliably. Same class of bug already fixed once on the
           Conversation screen's send button. */}
-      <button onClick={openSheet} style={{
+      <button onClick={openSheet} className="nu-fab" style={{
         // Was a flat bottom:90 — the message FAB it needs to align with
         // (fab.css's .fab-container) uses calc(76px + env(safe-area-inset-
         // bottom)), safe-area-aware since suite 55/56. The two only lined
@@ -1228,11 +1158,10 @@ Réponds en français.`
         // now, so they can't drift apart again.
         position: 'fixed', bottom: 'calc(76px + env(safe-area-inset-bottom))', left: 16, zIndex: 95,
         width: 52, height: 52, borderRadius: '50%',
-        background: 'var(--accent)', border: 'none', cursor: 'pointer',
+        border: 'none', cursor: 'pointer',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        boxShadow: '0 4px 20px rgba(240,193,75,0.4)',
       }}>
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent-ink)" strokeWidth="2.5" strokeLinecap="round">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--nu-cream)" strokeWidth="2.5" strokeLinecap="round">
           <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
         </svg>
       </button>
@@ -1249,15 +1178,14 @@ Réponds en français.`
           au clic. Audit JOURNAL.md. */}
       <div
         ref={foodSheetRef}
+        className="nu-sheet"
         style={{
           position: 'fixed', bottom: 0, left: '50%',
           transform: foodSheetSwipe.dragY > 0
             ? `translateX(-50%) translateY(${foodSheetSwipe.dragY}px)`
             : `translateX(-50%) translateY(${sheetOpen ? '0' : '100%'})`,
           width: '100%', maxWidth: 480,
-          background: 'var(--surface-solid)', backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)',
           borderRadius: '20px 20px 0 0',
-          borderTop: '1px solid var(--glass-border)',
           padding: '0 20px 40px',
           transition: foodSheetSwipe.dragging ? 'none' : 'transform 320ms cubic-bezier(0.34,1.56,0.64,1)',
           zIndex: 200, maxHeight: '80vh', overflowY: 'auto',
@@ -1335,12 +1263,12 @@ Réponds en français.`
                 <button
                   type="button"
                   onClick={() => setQtyHelperOpen(true)}
-                  style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: 12, fontWeight: 600, padding: '8px 0 0', cursor: 'pointer', display: 'block', margin: '0 auto' }}
+                  style={{ background: 'none', border: 'none', color: 'var(--nu-magenta)', fontSize: 12, fontWeight: 600, padding: '8px 0 0', cursor: 'pointer', display: 'block', margin: '0 auto' }}
                 >
                   Je ne connais pas le poids →
                 </button>
               ) : (
-                <div style={{ marginTop: 10, padding: 12, background: 'var(--surface-2)', borderRadius: 12 }}>
+                <div style={{ marginTop: 10, padding: 12, background: 'var(--nu-cream)', borderRadius: 12 }}>
                   <label className="text-xs text-muted" style={{ display: 'block', marginBottom: 6 }}>DÉCRIS LA QUANTITÉ</label>
                   <div style={{ display: 'flex', gap: 8 }}>
                     <input
@@ -1367,7 +1295,7 @@ Réponds en français.`
               )}
             </div>
             {preview && (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 8, marginBottom: 20, padding: '14px', background: 'var(--surface-2)', borderRadius: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 8, marginBottom: 20, padding: '14px', background: 'var(--nu-cream)', borderRadius: 12 }}>
                 {[
                   { label: 'kcal', val: preview.kcal },
                   { label: 'P', val: `${preview.proteins}g` },
@@ -1384,9 +1312,9 @@ Réponds en français.`
             <div style={{ display: 'flex', gap: 8, marginBottom: 16, overflowX: 'auto' }}>
               {MEAL_TYPES.map(mt => (
                 <button key={mt} onClick={() => setMealType(mt)} style={{
-                  background: mealType === mt ? 'var(--accent)' : 'var(--surface-2)',
-                  border: '0.5px solid var(--border)',
-                  color: mealType === mt ? 'var(--accent-ink)' : 'var(--text-secondary)',
+                  background: mealType === mt ? 'var(--nu-olive)' : 'var(--nu-card)',
+                  border: 'none',
+                  color: 'var(--nu-ink)',
                   fontSize: 11, fontWeight: 700, padding: '8px 14px', borderRadius: 50,
                   whiteSpace: 'nowrap', flexShrink: 0, cursor: 'pointer',
                 }}>{mt}</button>
@@ -1400,11 +1328,10 @@ Réponds en français.`
       {/* "Décrire plusieurs aliments" overlay + sheet */}
       {describeSheetOpen && <div onClick={() => setDescribeSheetOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 199 }} />}
       {describeSheetOpen && (
-        <div style={{
+        <div className="nu-sheet" style={{
           position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)',
-          width: '100%', maxWidth: 480, background: 'var(--surface-solid)',
-          backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)',
-          borderRadius: '20px 20px 0 0', borderTop: '1px solid var(--glass-border)',
+          width: '100%', maxWidth: 480,
+          borderRadius: '20px 20px 0 0',
           padding: '24px 20px 40px', zIndex: 200, maxHeight: '80vh', overflowY: 'auto',
         }}>
           {!describeResult ? (
@@ -1419,8 +1346,7 @@ Réponds en français.`
                 disabled={describeLoading}
                 style={{
                   width: '100%', resize: 'vertical', padding: '14px 16px', borderRadius: 12,
-                  background: 'var(--surface)', border: '2px solid var(--border)',
-                  color: 'var(--text-primary)', fontSize: 15, fontFamily: 'inherit', lineHeight: 1.5,
+                  fontSize: 15, fontFamily: 'inherit', lineHeight: 1.5,
                   marginBottom: 16,
                 }}
               />
@@ -1482,7 +1408,7 @@ Réponds en français.`
                               <button
                                 type="button"
                                 onClick={() => openItemCorrection(i)}
-                                style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: 11, fontWeight: 600, cursor: 'pointer', padding: 0, marginTop: 4, display: 'block' }}
+                                style={{ background: 'none', border: 'none', color: 'var(--nu-magenta)', fontSize: 11, fontWeight: 600, cursor: 'pointer', padding: 0, marginTop: 4, display: 'block' }}
                               >
                                 Corriger l'aliment
                               </button>
@@ -1562,9 +1488,9 @@ Réponds en français.`
                   <div style={{ display: 'flex', gap: 8, marginBottom: 16, overflowX: 'auto' }}>
                     {MEAL_TYPES.map(mt => (
                       <button key={mt} onClick={() => setDescribeMealType(mt)} style={{
-                        background: describeMealType === mt ? 'var(--accent)' : 'var(--surface-2)',
-                        border: '0.5px solid var(--border)',
-                        color: describeMealType === mt ? 'var(--accent-ink)' : 'var(--text-secondary)',
+                        background: describeMealType === mt ? 'var(--nu-olive)' : 'var(--nu-card)',
+                        border: 'none',
+                        color: 'var(--nu-ink)',
                         fontSize: 11, fontWeight: 700, padding: '8px 14px', borderRadius: 50,
                         whiteSpace: 'nowrap', flexShrink: 0, cursor: 'pointer',
                       }}>{mt}</button>
@@ -1580,13 +1506,11 @@ Réponds en français.`
 
       {/* Recipe overlay + sheet */}
       {recipeSheetOpen && <div onClick={() => setRecipeSheetOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 199 }} />}
-      <div style={{
+      <div className="nu-sheet" style={{
         position: 'fixed', bottom: 0, left: '50%',
         transform: `translateX(-50%) translateY(${recipeSheetOpen ? '0' : '100%'})`,
         width: '100%', maxWidth: 480,
-        background: 'var(--surface-solid)', backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)',
         borderRadius: '20px 20px 0 0',
-        borderTop: '1px solid var(--glass-border)',
         padding: '24px 20px 40px',
         transition: 'transform 320ms cubic-bezier(0.34,1.56,0.64,1)',
         zIndex: 200, maxHeight: '80vh', overflowY: 'auto',
@@ -1618,7 +1542,7 @@ Réponds en français.`
                   justifyContent: 'space-between', alignItems: 'center', '--delay': `${i * 40}ms`,
                 }}>
                   <span className="text-base bold text-primary">{mt}</span>
-                  <span style={{ color: 'var(--accent)' }}>→</span>
+                  <span style={{ color: 'var(--nu-magenta)' }}>→</span>
                 </button>
               ))}
             </div>
