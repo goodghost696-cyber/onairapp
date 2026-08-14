@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useApp } from '../context/AppContext'
 import { useLanguage } from '../context/LanguageContext'
-import { useTheme } from '../context/ThemeContext'
 import { supabase } from '../lib/supabase'
 import { BOUNDS, clamp } from '../utils/validation'
 import { calculateCalorieGoal } from '../utils/metabolism'
@@ -48,7 +47,6 @@ export default function Settings() {
   const { user, logout, updateUserProfile } = useAuth()
   const { appData, updateData } = useApp()
   const { lang, setLanguage, t } = useLanguage()
-  const { theme, toggleTheme } = useTheme()
   const [showHealthSync, setShowHealthSync] = useState(false)
   const [healthData, setHealthData] = useState({ steps: '', sleep_hours: '', sleep_minutes: '' })
   const [syncToast, setSyncToast] = useState(false)
@@ -338,16 +336,15 @@ export default function Settings() {
               toggles would come back, wired to something real. */}
         </div>
 
-        <div className="section-label">Apparence</div>
-        <div className="card card-animated" style={{ '--delay': '180ms' }}>
-          <div className="flex justify-between items-center" style={{ padding: '14px 0' }}>
-            <div>
-              <p className="text-sm text-secondary">Thème</p>
-              <p className="text-xs text-muted">{theme === 'dark' ? 'Mode sombre' : 'Mode clair'}</p>
-            </div>
-            <Toggle on={theme === 'light'} onToggle={toggleTheme} />
-          </div>
-        </div>
+        {/* Section "Apparence" (toggle Mode sombre/clair) retirée
+            (2026-08-15, tâche 4 du rapport d'investigation JOURNAL.md) :
+            le restyle "pastel chaud" est une palette fixe, sans variante
+            sombre — le toggle n'avait plus rien à faire varier de façon
+            cohérente sur les écrans déjà restylés (voir aussi le sujet 3
+            du rapport : le thème "dark" n'a jamais été vraiment distinct
+            du défaut depuis le pivot vers le corail). ThemeContext.jsx et
+            la logique data-theme elle-même ne sont pas touchées — retiré
+            uniquement le contrôle utilisateur, pas le mécanisme. */}
 
         <div className="section-label">{t('language_section')}</div>
         <div className="lang-selector card-animated" style={{ '--delay': '240ms' }}>
