@@ -9,6 +9,7 @@ import { dailyRemainingCalories } from '../utils/metabolism'
 import { fetchStreakDetails } from '../utils/streak'
 import { fetchHabitsWithProgress, checkHabitToday, uncheckHabitToday } from '../utils/habits'
 import { useSwipeToDismiss } from '../hooks/useSwipeToDismiss'
+import quotes from '../data/quotes.json'
 import '../styles/dashboard.css'
 
 // Streak paliers — first shown at 7 days, then every 30 days after the
@@ -63,34 +64,27 @@ function useWeather() {
   return weather
 }
 
-const QUOTES = [
-  'Reste constant.',
-  "Pas d'excuses.",
-  'Un jour à la fois.',
-  "L'effort paie.",
-  'Continue.',
-]
+// Citation du jour — déterministe (jour de l'année modulo la taille du
+// tableau), pas un tirage aléatoire : la même citation reste affichée
+// toute la journée, y compris si l'app est fermée/rouverte plusieurs fois,
+// et change automatiquement le lendemain. Remplace l'ancien composant à
+// défilement (RotatingQuote, setInterval + 5 phrases sans attribution) —
+// rapporté comme se chevauchant visuellement pendant la transition entre
+// deux citations. src/data/quotes.json : 55 citations effort/discipline/
+// sport/mental avec un vrai auteur attribué chacune, données locales
+// statiques (même choix que le catalogue d'exercices — pas de dépendance
+// à une API externe après la vente).
+function dayOfYear(date) {
+  const start = new Date(date.getFullYear(), 0, 0)
+  return Math.floor((date - start) / 86400000)
+}
 
-function RotatingQuote() {
-  const [index, setIndex] = useState(0)
-  const [visible, setVisible] = useState(true)
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setVisible(false)
-      setTimeout(() => {
-        setIndex(i => (i + 1) % QUOTES.length)
-        setVisible(true)
-      }, 300)
-    }, 3000)
-    return () => clearInterval(interval)
-  }, [])
-
+function QuoteOfTheDay() {
+  const quote = quotes[dayOfYear(new Date()) % quotes.length]
   return (
     <div className="db-quote">
-      <p className="db-quote-text" style={{ opacity: visible ? 1 : 0 }}>
-        "{QUOTES[index]}"
-      </p>
+      <p className="db-quote-text">"{quote.text}"</p>
+      <p className="db-quote-author">— {quote.author}</p>
     </div>
   )
 }
@@ -287,8 +281,8 @@ export default function Dashboard() {
           </button>
         </div>
 
-        {/* Rotating quote */}
-        <RotatingQuote />
+        {/* Citation du jour */}
+        <QuoteOfTheDay />
 
         {/* Streak — always present now (direct request: "je veux qu'elle
             soit toujours présente"). At 0, neutral/muted treatment (dimmed

@@ -188,7 +188,7 @@ body.dashboard-body-bg {
   font-family: inherit;
 }
 
-/* ── Citation défilante ── */
+/* ── Citation du jour ── */
 .db-quote {
   padding: 12px 0;
   border-bottom: 1px solid var(--db-border);
@@ -199,7 +199,12 @@ body.dashboard-body-bg {
   color: var(--db-text-secondary);
   font-style: italic;
   line-height: 1.5;
-  transition: opacity 300ms ease;
+}
+.db-quote-author {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--db-text-muted);
+  margin-top: 4px;
 }
 
 /* ── Streak ── */
