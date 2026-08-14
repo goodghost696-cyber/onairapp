@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { useLanguage } from '../context/LanguageContext'
 import { fetchMemberPrograms } from '../utils/programs'
 import '../styles/Workout.css'
+import '../styles/workout-redesign.css'
 import { authHeader } from '../lib/supabase'
 
 export default function Workout() {
@@ -27,6 +28,16 @@ export default function Workout() {
     fetchMemberPrograms(user.id).then(p => { if (!cancelled) setCoachPrograms(p) })
     return () => { cancelled = true }
   }, [user?.id])
+
+  // Même fix que Dashboard.jsx/Nutrition.jsx/Weekly.jsx/WorkoutSession.jsx
+  // (voir dashboard.css/JOURNAL.md) : couvre le rubber-band iOS, où le
+  // fond de <body> (dégradé corail partagé) reste visible au-delà des
+  // limites du wrapper interne. Classe active seulement tant que ce
+  // screen est monté.
+  useEffect(() => {
+    document.body.classList.add('workout-body-bg')
+    return () => document.body.classList.remove('workout-body-bg')
+  }, [])
 
   function startCoachProgram(programme) {
     addExercisesToSession(programme.exercices)
@@ -98,40 +109,46 @@ Donne exactement 4-5 exercices adaptés à l'objectif.`
   }
 
   const sectionIcons = {
-    maison: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
+    maison: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--wh-ink)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
     // Was an abstract "checklist" glyph (rows of dashes + dots) that read as
     // noise at this size — reported as "c'est quoi ça??" on a real screenshot.
     // A dumbbell silhouette (end caps + plates + bar) is unambiguous for
     // "Salle" at a glance, unlike Maison's house/Dehors' running figure.
-    salle: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent-secondary)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="9.5" width="2.5" height="5" rx="1"/><rect x="19.5" y="9.5" width="2.5" height="5" rx="1"/><rect x="6" y="7" width="3" height="10" rx="1.2"/><rect x="15" y="7" width="3" height="10" rx="1.2"/><line x1="9" y1="12" x2="15" y2="12"/></svg>,
-    dehors: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="5" r="2"/><path d="M8 21l2-8-2-3h8l-2 3 2 8"/><path d="M6 12l-2 2M18 12l2 2"/></svg>,
+    salle: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--wh-ink)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="9.5" width="2.5" height="5" rx="1"/><rect x="19.5" y="9.5" width="2.5" height="5" rx="1"/><rect x="6" y="7" width="3" height="10" rx="1.2"/><rect x="15" y="7" width="3" height="10" rx="1.2"/><line x1="9" y1="12" x2="15" y2="12"/></svg>,
+    dehors: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--wh-ink)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="5" r="2"/><path d="M8 21l2-8-2-3h8l-2 3 2 8"/><path d="M6 12l-2 2M18 12l2 2"/></svg>,
   }
 
+  // Restyle "pastel chaud" (2026-08-14, handoff dédié) — cercles pleins
+  // olive/lavande/rose au lieu des fonds translucides dorés hérités.
   const sectionIconBg = {
-    maison: 'rgba(240,193,75,0.12)',
-    salle: 'rgba(139,147,232,0.15)',
-    dehors: 'rgba(240,193,75,0.12)',
+    maison: 'var(--wh-olive)',
+    salle: 'var(--wh-lavender)',
+    dehors: 'var(--wh-pink)',
   }
+  // Cycle d'accent pour le 1er badge de chaque carte "Dernières séances"
+  // (voir workout-redesign.css, .history-ex-badge:first-child) — même
+  // esprit que le cycle de couleur des badges-lettre de Nutrition.jsx.
+  const HISTORY_ACCENTS = [
+    { bg: 'var(--wh-olive)', ink: 'var(--wh-olive-ink)' },
+    { bg: 'var(--wh-lavender)', ink: 'var(--wh-lavender-ink)' },
+    { bg: 'var(--wh-pink)', ink: 'var(--wh-pink-ink)' },
+  ]
 
   return (
-    <div className="app-wrapper">
-      <div className="screen">
-        <div className="screen-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 56, paddingBottom: 8 }}>
-          <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.85)' }}>🏋️ WORKOUT</p>
-          <span style={{ fontSize: 12, color: 'var(--text-secondary)', textTransform: 'capitalize' }}>{new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'short' })}</span>
+    <div className="app-wrapper workout-redesign">
+      <div className="screen workout-screen">
+        <div className="screen-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingTop: 56, paddingBottom: 22 }}>
+          <div>
+            <p className="wh-eyebrow">WORKOUT</p>
+            <h1 className="wh-title">{t('workout')}</h1>
+          </div>
+          <span className="wh-date">{new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'short' })}</span>
         </div>
-
-        <h1 style={{ fontSize: 30, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 24 }}>{t('workout')}</h1>
 
         <div className="card card-hero card-animated" style={{ '--delay': '0ms', marginBottom: 14 }}>
           <div className="flex justify-between items-center">
             <span className="text-sm text-muted">{t('sessions_week')}</span>
-            {/* var(--accent) is gold now — invisible on this card's own gold
-                gradient background. var(--text-secondary) has the same
-                problem (translucent white on a light card). Dark ink instead,
-                inherited color for the big number, explicit translucent-ink
-                for the smaller "/goal" part. */}
-            <span style={{ fontSize: 22, fontWeight: 800 }}>{appData.weeklyWorkouts}<span style={{ fontSize: 14, color: 'rgba(26,22,8,0.6)', fontWeight: 400 }}>/{appData.weeklyGoal}</span></span>
+            <span style={{ fontSize: 24, fontWeight: 700, letterSpacing: '-0.03em' }}>{appData.weeklyWorkouts}<span style={{ fontSize: 13, color: 'var(--wh-olive-ink)', fontWeight: 500 }}>/{appData.weeklyGoal}</span></span>
           </div>
           <div className="progress-bar" style={{ marginTop: 10 }}>
             <div className="progress-fill" style={{ width: `${appData.weeklyWorkouts/appData.weeklyGoal*100}%` }} />
@@ -145,7 +162,7 @@ Donne exactement 4-5 exercices adaptés à l'objectif.`
               <div>
                 <p className="active-session-label">SÉANCE EN COURS</p>
                 <p className="active-session-count">
-                  {activeSession.exercises.length} exercice{activeSession.exercises.length > 1 ? 's' : ''} · Démarrée à {activeSession.startTime}
+                  {activeSession.exercises.length} exercice{activeSession.exercises.length > 1 ? 's' : ''} · démarrée à {activeSession.startTime}
                 </p>
               </div>
             </div>
@@ -160,13 +177,13 @@ Donne exactement 4-5 exercices adaptés à l'objectif.`
 
         <div className="workout-cta-row">
           <button className="today-session-btn" onClick={handleStartSession}>
-            MA SÉANCE DU JOUR
+            Ma séance<br />du jour
           </button>
           <button className="generate-program-btn" onClick={generateProgram} disabled={loading}>
             {loading ? (
               <><div className="btn-spinner" /> Génération...</>
             ) : (
-              '✦ PROGRAMME IA'
+              <>✦ Programme<br />IA</>
             )}
           </button>
         </div>
@@ -179,13 +196,13 @@ Donne exactement 4-5 exercices adaptés à l'objectif.`
           <>
             <div className="section-label">MES PROGRAMMES</div>
             {coachPrograms.map((p, i) => (
-              <div key={p.id} className="card card-animated" style={{ '--delay': `${i * 60}ms`, cursor: 'pointer', marginBottom: 8 }} onClick={() => startCoachProgram(p)}>
+              <div key={p.id} className="card card-animated" style={{ '--delay': `${i * 60}ms`, cursor: 'pointer', marginBottom: 10 }} onClick={() => startCoachProgram(p)}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <div className="text-base bold">{p.titre}</div>
                     <div className="text-sm text-muted">{p.exercices.length} exercice{p.exercices.length > 1 ? 's' : ''}</div>
                   </div>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--wh-text-muted)" strokeWidth="1.5" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
                 </div>
               </div>
             ))}
@@ -217,16 +234,16 @@ Donne exactement 4-5 exercices adaptés à l'objectif.`
 
         <div className="section-label">{t('library')}</div>
         {sections.map((s, i) => (
-          <div key={s.key} className="card card-animated" style={{ '--delay': `${i*80}ms`, cursor: 'pointer', marginBottom: 8 }} onClick={() => navigate(`/workout/${s.key}`)}>
+          <div key={s.key} className="card card-animated" style={{ '--delay': `${i*80}ms`, cursor: 'pointer', marginBottom: 10 }} onClick={() => navigate(`/workout/${s.key}`)}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <div style={{ width: 44, height: 44, background: sectionIconBg[s.key], borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <div style={{ width: 46, height: 46, background: sectionIconBg[s.key], borderRadius: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 {sectionIcons[s.key]}
               </div>
               <div style={{ flex: 1 }}>
                 <div className="text-base bold">{s.name}</div>
                 <div className="text-sm text-muted">{s.sub}</div>
               </div>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--wh-text-muted)" strokeWidth="1.5" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
             </div>
           </div>
         ))}
@@ -238,28 +255,36 @@ Donne exactement 4-5 exercices adaptés à l'objectif.`
               Pas encore de séance enregistrée — lance-toi juste au-dessus.
             </p>
           )}
-          {sessionHistory.length > 0 && sessionHistory.map(session => (
+          {sessionHistory.length > 0 && sessionHistory.map((session, i) => {
+            // Cycle d'accent olive/lavande/rose pour le 1er badge — voir
+            // HISTORY_ACCENTS plus haut et .history-ex-badge:first-child
+            // dans workout-redesign.css.
+            const accent = HISTORY_ACCENTS[i % HISTORY_ACCENTS.length]
+            return (
               <div
                 className="history-card"
                 key={session.id}
                 onClick={() => navigate(`/workout/history/${session.id}`)}
-                style={{ cursor: 'pointer' }}
+                style={{ cursor: 'pointer', '--wh-history-accent': accent.bg, '--wh-history-accent-ink': accent.ink }}
               >
-                <div className="history-card-left">
-                  <p className="history-date">{session.date}</p>
-                  <p className="history-type">{session.type}</p>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12 }}>
+                  <div className="history-card-left">
+                    <p className="history-date">{session.date}</p>
+                    <p className="history-type">{session.type}</p>
+                  </div>
+                  <div className="history-stats">
+                    <span style={{ display: 'block' }}>{session.duration}</span>
+                    <span style={{ display: 'block' }}>{session.totalSets} séries</span>
+                  </div>
                 </div>
                 <div className="history-exercises">
                   {session.exercises.map((ex, i) => (
                     <span key={i} className="history-ex-badge">{ex}</span>
                   ))}
                 </div>
-                <div className="history-stats">
-                  <span>{session.duration}</span>
-                  <span>{session.totalSets} séries</span>
-                </div>
               </div>
-            ))}
+            )
+          })}
         </div>
       </div>
 

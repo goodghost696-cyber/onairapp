@@ -1,0 +1,335 @@
+/* ══════════════════════════════════════════════════════════════════════
+   Restyle VOLTA "pastel chaud" — Workout.jsx (hub Entraînement), 5e écran
+   après Dashboard.jsx, Nutrition.jsx, Weekly.jsx et WorkoutSession.jsx
+   (voir dashboard.css/nutrition-redesign.css/weekly-redesign.css/
+   workoutsession-redesign.css et JOURNAL.md). Source : handoff design
+   dédié (dossier local hors repo, "Redesign interface VOLTA (2)/
+   design_handoff_workout_hub/README.md" + WorkoutHub.reference.html),
+   même famille que le handoff WorkoutSession.
+
+   Même système à deux fonds que WorkoutSession (README explicite : "Fond
+   d'app (page)" #EFE7D9 vs "Fond d'écran" #F7F1E6) — les 3 écrans d'avant
+   (Dashboard/Nutrition/Weekly) n'en avaient qu'un seul, pas de retouche
+   rétroactive ici non plus (hors scope).
+
+   Leçon du bug de seam sur WorkoutSession (fond d'écran sans son propre
+   min-height, visible seulement sur contenu court) : min-height appliqué
+   ici directement sur .workout-redesign ET .workout-screen dès le départ,
+   pas seulement sur le wrapper.
+
+   Le README demande de garder les classes existantes. Certaines sont
+   globales et partagées avec d'autres écrans (.card, .card-hero,
+   .card-animated, .section-label, .progress-bar/.progress-fill,
+   global.css) — jamais retouchées directement, seulement overridées ici
+   scopées à .workout-redesign. Les classes déjà exclusives à cet écran
+   (.active-session-*, .workout-cta-row, .today-session-btn,
+   .generate-program-btn, .btn-spinner, .ai-program-*, .history-*,
+   Workout.css) sont redéfinies directement, scopées pour ne pas dépendre
+   de l'ordre d'import. .bottom-nav non touchée. */
+.workout-redesign {
+  --wh-bg: #EFE7D9;
+  --wh-screen-bg: #F7F1E6;
+  --wh-card: #FFFFFF;
+  --wh-neutral-badge: #F2ECE2;
+  --wh-neutral-badge-ink: #4A443C;
+  --wh-border: #EFE7D9;
+  --wh-ink: #1C1A17;
+  --wh-text-secondary: #4A443C;
+  --wh-text-tertiary: #6E675C;
+  --wh-text-muted: #736C60;
+  --wh-olive: #EBEB7D;
+  --wh-olive-ink: #55522E;
+  --wh-lavender: #A3AEFE;
+  --wh-lavender-ink: #3F4780;
+  --wh-pink: #FFBEF0;
+  --wh-pink-ink: #6B3F5F;
+  --wh-magenta: #B62472;
+  font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+  min-height: calc(var(--app-height, 100dvh) - env(safe-area-inset-top));
+  background: var(--wh-bg);
+  position: relative;
+}
+
+.workout-redesign::before {
+  content: '';
+  position: absolute;
+  top: calc(-1 * env(safe-area-inset-top));
+  left: 0;
+  right: 0;
+  height: env(safe-area-inset-top);
+  background: var(--wh-bg);
+  z-index: 0;
+}
+
+/* Pilotée par useEffect (Workout.jsx) — couvre le rubber-band iOS, voir
+   dashboard.css pour l'explication complète. Valeur en dur (pas
+   var(--wh-bg)) : <body> est un ancêtre, pas un descendant. */
+body.workout-body-bg {
+  background: #EFE7D9;
+}
+
+.workout-screen {
+  position: relative;
+  z-index: 1;
+  background: var(--wh-screen-bg);
+  color: var(--wh-ink);
+  /* Même fix que .workoutsession-screen (voir workoutsession-redesign.css)
+     — le fond distinct de cet écran a besoin de sa propre garantie de
+     hauteur, pas seulement celle du wrapper. */
+  min-height: calc(var(--app-height, 100dvh) - env(safe-area-inset-top));
+}
+
+/* ── En-tête ── */
+.wh-eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--wh-magenta);
+  margin-bottom: 6px;
+}
+.wh-title {
+  font-size: 27px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: var(--wh-ink);
+}
+.wh-date {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--wh-text-muted);
+  padding-top: 20px;
+  text-transform: capitalize;
+}
+
+.workout-redesign .section-label {
+  color: var(--wh-text-muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 0 6px 12px;
+  margin: 0;
+}
+
+/* ── Cartes génériques (bibliothèque, mes programmes) — .card global
+   (global.css) overridé ici uniquement, jamais touché directement. ── */
+.workout-redesign .card {
+  background: var(--wh-card);
+  border: none;
+  box-shadow: none;
+  border-radius: 28px;
+  padding: 16px 20px;
+}
+.workout-redesign .card:active {
+  transform: scale(0.985);
+}
+
+/* ── Carte "Séances cette semaine" (remplace .card-hero) — combo
+   .card.card-hero, même technique de spécificité que global.css pour
+   gagner sur .card seul. ── */
+.workout-redesign .card.card-hero {
+  background: var(--wh-olive);
+  border-radius: 34px;
+  padding: 22px 24px;
+  box-shadow: none;
+}
+.workout-redesign .card.card-hero .text-sm.text-muted {
+  color: var(--wh-olive-ink);
+  font-size: 13px;
+  font-weight: 600;
+}
+.workout-redesign .progress-bar {
+  height: 9px;
+  border-radius: 999px;
+  background: rgba(28,26,23,0.14);
+  margin-top: 0;
+}
+.workout-redesign .progress-fill {
+  background: var(--wh-ink);
+  border-radius: 999px;
+}
+
+/* ── Bandeau "Séance en cours" ── */
+.workout-redesign .active-session-banner {
+  background: var(--wh-card);
+  border: 1.5px solid var(--wh-ink);
+  border-radius: 28px;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+  gap: 12px;
+}
+.workout-redesign .active-session-dot {
+  width: 9px;
+  height: 9px;
+  background: var(--wh-magenta);
+}
+.workout-redesign .active-session-label {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: var(--wh-magenta);
+}
+.workout-redesign .active-session-count {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--wh-text-secondary);
+}
+.workout-redesign .active-session-ex-badge {
+  font-size: 10.5px;
+  font-weight: 600;
+  background: var(--wh-neutral-badge);
+  color: var(--wh-neutral-badge-ink);
+  padding: 5px 11px;
+}
+.workout-redesign .active-session-arrow {
+  color: var(--wh-ink);
+  font-size: 17px;
+}
+
+/* ── Rangée de CTA ── */
+.workout-redesign .workout-cta-row {
+  margin-bottom: 24px;
+}
+.workout-redesign .today-session-btn,
+.workout-redesign .generate-program-btn {
+  padding: 18px 16px;
+  border-radius: 26px;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: normal;
+  text-transform: none;
+  line-height: 1.35;
+  box-shadow: none;
+  border: none;
+}
+.workout-redesign .today-session-btn {
+  background: var(--wh-ink);
+  color: var(--wh-screen-bg);
+}
+.workout-redesign .generate-program-btn {
+  background: var(--wh-lavender);
+  color: var(--wh-ink);
+  border: none;
+}
+.workout-redesign .generate-program-btn:disabled {
+  opacity: 0.6;
+}
+.workout-redesign .btn-spinner {
+  border: 2px solid rgba(28,26,23,0.25);
+  border-top-color: var(--wh-ink);
+}
+
+/* Icônes de bibliothèque et chevrons — stroke posé directement en JSX
+   (var(--wh-ink) / var(--wh-text-muted)), pas ici : un sélecteur CSS
+   générique .card svg toucherait indifféremment icônes ET chevrons alors
+   que le README leur donne deux couleurs différentes. */
+
+/* ── Carte de programme IA généré ── */
+.workout-redesign .ai-program-card {
+  background: var(--wh-ink);
+  border: none;
+  border-left: none;
+  border-radius: 32px;
+  padding: 22px 20px;
+}
+.workout-redesign .ai-program-type {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--wh-olive);
+}
+.workout-redesign .ai-program-tagline {
+  font-size: 12px;
+  font-weight: 400;
+  color: rgba(247,241,230,0.7);
+}
+.workout-redesign .ai-program-badge {
+  background: var(--wh-lavender);
+  color: var(--wh-ink);
+  border: none;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: normal;
+  padding: 4px 10px;
+}
+.workout-redesign .ai-program-ex-row {
+  border-bottom: 1px solid rgba(247,241,230,0.12);
+}
+.workout-redesign .ai-program-ex-name {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--wh-screen-bg);
+}
+.workout-redesign .ai-program-ex-detail {
+  font-size: 11.5px;
+  color: rgba(247,241,230,0.6);
+}
+.workout-redesign .ai-program-start-btn {
+  background: var(--wh-olive);
+  color: var(--wh-ink);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  padding: 15px 0;
+}
+
+/* ── Dernières séances ── */
+.workout-redesign .history-section {
+  margin-top: 24px;
+}
+.workout-redesign .history-card {
+  background: var(--wh-card);
+  border: none;
+  border-radius: 28px;
+  padding: 18px 20px;
+  margin-bottom: 10px;
+}
+.workout-redesign .history-date {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--wh-text-muted);
+  text-transform: none;
+  letter-spacing: normal;
+  margin-bottom: 3px;
+}
+.workout-redesign .history-type {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--wh-ink);
+}
+.workout-redesign .history-stats {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  margin-top: 0;
+  font-size: 10.5px;
+  color: var(--wh-text-muted);
+  text-align: right;
+}
+.workout-redesign .history-stats span:first-child {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--wh-ink);
+}
+.workout-redesign .history-ex-badge {
+  font-size: 10.5px;
+  font-weight: 600;
+  background: var(--wh-neutral-badge);
+  color: var(--wh-neutral-badge-ink);
+  padding: 5px 11px;
+}
+/* Premier badge de chaque carte : accent cyclique (olive/lavande/rose,
+   posé en inline par Workout.jsx via --wh-history-accent/--wh-history-
+   accent-ink, même logique que le cycle de couleur des badges-lettre de
+   Nutrition.jsx / du remplissage des courbes de Weekly.jsx). */
+.workout-redesign .history-ex-badge:first-child {
+  background: var(--wh-history-accent, var(--wh-neutral-badge));
+  color: var(--wh-history-accent-ink, var(--wh-neutral-badge-ink));
+}
