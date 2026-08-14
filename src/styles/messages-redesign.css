@@ -39,6 +39,25 @@ body.messages-body-bg {
   background: #EFE7D9;
 }
 
+/* Fond opaque sombre (.bottom-nav) — généralisation (2026-08-14) du fix
+   posé initialement sur Dashboard.jsx (dashboard.css, commit 75ce568),
+   étendue aux 7 écrans membre principaux (commit efeb0ad) mais pas encore
+   à Messages/AI Coach, restylés après coup. Voir nutrition-redesign.css
+   pour l'explication complète. Mêmes valeurs, même technique (sélecteur
+   sibling scopé à ce wrapper, couleurs en dur car <body>/.bottom-nav sont
+   des ancêtres/siblings, pas des descendants). */
+.messages-redesign ~ .bottom-nav {
+  background: #1C1A17;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.messages-redesign ~ .bottom-nav .nav-btn svg {
+  color: rgba(247,241,230,0.55);
+}
+.messages-redesign ~ .bottom-nav .nav-btn.active svg {
+  color: #F7F1E6;
+}
+
 .messages-screen {
   position: relative;
   z-index: 1;
