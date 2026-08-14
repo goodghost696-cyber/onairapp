@@ -68,6 +68,25 @@ body.workoutsession-body-bg {
   background: #EFE7D9;
 }
 
+/* Fond opaque sombre (.bottom-nav) — généralisation (2026-08-14) du fix
+   posé initialement sur Dashboard.jsx uniquement (dashboard.css, commit
+   75ce568), voir nutrition-redesign.css pour l'explication complète.
+   Mêmes valeurs, même technique. Sans rapport avec .finish-session-btn
+   plus bas (élément fixe séparé, propre à cet écran) — les deux
+   coexistent sans conflit, z-index 90 pour le bouton contre 100 pour la
+   pill (nav.css), non modifié. */
+.workoutsession-redesign ~ .bottom-nav {
+  background: #1C1A17;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.workoutsession-redesign ~ .bottom-nav .nav-btn svg {
+  color: rgba(247,241,230,0.55);
+}
+.workoutsession-redesign ~ .bottom-nav .nav-btn.active svg {
+  color: #F7F1E6;
+}
+
 .workoutsession-screen {
   position: relative;
   z-index: 1;

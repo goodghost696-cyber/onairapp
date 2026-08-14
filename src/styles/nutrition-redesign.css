@@ -60,6 +60,30 @@ body.nutrition-body-bg {
   background: #EFE7D9;
 }
 
+/* Fond opaque sombre (.bottom-nav) — généralisation (2026-08-14) du fix
+   posé initialement sur Dashboard.jsx uniquement (dashboard.css, commit
+   75ce568) : la nav pill partagée (nav.css, --nav-glass glass translucide
+   délibéré) tranchait visuellement avec le fond opaque du Dashboard dès
+   qu'on naviguait vers un autre écran restylé — pas une régression, juste
+   ce fix jamais répliqué au-delà du premier écran où le besoin avait été
+   rapporté. Mêmes valeurs, même technique (sélecteur sibling scopé à ce
+   wrapper, couleurs en dur car <body>/.bottom-nav sont des ancêtres/
+   siblings, pas des descendants — les custom properties ne les
+   atteignent pas). Écrans pas encore restylés (Landing, Messages, AI
+   Coach...) non concernés, gardent le fond translucide d'origine tant
+   qu'ils n'ont pas eux-mêmes leur restyle. */
+.nutrition-redesign ~ .bottom-nav {
+  background: #1C1A17;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.nutrition-redesign ~ .bottom-nav .nav-btn svg {
+  color: rgba(247,241,230,0.55);
+}
+.nutrition-redesign ~ .bottom-nav .nav-btn.active svg {
+  color: #F7F1E6;
+}
+
 .nutrition-screen {
   position: relative;
   z-index: 1;
