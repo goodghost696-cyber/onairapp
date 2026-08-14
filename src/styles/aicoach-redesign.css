@@ -40,6 +40,15 @@
   background: var(--aic-bg);
 }
 
+/* Même bug de seam déjà corrigé sur Dashboard/WorkoutSession (voir
+   dashboard.css) : cette zone de couverture du notch peignait --aic-bg
+   (#EFE7D9, fond du wrapper), mais tout le contenu réellement visible
+   juste en dessous (.aic-header, .aic-messages) est peint en
+   --aic-screen-bg (#F7F1E6, crème) — deux tons différents, d'où la
+   tranche visible au raccord avec la zone statut/heure. Corrigé en
+   alignant cette couverture sur la couleur réellement adjacente
+   (--aic-screen-bg) plutôt que sur le fond du wrapper, qui n'est visible
+   nulle part sur cet écran (header + messages le recouvrent entièrement). */
 .aicoach-redesign::before {
   content: '';
   position: absolute;
@@ -47,7 +56,7 @@
   left: 0;
   right: 0;
   height: env(safe-area-inset-top);
-  background: var(--aic-bg);
+  background: var(--aic-screen-bg);
   z-index: 5;
 }
 
