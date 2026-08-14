@@ -45,6 +45,19 @@ Il existait déjà une "charte ON AIR Neon" documentée plus bas dans ce journal
 - `@phosphor-icons/react` uniquement pour la nav (bottom nav membre + nav coach) — son prop `weight` donne un état actif "plein" vs "contour" sans changement de couleur
 - Emoji conservés à quelques endroits précis et délibérés après itération (météo du Dashboard, sélecteur d'eau, toast de bienvenue) — jamais comme icône UI générique, seulement là où un pictogramme dessiné n'apportait rien de mieux (voir suites 77-81 pour l'historique de l'icône eau, 5 itérations avant 🥛)
 
+## 2026-08-14 — Citation du jour fixe et attribuée (remplace le défilement qui se chevauchait)
+
+`RotatingQuote` (Dashboard.jsx) faisait défiler 5 phrases sans auteur en dur (`QUOTES`), avec un `setInterval` de 3s + fade opacity — rapporté comme se chevauchant visuellement pendant la transition entre deux citations. Remplacé par une citation du jour **fixe**, avec un vrai auteur attribué (Sun Tzu, Muhammad Ali, Bruce Lee, Kobe Bryant, Confucius, Sénèque, etc.).
+
+- **`src/data/quotes.json`** (nouveau) : 52 citations effort/discipline/sport/mental, chacune `{ text, author }`. Données locales statiques, aucune dépendance à une API externe — même choix déjà fait pour le catalogue d'exercices (`exercisesLibrary.json`) : fiabilité pour l'acheteur après la vente, pas de service tiers à maintenir. Écarté volontairement Lance Armstrong (contexte dopage, mauvais choix pour une app de coaching) et quelques citations trop faiblement rattachées au thème (chanteuse d'opéra, etc.) trouvées en composant la première version du fichier (89 entrées au départ, retaillé à 52 pour rester dans la fourchette 40-60 demandée).
+- **Sélection déterministe** : `dayOfYear(new Date()) % quotes.length` (`Dashboard.jsx`) — index basé sur le jour de l'année, pas de `Math.random`. Même citation toute la journée quel que soit le nombre d'ouvertures de l'app, change automatiquement le lendemain.
+- **`QuoteOfTheDay` remplace `RotatingQuote`** : plus de `setInterval`/`setTimeout`, plus de state `index`/`visible`, plus de transition d'opacité — toute la logique de défilement supprimée, pas juste masquée. `dashboard.css` : nouvelle classe `.db-quote-author` (citation + `— Auteur`), règle `transition: opacity` retirée de `.db-quote-text` (devenue inutile sans fade).
+
+Vérifié dans le bundle compilé (`dist/assets/Dashboard-*.js`) : 52 occurrences `author:` présentes, ancien texte `"Reste constant."` absent, fonction `dayOfYear` (`864e5` = 86400000 minifié) et `QuoteOfTheDay` présentes.
+
+### Reste à valider
+- Aucune vérification visuelle possible dans ce sandbox — à confirmer au prochain retour : lisibilité de `.db-quote-author` (taille 11.5px, `--db-text-muted`) sous la citation, et qu'aucune citation ne déborde sur deux lignes de façon disgracieuse sur petit écran (les plus longues font ~180 caractères).
+
 ## 2026-08-14 — 5 corrections visuelles (nommage Street Workout, nav active, seam AI Coach, nav opaque AI Coach/Messages, présence lavande)
 
 5 commits distincts, `npm run build` + grep du bundle compilé après chaque sujet, comme demandé.
