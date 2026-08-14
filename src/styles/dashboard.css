@@ -132,7 +132,10 @@ body.dashboard-body-bg {
   color: rgba(247,241,230,0.55);
 }
 .dashboard-redesign ~ .bottom-nav .nav-btn.active svg {
-  color: #F7F1E6;
+  /* Lavande plutôt que crème — légère augmentation de la présence de
+     cette teinte dans la palette (retouche, cf. JOURNAL.md), et cohérent
+     avec le changement de nav.css (glow rouge -> couleur lavande). */
+  color: #A3AEFE;
 }
 
 .dashboard-screen {

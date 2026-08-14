@@ -69,7 +69,8 @@ body.weekly-body-bg {
   color: rgba(247,241,230,0.55);
 }
 .weekly-redesign ~ .bottom-nav .nav-btn.active svg {
-  color: #F7F1E6;
+  /* Lavande plutôt que crème — voir dashboard.css pour l'explication. */
+  color: #A3AEFE;
 }
 
 .weekly-screen {
