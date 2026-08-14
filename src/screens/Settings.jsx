@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useApp } from '../context/AppContext'
@@ -92,6 +92,22 @@ export default function Settings() {
   const [profile, setProfile] = useState({ name: user?.name || '', email: user?.email || '', weight: '', height: '', age: '' })
   const [profileSaving, setProfileSaving] = useState(false)
   const [profileSaved, setProfileSaved] = useState(false)
+  // Race condition rapportée en test réel (2026-08-14, investigation
+  // JOURNAL.md) : le fetch initial de profiles.poids/taille (useEffect
+  // ci-dessous) peuplait `profile` via un .then() qui écrasait
+  // inconditionnellement weight/height/etc. dès que la valeur serveur
+  // n'était pas null — sans vérifier si le membre avait déjà tapé une
+  // nouvelle valeur entre le montage et la résolution du fetch. Un membre
+  // qui édite un champ avant que le fetch revienne voyait sa saisie
+  // écrasée par l'ancienne valeur serveur. Un Set en ref (pas un state :
+  // pas besoin de re-render, juste lu au moment où le fetch résout) suit
+  // quels champs ont été touchés localement — le fetch ne peuple plus que
+  // les champs encore vierges de toute saisie.
+  const touchedProfileFields = useRef(new Set())
+  function updateProfileField(field, value) {
+    touchedProfileFields.current.add(field)
+    setProfile(p => ({ ...p, [field]: value }))
+  }
   // Eau/Pas retirés d'ici — modifiables directement depuis leur carte sur
   // le Dashboard maintenant ("passer par Réglages pour ça c'est pas ouf,
   // il faut rendre le chemin simple"). Calories/protéines restent ici :
@@ -118,12 +134,13 @@ export default function Settings() {
         if (cancelled) return
         if (error) { console.error('[Settings] profile fetch failed', error); return }
         if (data) {
+          const touched = touchedProfileFields.current
           setProfile(p => ({
-            name: data.prenom || p.name,
-            email: data.email || p.email,
-            weight: data.poids != null ? String(data.poids) : p.weight,
-            height: data.taille != null ? String(data.taille) : p.height,
-            age: data.age != null ? String(data.age) : p.age,
+            name: !touched.has('name') && data.prenom ? data.prenom : p.name,
+            email: !touched.has('email') && data.email ? data.email : p.email,
+            weight: !touched.has('weight') && data.poids != null ? String(data.poids) : p.weight,
+            height: !touched.has('height') && data.taille != null ? String(data.taille) : p.height,
+            age: !touched.has('age') && data.age != null ? String(data.age) : p.age,
           }))
         }
       })
@@ -250,10 +267,10 @@ export default function Settings() {
 
         <div className="section-label">{t('profile_section')}</div>
         <div className="card card-animated" style={{ '--delay': '0ms' }}>
-          <Field label={t('first_name')} value={profile.name} onChange={v => setProfile(p => ({...p, name: v}))} />
-          <Field label={t('email')} value={profile.email} onChange={v => setProfile(p => ({...p, email: v}))} type="email" />
-          <Field label={t('weight')} value={profile.weight} onChange={v => setProfile(p => ({...p, weight: v}))} type="number" />
-          <Field label={t('height')} value={profile.height} onChange={v => setProfile(p => ({...p, height: v}))} type="number" />
+          <Field label={t('first_name')} value={profile.name} onChange={v => updateProfileField('name', v)} />
+          <Field label={t('email')} value={profile.email} onChange={v => updateProfileField('email', v)} type="email" />
+          <Field label={t('weight')} value={profile.weight} onChange={v => updateProfileField('weight', v)} type="number" />
+          <Field label={t('height')} value={profile.height} onChange={v => updateProfileField('height', v)} type="number" />
         </div>
         <button className="btn-ghost set-outline-btn" onClick={saveProfile} disabled={profileSaving} style={{ opacity: profileSaving ? 0.6 : 1 }}>
           {profileSaving ? '...' : profileSaved ? '✓ Enregistré' : 'Enregistrer le profil'}
