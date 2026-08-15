@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { useApp } from '../context/AppContext'
+import { useApp, sleepFromHours } from '../context/AppContext'
 import { useLanguage } from '../context/LanguageContext'
 import { save } from '../utils/storage'
 import { BOUNDS, clamp } from '../utils/validation'
@@ -191,7 +191,10 @@ export default function Dashboard() {
     { key: 'steps', label: 'PAS', icon: '👟', tint: '#EBEB7D', value: appData.steps, unit: 'pas', target: stepsGoalVal },
     { key: 'kmRun', label: 'COURSE', icon: '🏃', tint: '#A3AEFE', value: appData.kmRun, unit: 'km', target: appData.kmRunGoal || 5 },
     { key: 'water', label: 'EAU', icon: '💧', tint: '#F7F1E6', value: appData.water, unit: 'ml', target: waterGoalMl },
-    { key: 'sleep', label: 'SOMMEIL', icon: '😴', tint: '#FFBEF0', value: appData.sleep?.hours || 0, unit: 'h', target: appData.sleepGoal || 8 },
+    // Valeur en heures décimales (7h30 -> 7.5) : n'afficher que `hours`
+    // laissait la carte annoncer "7h" pour une nuit de 7h30 déjà enregistrée
+    // comme telle en base.
+    { key: 'sleep', label: 'SOMMEIL', icon: '😴', tint: '#FFBEF0', value: Math.round(((appData.sleep?.hours || 0) + (appData.sleep?.minutes || 0) / 60) * 10) / 10, unit: 'h', target: appData.sleepGoal || 8 },
   ]
   const currentCard = CARDS.find(c => c.key === editingCard)
 
@@ -226,7 +229,13 @@ export default function Dashboard() {
     if (editingCard === 'water') { const num = clamp(raw, BOUNDS.water); updateData('water', num); save('water', num) }
     if (editingCard === 'sleep') {
       const num = clamp(raw, BOUNDS.sleepHours)
-      const s = { hours: Math.floor(num), minutes: 0, quality: num >= 7 ? 'GOOD' : num >= 5 ? 'FAIR' : 'POOR' }
+      // `minutes: 0` en dur ici jetait silencieusement la partie décimale :
+      // saisir 7.5 enregistrait 7h (constaté en test réel le 2026-08-16, en
+      // base comme à l'écran). Rien d'autre dans la chaîne ne l'imposait —
+      // activite_jour.sommeil_h est un `numeric` sans échelle fixe, et
+      // AppContext repersiste bien `hours + minutes/60`. On réutilise donc sa
+      // conversion plutôt que d'aplatir.
+      const s = sleepFromHours(num)
       updateData('sleep', s); save('sleep', s)
     }
     navigator.vibrate && navigator.vibrate(8)

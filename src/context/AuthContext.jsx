@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react'
-import { supabase, authHeader } from '../lib/supabase'
+import { supabase, authHeader, upsertOwnProfile } from '../lib/supabase'
 
 const AuthContext = createContext(null)
 
@@ -67,11 +67,10 @@ async function resolveRole(u, sessionUser) {
       // notice: if this ever fires for a real user, gym_id needs fixing
       // by hand afterwards (same as this account's original healing on
       // 2026-08-05, done manually).
-      const { error: healError } = await supabase.from('profiles').upsert({
-        user_id: u.id,
+      const { error: healError } = await upsertOwnProfile(u.id, {
         prenom: u.name,
         email: u.email,
-      }, { onConflict: 'user_id' })
+      })
       if (healError) console.error('[Auth] resolveRole: self-heal profile upsert failed', healError)
 
       // Confirm email support (2026-08-12) — finishes the create-gym/join-
@@ -232,11 +231,10 @@ export function AuthProvider({ children }) {
     // above), only what a member is genuinely allowed to set about
     // themselves.
     if (data.user) {
-      const { error: profileError } = await supabase.from('profiles').upsert({
-        user_id: data.user.id,
+      const { error: profileError } = await upsertOwnProfile(data.user.id, {
         prenom: firstName,
         email,
-      }, { onConflict: 'user_id' })
+      })
       if (profileError) {
         console.error('[Auth] register: profiles upsert failed', profileError)
       }
@@ -313,27 +311,27 @@ export function AuthProvider({ children }) {
       setUser(prev => ({ ...prev, ...profile }))
     }
 
-    // Also upsert profiles table
+    // Also persist to the profiles table (jamais upsert() — voir
+    // upsertOwnProfile dans lib/supabase.js)
     const userId = user?.id
     if (userId) {
-      const { error: profileError } = await supabase.from('profiles').upsert({
-        user_id: userId,
+      const { error: profileError } = await upsertOwnProfile(userId, {
         prenom: profile.name || profile.prenom,
         email: profile.email,
         poids: profile.weight ? parseFloat(profile.weight) : null,
         taille: profile.height ? parseFloat(profile.height) : null,
         // Omitted (not null) when absent — e.g. Settings.jsx's profile
-        // save doesn't collect age, and upsert only touches columns
-        // actually present in the payload, so this never wipes a real
-        // age already saved from Onboarding.
+        // save doesn't collect age, and upsertOwnProfile only touches
+        // columns actually present in the payload, so this never wipes a
+        // real age already saved from Onboarding.
         ...(profile.age ? { age: parseInt(profile.age, 10) } : {}),
         // Was only ever written to user_metadata (line above) — never
         // persisted here, so ClientsList.jsx's coach-facing goal badge
         // had nothing real to read and always showed "-".
         objectif: profile.goal || undefined,
-      }, { onConflict: 'user_id' })
+      })
       if (profileError) {
-        console.error('[Auth] updateUserProfile: profiles upsert failed', profileError)
+        console.error('[Auth] updateUserProfile: profiles write failed', profileError)
       }
       if (profile.calorieGoal) {
         const { error: objectifsError } = await supabase.from('objectifs').upsert({

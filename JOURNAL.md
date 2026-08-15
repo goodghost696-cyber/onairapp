@@ -45,6 +45,50 @@ Il existait déjà une "charte ON AIR Neon" documentée plus bas dans ce journal
 - `@phosphor-icons/react` uniquement pour la nav (bottom nav membre + nav coach) — son prop `weight` donne un état actif "plein" vs "contour" sans changement de couleur
 - Emoji conservés à quelques endroits précis et délibérés après itération (météo du Dashboard, sélecteur d'eau, toast de bienvenue) — jamais comme icône UI générique, seulement là où un pictogramme dessiné n'apportait rien de mieux (voir suites 77-81 pour l'historique de l'icône eau, 5 itérations avant 🥛)
 
+## 🚨 2026-08-16 — Audit sécurité (Phase 2) : tests fonctionnels réels, 3 bugs trouvés dont 2 critiques
+
+Suite directe de la Phase 1 (voir entrée juste en dessous). Phase 2 = tests fonctionnels réels dans le navigateur (claude-in-chrome) sur l'app déployée, avec un compte de test dédié. Périmètre de cette session, tel que demandé : signup membre, signup coach (+ re-test du TOCTOU `/api/create-gym`), Dashboard (toutes les cartes + édition des objectifs). Les autres flux (Nutrition, Bilan, Workout, Settings, messagerie, espace coach) restent à faire.
+
+Les trois bugs ont été trouvés **en test réel, pas en relecture de code** — et aucun n'était visible depuis l'UI : dans les trois cas l'écran affichait le bon résultat pendant que la base recevait autre chose (ou rien).
+
+### 🔴 BUG 1 (critique) — toutes les écritures client sur `profiles` échouaient en 42501
+Premier signup membre de la session : l'inscription "réussit", le Dashboard affiche bien « QaMembre »… mais la console crache `[Auth] register: profiles upsert failed` **et** `[Auth] resolveRole: self-heal profile upsert failed`. En base, la ligne `profiles` existe (créée par `api/invite.js` en service_role) mais avec **`prenom` NULL et `email` NULL** — un nouveau membre arrive donc anonyme pour son coach. Le prénom affiché à l'écran vient de `user_metadata`, pas de la base : d'où l'invisibilité totale du bug côté UI.
+
+- **Root cause** : PostgREST traduit `upsert()` en `INSERT ... ON CONFLICT DO UPDATE SET <toutes les colonnes du payload>`, **clé de conflit `user_id` comprise**. Or `user_id` n'est pas dans l'allowlist de colonnes UPDATE de `profiles` — celle restaurée la veille en Phase 1 pour refermer l'escalade de privilèges. Postgres exige donc `UPDATE(user_id)` et refuse la requête entière, **avant même d'évaluer la moindre RLS**.
+- **Isolé précisément par test** (pas déduit) : `PATCH {prenom, email}` → 204 ; le **même** PATCH avec `user_id` dans le corps → 42501. `objectifs`, lui, a bien un `UPDATE(user_id)` — c'est exactement pour ça que ses upserts, eux, fonctionnent.
+- **Portée** : les 3 upserts `profiles` du client, donc `register()`, le self-heal de `resolveRole()`, et `updateUserProfile()` — c'est-à-dire aussi Settings (nom/email/poids/taille), l'objectif édité depuis Bilan, et Onboarding. **Tous sans effet en base depuis le 2026-08-16.**
+- **Lien avec l'incident du 2026-08-15** : le GRANT table-wide posé ce jour-là masquait ce problème (il donnait `UPDATE(user_id)` au passage). Le rétablissement de l'allowlist en Phase 1 était sécuritairement correct mais a re-cassé ce chemin — et le retest d'alors avait porté sur `avatar_url` via un `.update()` simple (qui passe), pas sur un `upsert()`.
+- **Correctif — côté client, pas côté GRANT** : élargir le GRANT à `user_id` rouvrirait précisément le trou que l'allowlist existe pour fermer. Nouveau helper `upsertOwnProfile()` (`lib/supabase.js`) : UPDATE d'abord (colonnes autorisées uniquement), INSERT si aucune ligne, retry UPDATE sur 23505 — la concurrence est réelle ici, `register()` et le self-heal écrivent en même temps à l'inscription. Aucun changement de schéma, de GRANT ni de RLS.
+- **Re-testé en réel après fix** (voir « Vérification finale » plus bas).
+- **À noter au passage** : le compte `spicymymy@gmail.com` (2026-08-06) n'a **aucune ligne `profiles`** — un vrai utilisateur, pas un compte de test. Résidu d'un échec du même genre, à traiter à la main.
+
+### 🔴 BUG 2 (critique) — TOCTOU `/api/create-gym` : deux salles créées, une orpheline
+Le trou signalé en Phase 1 est **toujours présent, et confirmé par test réel** : deux POST concurrents avec le même token frais → **200 tous les deux, DEUX salles créées** (`QA RACE GYM 1` et `2`). Le profil coach n'en revendique qu'une ; l'autre reste orpheline, avec son propre code d'invitation (n'importe qui pourrait rejoindre une salle sans coach) et son propre essai de 14 jours.
+
+- **Ce n'est pas un scénario théorique** : à chaque inscription coach, `CoachSignup.jsx` **et** le self-heal de `resolveRole()` (AuthContext) appellent tous les deux cet endpoint quasi simultanément — vérifié dans les logs console du signup coach de test (`[Auth] resolveRole: deferred create-gym failed Ce compte a déjà un profil`). Sur ce run l'appel différé a perdu la course de justesse et a pris le 409 ; le trou était donc invisible en usage normal, mais bien ouvert.
+- **Root cause** : la vérification « ce compte a-t-il déjà un profil ? » était une lecture suivie d'une écriture non atomique.
+- **Correctif** : claim atomique du profil après création de la salle — INSERT (la contrainte `UNIQUE (user_id)` fait perdre le second en 23505), sinon UPDATE conditionné à `gym_id is null AND role = 'member'` (sous READ COMMITTED le second UPDATE ré-évalue son WHERE et met à jour 0 ligne). Le perdant supprime la salle qu'il venait de créer et répond 409 ; une vraie erreur d'écriture reste distinguée en 500. Le pré-filtre est conservé mais n'est plus la garantie. Aucun changement de schéma : le claim ne s'appuie que sur des contraintes déjà en place.
+
+### 🟠 BUG 3 (mineur) — la carte Sommeil jetait les demi-heures
+Saisir `7.5` sur la carte Sommeil enregistrait **7** — à l'écran comme en base (`activite_jour.sommeil_h = 7`), sans aucun retour à l'utilisateur. Root cause : `handleSave()` construisait `{ hours: Math.floor(num), minutes: 0 }`. Rien ne l'imposait — la colonne est un `numeric` sans échelle fixe, `AppContext` repersiste déjà `hours + minutes/60`, et `sleepFromHours()` faisait exactement la bonne conversion dans l'autre sens. Correctif : `sleepFromHours()` exportée et réutilisée ; la carte affiche désormais des heures décimales (elle ne lisait que `hours` et aurait annoncé « 7h » pour une nuit de 7h30 correctement enregistrée).
+
+### Ce qui a été testé et qui marche
+- **Signup membre** : compte créé dans `auth.users`, ligne `profiles` créée avec le bon `gym_id` (VOLTA FITNESS, via `api/invite.js` en service_role) et `role='member'`. Seuls `prenom`/`email` manquaient → BUG 1.
+- **Signup coach** : `gyms` (nom, code d'invitation généré, `trial_ends_at` à +14j) et `profiles` (prenom, email, `role='coach'`, `gym_id`) tous correctement peuplés. Le chemin service_role, lui, n'a jamais souffert du BUG 1.
+- **Dashboard** : les 5 familles de cartes s'affichent avec de vraies données (streak, calories/macros lues depuis `objectifs`, pas, course, eau, sommeil, séances de la semaine).
+- **Écriture des valeurs du jour** : eau 1500 ml (sélecteur de verres) et pas 8432 → confirmés dans `activite_jour`.
+- **Édition des objectifs** : eau 2500 → 3000 et sommeil 8 → 9 → confirmés dans `objectifs` (`eau_ml`, `sommeil_h_objectif`). Ces upserts-là passent : `objectifs` a le `UPDATE(user_id)` qui manque à `profiles`.
+
+### Point d'environnement (pas un bug de code) — les routes `/api/*` ne tournent pas en Preview
+Le retest était prévu sur le déploiement de preview de la PR : impossible, `/api/invite` y répond `500 {"error":"Not configured"}` (variable d'environnement absente côté Preview — `SUPABASE_SERVICE_ROLE_KEY` et/ou `VITE_SUPABASE_URL` ne sont configurées que pour Production). Conséquence pratique : **aucun flux serveur (signup membre, signup coach, quota IA…) n'est testable en preview aujourd'hui** — toute vérification réelle de ces chemins doit passer par la production. À arbitrer : ajouter ces variables à l'environnement Preview.
+
+### Reste à faire
+- **Phase 2 (suite)** — les flux non couverts cette session : Nutrition, Bilan, Workout, Settings, messagerie temps réel, espace coach.
+- **Phase 3** — qualité de code (mock data résiduelle, code mort, cohérence des messages d'erreur FR).
+- Réparer à la main le profil manquant de `spicymymy@gmail.com` (BUG 1).
+- Décider pour les variables d'env en Preview (ci-dessus).
+- Toujours en attente décision produit : protection des mots de passe compromis (advisor WARN, Phase 1).
+
 ## 🚨 2026-08-16 — Audit sécurité (Phase 1) : 2 failles corrigées, dont une escalade de privilèges introduite la veille
 
 Audit complet demandé avant reprise du restyle coach. Phase 1 (sécurité base de données) traitée ; Phases 2 (tests fonctionnels navigateur) et 3 (qualité de code) **pas encore commencées** (interrompues à la demande de l'utilisateur). Contexte de départ : le GRANT manquant découvert la veille (photo de profil) invitait à chercher d'autres trous du même type invisibles sans test réel.

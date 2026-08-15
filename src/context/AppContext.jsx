@@ -25,7 +25,7 @@ function mealFromRow(r) {
 
 // Reconstructs the {hours, minutes, quality} shape the UI expects from the
 // single `sommeil_h` numeric column activite_jour actually stores.
-function sleepFromHours(h) {
+export function sleepFromHours(h) {
   const hours = Math.floor(h)
   const minutes = Math.round((h - hours) * 60)
   const quality = h >= 7 ? 'GOOD' : h >= 5 ? 'FAIR' : 'POOR'
