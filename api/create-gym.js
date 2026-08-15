@@ -42,6 +42,15 @@ export default async function handler(req, res) {
   }
   const admin = createClient(process.env.VITE_SUPABASE_URL, serviceRoleKey);
 
+  // Pré-filtre (PAS la garantie) — évite de créer une salle pour rien dans le
+  // cas courant. La garantie réelle est le claim atomique plus bas : ce
+  // read-then-write est un TOCTOU, confirmé par test réel le 2026-08-16 (deux
+  // POST concurrents avec le même token frais -> 200 tous les deux, DEUX salles
+  // créées, dont une orpheline avec son propre code d'invitation et son propre
+  // essai de 14 jours). Ce n'est pas un scénario théorique : à chaque
+  // inscription coach, CoachSignup.jsx et le self-heal de resolveRole()
+  // (AuthContext.jsx) appellent tous les deux cet endpoint quasi simultanément.
+  //
   // Only ever for a genuinely fresh account — blocks an existing member or
   // coach from calling this later to spin up a second gym and re-attach
   // themselves to it, the same "single-shot, right after signUp()" posture
@@ -98,21 +107,61 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: "Erreur lors de la création de la salle" });
   }
 
-  const { error: profileError } = await admin.from('profiles').upsert({
-    user_id: user.id,
+  // Claim atomique du profil — c'est LUI qui tranche entre deux appels
+  // concurrents, pas la lecture ci-dessus.
+  //
+  // Chemin 1 (compte tout frais, aucune ligne) : INSERT. La contrainte UNIQUE
+  // (user_id) fait perdre le second appelant en 23505, qui bascule alors sur
+  // le chemin 2 et se fait refuser par ses conditions.
+  //
+  // Chemin 2 (ligne coquille déjà créée par le self-heal de resolveRole) :
+  // UPDATE conditionné à `gym_id is null AND role = 'member'` — sous READ
+  // COMMITTED, le second UPDATE attend le premier puis ré-évalue son WHERE sur
+  // la version à jour de la ligne, y voit gym_id/role déjà posés, et met à
+  // jour 0 ligne. Un seul gagnant possible.
+  const claimFields = {
     prenom: firstName || null,
     email: user.email,
     role: 'coach',
     gym_id: gym.id,
-  }, { onConflict: 'user_id' });
+  };
 
-  if (profileError) {
-    console.error('[create-gym] profile upsert failed', profileError);
-    // Best-effort rollback so a half-created gym doesn't linger with no
-    // coach attached — not wrapped in a real transaction (two separate
-    // REST calls), but this is the failure path, worth trying.
+  let claimed = false;
+  let writeFailed = false;
+  const { error: insertError } = await admin
+    .from('profiles')
+    .insert({ user_id: user.id, ...claimFields });
+  if (!insertError) {
+    claimed = true;
+  } else if (insertError.code === '23505') {
+    const { data: updatedRows, error: updateError } = await admin
+      .from('profiles')
+      .update(claimFields)
+      .eq('user_id', user.id)
+      .is('gym_id', null)
+      .eq('role', 'member')
+      .select('user_id');
+    if (updateError) {
+      console.error('[create-gym] profile claim update failed', updateError);
+      writeFailed = true;
+    } else {
+      claimed = updatedRows && updatedRows.length > 0;
+    }
+  } else {
+    console.error('[create-gym] profile claim insert failed', insertError);
+    writeFailed = true;
+  }
+
+  if (!claimed) {
+    // Salle créée mais profil non revendiqué : soit un appel concurrent a
+    // gagné, soit une vraie erreur d'écriture. Dans les deux cas la salle qu'on
+    // vient de créer est orpheline — on la supprime plutôt que de la laisser
+    // traîner avec son code d'invitation (best-effort : deux appels REST
+    // distincts, pas une vraie transaction, mais c'est le chemin d'échec).
     await admin.from('gyms').delete().eq('id', gym.id);
-    return res.status(500).json({ error: 'Erreur lors de la création du profil coach' });
+    return writeFailed
+      ? res.status(500).json({ error: 'Erreur lors de la création du profil coach' })
+      : res.status(409).json({ error: 'Ce compte a déjà un profil' });
   }
 
   return res.status(200).json({ success: true, gym });
