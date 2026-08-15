@@ -82,6 +82,17 @@ Saisir `7.5` sur la carte Sommeil enregistrait **7** — à l'écran comme en ba
 ### Point d'environnement (pas un bug de code) — les routes `/api/*` ne tournent pas en Preview
 Le retest était prévu sur le déploiement de preview de la PR : impossible, `/api/invite` y répond `500 {"error":"Not configured"}` (variable d'environnement absente côté Preview — `SUPABASE_SERVICE_ROLE_KEY` et/ou `VITE_SUPABASE_URL` ne sont configurées que pour Production). Conséquence pratique : **aucun flux serveur (signup membre, signup coach, quota IA…) n'est testable en preview aujourd'hui** — toute vérification réelle de ces chemins doit passer par la production. À arbitrer : ajouter ces variables à l'environnement Preview.
 
+### Vérification finale — les 3 correctifs re-testés en réel après déploiement
+Le retest était prévu sur la preview de la PR : impossible (voir le point d'environnement ci-dessus, les routes `/api/*` n'y tournent pas). Les 3 fix ont donc été re-testés sur la **production**, après merge de la PR #127, avec de nouveaux comptes de test — pas par relecture du diff.
+
+- **BUG 1** — nouveau signup membre : ligne `profiles` créée avec `prenom='QaMembreDeux'`, `email`, `role='member'` et le bon `gym_id`. Plus aucune erreur `upsert failed` en console (seul reste le log informatif du self-heal, qui réussit maintenant). Puis, sur le même compte, édition depuis Réglages (Poids 72 / Taille 178) → **confirmés en base** : le chemin `updateUserProfile()`, cassé lui aussi, refonctionne.
+- **BUG 2** — deux POST `/api/create-gym` concurrents, même token frais : **un seul 200, l'autre 409**, et en base **une seule salle** (`QA RACE GYM B2`, 1 profil rattaché). À comparer au run d'avant fix, encore visible en base au moment du test : `QA RACE GYM 1` (1 profil) **et** `QA RACE GYM 2` (0 profil — l'orpheline). Le perdant supprime bien la salle qu'il venait de créer.
+- **BUG 3** — carte Sommeil, saisie `7.5` : affichée `7.5h` et enregistrée `sommeil_h = 7.5` en base (contre `7` avant fix).
+- Le bundle servi par la production a été vérifié avant le retest (`index-CXlRhYPi.js`) : helper présent, plus aucun `from("profiles").upsert` — service worker déréférencé au préalable pour ne pas tester un ancien build en cache.
+
+### Nettoyage des données de test — vérifié à 0
+5 comptes de test (`volta.qa.*@gmail.com`), 4 salles de test (`QA %`), et toutes leurs lignes associées supprimés : `profiles` (5), `activite_jour` (2), `objectifs` (1), `api_rate_limit` (10), `gyms` (4), `auth.users` (5). Contrôle après coup : **0** compte de test, **0** salle de test, **0** ligne orpheline (`profiles`/`activite_jour`/`objectifs` sans utilisateur), **0** fichier de test dans Storage. La base est revenue exactement à son état d'avant session : 1 salle (VOLTA FITNESS), 4 profils, 5 comptes `auth.users` (dont `spicymymy@gmail.com`, sans profil — anomalie **pré-existante** signalée plus haut, laissée intacte).
+
 ### Reste à faire
 - **Phase 2 (suite)** — les flux non couverts cette session : Nutrition, Bilan, Workout, Settings, messagerie temps réel, espace coach.
 - **Phase 3** — qualité de code (mock data résiduelle, code mort, cohérence des messages d'erreur FR).
