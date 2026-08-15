@@ -134,6 +134,13 @@ export function AppProvider({ children }) {
       // Used only for the running-calorie-burn estimate (utils/metabolism.js)
       // — a reasonable adult default until the real profile loads below.
       weightKg: 75,
+      // Photo de profil (Avatar.jsx) — null tant qu'aucune n'a été
+      // uploadée, auquel cas Avatar.jsx retombe sur le cercle-initiale.
+      // Fetchée une fois pour toute l'app juste plus bas (même requête
+      // profiles que weightKg) ; mise à jour immédiatement après un
+      // nouvel upload (Settings.jsx, updateData('avatarUrl', ...)) pour
+      // que Dashboard.jsx la reflète sans re-fetch.
+      avatarUrl: null,
       water: load('water', 0),
       waterGoal: 2500,
       sleep: load('sleep', { hours: 7, minutes: 23, quality: 'Bonne' }),
@@ -232,15 +239,18 @@ export function AppProvider({ children }) {
 
     // Real body weight, used only for the running-calorie-burn estimate in
     // utils/metabolism.js — everything else calorie-related already goes
-    // through objectifs/repas above.
+    // through objectifs/repas above. avatar_url ajouté à cette même requête
+    // (2026-08-15) plutôt qu'un fetch séparé — un seul aller-retour pour
+    // les deux valeurs "profil" que l'app entière doit connaître au démarrage.
     supabase
       .from('profiles')
-      .select('poids')
+      .select('poids, avatar_url')
       .eq('user_id', user.id)
       .maybeSingle()
       .then(({ data, error }) => {
-        if (error) { console.error('[App] fetch profile weight failed', error); return }
+        if (error) { console.error('[App] fetch profile weight/avatar failed', error); return }
         if (data?.poids != null) setAppData(prev => ({ ...prev, weightKg: data.poids }))
+        if (data?.avatar_url) setAppData(prev => ({ ...prev, avatarUrl: data.avatar_url }))
       })
   }, [user?.id])
 

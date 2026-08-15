@@ -10,6 +10,7 @@ import { fetchStreakDetails } from '../utils/streak'
 import { fetchHabitsWithProgress, checkHabitToday, uncheckHabitToday } from '../utils/habits'
 import { useSwipeToDismiss } from '../hooks/useSwipeToDismiss'
 import quotes from '../data/quotes.json'
+import Avatar from '../components/Avatar'
 import '../styles/dashboard.css'
 
 // Streak paliers — first shown at 7 days, then every 30 days after the
@@ -277,7 +278,7 @@ export default function Dashboard() {
             </p>
           </div>
           <button onClick={() => navigate('/settings')} className="db-avatar-btn" style={{ marginTop: 4 }}>
-            {(user?.name || 'A').charAt(0).toUpperCase()}
+            <Avatar name={user?.name} avatarUrl={appData.avatarUrl} />
           </button>
         </div>
 

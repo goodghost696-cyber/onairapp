@@ -6,7 +6,9 @@ import { useLanguage } from '../context/LanguageContext'
 import { supabase } from '../lib/supabase'
 import { BOUNDS, clamp } from '../utils/validation'
 import { isPushSupported, getPushSubscriptionState, subscribeToPush, unsubscribeFromPush, isIOSNotStandalone } from '../utils/push'
+import { uploadAvatar } from '../utils/avatar'
 import DeleteAccountButton from '../components/DeleteAccountButton'
+import Avatar from '../components/Avatar'
 import { storageKey } from '../components/OnboardingTour'
 import '../styles/settings-redesign.css'
 
@@ -43,6 +45,32 @@ export default function Settings() {
   // placeholders (no scheduling logic built yet). This one actually
   // subscribes the browser to Web Push and persists it in push_subscriptions.
   const [pushState, setPushState] = useState('loading')
+  // Photo de profil (2026-08-15) — tap sur l'avatar → sélecteur photo natif
+  // (input file caché) → resize client (utils/avatar.js) → upload Storage
+  // → update profiles.avatar_url → updateData('avatarUrl', ...) pour que
+  // Dashboard.jsx (et tout autre écran affichant Avatar.jsx) reflète la
+  // nouvelle photo immédiatement, sans re-fetch ni navigation.
+  const avatarInputRef = useRef(null)
+  const [avatarUploading, setAvatarUploading] = useState(false)
+  const [avatarError, setAvatarError] = useState('')
+
+  async function handleAvatarChange(e) {
+    const file = e.target.files?.[0]
+    e.target.value = '' // permet de re-sélectionner le même fichier plus tard
+    if (!file || !user?.id) return
+    setAvatarError('')
+    setAvatarUploading(true)
+    try {
+      const url = await uploadAvatar(user.id, file)
+      const { error } = await supabase.from('profiles').update({ avatar_url: url }).eq('user_id', user.id)
+      if (error) throw error
+      updateData('avatarUrl', url)
+    } catch (err) {
+      console.error('[Settings] avatar upload failed', err)
+      setAvatarError("Échec de l'envoi — réessaie.")
+    }
+    setAvatarUploading(false)
+  }
 
   useEffect(() => {
     if (!isPushSupported()) { setPushState('unsupported'); return }
@@ -180,6 +208,31 @@ export default function Settings() {
         </div>
 
         <div className="section-label">{t('profile_section')}</div>
+        <div className="set-avatar-row">
+          <button
+            type="button"
+            className="set-avatar-btn"
+            onClick={() => avatarInputRef.current?.click()}
+            disabled={avatarUploading}
+            aria-label="Changer la photo de profil"
+          >
+            <Avatar name={profile.name} avatarUrl={appData.avatarUrl} />
+            {avatarUploading && <span className="set-avatar-spinner" />}
+          </button>
+          <div>
+            <button type="button" className="set-avatar-change-link" onClick={() => avatarInputRef.current?.click()} disabled={avatarUploading}>
+              {avatarUploading ? 'Envoi...' : 'Changer la photo'}
+            </button>
+            {avatarError && <p className="set-avatar-error">{avatarError}</p>}
+          </div>
+          <input
+            ref={avatarInputRef}
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            style={{ display: 'none' }}
+            onChange={handleAvatarChange}
+          />
+        </div>
         <div className="card card-animated" style={{ '--delay': '0ms' }}>
           <Field label={t('first_name')} value={profile.name} onChange={v => updateProfileField('name', v)} />
           <Field label={t('email')} value={profile.email} onChange={v => updateProfileField('email', v)} type="email" />

@@ -188,6 +188,9 @@ body.dashboard-body-bg {
   width: 46px;
   height: 46px;
   border-radius: 999px;
+  /* Nécessaire pour clipper .avatar-photo (Avatar.jsx, width/height:100%)
+     en cercle — border-radius seul ne rogne pas un enfant en overflow. */
+  overflow: hidden;
   background: var(--db-lavender);
   color: var(--db-ink);
   border: none;

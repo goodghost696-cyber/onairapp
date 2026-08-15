@@ -712,6 +712,17 @@ button {
   background: rgba(240,193,75,0.08);
 }
 
+/* Photo de profil (Avatar.jsx) — remplit le conteneur circulaire existant
+   (.db-avatar-btn sur Dashboard.jsx, .set-avatar-btn sur Settings.jsx,
+   quelle que soit sa taille/couleur de fond) plutôt que d'imposer ses
+   propres dimensions, pour rester réutilisable sans CSS par écran. */
+.avatar-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+
 /* Réglages > Objectifs — goal chips, reusing .lang-btn's visual language
    (pill, active = accent border/tint) but wrapping instead of forcing a
    fixed number of equal-width columns, since goal labels are longer and
