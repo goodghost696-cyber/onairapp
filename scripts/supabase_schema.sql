@@ -217,16 +217,28 @@ grant execute on function public.is_platform_admin() to authenticated;
 -- new table by default, which is why an earlier fix here silently never
 -- held. The durable fix is to REVOKE the table-wide UPDATE grant entirely
 -- and re-GRANT an explicit column allowlist that excludes `role`/`id`/
--- `user_id`/`created_at`.
+-- `user_id`/`created_at`/`gym_id`/`is_platform_admin`.
+--
+-- 2026-08-15: this hole was reopened once — an avatar_url UPDATE 403'd
+-- (the new column wasn't in the allowlist), and the "fix" was a table-wide
+-- `grant update ... to authenticated` (the exact reflex this comment warns
+-- about). role stayed safe via the trigger below, but gym_id and
+-- is_platform_admin, allowlist-only at the time, briefly became
+-- self-editable by any member (confirmed by a real exploit test). Reclosed
+-- by migration reclose_profiles_update_grant_hole: allowlist restored (with
+-- avatar_url added), and the trigger extended to gym_id/is_platform_admin.
 revoke update on public.profiles from authenticated, anon;
-grant update (prenom, email, poids, taille, age, objectif) on public.profiles to authenticated;
+grant update (prenom, email, poids, taille, age, objectif, avatar_url) on public.profiles to authenticated;
 
--- Defense in depth on top of the GRANT restriction above: block any role
--- change coming through PostgREST as `authenticated` unless the caller is
--- already coach/admin, so a future broad "grant all on all tables"
--- (a common Supabase troubleshooting reflex) can't silently reopen this.
--- Does not apply to service_role/postgres (manual promotion via SQL editor
--- remains possible).
+-- Defense in depth on top of the GRANT restriction above: block any change
+-- to a privilege column coming through PostgREST as `authenticated`, so a
+-- future broad "grant all on all tables" (a common Supabase troubleshooting
+-- reflex) can't silently reopen this. role: allowed only if the caller is
+-- already coach/admin. gym_id / is_platform_admin: never, for authenticated
+-- (all legit changes are service_role — create-gym.js, invite.js, manual
+-- admin promotion — which bypass this since auth.role() <> 'authenticated';
+-- mirrors prevent_self_privilege_insert on the INSERT path). Does not apply
+-- to service_role/postgres.
 create or replace function public.prevent_self_role_escalation()
 returns trigger
 language plpgsql
@@ -234,12 +246,20 @@ security definer
 set search_path = public
 as $$
 begin
-  if new.role is distinct from old.role and auth.role() = 'authenticated' then
-    if not exists (
-      select 1 from public.profiles
-      where user_id = auth.uid() and role in ('coach', 'admin')
-    ) then
-      raise exception 'Not authorized to change role';
+  if auth.role() = 'authenticated' then
+    if new.role is distinct from old.role then
+      if not exists (
+        select 1 from public.profiles
+        where user_id = auth.uid() and role in ('coach', 'admin')
+      ) then
+        raise exception 'Not authorized to change role';
+      end if;
+    end if;
+    if new.gym_id is distinct from old.gym_id then
+      raise exception 'Not authorized to change gym_id';
+    end if;
+    if new.is_platform_admin is distinct from old.is_platform_admin then
+      raise exception 'Not authorized to change is_platform_admin';
     end if;
   end if;
   return new;
