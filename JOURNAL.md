@@ -45,6 +45,54 @@ Il existait déjà une "charte ON AIR Neon" documentée plus bas dans ce journal
 - `@phosphor-icons/react` uniquement pour la nav (bottom nav membre + nav coach) — son prop `weight` donne un état actif "plein" vs "contour" sans changement de couleur
 - Emoji conservés à quelques endroits précis et délibérés après itération (météo du Dashboard, sélecteur d'eau, toast de bienvenue) — jamais comme icône UI générique, seulement là où un pictogramme dessiné n'apportait rien de mieux (voir suites 77-81 pour l'historique de l'icône eau, 5 itérations avant 🥛)
 
+## 🚨 2026-08-15 — Incident base de données : UPDATE sur `profiles` bloqué depuis le début (GRANT manquant, pas un bug RLS)
+
+Découvert en testant en conditions réelles l'upload d'avatar (voir l'entrée juste en dessous, photo de profil). **Sans lien avec la fonctionnalité avatar elle-même** — un incident de configuration de la base, distinct, documenté séparément parce que son impact dépasse largement l'avatar.
+
+### Symptôme
+Upload Storage réussi (200), mais l'écriture de `avatar_url` dans `profiles` échouait avec **403 "permission denied for table profiles"** (code Postgres `42501`).
+
+### Root cause — pas une policy RLS
+La policy RLS `"Users can update own profile"` (`auth.uid() = user_id`) était correcte et déjà en place. Le vrai problème : le rôle `authenticated` avait DELETE/INSERT/SELECT/TRIGGER/TRUNCATE sur `public.profiles`, **mais jamais UPDATE**, au niveau GRANT Postgres — une couche *en dessous* de RLS. RLS ne fait que *restreindre* un accès déjà accordé par GRANT ; sans UPDATE au niveau table, Postgres refuse la requête avant même d'évaluer la moindre policy.
+
+### Impact réel — bien plus large que l'avatar
+Tout code faisant un `upsert()` sur une ligne `profiles` **déjà existante** échouait silencieusement en base depuis le début, jamais remarqué parce qu'aucun de ces flux (`updateUserProfile` dans AuthContext.jsx, utilisé par : Settings.jsx pour nom/email/poids/taille, Weekly.jsx pour l'objectif/calories/protéines depuis le déménagement du 2026-08-15, Onboarding.jsx) ne vérifiait la réponse Supabase pour un cas d'erreur aussi basique — un upsert avec conflit était censé transparent, mais **son chemin UPDATE n'a probablement jamais fonctionné pour aucun compte réel**. Seul le tout premier enregistrement d'une nouvelle ligne (chemin INSERT, jamais concerné) a pu passer.
+
+### Correctif
+```sql
+grant update on public.profiles to authenticated;
+```
+Appliqué manuellement par l'utilisateur (ma tentative via Supabase MCP a été bloquée par le classificateur de permissions Claude Code — GRANT est une modification de schéma, hors du périmètre normalement autorisé sans confirmation explicite).
+
+### Vérifié par un vrai retest, pas seulement par relecture du GRANT
+Nouveau compte de test, upload d'une vraie photo (avatar_url confirmé en base) **et** modification du champ Poids depuis Settings.jsx (poids confirmé en base, `"72"`) — les deux passent maintenant, confirmant que le correctif couvre bien l'ensemble des updates `profiles`, pas seulement l'avatar. Compte de test, ligne `profiles`, et fichier Storage nettoyés après coup (0 résidu vérifié).
+
+### Reste à faire
+Aucun test automatisé sur ce repo (dette connue, CLAUDE.md) — rien n'aurait détecté ce genre de trou de configuration avant un test manuel réel. Aucune action de suivi précise identifiée au-delà de ce constat ; à garder en tête si d'autres tables affichent un jour un comportement d'écriture "silencieusement sans effet" similaire — vérifier les GRANTs de rôle avant de soupçonner RLS.
+
+## 2026-08-15 — Photo de profil uploadable (remplace le cercle-initiale)
+
+Demande : remplacer l'avatar "cercle + initiale" par une vraie photo de profil, partout où il apparaît.
+
+### Investigation préalable
+Un seul endroit affichait l'avatar du membre connecté : `.db-avatar-btn` sur Dashboard.jsx (`(user?.name || 'A').charAt(0)`). Settings.jsx n'avait aucun avatar (devient le point d'entrée d'upload). CoachDashboard.jsx/ClientsList.jsx/MemberDetail.jsx — vérifiés, aucun cercle-initiale nulle part côté coach. Messages.jsx et Conversation.jsx affichent bien une initiale dans un cercle, mais celle d'une **autre** personne (le coach vu par le membre, ou le membre vu par le coach) — hors scope de "l'avatar actuel" (celui du compte connecté), non touchés.
+
+### Infrastructure Supabase (via Supabase MCP)
+- Bucket Storage `avatars` : public en lecture, 2 Mo max, types image seulement (JPEG/PNG/WebP).
+- Colonne `profiles.avatar_url` (text, nullable).
+- Policies `storage.objects` scopées au bucket : lecture publique ; écriture (INSERT/UPDATE) restreinte à `(storage.foldername(name))[1] = auth.uid()::text` — chemin attendu `"{user_id}/avatar.jpg"`, un seul avatar par utilisateur, toujours écrasé (upsert).
+- **Sécurité vérifiée par un vrai test contre le projet réel** (pas juste relu) : deux comptes fraîchement créés, script Node avec `@supabase/supabase-js` — upload dans son propre dossier → OK ; tentative d'écrasement du dossier de l'autre compte → rejeté (RLS) ; upload sans authentification → rejeté. Comptes de test et fichier nettoyés après coup (policy DELETE temporaire ajoutée puis retirée pour l'occasion, `storage.objects` protège contre le DELETE SQL direct par design).
+
+### Code
+- **`src/components/Avatar.jsx`** (nouveau, partagé) : affiche la photo (`<img>`) si `avatarUrl`, sinon repli sur l'initiale — comportement par défaut inchangé. Contenu seul, pas de wrapper : dimensions/couleur de fond restent gérées par l'élément appelant (`.db-avatar-btn`, `.set-avatar-btn`), pour rester réutilisable sans CSS dupliqué par écran. `.avatar-photo` (global.css) : `width/height:100%; object-fit:cover; border-radius:inherit`.
+- **`src/utils/avatar.js`** (nouveau) : `uploadAvatar(userId, file)` — redimensionne à 400px max via `resizeImage` (déjà utilisé par Scan.jsx/Nutrition.jsx, pas dupliqué), upload vers Storage (upsert, chemin fixe), retourne l'URL publique avec un paramètre `?t=timestamp` (cache-bust — le chemin fixe serait sinon servi en cache par le navigateur/CDN après un nouvel upload).
+- **`AppContext.jsx`** : `appData.avatarUrl` — fetchée dans la même requête `profiles` que `weightKg` (un seul aller-retour), mise à jour immédiatement après upload via `updateData('avatarUrl', ...)` pour que Dashboard.jsx la reflète sans re-fetch.
+- **`Dashboard.jsx`** : `.db-avatar-btn` utilise désormais `<Avatar>` ; `overflow:hidden` ajouté (nécessaire pour que la photo soit clippée en cercle, un `border-radius` seul ne rogne pas un enfant en overflow).
+- **`Settings.jsx`** : nouveau bloc `.set-avatar-row` en tête de la carte Profil — avatar tappable (ouvre un `<input type="file">` caché) + lien "Changer la photo", état de chargement (spinner superposé) et message d'erreur inline.
+
+### Testé en conditions réelles (upload d'une vraie photo, pas seulement le bundle compilé)
+Serveur `vite dev` lancé localement, compte de test créé (email/mdp via `auth.signUp`, ligne `profiles` insérée à la main pour rattacher à la salle réelle), connexion via l'UI, upload d'une vraie image JPEG via le champ fichier réel de Settings.jsx. **Premier essai : échec** — a révélé l'incident GRANT documenté juste au-dessus (sans lien avec le code de cette fonctionnalité). Après correctif du GRANT par l'utilisateur : retest complet, avatar affiché sur Settings **et** Dashboard après navigation, confirmé en base (`avatar_url` correctement enregistré). Compte de test et fichier Storage nettoyés après coup (0 résidu vérifié dans `auth.users`/`storage.objects`).
+
 ## 2026-08-15 — Édition de l'objectif déménagée de Settings.jsx vers Weekly.jsx (Bilan)
 
 Demande : l'objectif (perte de poids/prise de masse/nutrition/performance, chips) n'était éditable que depuis Réglages ; centralisé pour n'être éditable que depuis Bilan, Réglages devient un résumé en lecture seule.
