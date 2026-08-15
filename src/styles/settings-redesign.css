@@ -174,6 +174,15 @@ body.settings-body-bg {
   font-family: inherit;
   padding: 0;
 }
+/* Résumé objectif en lecture seule (2026-08-15) — même gabarit visuel que
+   .set-field input (texte encre, aligné à droite) mais un simple <span>,
+   pas de champ éditable : l'édition a déménagé sur Bilan (Weekly.jsx). */
+.set-field-value {
+  color: var(--set-ink);
+  font-size: 14.5px;
+  font-weight: 600;
+  text-align: right;
+}
 
 /* Boutons "Enregistrer..." — pilule contour encre. */
 .settings-redesign .btn-ghost.set-outline-btn {

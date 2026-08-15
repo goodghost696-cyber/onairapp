@@ -185,6 +185,92 @@ body.weekly-body-bg {
   color: var(--wk-text-muted);
 }
 
+/* ── Objectif — déménagé depuis Settings.jsx (2026-08-15). Même gabarit
+   que .set-field/.goal-chip de settings-redesign.css (carte blanche,
+   chips pilule, champ aligné à droite), juste réécrit avec les tokens
+   --wk-* de cet écran plutôt que --set-*. */
+.wk-goal-card {
+  background: var(--wk-card);
+  border-radius: 30px;
+  padding: 20px 22px 6px;
+  margin-bottom: 10px;
+}
+.wk-goal-hint {
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--wk-text-muted);
+  margin-bottom: 12px;
+}
+.weekly-redesign .goal-selector {
+  margin-bottom: 4px;
+}
+.weekly-redesign .goal-chip {
+  background: var(--wk-track);
+  border: none;
+  color: var(--wk-text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 999px;
+  padding: 10px 16px;
+}
+/* Alterne olive/lavande parmi les chips sélectionnées — même logique que
+   settings-redesign.css, purement décoratif (pas lié à la donnée). */
+.weekly-redesign .goal-chip.active:nth-of-type(odd) {
+  background: var(--wk-olive);
+  color: var(--wk-ink);
+  font-weight: 600;
+}
+.weekly-redesign .goal-chip.active:nth-of-type(even) {
+  background: var(--wk-lavender);
+  color: var(--wk-ink);
+  font-weight: 600;
+}
+.wk-goal-field {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--wk-border);
+}
+.wk-goal-field:last-of-type {
+  border-bottom: none;
+}
+.wk-goal-field-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--wk-text-secondary);
+}
+.wk-goal-field input {
+  background: none;
+  border: none;
+  color: var(--wk-ink);
+  font-size: 14.5px;
+  font-weight: 600;
+  text-align: right;
+  width: 120px;
+  outline: none;
+  font-family: inherit;
+  padding: 0;
+}
+.wk-goal-save-btn {
+  width: 100%;
+  background: none;
+  border: 1.5px solid var(--wk-ink);
+  color: var(--wk-ink);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  padding: 14px 0;
+  margin-bottom: 24px;
+  cursor: pointer;
+  font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+}
+.wk-goal-save-btn:disabled {
+  cursor: not-allowed;
+}
+
 /* ── Mes charges (courbes) — .lifts-section/.lift-curve-* existent déjà
    dans Weekly.css (chargé sur ce même écran, pas partagé ailleurs) ;
    scopés à .weekly-redesign ici pour gagner en spécificité sans dépendre

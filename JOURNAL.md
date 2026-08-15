@@ -45,6 +45,23 @@ Il existait déjà une "charte ON AIR Neon" documentée plus bas dans ce journal
 - `@phosphor-icons/react` uniquement pour la nav (bottom nav membre + nav coach) — son prop `weight` donne un état actif "plein" vs "contour" sans changement de couleur
 - Emoji conservés à quelques endroits précis et délibérés après itération (météo du Dashboard, sélecteur d'eau, toast de bienvenue) — jamais comme icône UI générique, seulement là où un pictogramme dessiné n'apportait rien de mieux (voir suites 77-81 pour l'historique de l'icône eau, 5 itérations avant 🥛)
 
+## 2026-08-15 — Édition de l'objectif déménagée de Settings.jsx vers Weekly.jsx (Bilan)
+
+Demande : l'objectif (perte de poids/prise de masse/nutrition/performance, chips) n'était éditable que depuis Réglages ; centralisé pour n'être éditable que depuis Bilan, Réglages devient un résumé en lecture seule.
+
+### Ce qui a été déplacé
+Le composant "goals_section" de Settings.jsx était une unité cohérente autour d'**un seul** `saveGoals()` : chips d'objectif (`GOAL_OPTIONS`/`selectedGoals`/`toggleGoal`) **et** champs calories/protéines (`goals`/recalcul auto au clic sur un chip via `recalcCalorieGoals`), le tout persisté ensemble dans `profiles` (colonnes `goal`, `calories_jour`/`objectifs.calories_jour` via `updateUserProfile`). Scindé la portée (chips seuls vers Weekly, calories/protéines éditables restant dans Settings) aurait fragmenté un flux de sauvegarde atomique en deux — déplacé le bloc **entier** (chips + calories/protéines + bouton "Enregistrer") vers Weekly.jsx, positionné juste après le bloc RÉSUMÉ (nouvelle section "OBJECTIF").
+
+### Détail technique du déplacement
+- **Weekly.jsx** : `GOAL_OPTIONS`, `selectedGoals`, `goals`, `goalsSaving`/`goalsSaved`, `recalcCalorieGoals`, `toggleGoal`, `saveGoals` — repris tels quels depuis l'ancien Settings.jsx. Seule différence : `recalcCalorieGoals` a besoin de poids/taille/âge pour la formule (`utils/metabolism.js`) — le poids est déjà disponible en temps réel via `appData.weightKg` (AppContext, fetché une fois pour toute l'app), donc pas re-fetché ; taille/âge n'existaient nulle part sur cet écran, ajouté un petit fetch dédié (`profiles: taille, age`) au montage.
+- **weekly-redesign.css** : nouvelles classes `.wk-goal-card`/`.wk-goal-field`/`.wk-goal-save-btn` + `.weekly-redesign .goal-chip` (alternance olive/lavande sur les chips actifs), même gabarit visuel que `.set-field`/`.goal-chip` de settings-redesign.css, réécrit avec les tokens `--wk-*` de cet écran.
+- **Settings.jsx** : le bloc devient un résumé en lecture seule — 3 lignes `.set-field` (Objectif / Calories / Protéines) affichant `user?.goal` (AuthContext) et `appData.calorieGoal`/`appData.proteinGoal` (AppContext) directement, plus un texte "Modifiable depuis Bilan." Nouvelle classe `.set-field-value` (même gabarit que `.set-field input`, un `<span>` non éditable). `calculateCalorieGoal` (plus utilisé) retiré des imports ; `BOUNDS`/`clamp` restent utilisés par la sync santé (steps/sommeil), non touchée.
+
+### Propagation vérifiée par lecture du code (pas de test E2E réel possible ici)
+`updateUserProfile` (AuthContext.jsx) fait `setUser(prev => ({ ...prev, ...profile, ...updated }))` après la sauvegarde — `user.goal` est donc à jour immédiatement dans le context partagé. `updateData` (AppContext.jsx) fait `setAppData(prev => ({ ...prev, [key]: value }))` — même chose pour `calorieGoal`/`proteinGoal`. Les deux contexts sont montés une seule fois à la racine de l'app ; le résumé de Settings.jsx les lit directement (pas de state local dupliqué), donc un changement fait depuis Bilan apparaît dans Réglages dès son prochain montage, sans plomberie supplémentaire. **Test manuel réel recommandé par la demande (changer l'objectif depuis Bilan, vérifier le reflet dans Settings) non fait dans ce sandbox** — pas de credentials Supabase disponibles ici pour une session authentifiée réelle (même limite que sur les tâches précédentes demandant un test réel). À confirmer au prochain retour utilisateur.
+
+Vérifié dans le bundle compilé (`dist/assets/Settings-*.js`/`Weekly-*.js`) : "Perte de poids"/`.goal-chip` absents de Settings, présents dans Weekly ; `.set-field-value`/"Modifiable depuis Bilan" présents dans Settings.
+
 ## 2026-08-15 — Correction : les 2 sheets du Dashboard n'avaient en fait pas le bug z-index (fausse piste de la tâche précédente)
 
 Demande initiale : corriger `.activity-edit-sheet`/`.sheet-overlay` (Dashboard.jsx), citées dans l'entrée juste en dessous comme "touchées par le même bug" que Settings.jsx. En investiguant pour appliquer le correctif, **ce n'était pas le cas** — écarté après vérification, pas de changement fonctionnel appliqué.

@@ -2,15 +2,29 @@ import { useState, useEffect } from 'react'
 import { useApp } from '../context/AppContext'
 import { useAuth } from '../context/AuthContext'
 import { useLanguage } from '../context/LanguageContext'
+import { supabase } from '../lib/supabase'
 import { fetchWeeklyStats } from '../utils/weeklyStats'
 import { fetchLiftProgress } from '../utils/liftProgress'
 import { fetchWeeklyLeaderboard } from '../utils/leaderboard'
+import { calculateCalorieGoal } from '../utils/metabolism'
+import { BOUNDS, clamp } from '../utils/validation'
 import '../styles/Weekly.css'
 import '../styles/weekly-redesign.css'
 
 const MEDALS = ['🥇', '🥈', '🥉']
 
 const BAR_MAX_HEIGHT = 60
+
+// Déménagé depuis Settings.jsx (2026-08-15) — même 4 options/valeurs que
+// l'étape "goal" d'Onboarding.jsx, les values sont les clés que
+// GOAL_MULTIPLIERS (utils/metabolism.js) matche, à garder en synchro avec
+// cette liste-là, pas juste visuellement similaire.
+const GOAL_OPTIONS = [
+  { label: 'Perdre du poids',   value: 'Perte de poids' },
+  { label: 'Prendre du muscle', value: 'Prise de masse' },
+  { label: 'Mieux manger',      value: 'Nutrition' },
+  { label: 'Performance',       value: 'Performance' },
+]
 
 // Cycle de teintes pour le remplissage des courbes de charge (une par
 // exercice, dans l'ordre) — reprend la palette du restyle "pastel chaud",
@@ -158,8 +172,8 @@ function LiftsSkeleton() {
 }
 
 export default function Weekly() {
-  const { appData } = useApp()
-  const { user } = useAuth()
+  const { appData, updateData } = useApp()
+  const { user, updateUserProfile } = useAuth()
   const { t } = useLanguage()
   const [weeklyData, setWeeklyData] = useState([])
   const [sleepData, setSleepData] = useState([])
@@ -168,6 +182,87 @@ export default function Weekly() {
   const [liftProgress, setLiftProgress] = useState([])
   const [leaderboard, setLeaderboard] = useState([])
   const [leaderboardLoaded, setLeaderboardLoaded] = useState(false)
+  // Édition d'objectif déménagée depuis Settings.jsx (2026-08-15, demande
+  // explicite de centraliser l'édition ici plutôt que de la dupliquer sur
+  // les deux écrans) — même state/logique que l'ancien Settings.jsx,
+  // adaptés à cet écran. user.goal est la chaîne jointe par ', '
+  // qu'Onboarding.jsx écrit (voir son handleComplete) — sessionToUser la
+  // remappe fiablement depuis les métadonnées auth, même après un reload.
+  const [selectedGoals, setSelectedGoals] = useState(() => user?.goal ? user.goal.split(', ').filter(Boolean) : [])
+  const [goals, setGoals] = useState({ calories: String(appData.calorieGoal), protein: String(appData.proteinGoal) })
+  const [goalsSaving, setGoalsSaving] = useState(false)
+  const [goalsSaved, setGoalsSaved] = useState(false)
+  // Taille/âge — nécessaires pour recalculer les calories (formule
+  // utils/metabolism.js) quand un chip d'objectif est basculé, comme le
+  // faisait Settings.jsx. Le poids est déjà disponible en temps réel via
+  // appData.weightKg (AppContext, fetché une fois pour toute l'app) — pas
+  // besoin de le redemander ici, seuls taille/âge manquent à cet écran.
+  const [bodyStats, setBodyStats] = useState({ height: '', age: '' })
+
+  useEffect(() => {
+    if (!user?.id) return
+    let cancelled = false
+    supabase.from('profiles').select('taille, age').eq('user_id', user.id).maybeSingle()
+      .then(({ data, error }) => {
+        if (cancelled) return
+        if (error) { console.error('[Weekly] profile fetch failed', error); return }
+        if (data) {
+          setBodyStats({
+            height: data.taille != null ? String(data.taille) : '',
+            age: data.age != null ? String(data.age) : '',
+          })
+        }
+      })
+    return () => { cancelled = true }
+  }, [user?.id])
+
+  // Même logique que l'ancien Settings.jsx : recalcule calories/protéines
+  // à partir de la même formule qu'Onboarding, appelée dès qu'un chip est
+  // basculé pour que les nouveaux chiffres apparaissent immédiatement dans
+  // les champs ci-dessous, toujours modifiables à la main avant
+  // "ENREGISTRER LES OBJECTIFS" comme n'importe quel autre objectif ici.
+  function recalcCalorieGoals(goalsList) {
+    const weightKg = appData.weightKg || 75
+    const { calorieGoal } = calculateCalorieGoal({
+      weightKg,
+      heightCm: parseFloat(bodyStats.height) || 175,
+      age: parseFloat(bodyStats.age) || 25,
+      goals: goalsList,
+      frequency: user?.frequency,
+    })
+    setGoals(g => ({ ...g, calories: String(calorieGoal), protein: String(Math.round(weightKg * 2)) }))
+  }
+
+  function toggleGoal(value) {
+    setSelectedGoals(prev => {
+      const next = prev.includes(value) ? prev.filter(g => g !== value) : [...prev, value]
+      recalcCalorieGoals(next)
+      return next
+    })
+  }
+
+  async function saveGoals() {
+    const calorieGoal = clamp(parseInt(goals.calories), BOUNDS.calorieGoal, appData.calorieGoal)
+    const proteinGoal = clamp(parseInt(goals.protein), BOUNDS.proteinGoal, appData.proteinGoal)
+    // Répercussion locale immédiate (l'anneau du Dashboard, les barres de
+    // Nutrition, etc. lisent appData.*Goal directement).
+    updateData('calorieGoal', calorieGoal)
+    updateData('proteinGoal', proteinGoal)
+    setGoalsSaving(true)
+    // waterGoal/stepsGoal volontairement PAS envoyés — eau/pas s'éditent
+    // depuis leur propre carte Dashboard (AppContext.updateGoal), et
+    // AuthContext.updateUserProfile ne touche eau_ml/pas_jour que si ces
+    // clés sont explicitement fournies, donc les omettre ici laisse ce qui
+    // a été réglé depuis la carte intact.
+    await updateUserProfile({
+      goal: selectedGoals.join(', '),
+      calorieGoal, proteinGoal,
+      carbGoal: appData.carbsGoal, fatGoal: appData.fatGoal,
+    })
+    setGoalsSaving(false)
+    setGoalsSaved(true)
+    setTimeout(() => setGoalsSaved(false), 2000)
+  }
   // Couvre les 2 fetchs qui alimentent le contenu visible (calories/résumé
   // + charges) — pas le leaderboard, masqué côté produit (voir plus bas) et
   // déjà géré par son propre flag indépendant.
@@ -251,6 +346,43 @@ export default function Weekly() {
             ))}
           </div>
         )}
+
+        {/* Objectif — déménagé depuis Settings.jsx (2026-08-15, demande
+            explicite) : "il faut remettre l'objectif et toujours laisser
+            le choix à l'utilisateur de redéfinir son objectif" reste
+            valable, juste centralisé ici plutôt que dupliqué entre
+            Réglages et Bilan. Settings.jsx n'affiche plus qu'un résumé en
+            lecture seule de ces mêmes valeurs (user.goal/appData.*Goal,
+            déjà synchronisées via les contexts partagés). */}
+        <div className="wk-section-label">OBJECTIF</div>
+        <div className="wk-goal-card card-animated" style={{ '--delay': '160ms' }}>
+          <p className="wk-goal-hint">Ton ou tes objectifs — choisir en modifie automatiquement les calories/protéines ci-dessous.</p>
+          <div className="goal-selector">
+            {GOAL_OPTIONS.map(o => (
+              <button
+                key={o.value}
+                type="button"
+                className={`goal-chip${selectedGoals.includes(o.value) ? ' active' : ''}`}
+                onClick={() => toggleGoal(o.value)}
+              >
+                {o.label}
+              </button>
+            ))}
+          </div>
+          <div className="wk-goal-field">
+            <span className="wk-goal-field-label">{t('calories_day')}</span>
+            <input type="number" value={goals.calories} onChange={e => setGoals(g => ({ ...g, calories: e.target.value }))} />
+          </div>
+          <div className="wk-goal-field">
+            <span className="wk-goal-field-label">{t('proteins')}</span>
+            <input type="number" value={goals.protein} onChange={e => setGoals(g => ({ ...g, protein: e.target.value }))} />
+          </div>
+          {/* Eau/Pas volontairement absents ici aussi — modifiables
+              directement depuis leur carte sur le Dashboard. */}
+        </div>
+        <button className="wk-goal-save-btn" onClick={saveGoals} disabled={goalsSaving} style={{ opacity: goalsSaving ? 0.6 : 1 }}>
+          {goalsSaving ? '...' : goalsSaved ? '✓ Enregistré' : t('save_goals')}
+        </button>
 
         {/* Classement de la salle — audit marché 2026-08-06 (JOURNAL.md
             suite 47) : c'est le seul terrain où Volta n'a aucun concurrent

@@ -5,7 +5,6 @@ import { useApp } from '../context/AppContext'
 import { useLanguage } from '../context/LanguageContext'
 import { supabase } from '../lib/supabase'
 import { BOUNDS, clamp } from '../utils/validation'
-import { calculateCalorieGoal } from '../utils/metabolism'
 import { isPushSupported, getPushSubscriptionState, subscribeToPush, unsubscribeFromPush, isIOSNotStandalone } from '../utils/push'
 import DeleteAccountButton from '../components/DeleteAccountButton'
 import { storageKey } from '../components/OnboardingTour'
@@ -22,16 +21,6 @@ function Toggle({ on, onToggle }) {
     </div>
   )
 }
-
-// Same 4 options/values as Onboarding.jsx's "goal" step — the values are
-// the actual keys GOAL_MULTIPLIERS (utils/metabolism.js) matches against,
-// so this list has to stay in sync with that one, not just look similar.
-const GOAL_OPTIONS = [
-  { label: 'Perdre du poids',   value: 'Perte de poids' },
-  { label: 'Prendre du muscle', value: 'Prise de masse' },
-  { label: 'Mieux manger',      value: 'Nutrition' },
-  { label: 'Performance',       value: 'Performance' },
-]
 
 function Field({ label, value, onChange, type = 'text' }) {
   return (
@@ -106,24 +95,6 @@ export default function Settings() {
     touchedProfileFields.current.add(field)
     setProfile(p => ({ ...p, [field]: value }))
   }
-  // Eau/Pas retirés d'ici — modifiables directement depuis leur carte sur
-  // le Dashboard maintenant ("passer par Réglages pour ça c'est pas ouf,
-  // il faut rendre le chemin simple"). Calories/protéines restent ici :
-  // pas de carte dédiée pour ces deux-là, et ce sont des réglages plus
-  // complexes (liés au(x) objectif(s) choisi(s) ci-dessous) que "modifier
-  // un objectif en tapant sur une carte" ne couvrirait pas bien.
-  const [goals, setGoals] = useState({ calories: String(appData.calorieGoal), protein: String(appData.proteinGoal) })
-  const [goalsSaving, setGoalsSaving] = useState(false)
-  const [goalsSaved, setGoalsSaved] = useState(false)
-  // "il faut remettre l'objectif et toujours laisser le choix à
-  // l'utilisateur de redéfinir son objectif" — the goal(s) picked at
-  // onboarding (Perte de poids / Prise de masse / Nutrition / Performance,
-  // multi-select) drove the calorie target but had nowhere to be reviewed
-  // or changed again afterwards. user.goal is the comma-joined string
-  // Onboarding wrote (see its handleComplete) — sessionToUser maps it
-  // reliably from auth metadata even after a fresh reload.
-  const [selectedGoals, setSelectedGoals] = useState(() => user?.goal ? user.goal.split(', ').filter(Boolean) : [])
-
   useEffect(() => {
     if (!user?.id) return
     let cancelled = false
@@ -144,32 +115,6 @@ export default function Settings() {
       })
     return () => { cancelled = true }
   }, [user?.id])
-
-  // Recalculates calorie/protein targets from the same formula Onboarding
-  // used (utils/metabolism.js), using whatever weight/height/age/frequency
-  // is on file — called right when a goal chip is toggled so the member
-  // sees the new numbers land in the fields below immediately, still free
-  // to hand-edit them before hitting "ENREGISTRER LES OBJECTIFS" same as
-  // any other goal here.
-  function recalcCalorieGoals(goalsList) {
-    const weightKg = parseFloat(profile.weight) || 75
-    const { calorieGoal } = calculateCalorieGoal({
-      weightKg,
-      heightCm: parseFloat(profile.height) || 175,
-      age: parseFloat(profile.age) || 25,
-      goals: goalsList,
-      frequency: user?.frequency,
-    })
-    setGoals(g => ({ ...g, calories: String(calorieGoal), protein: String(Math.round(weightKg * 2)) }))
-  }
-
-  function toggleGoal(value) {
-    setSelectedGoals(prev => {
-      const next = prev.includes(value) ? prev.filter(g => g !== value) : [...prev, value]
-      recalcCalorieGoals(next)
-      return next
-    })
-  }
 
   // "Profil" card had inputs but no save button at all — editing name/
   // weight/height did nothing beyond local component state, same class of
@@ -215,35 +160,6 @@ export default function Settings() {
     window.location.href = '/dashboard'
   }
 
-  async function saveGoals() {
-    const calorieGoal = clamp(parseInt(goals.calories), BOUNDS.calorieGoal, appData.calorieGoal)
-    const proteinGoal = clamp(parseInt(goals.protein), BOUNDS.proteinGoal, appData.proteinGoal)
-    // Immediate local reflection (Dashboard's ring, Nutrition's bars, etc.
-    // all read appData.*Goal directly).
-    updateData('calorieGoal', calorieGoal)
-    updateData('proteinGoal', proteinGoal)
-    setGoalsSaving(true)
-    // Was: this whole function only ever called updateData above, which is
-    // in-memory + localStorage only (utils/storage.js) — nothing here ever
-    // reached Supabase's `objectifs` table, so a redefined goal silently
-    // reverted to whatever was last saved server-side on the next login /
-    // different device. Also the only place `objectif` (the goal TYPE, not
-    // the numeric targets) gets persisted, now that it's editable here.
-    // waterGoal/stepsGoal deliberately NOT sent — eau/pas are edited from
-    // their own Dashboard card now (AppContext.updateGoal), and
-    // AuthContext.updateUserProfile only touches eau_ml/pas_jour when
-    // those keys are actually provided, so omitting them here leaves
-    // whatever was set from the card untouched.
-    await updateUserProfile({
-      goal: selectedGoals.join(', '),
-      calorieGoal, proteinGoal,
-      carbGoal: appData.carbsGoal, fatGoal: appData.fatGoal,
-    })
-    setGoalsSaving(false)
-    setGoalsSaved(true)
-    setTimeout(() => setGoalsSaved(false), 2000)
-  }
-
   return (
     <div className="app-wrapper settings-redesign">
       {/* Sync Toast */}
@@ -274,29 +190,32 @@ export default function Settings() {
           {profileSaving ? '...' : profileSaved ? '✓ Enregistré' : 'Enregistrer le profil'}
         </button>
 
+        {/* Résumé en lecture seule (2026-08-15) — l'édition (chips
+            d'objectif + calories/protéines + sauvegarde) a déménagé sur
+            Bilan (Weekly.jsx), à côté du bloc RÉSUMÉ : demande explicite
+            de centraliser l'édition d'objectif à un seul endroit plutôt
+            que de la dupliquer entre Réglages et Bilan. Ce bloc-ci lit
+            juste user.goal (AuthContext) et appData.calorieGoal/
+            proteinGoal (AppContext) — les deux sont déjà tenus à jour en
+            temps réel par ces contexts partagés, donc un changement fait
+            depuis Bilan apparaît ici sans rien de plus à câbler, dès le
+            prochain montage de cet écran. */}
         <div className="section-label">{t('goals_section')}</div>
         <div className="card card-animated" style={{ '--delay': '60ms' }}>
-          <p className="text-xs text-muted" style={{ marginBottom: 10 }}>Ton ou tes objectifs — choisir en modifie automatiquement les calories/protéines ci-dessous.</p>
-          <div className="goal-selector">
-            {GOAL_OPTIONS.map(o => (
-              <button
-                key={o.value}
-                type="button"
-                className={`goal-chip${selectedGoals.includes(o.value) ? ' active' : ''}`}
-                onClick={() => toggleGoal(o.value)}
-              >
-                {o.label}
-              </button>
-            ))}
+          <div className="set-field">
+            <span className="set-field-label">Objectif</span>
+            <span className="set-field-value">{user?.goal || '—'}</span>
           </div>
-          <Field label={t('calories_day')} value={goals.calories} onChange={v => setGoals(g => ({...g, calories: v}))} type="number" />
-          <Field label={t('proteins')} value={goals.protein} onChange={v => setGoals(g => ({...g, protein: v}))} type="number" />
-          {/* Eau/Pas retirés — modifiables directement depuis leur carte
-              sur le Dashboard maintenant. */}
+          <div className="set-field">
+            <span className="set-field-label">{t('calories_day')}</span>
+            <span className="set-field-value">{appData.calorieGoal} kcal</span>
+          </div>
+          <div className="set-field">
+            <span className="set-field-label">{t('proteins')}</span>
+            <span className="set-field-value">{appData.proteinGoal} g</span>
+          </div>
+          <p className="text-xs text-muted" style={{ marginTop: 10 }}>Modifiable depuis Bilan.</p>
         </div>
-        <button className="btn-ghost set-outline-btn" onClick={saveGoals} disabled={goalsSaving} style={{ opacity: goalsSaving ? 0.6 : 1 }}>
-          {goalsSaving ? '...' : goalsSaved ? '✓ Enregistré' : t('save_goals')}
-        </button>
 
         <div className="section-label">{t('notifications_section')}</div>
         <div className="card card-animated" style={{ '--delay': '120ms' }}>
