@@ -1,13 +1,19 @@
 # VOLTA App
 
 ## Setup
-1. cp .env.example .env
-2. Add your Anthropic API key in .env
-3. npm install
-4. npm run dev
+1. `cp .env.example .env` puis renseigner les valeurs (voir les commentaires dans `.env.example`)
+2. `npm install`
+3. `npm run dev`
 
-## Test accounts
-Coach: coach@onair.fr / coach123
-Membre: membre@onair.fr / membre123
+## Comptes de test
+Créer un compte via l'écran d'inscription (`/login` → onglet Inscription), avec le
+code d'accès de la salle. Il n'y a plus de comptes de démo en dur — l'ancien
+système d'auth localStorage (`coach@onair.fr` / `membre@onair.fr`) a été remplacé
+par Supabase Auth.
 
-To test the AI Coach, add your VITE_ANTHROPIC_API_KEY in .env
+## Coach IA
+La clé Anthropic est **exclusivement côté serveur** (`ANTHROPIC_API_KEY`, lue par
+le proxy `api/claude.js`) — jamais exposée au client. Ne jamais la mettre dans une
+variable `VITE_*` : Vite inline toute variable préfixée `VITE_` dans le bundle
+client, ce qui exposerait la clé publiquement. En développement local, définir
+`ANTHROPIC_API_KEY` (sans préfixe) dans `.env`.
