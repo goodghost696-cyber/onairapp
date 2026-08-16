@@ -65,6 +65,25 @@ Pas un agent agentique à function calling. Une requête planifiée : réutilise
 
 **Pourquoi ne pas commencer maintenant** : priorité au socle avant toute nouvelle feature. Tant que la Phase 2 et la Phase 3 de l'audit et le restyle coach (`CoachDashboard`, `ClientsList`, `MemberDetail`) ne sont pas faits, enchaîner les features reproduirait le pattern `RunContent` — du contenu fabriqué resté en production pendant des mois sur une base non stabilisée.
 
+## 🔧 2026-08-16 — Réparation manuelle (2/2) : poids/taille manquants sur le compte d'Arnaud
+
+Deuxième et dernière victime réelle du BUG 1 (voir l'entrée « Réparation manuelle d'un compte réel (Myriam) » juste en dessous, et le BUG 1 lui-même dans l'entrée Phase 2). **Même cause, symptôme différent** : ici la ligne `profiles` existait bien — c'est le *chemin UPDATE* de l'upsert qui échouait, pas la création de la ligne. Résultat : `prenom`/`email`/`objectif` corrects (posés à l'INSERT initial), mais `poids` et `taille` restés NULL depuis le 2026-07-09, alors qu'ils avaient bien été saisis à l'onboarding.
+
+### Constat et valeurs retrouvées
+`raw_user_meta_data` porte `weight: "76"` et `height: "188"` (ainsi que `name "Arnaud"`, `goal "Perte de poids"` — ces deux-là déjà correctement en base). Même trace corroborante que pour Myriam : la ligne `objectifs` de ce compte a été écrite le **2026-07-09 à 20:21:19**, soit **27 secondes après l'inscription** (20:20:52), avec des cibles cohérentes (3100 kcal / 195 P / 240 G / 80 L) — l'onboarding est donc bien allé au bout, seule l'écriture `profiles` s'est perdue. `age` absent des deux sources → laissé NULL, pas inventé.
+
+### Réparation appliquée
+Un seul UPDATE en service_role, **strictement les deux colonnes concernées** :
+`update public.profiles set poids = 76, taille = 188 where user_id = '…' and poids is null and taille is null`
+
+Mêmes garde-fous que la réparation précédente : `user_id` **jamais dans le SET** (uniquement dans le WHERE — c'est précisément ce que l'allowlist de colonnes interdit et ce qui causait le 42501), requête idempotente grâce aux conditions `is null`, et **aucun changement de GRANT, RLS, allowlist ou trigger**. Rien d'autre n'a été touché sur ce profil : `role`, `gym_id` et surtout `is_platform_admin` (seul compte à `true`) sont restés inchangés — vérifié dans le `returning`.
+
+### Vérifié côté coach
+Requête exacte de `ClientsList` rejouée **sous le contexte RLS réel du coach** : Arnaud remonte désormais avec `poids 76` / `taille 188` / `objectif "Perte de poids"`, aux côtés de Myriam (65/160) et Gisèle.
+
+### État final des 3 membres
+Plus aucune donnée d'onboarding perdue en base, hormis ce qui n'a réellement jamais été saisi : Gisèle n'a ni poids, ni taille, ni objectif — absents **aussi** de son `raw_user_meta_data`, donc rien à réparer de son côté. `age` est NULL pour les trois, jamais collecté nulle part. Les deux réparations manuelles rattrapent tout ce que le BUG 1 avait fait perdre aux comptes réels ; à partir d'ici, le fix de code prend le relais pour les nouveaux comptes (re-testé en réel, voir l'entrée Phase 2).
+
 ## 🔧 2026-08-16 — Réparation manuelle d'un compte réel (Myriam) : ligne `profiles` manquante depuis le 2026-08-06
 
 **Distinct du BUG 1 de la Phase 2 ci-dessous**, même si la cause est la même. Le BUG 1 est le *défaut de code* (upsert client bloqué en 42501 par l'allowlist de colonnes), corrigé le jour même. Cette entrée-ci documente sa **victime réelle** : une utilisatrice inscrite **10 jours avant que le correctif existe**, dont la ligne `profiles` n'a jamais été créée et que le fix de code ne pouvait pas réparer rétroactivement. Aucune donnée de test ici — un vrai compte, réparé à la main.
@@ -91,7 +110,7 @@ Pas seulement relu : la requête exacte de `ClientsList` (`select * from profile
 
 ### Deux points laissés ouverts
 - **`profiles.created_at` de cette ligne porte la date de la réparation (2026-08-16), pas celle de l'inscription (2026-08-06).** L'alignement sur `auth.users.created_at` a été tenté mais bloqué par le classificateur de permissions. Sans impact fonctionnel connu : `profiles.created_at` n'est lu nulle part dans `src/` (vérifié par grep — les autres usages de `created_at` portent sur `repas`/`seances`/`messages`/`gyms`/`habitudes`/`programmes`). À corriger à la main si une notion d'ancienneté de membre apparaît un jour.
-- **Même trou de données, autre symptôme, sur le compte d'Arnaud** : `poids 76` / `taille 188` sont présents dans son `raw_user_meta_data` mais NULL dans `profiles` — sa ligne existait, c'est le chemin UPDATE qui échouait. Non touché (hors périmètre de cette réparation). Gisèle, elle, n'a jamais rempli ces champs (absents des deux côtés) : rien à réparer.
+- ~~**Même trou de données, autre symptôme, sur le compte d'Arnaud** : `poids 76` / `taille 188` sont présents dans son `raw_user_meta_data` mais NULL dans `profiles` — sa ligne existait, c'est le chemin UPDATE qui échouait. Non touché (hors périmètre de cette réparation).~~ **Réparé le 2026-08-16** — voir l'entrée « Réparation manuelle (2/2) » juste au-dessus. Gisèle, elle, n'a jamais rempli ces champs (absents des deux côtés) : rien à réparer.
 
 ## 🚨 2026-08-16 — Audit sécurité (Phase 2) : tests fonctionnels réels, 3 bugs trouvés dont 2 critiques
 
