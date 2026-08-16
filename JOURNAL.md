@@ -45,6 +45,26 @@ Il existait déjà une "charte ON AIR Neon" documentée plus bas dans ce journal
 - `@phosphor-icons/react` uniquement pour la nav (bottom nav membre + nav coach) — son prop `weight` donne un état actif "plein" vs "contour" sans changement de couleur
 - Emoji conservés à quelques endroits précis et délibérés après itération (météo du Dashboard, sélecteur d'eau, toast de bienvenue) — jamais comme icône UI générique, seulement là où un pictogramme dessiné n'apportait rien de mieux (voir suites 77-81 pour l'historique de l'icône eau, 5 itérations avant 🥛)
 
+## 📌 Chantiers ouverts / décisions produit en attente (section vivante, pas datée)
+
+Section permanente, comme la charte graphique ci-dessus : ce qui est **validé sur le principe mais volontairement pas commencé**, avec sa condition de démarrage. À tenir à jour ici plutôt que de laisser l'info se perdre dans une entrée datée. Les entrées datées ci-dessous restent la source pour ce qui a été *fait*.
+
+### 🤖 Agent IA côté coach — résumés quotidiens + alertes de décrochage
+**Statut : idée validée, à faire APRÈS la Phase 2/3 de l'audit sécurité ET le restyle coach. Pas avant.**
+
+**Contenu prévu**
+- **Résumé automatique quotidien en haut de `CoachDashboard`**, généré par Claude Haiku à partir de données calculées côté serveur : membres inactifs depuis 5 jours ou plus, membres en forte progression, taux d'assiduité du groupe sur la semaine.
+- **Alertes de décrochage** basées sur le calcul de streak existant (`activite_jour`, tolérance d'un jour par semaine déjà en place) : dès qu'un membre casse son streak ou n'a plus d'activité, il remonte en priorité dans `CoachDashboard`/`ClientsList` au lieu d'être noyé dans la liste.
+
+**Approche technique**
+Pas un agent agentique à function calling. Une requête planifiée : réutiliser le pattern cron Vercel déjà en place (`inactivity-nudge`/`streak-nudge`) pour calculer les signaux côté Supabase, puis les formuler en langage naturel via le proxy Claude Haiku existant.
+
+**Estimation** : proche de 2-3 jours de dev. La partie streak/activité/cron existe déjà ; le travail réel porte sur la détection de seuil et la mise en forme du résumé.
+
+**Justification business** : complète l'argument de vente « visibilité totale coach en un dashboard », et se démontre mieux en démo qu'un chantier lourd.
+
+**Pourquoi ne pas commencer maintenant** : priorité au socle avant toute nouvelle feature. Tant que la Phase 2 et la Phase 3 de l'audit et le restyle coach (`CoachDashboard`, `ClientsList`, `MemberDetail`) ne sont pas faits, enchaîner les features reproduirait le pattern `RunContent` — du contenu fabriqué resté en production pendant des mois sur une base non stabilisée.
+
 ## 🚨 2026-08-16 — Audit sécurité (Phase 2) : tests fonctionnels réels, 3 bugs trouvés dont 2 critiques
 
 Suite directe de la Phase 1 (voir entrée juste en dessous). Phase 2 = tests fonctionnels réels dans le navigateur (claude-in-chrome) sur l'app déployée, avec un compte de test dédié. Périmètre de cette session, tel que demandé : signup membre, signup coach (+ re-test du TOCTOU `/api/create-gym`), Dashboard (toutes les cartes + édition des objectifs). Les autres flux (Nutrition, Bilan, Workout, Settings, messagerie, espace coach) restent à faire.
