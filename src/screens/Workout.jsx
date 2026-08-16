@@ -7,6 +7,7 @@ import { fetchMemberPrograms } from '../utils/programs'
 import '../styles/Workout.css'
 import '../styles/workout-redesign.css'
 import { authHeader } from '../lib/supabase'
+import { activable } from '../utils/a11y'
 
 export default function Workout() {
   const navigate = useNavigate()
@@ -43,7 +44,7 @@ export default function Workout() {
   }, [])
 
   function startCoachProgram(programme) {
-    addExercisesToSession(programme.exercices)
+    addExercisesToSession(programme.exercices, programme.titre)
     navigate('/workout/session')
   }
 
@@ -123,7 +124,7 @@ Donne exactement 4-5 exercices adaptés à l'objectif.`
   }
 
   const handleAddAll = () => {
-    if (program) addExercisesToSession(program.exercises)
+    if (program) addExercisesToSession(program.exercises, program.session_type)
     navigate('/workout/session')
   }
 
@@ -175,7 +176,7 @@ Donne exactement 4-5 exercices adaptés à l'objectif.`
         </div>
 
         {activeSession.exercises.length > 0 && (
-          <div className="active-session-banner" onClick={() => navigate('/workout/session')}>
+          <div className="active-session-banner" {...activable(() => navigate('/workout/session'), { label: 'Reprendre la séance en cours' })}>
             <div className="active-session-left">
               <div className="active-session-dot" />
               <div>
@@ -215,7 +216,7 @@ Donne exactement 4-5 exercices adaptés à l'objectif.`
           <>
             <div className="section-label">MES PROGRAMMES</div>
             {coachPrograms.map((p, i) => (
-              <div key={p.id} className="card card-animated" style={{ '--delay': `${i * 60}ms`, cursor: 'pointer', marginBottom: 10 }} onClick={() => startCoachProgram(p)}>
+              <div key={p.id} className="card card-animated" style={{ '--delay': `${i * 60}ms`, cursor: 'pointer', marginBottom: 10 }} {...activable(() => startCoachProgram(p), { label: `Démarrer le programme ${p.titre}` })}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <div className="text-base bold">{p.titre}</div>
@@ -253,7 +254,7 @@ Donne exactement 4-5 exercices adaptés à l'objectif.`
 
         <div className="section-label">{t('library')}</div>
         {sections.map((s, i) => (
-          <div key={s.key} className="card card-animated" style={{ '--delay': `${i*80}ms`, cursor: 'pointer', marginBottom: 10 }} onClick={() => navigate(`/workout/${s.key}`)}>
+          <div key={s.key} className="card card-animated" style={{ '--delay': `${i*80}ms`, cursor: 'pointer', marginBottom: 10 }} {...activable(() => navigate(`/workout/${s.key}`), { label: s.name })}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
               <div style={{ width: 46, height: 46, background: sectionIconBg[s.key], borderRadius: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 {sectionIcons[s.key]}
@@ -283,7 +284,7 @@ Donne exactement 4-5 exercices adaptés à l'objectif.`
               <div
                 className="history-card"
                 key={session.id}
-                onClick={() => navigate(`/workout/history/${session.id}`)}
+                {...activable(() => navigate(`/workout/history/${session.id}`), { label: `Séance du ${session.date} — voir le détail` })}
                 style={{ cursor: 'pointer', '--wh-history-accent': accent.bg, '--wh-history-accent-ink': accent.ink }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12 }}>
