@@ -41,13 +41,40 @@ function hasCompleteMacros(p) {
 // name better but missing proteins/carbs/fat (those would silently read as
 // 0 downstream) — name similarity only breaks ties within the same
 // completeness tier.
-function pickBestMatch(hits, query) {
+function usableRef(refKcal100) {
+  return Number.isFinite(refKcal100) && refKcal100 > 0
+}
+
+// Proximité entre le kcal/100g d'un candidat OFF et l'estimation que le
+// modèle a lui-même donnée pour cet aliment : 1 = identique, 0 = écart
+// d'au moins 100%. Sert de départage quand plusieurs candidats sont à
+// égalité sur la complétude ET sur le nom (cas fréquent : OFF renvoie
+// plusieurs produits génériques portant exactement le même libellé).
+function kcalProximity(refKcal100, kcal) {
+  if (!usableRef(refKcal100) || !Number.isFinite(kcal)) return 0
+  return 1 - Math.min(1, Math.abs(kcal - refKcal100) / refKcal100)
+}
+
+// Poids volontairement < 0.3 (l'écart entre deux paliers de
+// nameSimilarity) : un produit dont le nom correspond mieux gagne
+// toujours, la proximité calorique ne fait que départager à nom égal.
+const KCAL_PROXIMITY_WEIGHT = 0.25
+
+// Au-delà de ce facteur d'écart avec l'estimation du modèle, le produit
+// OFF retenu n'est très probablement pas le bon aliment — on préfère
+// alors ne rien renvoyer (l'appelant retombe sur l'estimation IA et
+// n'affiche pas le badge « vérifié »).
+const MAX_KCAL_RATIO = 2
+
+function pickBestMatch(hits, query, refKcal100) {
   const candidates = (hits || []).filter(p => p.product_name && p.nutriments?.['energy-kcal_100g'])
   if (candidates.length === 0) return null
   let best = null
   let bestScore = -Infinity
   for (const p of candidates) {
-    const score = (hasCompleteMacros(p) ? 10 : 0) + nameSimilarity(query, p.product_name)
+    const score = (hasCompleteMacros(p) ? 10 : 0)
+      + nameSimilarity(query, p.product_name)
+      + KCAL_PROXIMITY_WEIGHT * kcalProximity(refKcal100, p.nutriments['energy-kcal_100g'])
     if (score > bestScore) { bestScore = score; best = p }
   }
   return best
@@ -57,7 +84,16 @@ function pickBestMatch(hits, query) {
 // Returns null if no usable match is found (caller falls back to the AI
 // estimate). Moved here from Scan.jsx so Nutrition.jsx's own multi-food
 // text description entry point can reuse it without duplicating the logic.
-export async function lookupOFF(name) {
+// `refKcal100` = l'estimation par 100g que le modèle a lui-même donnée
+// pour cet aliment (déjà présente chez les deux appelants, où elle sert
+// de repli). Utilisée ici pour départager des candidats OFF à égalité et
+// pour rejeter un match manifestement hors-sujet — voir le bug mesuré en
+// test réel le 2026-08-16 : « Pâte à tartiner Nutella » renvoyait 5
+// produits OFF tous nommés exactement « Pâte à tartiner » (78, 59, 555 et
+// 571 kcal/100g). Tous à égalité de score, le premier de la liste
+// gagnait : 400g de Nutella étaient comptés 312 kcal au lieu de ~2200,
+// avec un badge « ✓ vérifié » qui rendait l'erreur crédible.
+export async function lookupOFF(name, refKcal100) {
   try {
     // Server-side proxy (api/food-search.js) calls the fast search-a-licious
     // API on our behalf — that endpoint has no CORS support for browsers,
@@ -69,9 +105,14 @@ export async function lookupOFF(name) {
       { headers: await authHeader() }
     )
     const data = await res.json()
-    const p = pickBestMatch(data.hits, name)
+    const p = pickBestMatch(data.hits, name, refKcal100)
     const kcal = p?.nutriments?.['energy-kcal_100g']
     if (!p || !kcal) return null
+    // Garde-fou : même le meilleur candidat peut rester un tout autre
+    // aliment. Sans repère du modèle, on garde le comportement d'avant.
+    if (usableRef(refKcal100) && (kcal > refKcal100 * MAX_KCAL_RATIO || kcal < refKcal100 / MAX_KCAL_RATIO)) {
+      return null
+    }
     return {
       kcal100: Math.round(kcal),
       prot100: Math.round((p.nutriments.proteins_100g || 0) * 10) / 10,
@@ -146,7 +187,7 @@ Réponds en ${langName}. Les noms des aliments doivent être en ${langName}.`
   const parsed = JSON.parse(clean)
 
   const items = await Promise.all((parsed.items || []).map(async (item) => {
-    const off = await lookupOFF(item.name)
+    const off = await lookupOFF(item.name, item.kcal_100g)
     return {
       name: item.name,
       grams: item.grams || 100,
