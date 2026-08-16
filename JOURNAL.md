@@ -65,6 +65,76 @@ Pas un agent agentique à function calling. Une requête planifiée : réutilise
 
 **Pourquoi ne pas commencer maintenant** : priorité au socle avant toute nouvelle feature. Tant que la Phase 2 et la Phase 3 de l'audit et le restyle coach (`CoachDashboard`, `ClientsList`, `MemberDetail`) ne sont pas faits, enchaîner les features reproduirait le pattern `RunContent` — du contenu fabriqué resté en production pendant des mois sur une base non stabilisée.
 
+## 🚨 2026-08-16 — Audit sécurité (Phase 2, suite 2) : Workout + messagerie temps réel, 3 bugs dont 2 pertes de séance
+
+Suite directe des deux entrées Phase 2 plus bas. Périmètre demandé pour cette session : **Workout** (séance complète — démarrage, ajout d'exercices depuis la bibliothèque, complétion, sauvegarde en base ; navigation `WorkoutLibrary` ; cohérence hub ↔ `WorkoutSession`) et **messagerie membre↔coach** (temps réel Supabase Realtime avec deux comptes connectés simultanément, persistance, et test RLS réel qu'un membre ne peut pas lire la conversation d'un autre membre avec le coach). Tests réels dans le navigateur sur la production, puis re-tests des correctifs sur le déploiement de preview de la PR #131.
+
+**Les 3 bugs sont côté Workout. La messagerie n'a révélé aucun bug** — c'est le premier flux de cette phase d'audit à passer intégralement.
+
+**Note de méthode — deux sessions vraiment simultanées.** Le problème pratique du test « deux comptes en même temps » est que `localStorage` est par origine : deux onglets sur `onairapp.vercel.app` partagent la même session Supabase, et supabase-js les synchronise entre onglets. Contourné en utilisant **l'URL de déploiement Vercel** (`onairapp-j9pe2gn38-….vercel.app`) comme seconde origine : même build, mêmes variables d'environnement de production, mais stockage isolé. Membre et coach étaient donc réellement connectés en parallèle, chacun dans sa vraie UI, sans bricolage de session.
+
+### 🔴 BUG 8 (critique — perte de données) — la séance en cours était perdue au moindre rechargement
+`activeSession` était le **seul** champ d'`appData` ni relu ni sauvegardé en `localStorage`. Tous ses voisins (`calories`, `water`, `steps`, `meals`, `sleep`, `kmRun`, `sessionHistory`) passent par `load()`/`save()` ; lui était initialisé à un littéral vide (`AppContext.jsx`) et aucun effet de persistance ne le concernait.
+
+- **Mesuré en réel, pas déduit** : séance à 3 séries dont 2 validées, reps et kg saisis (20×0, 18×5 validées, 16×10 non validée) → `location.reload()` → l'écran `/workout/session` affiche « Aucun exercice ajouté. » Tout est perdu, sans le moindre message.
+- **Pourquoi ce n'est pas un cas limite** : sur une PWA c'est le cas *courant*. iOS tue régulièrement une app passée en arrière-plan ; le service worker est en network-first depuis le 2026-07-09 (donc une activation de nouvelle version recharge réellement) ; et le pull-to-refresh est à un geste. Le scénario est littéralement « je pose mon téléphone entre deux séries ».
+- **Correctif** : lecture au démarrage (défensive — `exercises` doit être un tableau, le rendu le déréférence sans garde), effet de persistance aligné sur les autres champs, et reset dans `clearDay()` pour qu'une séance jamais terminée ne déborde pas sur le lendemain et ne s'y enregistre pas à la mauvaise date (`finishSession` écrit `date: todayStr()`).
+- **Re-testé en réel après déploiement** : nouvel onglet, rechargement complet → les 3 séries et leurs valeurs sont intactes, l'état validé/non validé aussi.
+
+### 🔴 BUG 9 (critique — perte de données) — « Ma séance du jour » effaçait la séance en cours sans prévenir
+`handleStartSession()` (`Workout.jsx`) appelait `clearActiveSession()` inconditionnellement. Or le bouton est affiché **juste sous** la bannière « SÉANCE EN COURS » du hub : taper dessus pour rejoindre sa séance est le geste naturel, et il faisait exactement l'inverse.
+
+- **Mesuré en réel** : séance à 1 exercice → un tap → « Aucun exercice ajouté. »
+- **Aggravé par le BUG 8 une fois celui-ci corrigé** : la séance survivant désormais aux rechargements, elle vit plus longtemps, et ce bouton devenait le principal moyen de la perdre.
+- **Pourquoi pas un simple garde-fou** : ce chemin est aussi le **seul** moyen d'abandonner une séance dans l'app (`WorkoutSession.jsx` n'offre que « TERMINER LA SÉANCE », qui l'enregistre). Le rendre non destructif aurait supprimé une action légitime. D'où un choix explicite en sheet — « Reprendre la séance » / « Démarrer une nouvelle séance » (style danger) / « Annuler » — qui conserve les deux intentions et n'en déclenche aucune par accident. Sheet calquée sur `DeleteAccountButton.jsx`, seule convention de confirmation de l'app (aucun `window.confirm` nulle part).
+- **Re-testé en réel dans les deux sens** : « Reprendre » → séance intacte (3 séries, toutes valeurs conservées) ; « Démarrer une nouvelle » → efface bien, volontairement cette fois.
+
+### 🟠 BUG 10 (majeur) — le minuteur de repos recouvrait « TERMINER LA SÉANCE »
+Le restyle du 2026-08-14 a rendu `.finish-session-btn` `position: fixed` (bottom 76px, z-index 90). Il était dans le flux avant, donc aucune collision n'était possible. `.rest-timer` (`RestTimer.css`) n'a pas bougé : fixed, bottom 100px, z-index 96. Les deux se sont retrouvés dans la même bande, le minuteur au-dessus.
+
+- Le minuteur s'ouvre **automatiquement à chaque série validée, dernière série comprise** : il recouvrait donc le bouton exactement au moment de s'en servir. Il fallait taper SKIP (ou attendre la fin du décompte) sans que rien ne l'indique.
+- **Confirmé par hit-test, pas par lecture** : `elementFromPoint()` au centre du bouton renvoyait `.rest-timer`, et le clic sur « TERMINER LA SÉANCE » ne partait effectivement pas.
+- **Correctif** : le minuteur remonte au-dessus du bouton — 76 (même clearance nav pill) + 56 (hauteur mesurée du bouton) + 12 d'air. Sélecteur scopé à `.workoutsession-redesign`, seul contexte où `RestTimer` est rendu.
+- **Erreur de méthode à noter** : j'ai d'abord conclu que ce correctif ne marchait pas, sur une mesure qui donnait un `translateY(+74px)` résiduel. C'était l'animation `slideUp` (250 ms) capturée **en plein vol** par la mesure. Re-mesuré proprement sur 3,6 s : `translateY(0)`, minuteur à 806-880, bouton à 892-948, et les trois points du bouton (haut, centre, bas) atteignables. Le correctif était bon ; la mesure ne l'était pas.
+
+### Ce qui a été testé et qui marche (vérifié en base, pas seulement à l'écran)
+- **Workout — sauvegarde en base** : séance à 2 exercices issus de 2 sections différentes (Push-up depuis Maison, Bench Press depuis Salle), 5 séries dont 3 validées → ligne `seances` exacte : `[{Push-up: [15×0, 12×5]}, {Bench Press: [8×60]}]`, `duree_min` 1, `date` du jour. **Les 2 séries non cochées sont correctement exclues** (le filtre ajouté le 2026-08-13 tient). Hub après rechargement complet : « 1/6 séances », carte « 3 séries », badges Push-up/Bench Press — tout cohérent avec la base. Écran de détail d'historique exact au détail de chaque série.
+- **WorkoutLibrary** : les 3 sections chargent ; fusion catalogue local curaté + wger statique + API live vérifiée en direct (127 → 177 exercices sur Salle après ~10 s de chargement) ; recherche (« bench » → 7 résultats, regroupement par groupe musculaire conservé) ; modal d'exercice avec instructions ; ajout depuis la liste **et** depuis la modal.
+- **Messagerie — temps réel bidirectionnel**, avec les deux comptes réellement connectés en parallèle : membre → coach et coach → membre, message affiché **sans rechargement** des deux côtés. Persistance des 4 messages en base, `read_at` posé correctement à l'ouverture de chaque conversation, pastille de non-lus présente avant lecture, résumés de conversation (dernier message + heure) justes côté coach comme côté membre.
+- **Multi-salles, sous une vraie 2ᵉ salle** : le membre ne voit que le coach de sa salle, le coach ne voit que ses 2 membres et aucun des 3 membres réels de VOLTA FITNESS. À noter : `fetchPrimaryCoach()` (`utils/messages.js`) n'a **aucun filtre `gym_id`** — il prend le coach le plus ancien globalement. C'est la policy « Members can view own-gym coach profiles » qui le rend inoffensif : le membre de test a bien vu QaCoach (créé le jour même) et non le coach de VOLTA (créé le 2026-07-08, donc plus ancien). Vérifié en conditions réelles, pas déduit — mais c'est une garantie qui repose entièrement sur la RLS, à garder en tête si la requête devait un jour tourner en service_role.
+- **Coach passant d'une conversation à l'autre** : échantillonnage du DOM toutes les 50 ms sur 2 s — aucune fenêtre où les messages d'un membre s'affichent sous le nom de l'autre. Hypothèse envisagée puis **réfutée par la mesure**.
+
+### Test RLS réel de la messagerie — fait pour de vrai, aux deux couches
+Demandé explicitement : vérifier par test, pas par lecture de policy. Fait avec le token d'un **second membre réel** de la même salle.
+
+| Tentative | Résultat |
+|---|---|
+| Requête exacte de `fetchConversation(membre1, coach)` | **0 ligne** |
+| `select *` sur toute la table `messages` | **0 ligne** |
+| Recherche par contenu (`content=ilike.*test membre 1*`) | **0 ligne** |
+| INSERT vers un autre membre | **42501 refusé** |
+| INSERT en usurpant `sender_id` (se faire passer pour membre 1) | **42501 refusé** |
+| PATCH `read_at` sur les messages d'autrui | 200 mais **0 ligne modifiée** |
+
+**Et surtout, la couche Realtime — c'est le point qui ne se lit pas dans une policy.** Le filtre `postgres_changes` est fourni par le client : si Realtime n'appliquait pas la RLS, n'importe qui pourrait s'abonner avec `filter: receiver_id=eq.<id du coach>` et écouter toutes les conversations de la salle. Testé avec **contrôle positif** : deux WebSockets ouverts sur la même config exactement, l'un avec le JWT du coach, l'autre avec celui du second membre, tous deux `phx_join` en `"ok"`. Sur une insertion réelle (membre 1 → coach) : **le socket du coach a reçu le payload, celui du second membre n'a rien reçu.** La RLS est donc bien appliquée par abonné, et le filtre client ne permet pas d'écouter la conversation d'autrui.
+
+### Nettoyage des données de test — vérifié à 0
+3 comptes de test (`volta.qa.coach2@`, `volta.qa.m1@`, `volta.qa.m2@`) et 1 salle de test (`QA GYM MSG`) supprimés, avec toutes leurs lignes : `messages` (4), `seances` (1), `api_rate_limit` (11), `profiles` (3), `gyms` (1), `auth.users` (3). Les 15 tables du schéma ont été balayées, pas seulement celles touchées : `objectifs`, `activite_jour`, `repas`, `ai_usage`, `coach_notes`, `habitudes`, `habitude_logs`, `programmes`, `programme_assignations`, `push_subscriptions` étaient déjà à 0 pour ces comptes.
+
+Contrôle après coup : **0** compte de test, **0** profil de test, **0** salle de test, **0** message de test, **0** ligne orpheline sur `profiles`/`seances`/`messages`/`objectifs`/`activite_jour`/`repas`/`api_rate_limit`, **0** profil rattaché à une salle inexistante, **0** ligne `ai_usage` sans salle, **0** objet Storage orphelin. Base revenue **exactement** à son état d'avant session : 5 `auth.users`, 5 profils, 1 salle (VOLTA FITNESS), 2 séances, 6 messages, 3 objectifs, 32 `activite_jour`, 12 repas, 39 `api_rate_limit`. Le seul objet Storage (1) est l'avatar réel d'Arnaud du 2026-08-15, antérieur à la session. Arnaud reste le seul `is_platform_admin`.
+
+**Aucun résidu `ai_usage` cette fois**, contrairement à la session précédente : aucun appel IA n'a été nécessaire (ni « Programme IA », ni scan, ni recette), et la salle de test a de toute façon été supprimée.
+
+Sessions de test aussi effacées du navigateur (`localStorage` vidé sur les 3 origines utilisées : production, URL de déploiement production, URL de preview).
+
+### Reste à faire
+- **Phase 2 (suite)** — flux non couverts : **Settings** et **espace coach** (`CoachDashboard`, `ClientsList`, `MemberDetail`, programmes, habitudes).
+- **Phase 3** — qualité de code. Deux candidats repérés au passage cette session, volontairement **pas** traités (ce ne sont pas des bugs) :
+  - `activeSession.type` n'est **jamais** renseigné : ni `addExercisesToSession`, ni `startCoachProgram`, ni le flux bibliothèque ne le posent. Toutes les séances s'enregistrent donc sous le nom générique « SÉANCE », y compris celles issues d'un programme IA qui affiche pourtant un `session_type` (« PUSH DAY »). Effet de bord : `recentSessionsLine` (`Workout.jsx`) envoie « SÉANCE (dim. 16 août) » au générateur de programme — un historique sans information utile.
+  - Qualité du catalogue wger : « Développé incliné à la Smith machine » apparaît dans la section **Maison** (« Bodyweight · Sans équipement »). Donnée tierce mal catégorisée, pas un bug de code.
+- Décider pour les variables d'env en Preview — **partiellement tranché en pratique** : les variables `VITE_*` (donc Supabase Auth, Realtime, REST) **fonctionnent bien en Preview**, c'est confirmé cette session en s'y connectant et en y testant les 3 correctifs. Seules les routes `/api/*` (qui ont besoin de `SUPABASE_SERVICE_ROLE_KEY`) restent indisponibles. Un correctif purement client est donc testable en preview avant merge ; seuls les flux serveur imposent encore de passer par la production.
+- Toujours en attente décision produit : protection des mots de passe compromis (advisor WARN, Phase 1).
+
 ## 🚨 2026-08-16 — Audit sécurité (Phase 2, suite) : Bilan + Nutrition, 4 bugs trouvés dont une perte de données
 
 Suite directe de la Phase 2 (entrée « tests fonctionnels réels, 3 bugs trouvés » plus bas). Périmètre de cette session, tel que demandé : **Bilan** (`Weekly.jsx` — édition d'objectif calories/protéines déplacée depuis Settings le 2026-08-15, recalcul auto, sauvegarde ; + classement hebdo) et **Nutrition** (ajout de repas, scan photo avec croisement Open Food Facts, « Décrire un repas », génération de recette). Tests réels dans le navigateur sur la **production** (les routes `/api/*` ne tournent toujours pas en Preview — voir le point d'environnement de l'entrée précédente, toujours non arbitré).
