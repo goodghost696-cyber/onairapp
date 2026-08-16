@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useApp } from '../context/AppContext'
 import { BOUNDS, inBounds } from '../utils/validation'
 import { calculateCalorieGoal } from '../utils/metabolism'
 import Icon from '../components/Icon'
@@ -89,6 +90,7 @@ const STEPS = [
 export default function Onboarding() {
   const navigate = useNavigate()
   const { user, updateUserProfile } = useAuth()
+  const { updateData } = useApp()
   const [currentStep, setCurrentStep] = useState(0)
   const [answers, setAnswers] = useState({})
 
@@ -173,6 +175,25 @@ export default function Onboarding() {
     localStorage.setItem('onair_user', JSON.stringify(profile))
     localStorage.setItem('onair_calorieGoal', profile.calorieGoal)
     if (updateUserProfile) updateUserProfile(profile)
+    // Répercussion immédiate dans AppContext. Sans ça, les cibles qu'on
+    // vient de calculer n'apparaissaient nulle part avant un rechargement
+    // complet de la page : AppContext ne relit `objectifs` que sur
+    // changement de user.id, or l'utilisateur est déjà authentifié pendant
+    // l'onboarding — l'id ne change pas. Le setItem ci-dessus ne suffit
+    // pas non plus : getPersonalisedGoals() ne le lit que dans
+    // l'initialiseur de useState, déjà exécuté bien avant.
+    // Constaté en test réel le 2026-08-16 : onboarding à 3069 kcal
+    // correctement écrit en base, mais Dashboard et Nutrition affichaient
+    // encore 2400/180/240/80 (les valeurs par défaut) jusqu'au reload —
+    // soit la toute première impression de chaque nouveau membre.
+    updateData('calorieGoal', targets.calorieGoal)
+    updateData('proteinGoal', targets.proteinGoal)
+    updateData('carbsGoal', targets.carbGoal)
+    updateData('fatGoal', targets.fatGoal)
+    // Sert au calcul de dépense de la course (utils/metabolism.js) et au
+    // recalcul d'objectif depuis Bilan — même problème de fraîcheur.
+    const weightKg = parseFloat(answers.body?.weight)
+    if (Number.isFinite(weightKg)) updateData('weightKg', weightKg)
     // Straight to a short app tour instead of Dashboard directly — a brand
     // new member otherwise lands there with zero explanation of what
     // anything does. Consumed once (see AppTour.jsx), same one-shot

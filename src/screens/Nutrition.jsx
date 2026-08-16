@@ -546,13 +546,29 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant ou après, avec exactement 
       setRecipeLinkInput('')
       setRecipeStep(2)
     } else {
-      generateRecipe()
+      // `type` passé explicitement, PAS lu depuis recipeMealType : le
+      // setRecipeMealType ci-dessus ne prend effet qu'au prochain rendu,
+      // alors que generateRecipe() part immédiatement dans le même
+      // gestionnaire d'événement. Sans ça, elle lisait la valeur d'AVANT
+      // (chaîne vide, remise par openRecipeSheet) — bug réel mesuré en
+      // test le 2026-08-16 : prompt envoyé avec « Repas concerné :  »
+      // vide, et getMealBudget('') retombant sur le plafond générique de
+      // 700 kcal parce que MEAL_TYPES.indexOf('') vaut -1. Le plafond par
+      // type de repas (500/700/700/300) n'a donc JAMAIS été appliqué sur
+      // ce chemin : un Snack était proposé à ~700 kcal, exactement le
+      // symptôme que ce plafond avait été ajouté pour corriger.
+      // Les chemins photo/lien ne sont pas concernés : leur génération
+      // part d'un événement ultérieur (onChange du fichier, bouton), donc
+      // après re-rendu.
+      generateRecipe(type)
     }
   }
 
-  async function generateRecipe() {
-    recipeRegenerateRef.current = () => generateRecipe()
-    const type = recipeMealType
+  async function generateRecipe(mealTypeArg) {
+    const type = mealTypeArg ?? recipeMealType
+    // Le régénérateur ("Voir d'autres idées") reçoit le même type explicite,
+    // pour ne pas réintroduire la lecture d'état au coup suivant.
+    recipeRegenerateRef.current = () => generateRecipe(type)
     setRecipeStep(3)
     setRecipeLoading(true)
     setRecipeError('')

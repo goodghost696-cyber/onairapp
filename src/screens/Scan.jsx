@@ -170,7 +170,7 @@ export default function Scan() {
         })
       } else if (mode === 'food') {
         const items = await Promise.all((parsed.items || []).map(async (item) => {
-          const off = await lookupOFF(item.name)
+          const off = await lookupOFF(item.name, item.kcal_100g)
           return {
             name: item.name,
             grams: item.grams || 100,
