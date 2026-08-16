@@ -23,6 +23,22 @@ function mealFromRow(r) {
   }
 }
 
+const EMPTY_ACTIVE_SESSION = { exercises: [], startTime: null, startTimestamp: null }
+
+// La séance en cours était le SEUL champ d'appData ni relu ni sauvegardé en
+// localStorage (audit 2026-08-16) : elle ne vivait qu'en mémoire, donc le
+// moindre rechargement — reprise de la PWA tuée par iOS, activation d'un
+// nouveau service worker, pull-to-refresh — effaçait exercices, séries,
+// reps et kg sans un mot. Confirmé en test réel : séance de 3 séries dont
+// 2 validées -> "Aucun exercice ajouté." après un simple reload.
+// Relecture défensive : une valeur héritée d'une version antérieure (ou
+// tronquée) ne doit pas faire planter le rendu, qui déréférence
+// `activeSession.exercises` sans garde.
+function loadActiveSession() {
+  const stored = load('activeSession', null)
+  return stored && Array.isArray(stored.exercises) ? stored : { ...EMPTY_ACTIVE_SESSION }
+}
+
 // Reconstructs the {hours, minutes, quality} shape the UI expects from the
 // single `sommeil_h` numeric column activite_jour actually stores.
 export function sleepFromHours(h) {
@@ -158,7 +174,7 @@ export function AppProvider({ children }) {
       // qui les vide, ils apparaissaient brièvement. Même correctif que
       // sessionHistory/weeklyWorkouts ci-dessus : démarrer vide.
       meals: load('meals', []),
-      activeSession: { exercises: [], startTime: null, startTimestamp: null },
+      activeSession: loadActiveSession(),
       sessionHistory: load('sessionHistory', DEFAULT_SESSION_HISTORY),
     }
   })
@@ -171,10 +187,15 @@ export function AppProvider({ children }) {
   useEffect(() => {
     if (clearDay()) {
       const freshSleep = sleepFromHours(0)
-      setAppData(prev => ({ ...prev, calories: 0, water: 0, steps: 0, protein: 0, carbs: 0, fat: 0, meals: [], sleep: freshSleep, kmRun: 0 }))
+      setAppData(prev => ({ ...prev, calories: 0, water: 0, steps: 0, protein: 0, carbs: 0, fat: 0, meals: [], sleep: freshSleep, kmRun: 0, activeSession: { ...EMPTY_ACTIVE_SESSION } }))
       save('calories', 0); save('water', 0); save('steps', 0)
       save('protein', 0); save('carbs', 0); save('fat', 0); save('meals', [])
       save('sleep', freshSleep); save('kmRun', 0)
+      // Une séance est datée du jour (finishSession écrit `date: todayStr()`) :
+      // maintenant qu'elle survit au rechargement, une séance jamais terminée
+      // ne doit pas déborder sur le lendemain et s'y enregistrer à la mauvaise
+      // date. Même traitement que les autres métriques quotidiennes ci-dessus.
+      save('activeSession', { ...EMPTY_ACTIVE_SESSION })
     }
   }, [])
 
@@ -366,6 +387,7 @@ export function AppProvider({ children }) {
   useEffect(() => { save('carbs', appData.carbs) }, [appData.carbs])
   useEffect(() => { save('fat', appData.fat) }, [appData.fat])
   useEffect(() => { save('meals', appData.meals) }, [appData.meals])
+  useEffect(() => { save('activeSession', appData.activeSession) }, [appData.activeSession])
   useEffect(() => { save('sessionHistory', appData.sessionHistory) }, [appData.sessionHistory])
   useEffect(() => { save('weeklyWorkouts', appData.weeklyWorkouts) }, [appData.weeklyWorkouts])
   useEffect(() => { save('sleep', appData.sleep) }, [appData.sleep])
