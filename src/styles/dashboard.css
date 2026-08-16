@@ -100,23 +100,26 @@ body.dashboard-body-bg {
   bottom: env(safe-area-inset-bottom);
 }
 
-/* Fond opaque sombre (.bottom-nav) — la maquette de référence veut une
-   pill opaque noir/charbon sur le Dashboard restylé, mais le fond global
-   de nav.css (--nav-glass: rgba(255,255,255,0.28), glass "frost léger"
-   délibéré, voir nav.css) n'a jamais été touché par les fixs précédents
-   (vérifié : aucun diff sur nav.css/global.css dans les 3 commits
-   précédents) — ce n'est pas une régression introduite ici, c'est ce
-   glass translucide préexistant qui devient gênant maintenant que la
-   grille d'activité a des cartes pastel pleines (Eau lavande, Sommeil
-   rose) derrière. Override scopé au Dashboard uniquement, pas touché
-   ailleurs. Couleur en dur (pas var(--db-ink)) : les custom properties de
+/* Fond frost sombre (.bottom-nav). Historique de cette règle, parce qu'elle
+   a déjà changé de sens une fois :
+   - 2026-08-14 : posée en `#1C1A17` OPAQUE + `backdrop-filter: none`, parce
+     que le glass clair de nav.css laissait voir les cartes pastel pleines
+     (Eau lavande, Sommeil rose) juste derrière — jugé sale sur capture
+     réelle. Généralisée ensuite aux 8 autres écrans restylés.
+   - 2026-08-16 : demande explicite de revenir à un effet frost, opacité de
+     fond fixée à 25% et flou à 15px. C'est donc un ARBITRAGE PRODUIT
+     INVERSÉ, pas la correction d'un bug : les cartes pastel redeviennent
+     partiellement visibles derrière la pill, cette fois assumé.
+   Couleur toujours en dur (pas var(--db-ink)) : les custom properties de
    .dashboard-redesign n'atteignent pas .bottom-nav, qui est un sibling,
-   pas un descendant — même contrainte que le fix du fond de <body>
-   plus haut ; #1C1A17 doit rester en sync manuel avec --db-ink. */
+   pas un descendant — rgba(28,26,23,·) doit rester en sync manuel avec
+   --db-ink. Le fond reste SOMBRE, et pas le glass blanc de nav.css : les
+   icônes de ces 9 écrans sont en crème (règle juste en dessous), elles
+   deviendraient illisibles sur un frost clair. */
 .dashboard-redesign ~ .bottom-nav {
-  background: #1C1A17;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
+  background: rgba(28,26,23,0.25);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
 }
 
 /* Conséquence directe du fond opaque sombre ci-dessus, pas un changement à
