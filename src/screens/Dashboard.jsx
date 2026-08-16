@@ -9,6 +9,7 @@ import { dailyRemainingCalories } from '../utils/metabolism'
 import { fetchStreakDetails } from '../utils/streak'
 import { fetchHabitsWithProgress, checkHabitToday, uncheckHabitToday } from '../utils/habits'
 import { useSwipeToDismiss } from '../hooks/useSwipeToDismiss'
+import { activable } from '../utils/a11y'
 import quotes from '../data/quotes.json'
 import Avatar from '../components/Avatar'
 import '../styles/dashboard.css'
@@ -326,12 +327,14 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Calorie card — was a ring (CalorieRing.jsx) on a plain dark
-            surface; converted to the same flat gold-gradient "hero" card
-            Nutrition.jsx already uses, matching the mockup's "Calories du
-            jour" card and keeping the two calorie displays in the app
-            visually consistent with each other. CalorieRing.jsx itself is
-            untouched/still available, just not used here anymore. */}
+        {/* Calorie card — était un anneau (CalorieRing.jsx) sur une surface
+            sombre ; converti en la même carte « hero » que Nutrition.jsx
+            utilise déjà, pour garder les deux affichages de calories
+            cohérents entre eux. CalorieRing.jsx (et son hook useCountUp)
+            ont été supprimés en Phase 3 : plus importés nulle part depuis
+            ce changement, et issus d'une direction visuelle abandonnée
+            depuis le restyle « pastel chaud ». Récupérables dans l'historique
+            git si le besoin revient. */}
         <div className="db-calorie-card card-animated" style={{ '--delay': '0ms' }}>
           <div className="db-calorie-top">
             <div>
@@ -384,7 +387,10 @@ export default function Dashboard() {
               key={card.key}
               className={`activity-card-compact card-animated${card.key === 'water' ? ' activity-card-accent' : ''}`}
               style={{ '--delay': `${80 + i * 40}ms` }}
-              onClick={() => { setEditingCard(card.key); setInputVal(''); setGoalInputVal(String(card.target)) }}
+              {...activable(
+                () => { setEditingCard(card.key); setInputVal(''); setGoalInputVal(String(card.target)) },
+                { label: `${card.label} — modifier` },
+              )}
             >
               <span className="activity-card-icon-badge" style={{ background: card.tint }}>{card.icon}</span>
               <p className="activity-card-label">{card.label}</p>
@@ -447,7 +453,11 @@ export default function Dashboard() {
                   key={h.id}
                   className="db-habit-card card-animated"
                   style={{ '--delay': `${360 + i * 40}ms`, '--db-habit-accent': i % 2 === 0 ? 'var(--db-olive)' : 'var(--db-lavender)' }}
-                  onClick={() => toggleHabitToday(h)}
+                  {...activable(() => toggleHabitToday(h), {
+                    role: 'checkbox',
+                    'aria-checked': !!h.doneToday,
+                    label: `${h.titre} — marquer comme fait aujourd'hui`,
+                  })}
                 >
                   <div className={`db-habit-check${h.doneToday ? ' done' : ''}`}>
                     {h.doneToday ? '✓' : ''}

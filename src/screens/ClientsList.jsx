@@ -5,6 +5,7 @@ import { supabase, authHeader } from '../lib/supabase'
 import { fetchMemberActivitySummaries, lastSeenLabel } from '../utils/coachStats'
 import { fetchStreaksForUsers } from '../utils/streak'
 import Icon from '../components/Icon'
+import { activable } from '../utils/a11y'
 
 const STATUS_COLORS = { 'ON TRACK': 'var(--success)', 'AT RISK': 'var(--warning)', 'INACTIVE': 'var(--danger)' }
 // Keys match the exact values Onboarding.jsx's goal step writes to
@@ -139,7 +140,7 @@ export default function ClientsList() {
 
         <div className="coach-grid">
           {!loading && filtered.map((m, i) => (
-            <div key={m.id} className="card card-animated" style={{ '--delay': `${i*40}ms`, cursor: 'pointer', marginBottom: 8 }} onClick={() => navigate(`/coach/member/${m.id}`)}>
+            <div key={m.id} className="card card-animated" style={{ '--delay': `${i*40}ms`, cursor: 'pointer', marginBottom: 8 }} {...activable(() => navigate(`/coach/member/${m.id}`), { label: `Voir la fiche de ${m.prenom}` })}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--surface-2)', border: `1.5px solid ${STATUS_COLORS[m.status] || 'var(--border)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 16, color: STATUS_COLORS[m.status] || 'var(--text-muted)', flexShrink: 0 }}>
                   {m.prenom?.[0] || '?'}

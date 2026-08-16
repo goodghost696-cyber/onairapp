@@ -23,7 +23,10 @@ function mealFromRow(r) {
   }
 }
 
-const EMPTY_ACTIVE_SESSION = { exercises: [], startTime: null, startTimestamp: null }
+// `type` = le nom sous lequel la séance sera enregistrée (`seances.nom`).
+// Null pour une séance libre composée depuis la bibliothèque, renseigné
+// quand elle démarre depuis un programme nommé — voir addExercisesToSession.
+const EMPTY_ACTIVE_SESSION = { exercises: [], startTime: null, startTimestamp: null, type: null }
 
 // La séance en cours était le SEUL champ d'appData ni relu ni sauvegardé en
 // localStorage (audit 2026-08-16) : elle ne vivait qu'en mémoire, donc le
@@ -421,12 +424,12 @@ export function AppProvider({ children }) {
   }
 
   function clearActiveSession() {
-    setAppData(prev => ({ ...prev, activeSession: { exercises: [], startTime: null, startTimestamp: null } }))
+    setAppData(prev => ({ ...prev, activeSession: { ...EMPTY_ACTIVE_SESSION } }))
   }
 
   function addExerciseToSession(exercise) {
     setAppData(prev => {
-      const current = prev.activeSession || { exercises: [], startTime: null, startTimestamp: null }
+      const current = prev.activeSession || { ...EMPTY_ACTIVE_SESSION }
       const exists = current.exercises.find(e => e.id === exercise.id)
       if (exists) return prev
       return {
@@ -438,12 +441,28 @@ export function AppProvider({ children }) {
           }],
           startTime: current.startTime || new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
           startTimestamp: current.startTimestamp || Date.now(),
+          // Reconduit explicitement : cet objet est reconstruit champ par
+          // champ, donc sans cette ligne, ajouter un exercice de la
+          // bibliothèque à une séance démarrée depuis un programme nommé
+          // effaçait son nom, et elle repartait en base en « SÉANCE ».
+          type: current.type || null,
         }
       }
     })
   }
 
-  function addExercisesToSession(exercises) {
+  // `sessionType` = nom du programme d'où part la séance (titre du programme
+  // coach, ou `session_type` du programme IA). Jusqu'ici il n'était jamais
+  // transmis : `activeSession.type` restait donc toujours undefined et
+  // finishSession() retombait systématiquement sur « SÉANCE » — y compris
+  // pour une séance générée en « PUSH DAY » ou assignée par le coach.
+  // Deux effets, au-delà du libellé d'historique : le coach voyait toutes
+  // les séances de ses membres sous le même nom dans MemberDetail, et le
+  // générateur de programme IA (Workout.jsx) recevait un historique
+  // « SÉANCE, SÉANCE, SÉANCE » — soit aucune information exploitable.
+  // Première valeur gagnante, comme startTime/startTimestamp juste à côté :
+  // une séance déjà nommée garde son nom si on lui ajoute autre chose.
+  function addExercisesToSession(exercises, sessionType) {
     const formatted = exercises.map(ex => ({
       id: `ai_${Date.now()}_${Math.random()}`,
       name: ex.name,
@@ -452,13 +471,14 @@ export function AppProvider({ children }) {
       suggested: { reps: ex.reps, kg: ex.kg, rest: ex.rest }
     }))
     setAppData(prev => {
-      const current = prev.activeSession || { exercises: [], startTime: null, startTimestamp: null }
+      const current = prev.activeSession || { ...EMPTY_ACTIVE_SESSION }
       return {
         ...prev,
         activeSession: {
           exercises: [...current.exercises, ...formatted],
           startTime: current.startTime || new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
           startTimestamp: current.startTimestamp || Date.now(),
+          type: current.type || sessionType || null,
         }
       }
     })

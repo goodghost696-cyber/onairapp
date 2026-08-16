@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import { fetchMemberActivitySummaries, fetchGymWeeklyActivity, lastSeenLabel } from '../utils/coachStats'
 import CoachNav from '../components/CoachNav'
 import Icon from '../components/Icon'
+import { activable } from '../utils/a11y'
 
 const STATUS_COLORS = { 'ON TRACK': 'var(--success)', 'AT RISK': 'var(--warning)', 'INACTIVE': 'var(--danger)' }
 
@@ -173,7 +174,7 @@ export default function CoachDashboard() {
             <div className="section-label" style={{ color: 'var(--danger)' }}>NÉCESSITE ATTENTION</div>
             <div className="coach-grid">
               {alerts.map((m, i) => (
-                <div key={m.id} className="card card-animated" style={{ borderLeft: '2px solid var(--danger)', marginBottom: 8, cursor: 'pointer', '--delay': `${Math.min(i, 6) * 40}ms` }} onClick={() => navigate(`/coach/member/${m.id}`)}>
+                <div key={m.id} className="card card-animated" style={{ borderLeft: '2px solid var(--danger)', marginBottom: 8, cursor: 'pointer', '--delay': `${Math.min(i, 6) * 40}ms` }} {...activable(() => navigate(`/coach/member/${m.id}`), { label: `Voir la fiche de ${m.prenom}` })}>
                   <div className="flex justify-between items-center">
                     <span className="text-base bold">{m.prenom}</span>
                     <span className="text-xs text-accent">VOIR →</span>
@@ -194,7 +195,7 @@ export default function CoachDashboard() {
         {!loading && activeToday.length === 0 && recentFallback.length === 0 && <p className="text-sm text-muted">Aucune activité enregistrée pour l'instant.</p>}
         <div className="coach-grid">
           {!loading && (activeToday.length > 0 ? activeToday : recentFallback).map((m, i) => (
-            <div key={m.id} className="card card-animated" style={{ cursor: 'pointer', marginBottom: 8, '--delay': `${Math.min(i, 6) * 40}ms` }} onClick={() => navigate(`/coach/member/${m.id}`)}>
+            <div key={m.id} className="card card-animated" style={{ cursor: 'pointer', marginBottom: 8, '--delay': `${Math.min(i, 6) * 40}ms` }} {...activable(() => navigate(`/coach/member/${m.id}`), { label: `Voir la fiche de ${m.prenom}` })}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--surface-2)', border: `1.5px solid ${STATUS_COLORS[m.status] || 'var(--border)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: STATUS_COLORS[m.status] || 'var(--text-muted)', flexShrink: 0 }}>
                   {m.prenom?.[0] || '?'}

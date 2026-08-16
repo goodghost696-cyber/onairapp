@@ -5,7 +5,6 @@ import { useLanguage } from '../context/LanguageContext'
 import { supabase } from '../lib/supabase'
 import { fetchWeeklyStats } from '../utils/weeklyStats'
 import { fetchLiftProgress } from '../utils/liftProgress'
-import { fetchWeeklyLeaderboard } from '../utils/leaderboard'
 import { calculateCalorieGoal } from '../utils/metabolism'
 import { BOUNDS, clamp } from '../utils/validation'
 import '../styles/Weekly.css'
@@ -180,8 +179,15 @@ export default function Weekly() {
   const [weeklySteps, setWeeklySteps] = useState(0)
   const [weeklyKmRun, setWeeklyKmRun] = useState(0)
   const [liftProgress, setLiftProgress] = useState([])
-  const [leaderboard, setLeaderboard] = useState([])
-  const [leaderboardLoaded, setLeaderboardLoaded] = useState(false)
+  // Le classement est masqué côté produit depuis le 2026-08-13 (rendu mis en
+  // commentaire plus bas, décision « repoussée, pas abandonnée »). Son fetch,
+  // lui, continuait de partir à CHAQUE montage du Bilan pour alimenter un
+  // état que plus rien ne lisait — une requête réseau par visite, pour rien,
+  // et qui plus est sur `leaderboard_weekly`, la vue SECURITY DEFINER dont la
+  // Phase 1 a dû reboucher la fuite cross-salle. Retiré (Phase 3) : l'état
+  // `leaderboard`/`leaderboardLoaded`, l'appel dans l'effet, et l'import.
+  // `utils/leaderboard.js` est volontairement conservé, non importé, avec le
+  // rendu commenté — pour rebrancher, remettre ces trois éléments.
   // Édition d'objectif déménagée depuis Settings.jsx (2026-08-15, demande
   // explicite de centraliser l'édition ici plutôt que de la dupliquer sur
   // les deux écrans) — même state/logique que l'ancien Settings.jsx,
@@ -264,8 +270,7 @@ export default function Weekly() {
     setTimeout(() => setGoalsSaved(false), 2000)
   }
   // Couvre les 2 fetchs qui alimentent le contenu visible (calories/résumé
-  // + charges) — pas le leaderboard, masqué côté produit (voir plus bas) et
-  // déjà géré par son propre flag indépendant.
+  // + charges).
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -282,7 +287,6 @@ export default function Weekly() {
       setLiftProgress(lifts)
       setLoading(false)
     })
-    fetchWeeklyLeaderboard().then(rows => { setLeaderboard(rows); setLeaderboardLoaded(true) })
   }, [user?.id])
 
   // Même fix que Dashboard.jsx/Nutrition.jsx (voir dashboard.css/JOURNAL.md)

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { fetchPrimaryCoach, fetchConversationSummaries } from '../utils/messages'
+import { activable } from '../utils/a11y'
 import '../styles/messages-redesign.css'
 
 function formatTime(iso) {
@@ -58,7 +59,7 @@ export default function Messages() {
         {loading && <p className="msg-empty">Chargement...</p>}
         {!loading && !coach && <p className="msg-empty">Aucun coach disponible pour l'instant.</p>}
         {!loading && coach && (
-          <div className="card msg-conversation-card card-animated" style={{ cursor: 'pointer', '--delay': '0ms' }} onClick={() => navigate('/messages/coach')}>
+          <div className="card msg-conversation-card card-animated" style={{ cursor: 'pointer', '--delay': '0ms' }} {...activable(() => navigate('/messages/coach'), { label: `Conversation avec ${coach.prenom || 'ton coach'}${summary?.unreadCount > 0 ? ' — messages non lus' : ''}` })}>
             <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
               <div className="msg-avatar">
                 {(coach.prenom?.[0] || 'C').toUpperCase()}

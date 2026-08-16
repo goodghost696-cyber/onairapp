@@ -9,10 +9,14 @@ import { storageKey } from '../components/OnboardingTour'
 import { useGymConfig } from '../hooks/useGymConfig'
 import { isGymAccessActive, trialDaysLeft } from '../utils/billing'
 import Icon from '../components/Icon'
+import { activable } from '../utils/a11y'
 
-function Toggle({ on, onToggle }) {
+// `role="switch"` + aria-checked plutôt que `button` : c'est un interrupteur
+// à deux états, et sans ça un lecteur d'écran l'annonçait comme rien du tout
+// (div nu, non atteignable au clavier). Même traitement dans Settings.jsx.
+function Toggle({ on, onToggle, label }) {
   return (
-    <div onClick={onToggle} style={{ width: 44, height: 26, background: on ? 'var(--accent)' : 'var(--border)', borderRadius: 13, position: 'relative', cursor: 'pointer', transition: 'background 200ms ease', flexShrink: 0 }}>
+    <div {...activable(onToggle, { role: 'switch', 'aria-checked': !!on, label })} style={{ width: 44, height: 26, background: on ? 'var(--accent)' : 'var(--border)', borderRadius: 13, position: 'relative', cursor: 'pointer', transition: 'background 200ms ease', flexShrink: 0 }}>
       <div style={{ position: 'absolute', width: 20, height: 20, background: 'white', borderRadius: '50%', top: 3, left: 3, transform: on ? 'translateX(18px)' : 'none', transition: 'transform 200ms ease' }} />
     </div>
   )
@@ -207,7 +211,7 @@ export default function CoachSettings() {
                 <div className="text-sm text-secondary">Nouveaux messages</div>
                 {pushState === 'denied' && <div className="text-xs" style={{ color: 'var(--danger)', marginTop: 2 }}>Bloquées dans les réglages du navigateur</div>}
               </div>
-              <Toggle on={pushState === 'subscribed'} onToggle={handleTogglePush} />
+              <Toggle on={pushState === 'subscribed'} onToggle={handleTogglePush} label="Notifications push" />
             </div>
           )}
           {/* Same fix as Settings.jsx (member side) — was rendering nothing

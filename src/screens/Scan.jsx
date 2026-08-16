@@ -7,6 +7,7 @@ import { authHeader } from '../lib/supabase'
 import { BOUNDS, clamp } from '../utils/validation'
 import { resizeImage } from '../utils/image'
 import { lookupOFF, computeItemsTotal } from '../utils/foodEstimate'
+import { mapApiError } from '../utils/apiErrors'
 
 const LANG_NAMES = { fr: 'français', en: 'English', es: 'español' }
 
@@ -186,7 +187,7 @@ export default function Scan() {
         setResult({ type: mode, data: parsed })
       }
     } catch (err) {
-      setError(`Erreur : ${err.message}`)
+      setError(mapApiError(err))
     }
     setLoading(false)
   }

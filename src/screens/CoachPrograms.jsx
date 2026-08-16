@@ -190,11 +190,16 @@ export default function CoachPrograms() {
                   {p.exercices.length} exercice{p.exercices.length > 1 ? 's' : ''} · {p.exercices.map(e => e.name).join(', ')}
                 </p>
                 {assignedMembers.length > 0 && (
+                  /* Chaque puce était un <span> cliquable : une action
+                     destructive (retirer le programme d'un membre) ni
+                     atteignable au clavier ni annoncée comme un contrôle.
+                     Vrai <button> ici plutôt que role="button" — rien ne
+                     l'en empêchait, la puce n'a aucun enfant interactif. */
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
                     {assignedMembers.map(m => (
-                      <span key={m.user_id} onClick={() => handleUnassign(p.id, m.user_id)} style={{ cursor: 'pointer', fontSize: 11, padding: '4px 8px', borderRadius: 100, background: 'var(--surface-2)', color: 'var(--text-secondary)' }}>
+                      <button key={m.user_id} type="button" onClick={() => handleUnassign(p.id, m.user_id)} aria-label={`Retirer ce programme à ${m.prenom}`} style={{ cursor: 'pointer', fontFamily: 'inherit', fontSize: 11, padding: '4px 8px', borderRadius: 100, background: 'var(--surface-2)', color: 'var(--text-secondary)', border: 'none' }}>
                         {m.prenom} ✕
-                      </span>
+                      </button>
                     ))}
                   </div>
                 )}
