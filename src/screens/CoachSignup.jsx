@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase, authHeader } from '../lib/supabase'
+import { mapAuthError } from '../utils/authErrors'
+import { mapApiError } from '../utils/apiErrors'
 
 // Self-service "créer ma salle" — the follow-up explicitly flagged as out
 // of scope when the multi-tenant foundation (gyms table, gym_id, RLS
@@ -47,7 +49,13 @@ export default function CoachSignup() {
     })
     if (signUpError) {
       setSubmitting(false)
-      setError(signUpError.message || "Erreur lors de l'inscription")
+      // Était `signUpError.message || fallbackFR` — exactement le pattern que
+      // mapAuthError a été écrit pour corriger sur Login.jsx/ResetPassword.jsx
+      // (le `||` ne se déclenche jamais, `message` n'étant jamais vide), mais
+      // cet écran-ci avait été oublié. Un coach s'inscrivant avec un email
+      // déjà pris voyait donc « User already registered » en anglais, sur
+      // l'écran d'acquisition.
+      setError(mapAuthError(signUpError))
       return
     }
 
@@ -75,7 +83,9 @@ export default function CoachSignup() {
       setGym(result.gym)
       setStep('done')
     } catch (err) {
-      setError(err.message)
+      // `result.error` de /api/create-gym est déjà en FR ; ce qui pouvait
+      // fuir ici, c'est l'échec de fetch() lui-même (« Failed to fetch »).
+      setError(mapApiError(err, "Erreur lors de la création de la salle"))
     }
     setSubmitting(false)
   }

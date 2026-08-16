@@ -10,6 +10,7 @@ import { dailyRemainingCalories } from '../utils/metabolism'
 import { resizeImage } from '../utils/image'
 import { estimateFoodsFromText, computeItemsTotal } from '../utils/foodEstimate'
 import { activable } from '../utils/a11y'
+import { mapApiError } from '../utils/apiErrors'
 import NutriscoreBadge from '../components/NutriscoreBadge'
 import SwipeableRow from '../components/SwipeableRow'
 import { useSwipeToDismiss } from '../hooks/useSwipeToDismiss'
@@ -374,7 +375,7 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant ou après, avec exactement 
       const result = await estimateFoodsFromText(description, lang)
       setDescribeResult(result)
     } catch (err) {
-      setDescribeError(`Erreur : ${err.message}`)
+      setDescribeError(mapApiError(err))
     }
     setDescribeLoading(false)
   }
@@ -647,7 +648,7 @@ Réponds en français.`
       if (!opts.length) throw new Error('Aucune recette valide générée, réessaie')
       setRecipeOptions(opts)
     } catch (err) {
-      setRecipeError(`Erreur : ${err.message}`)
+      setRecipeError(mapApiError(err))
     }
     setRecipeLoading(false)
   }
@@ -739,7 +740,7 @@ Réponds en français.`
       if (!opts.length) throw new Error('Aucune recette exploitable trouvée sur cette photo')
       setRecipeOptions(opts)
     } catch (err) {
-      setRecipeError(`Erreur : ${err.message}`)
+      setRecipeError(mapApiError(err))
     }
     setRecipeLoading(false)
   }
@@ -835,7 +836,7 @@ Réponds en français.`
       if (parsed.error) throw new Error(parsed.error)
       setRecipe(parsed)
     } catch (err) {
-      setRecipeError(`Erreur : ${err.message}`)
+      setRecipeError(mapApiError(err))
     }
     setRecipeLoading(false)
   }
