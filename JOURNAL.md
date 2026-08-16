@@ -65,6 +65,34 @@ Pas un agent agentique à function calling. Une requête planifiée : réutilise
 
 **Pourquoi ne pas commencer maintenant** : priorité au socle avant toute nouvelle feature. Tant que la Phase 2 et la Phase 3 de l'audit et le restyle coach (`CoachDashboard`, `ClientsList`, `MemberDetail`) ne sont pas faits, enchaîner les features reproduirait le pattern `RunContent` — du contenu fabriqué resté en production pendant des mois sur une base non stabilisée.
 
+## 🔧 2026-08-16 — Réparation manuelle d'un compte réel (Myriam) : ligne `profiles` manquante depuis le 2026-08-06
+
+**Distinct du BUG 1 de la Phase 2 ci-dessous**, même si la cause est la même. Le BUG 1 est le *défaut de code* (upsert client bloqué en 42501 par l'allowlist de colonnes), corrigé le jour même. Cette entrée-ci documente sa **victime réelle** : une utilisatrice inscrite **10 jours avant que le correctif existe**, dont la ligne `profiles` n'a jamais été créée et que le fix de code ne pouvait pas réparer rétroactivement. Aucune donnée de test ici — un vrai compte, réparé à la main.
+
+### Constat
+`spicymymy@gmail.com` (inscrite le 2026-08-06 à 12:48) existait dans `auth.users` sans **aucune** ligne dans `profiles`. Conséquences concrètes : invisible dans `ClientsList`/`CoachDashboard` côté coach (les policies coach filtrent sur `profiles`), et donc absente de tout suivi depuis 10 jours.
+
+### Investigation — valeurs retrouvées, pas devinées
+Rien n'a été inventé. Deux sources concordantes :
+1. **`auth.users.raw_user_meta_data`** — l'onboarding a bien écrit dans les métadonnées auth (`auth.updateUser()` fonctionne, lui) : `name: "Myriam"`, `role: "member"`, `goal: "Prise de masse"`, `weight: "65"`, `height: "160"`, plus les cibles calculées (`calorieGoal 2609`, `proteinGoal 130`, `carbGoal 294`, `fatGoal 72`, `tdee 2372`, `frequency "4-5"`, `level "Intermédiaire"`).
+2. **Trace indépendante en base** — la ligne `objectifs` de ce compte, écrite le **2026-08-06 à 12:49:09** (une minute après l'inscription), porte exactement les mêmes chiffres : `calories_jour 2609`, `proteines 130`, `glucides 294`, `lipides 72`. Elle prouve que l'onboarding est bien allé au bout : `objectifs` a le `UPDATE(user_id)` qui manque à `profiles`, donc son upsert passait pendant que celui de `profiles` échouait silencieusement. Il existe aussi 1 ligne `activite_jour` (2026-08-06, sommeil 7,38 h) et 1 message envoyé.
+
+`age` n'apparaît **nulle part** dans ces traces → laissé à NULL plutôt que d'inventer une valeur.
+
+### Réparation appliquée
+Une seule ligne `profiles` créée, avec les valeurs ci-dessus : `prenom 'Myriam'`, `email`, `poids 65`, `taille 160`, `objectif 'Prise de masse'` (valeur exacte attendue par le code — `GOAL_OPTIONS` dans `Weekly.jsx` mappe le libellé « Prendre du muscle » sur cette valeur stockée), `role 'member'`, `gym_id` = VOLTA FITNESS (`30cd42d5…`, **seule salle active** ; les 4 autres profils y sont tous rattachés — à noter, la table `gyms` n'existait pas encore à son inscription, créée le 2026-08-10).
+
+Écriture faite en service_role avec la même sémantique que le helper `upsertOwnProfile` (INSERT puisqu'aucune ligne n'existait, `user_id` jamais dans un SET), et idempotente (`where not exists`). C'est aussi le même partage des rôles que le pipeline d'inscription réel : `register()` pose prenom/email, `api/invite.js` pose `gym_id`/`role` en service_role.
+
+**Aucun changement de GRANT, de RLS, d'allowlist ni de trigger** — strictement une insertion de données conforme à l'existant. Pas de changement de code non plus : cette entrée est le seul livrable versionné.
+
+### Vérifié côté coach, pour de vrai
+Pas seulement relu : la requête exacte de `ClientsList` (`select * from profiles where role='member'`) a été rejouée **sous le contexte RLS réel du coach** (`set local role authenticated` + `request.jwt.claims` = user_id du coach). Myriam y apparaît désormais aux côtés d'Arnaud et Gisèle, avec son objectif, son poids et sa taille — elle est même la seule des trois dont `poids`/`taille` sont renseignés en base.
+
+### Deux points laissés ouverts
+- **`profiles.created_at` de cette ligne porte la date de la réparation (2026-08-16), pas celle de l'inscription (2026-08-06).** L'alignement sur `auth.users.created_at` a été tenté mais bloqué par le classificateur de permissions. Sans impact fonctionnel connu : `profiles.created_at` n'est lu nulle part dans `src/` (vérifié par grep — les autres usages de `created_at` portent sur `repas`/`seances`/`messages`/`gyms`/`habitudes`/`programmes`). À corriger à la main si une notion d'ancienneté de membre apparaît un jour.
+- **Même trou de données, autre symptôme, sur le compte d'Arnaud** : `poids 76` / `taille 188` sont présents dans son `raw_user_meta_data` mais NULL dans `profiles` — sa ligne existait, c'est le chemin UPDATE qui échouait. Non touché (hors périmètre de cette réparation). Gisèle, elle, n'a jamais rempli ces champs (absents des deux côtés) : rien à réparer.
+
 ## 🚨 2026-08-16 — Audit sécurité (Phase 2) : tests fonctionnels réels, 3 bugs trouvés dont 2 critiques
 
 Suite directe de la Phase 1 (voir entrée juste en dessous). Phase 2 = tests fonctionnels réels dans le navigateur (claude-in-chrome) sur l'app déployée, avec un compte de test dédié. Périmètre de cette session, tel que demandé : signup membre, signup coach (+ re-test du TOCTOU `/api/create-gym`), Dashboard (toutes les cartes + édition des objectifs). Les autres flux (Nutrition, Bilan, Workout, Settings, messagerie, espace coach) restent à faire.
@@ -111,12 +139,12 @@ Le retest était prévu sur la preview de la PR : impossible (voir le point d'en
 - Le bundle servi par la production a été vérifié avant le retest (`index-CXlRhYPi.js`) : helper présent, plus aucun `from("profiles").upsert` — service worker déréférencé au préalable pour ne pas tester un ancien build en cache.
 
 ### Nettoyage des données de test — vérifié à 0
-5 comptes de test (`volta.qa.*@gmail.com`), 4 salles de test (`QA %`), et toutes leurs lignes associées supprimés : `profiles` (5), `activite_jour` (2), `objectifs` (1), `api_rate_limit` (10), `gyms` (4), `auth.users` (5). Contrôle après coup : **0** compte de test, **0** salle de test, **0** ligne orpheline (`profiles`/`activite_jour`/`objectifs` sans utilisateur), **0** fichier de test dans Storage. La base est revenue exactement à son état d'avant session : 1 salle (VOLTA FITNESS), 4 profils, 5 comptes `auth.users` (dont `spicymymy@gmail.com`, sans profil — anomalie **pré-existante** signalée plus haut, laissée intacte).
+5 comptes de test (`volta.qa.*@gmail.com`), 4 salles de test (`QA %`), et toutes leurs lignes associées supprimés : `profiles` (5), `activite_jour` (2), `objectifs` (1), `api_rate_limit` (10), `gyms` (4), `auth.users` (5). Contrôle après coup : **0** compte de test, **0** salle de test, **0** ligne orpheline (`profiles`/`activite_jour`/`objectifs` sans utilisateur), **0** fichier de test dans Storage. La base est revenue exactement à son état d'avant session : 1 salle (VOLTA FITNESS), 4 profils, 5 comptes `auth.users` (dont `spicymymy@gmail.com`, sans profil — anomalie **pré-existante** signalée plus haut, laissée intacte à ce moment-là ; réparée depuis, voir l'entrée du 2026-08-16 plus haut).
 
 ### Reste à faire
 - **Phase 2 (suite)** — les flux non couverts cette session : Nutrition, Bilan, Workout, Settings, messagerie temps réel, espace coach.
 - **Phase 3** — qualité de code (mock data résiduelle, code mort, cohérence des messages d'erreur FR).
-- Réparer à la main le profil manquant de `spicymymy@gmail.com` (BUG 1).
+- ~~Réparer à la main le profil manquant de `spicymymy@gmail.com` (BUG 1).~~ **Fait le 2026-08-16** — voir l'entrée « Réparation manuelle d'un compte réel (Myriam) » plus haut.
 - Décider pour les variables d'env en Preview (ci-dessus).
 - Toujours en attente décision produit : protection des mots de passe compromis (advisor WARN, Phase 1).
 
