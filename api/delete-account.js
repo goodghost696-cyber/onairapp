@@ -30,6 +30,37 @@ export default async function handler(req, res) {
   }
 
   const admin = createClient(process.env.VITE_SUPABASE_URL, serviceRoleKey);
+
+  // La photo de profil, elle, ne part PAS avec le compte : storage.objects
+  // n'a aucune clé étrangère vers auth.users (juste une colonne `owner` en
+  // uuid nu), donc aucune cascade ne l'atteint. Mesuré en test réel le
+  // 2026-08-16 : après un delete-account renvoyant 200 et un auth.users
+  // bien supprimé, le fichier restait dans le bucket ET restait servi
+  // publiquement en HTTP 200 (la policy SELECT du bucket `avatars` est
+  // `bucket_id = 'avatars'`, sans contrôle de propriétaire). L'écran de
+  // confirmation promet pourtant « Toutes tes données seront effacées pour
+  // toujours ». Il n'existe par ailleurs AUCUNE policy DELETE sur
+  // storage.objects — un client authentifié ne peut donc pas nettoyer
+  // derrière lui, seul ce chemin service_role le peut.
+  //
+  // Fait AVANT la suppression du compte, à dessein : si ça échoue, on
+  // s'arrête et le compte existe toujours, donc l'utilisateur peut
+  // réessayer. Dans l'ordre inverse, un échec ici laisserait un fichier
+  // orphelin que plus rien ne rattache à personne.
+  const { data: avatarFiles, error: listError } = await admin.storage.from('avatars').list(user.id);
+  if (listError) {
+    console.error('[delete-account] avatar list failed', listError);
+    return res.status(500).json({ error: 'Deletion failed, try again' });
+  }
+  if (avatarFiles?.length) {
+    const paths = avatarFiles.map(f => `${user.id}/${f.name}`);
+    const { error: removeError } = await admin.storage.from('avatars').remove(paths);
+    if (removeError) {
+      console.error('[delete-account] avatar remove failed', removeError);
+      return res.status(500).json({ error: 'Deletion failed, try again' });
+    }
+  }
+
   const { error } = await admin.auth.admin.deleteUser(user.id);
 
   if (error) {
