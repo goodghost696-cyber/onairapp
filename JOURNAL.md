@@ -65,6 +65,82 @@ Pas un agent agentique à function calling. Une requête planifiée : réutilise
 
 **Pourquoi ne pas commencer maintenant** : priorité au socle avant toute nouvelle feature. Tant que la Phase 2 et la Phase 3 de l'audit et le restyle coach (`CoachDashboard`, `ClientsList`, `MemberDetail`) ne sont pas faits, enchaîner les features reproduirait le pattern `RunContent` — du contenu fabriqué resté en production pendant des mois sur une base non stabilisée.
 
+## 🚨 2026-08-16 — Audit sécurité (Phase 2, suite) : Bilan + Nutrition, 4 bugs trouvés dont une perte de données
+
+Suite directe de la Phase 2 (entrée « tests fonctionnels réels, 3 bugs trouvés » plus bas). Périmètre de cette session, tel que demandé : **Bilan** (`Weekly.jsx` — édition d'objectif calories/protéines déplacée depuis Settings le 2026-08-15, recalcul auto, sauvegarde ; + classement hebdo) et **Nutrition** (ajout de repas, scan photo avec croisement Open Food Facts, « Décrire un repas », génération de recette). Tests réels dans le navigateur sur la **production** (les routes `/api/*` ne tournent toujours pas en Preview — voir le point d'environnement de l'entrée précédente, toujours non arbitré).
+
+Les 4 bugs ont été trouvés **en test réel, pas en relecture de code**, et aucun n'était visible depuis l'UI : dans les quatre cas l'écran affichait quelque chose de parfaitement crédible pendant que le calcul ou la donnée derrière était faux.
+
+**Note de méthode** : les deux comptes de test ont été créés par appel direct à `auth/v1/signup` + `/api/invite` depuis la page (le vrai chemin de `register()`), puis la session injectée en `localStorage` — plutôt qu'en tapant un mot de passe dans le formulaire. Le signup UI n'était pas au périmètre (déjà testé la session précédente) ; l'onboarding, lui, a bien été fait via l'UI réelle, écran par écran.
+
+### 🔴 BUG 4 (critique — perte de données) — enregistrer un objectif depuis Bilan effaçait poids et taille
+Trouvé **par accident, en fin de session**, en recomparant l'état du compte de test à celui qu'il avait après l'onboarding : `poids 82` / `taille 180` étaient devenus NULL. Le seul geste intercalé était « ENREGISTRER LES OBJECTIFS » depuis le Bilan.
+
+- **Root cause** (`AuthContext.updateUserProfile`) : `poids: profile.weight ? parseFloat(...) : null` et l'équivalent pour `taille` — un `null` explicite dès que l'appelant ne fournit pas ces champs. Or `upsertOwnProfile` ne filtre que les `undefined`. Les null partaient donc en base et écrasaient les vraies valeurs. Juste en dessous, `age` et `objectif` utilisent, eux, la bonne forme (omission conditionnelle) — le commentaire d'`age` explique même exactement ce piège. Poids/taille n'avaient simplement jamais reçu le même traitement.
+- **Seul appelant concerné** : `Weekly.jsx`, qui n'envoie que l'objectif et les cibles caloriques. `Onboarding.jsx` et `Settings.jsx` envoient bien poids/taille et n'ont jamais été destructeurs.
+- **Fenêtre d'exposition — étroite, et c'est important** : ce chemin ne pouvait pas détruire de données avant le 2026-08-16, puisque **toutes** les écritures `profiles` du client échouaient alors en 42501 (BUG 1). Le correctif d'hier est donc précisément ce qui a rendu cette perte effective — un correctif juste qui a découvert un second défaut derrière lui.
+- **Aucun compte réel touché** — vérifié en base avant correctif : Arnaud (76/188) et Myriam (65/160), réparés manuellement la veille, étaient toujours intacts ; personne n'avait encore enregistré d'objectif depuis Bilan dans cette fenêtre. Les deux réparations manuelles n'ont donc pas été perdues.
+- **Portée réelle au-delà de l'affichage** : `poids` alimente `AppContext.weightKg` (estimation de dépense de la course, `utils/metabolism.js`), le recalcul d'objectif du Bilan lui-même, et la fiche membre vue par le coach (`ClientsList.jsx`).
+- **Re-testé en réel après déploiement** : sauvegarde d'objectif depuis Bilan sur un compte à 82/180 → objectif et calories bien mis à jour (2999), `poids` et `taille` **intacts**.
+
+### 🔴 BUG 5 (critique) — le type de repas n'arrivait jamais au générateur de recette
+Demander une idée de **Snack** renvoyait 3 propositions à ~700 kcal — « Bowl petit-déjeuner », « Croque-monsieur », « Pâtes bolo » — sous un en-tête « SNACK ». C'est très exactement le symptôme qu'un membre réel avait remonté et que le plafond par type de repas était censé corriger.
+
+- **Root cause** : `chooseMealType()` appelait `generateRecipe()` dans le **même gestionnaire d'événement** que `setRecipeMealType()`, dont l'effet n'arrive qu'au rendu suivant. `generateRecipe` lisait donc la valeur d'avant — la chaîne vide remise par `openRecipeSheet()`.
+- **Isolé précisément par test** (pas déduit) : interception du corps envoyé à `/api/claude` → prompt parti avec « Repas concerné : » **vide** et « Calories restantes : 700 kcal », deux fois de suite, pour Dîner comme pour Snack.
+- **Conséquence en cascade** : `getMealBudget('')` fait `MEAL_TYPES.indexOf('')` = -1, donc `[500,700,700,300][-1]` = `undefined` → repli sur 700, et `mealScale` = 1. **Le plafond par type de repas n'a donc JAMAIS été appliqué sur ce chemin** depuis son ajout. Les protéines/glucides/lipides restants étaient mis à la même échelle erronée.
+- **Non concernés** : les chemins photo et lien, dont la génération part d'un événement ultérieur (onChange du fichier, bouton), donc après re-rendu.
+- **Correctif** : le type est passé explicitement à `generateRecipe(type)`, et le régénérateur (« Voir d'autres idées ») le reconduit.
+- **Re-testé en réel** : « Repas concerné : Snack », « Calories restantes : 300 kcal », protéines/glucides/lipides remis à l'échelle (26/43/17 au lieu de 60/100/40), et 3 vraies propositions de snack à 295-298 kcal.
+
+### 🟠 BUG 6 (majeur) — mauvais produit Open Food Facts retenu quand les noms sont à égalité
+Photo d'un pot de Nutella en mode Repas : le modèle identifie correctement le produit et estime 400 g, mais l'écran affichait **312 kcal** — avec un badge « ✓ vérifié » qui rendait le chiffre crédible. Sous-comptage d'un facteur 7.
+
+- **Root cause reproduite à la main** sur l'endpoint réel : la recherche OFF pour « Pâte à tartiner Nutella » renvoie 5 entrées nommées **toutes exactement « Pâte à tartiner »** (78, 59, 555 et 571 kcal/100g). `pickBestMatch` départage sur la complétude des macros puis la similarité de nom : les quatre candidats utilisables obtenaient donc le même score, et la comparaison stricte `>` gardait le premier de la liste — c'est-à-dire le classement de pertinence textuelle d'OFF, qui ici met en tête une entrée atypique.
+- **Ce n'est pas une incohérence détectable par contrôle interne** : les macros du mauvais candidat sont parfaitement cohérentes avec ses propres calories (contrôle d'Atwater OK). C'est un autre aliment, pas une donnée corrompue — d'où le choix du correctif ci-dessous.
+- **Correctif, sans requête supplémentaire** : les deux appelants (`Scan.jsx`, `estimateFoodsFromText`) disposent déjà de l'estimation par 100g du modèle, qui leur sert de repli. Elle est désormais passée à `lookupOFF` et sert (1) à départager les candidats à égalité — poids 0.25, volontairement **sous** l'écart de 0.3 entre deux paliers de `nameSimilarity`, pour qu'un meilleur nom continue toujours de l'emporter — et (2) à rejeter un match dont le kcal/100g s'écarte de plus d'un facteur 2 : `lookupOFF` renvoie alors `null`, l'appelant retombe sur l'estimation IA et **n'affiche plus le badge « vérifié »**. Sans repère exploitable, comportement strictement inchangé.
+- **Re-testé en réel** : même photo, même estimation de 400 g → **2220 kcal / 37 P / 196 G / 140 L** au lieu de 312 kcal.
+
+### 🟠 BUG 7 (majeur, première impression) — les objectifs calculés à l'onboarding n'apparaissaient qu'après rechargement
+Onboarding complet en conditions réelles (82 kg / 180 cm / 30 ans, prise de masse, 4-5 séances) : les cibles sont **correctement calculées et écrites en base** (3069 / 164 / 345 / 85, vérifié dans `objectifs`), mais le Dashboard affichait encore 2400 / 180 / 240 / 80 — les valeurs par défaut — jusqu'à un rechargement complet de la page.
+
+- **Root cause** : `handleComplete()` persiste via `updateUserProfile()` (AuthContext) sans jamais toucher `AppContext`, dont le fetch de `objectifs` est déclenché par `[user?.id]`. Or le membre est **déjà authentifié** pendant l'onboarding : l'id ne change pas, le fetch n'est jamais rejoué.
+- **Le `localStorage.setItem('onair_calorieGoal')` déjà présent ne compensait pas** : `getPersonalisedGoals()` ne le lit que dans l'initialiseur de `useState` d'AppContext, exécuté bien avant. Cette écriture était donc morte pour la session en cours.
+- **Correctif** : répercussion locale immédiate via `updateData()` (setter d'état pur, aucune écriture supplémentaire en base) pour les 4 cibles + le poids.
+- **Re-testé en réel** sur un second compte neuf : Dashboard à **3069 / 164 / 345 / 85 sans aucun rechargement**, navigation SPA de bout en bout.
+
+### Ce qui a été testé et qui marche (vérifié en base, pas seulement à l'écran)
+- **Bilan — édition d'objectif** : recalcul automatique au clic sur un chip (3069 → 2651 en ajoutant « Perdre du poids », protéines à 164 = 2 × le vrai poids de 82 kg, donc la formule lit bien les vraies valeurs et pas les valeurs de repli), édition manuelle, sauvegarde confirmée dans `profiles.objectif` **et** `objectifs`. Les objectifs réglés ailleurs (eau 2500, pas 10000) ne sont pas écrasés au passage. Propagation immédiate vers Dashboard et Nutrition sans rechargement.
+- **Bilan — classement hebdomadaire** : la vue `leaderboard_weekly` est bien scopée à la salle de l'appelant (correctif Phase 1 toujours en place, revérifié dans la définition SQL **et** par appel REST réel avec le token du compte de test). Le rendu reste masqué côté produit depuis le 2026-08-13 ; le fetch, lui, part toujours à chaque montage du Bilan — code mort à trancher en Phase 3, pas un bug.
+- **Nutrition — ajout de repas** : « Blanc de poulet 150 g » → 165 kcal / 34.5 P / 0 G / 3 L à l'écran, exactement la même chose en base (`repas`), avec le bon `type_repas`.
+- **Nutrition — « Décrire un repas »** : « deux œufs brouillés, une tranche de pain complet et un demi avocat » → 3 items convertis en grammes (110 / 30 / 60), chacun avec sa correspondance OFF affichée, total 294 kcal. Édition des grammes en direct : 110 → 220 recalcule bien l'item (99 → 198 kcal) et le total (294 → 393).
+- **Onboarding** : `profiles` (prénom, email, poids, taille, âge, objectif) et `objectifs` tous les deux correctement écrits — le correctif du BUG 1 de la session précédente tient, revérifié sur deux comptes neufs.
+
+### Réponse à la question de clôture : aucune autre table n'a le pattern « allowlist vs upsert » du BUG 1
+Vérifié par requête sur `information_schema.column_privileges` (niveau colonne, le seul où ce trou est visible) puis croisé avec **tous** les `onConflict` du code :
+
+| Table | Clé de conflit utilisée | Dans l'allowlist UPDATE ? |
+|---|---|---|
+| `objectifs` | `user_id` | ✅ |
+| `activite_jour` | `user_id,date` | ✅ |
+| `coach_notes` | `coach_id,member_id` | ✅ |
+| `push_subscriptions` | `endpoint` | ✅ |
+| `profiles` | — | plus d'upsert (helper `upsertOwnProfile`) |
+
+`profiles` est la **seule** table à allowlist UPDATE restreinte (`prenom, email, poids, taille, age, objectif, avatar_url`). La seule autre restriction de colonne du schéma est `messages` en `UPDATE(read_at)` — sans upsert nulle part dans le code (insert + update de `read_at` uniquement), donc hors de portée du problème. **Aucun compte réel n'est exposé à une répétition du BUG 1.** En revanche le BUG 4 ci-dessus est une perte de données de la même famille (écriture silencieuse d'un `null`) sur ces mêmes colonnes — trouvée et fermée avant qu'un compte réel ne soit touché.
+
+### Nettoyage des données de test — vérifié à 0
+2 comptes de test (`volta.qa.bilan@`, `volta.qa.onb@`) et toutes leurs lignes supprimés : `profiles` (2), `repas` (2), `objectifs` (2), `api_rate_limit` (5), `auth.users` (2). Contrôle après coup : **0** compte de test, **0** profil de test, **0** salle de test, **0** ligne orpheline sur `profiles`/`repas`/`objectifs`/`activite_jour`/`seances`/`api_rate_limit`/`messages`, **0** fichier orphelin dans Storage. La base est revenue exactement à son état d'avant session : 1 salle (VOLTA FITNESS), 5 profils, 5 comptes `auth.users`.
+
+**Un résidu assumé, pas nettoyé** : les ~7 appels IA de cette session (scan, description de repas, générations de recette) ont incrémenté `ai_usage` de la vraie salle VOLTA FITNESS — ce compteur est gym-scoped, pas user-scoped, donc il n'y a pas de ligne de test à supprimer, seulement un compteur réel légèrement gonflé (17 appels sur le mois au total). Inévitable tant que les tests doivent passer par la production faute de variables d'environnement en Preview.
+
+### Reste à faire
+- **Phase 2 (suite)** — flux non couverts : Workout, Settings, messagerie temps réel, espace coach.
+- **Phase 3** — qualité de code. Deux candidats repérés au passage cette session, volontairement **pas** traités (ce ne sont pas des bugs) : le fetch `fetchWeeklyLeaderboard` qui part à chaque montage du Bilan pour un rendu masqué, et la colonne `repas.portion` qui vaut toujours `'100g'` (valeur par défaut de la base, jamais écrite ni lue par `src/`) alors que la quantité réelle vit dans le nom du repas.
+- **Qualité des données OFF** (pas un bug de code) : même après le BUG 6, certaines correspondances restent médiocres — « Œuf brouillé » matché à ~99 kcal/100g contre ~155 attendu. Le garde-fou d'un facteur 2 laisse passer ce genre d'écart. Le bouton « Corriger l'aliment » existe déjà côté membre pour ça ; à surveiller si des retours arrivent.
+- Décider pour les variables d'env en Preview (toujours ouvert).
+- Toujours en attente décision produit : protection des mots de passe compromis (advisor WARN, Phase 1).
+
 ## 🔧 2026-08-16 — Réparation manuelle (2/2) : poids/taille manquants sur le compte d'Arnaud
 
 Deuxième et dernière victime réelle du BUG 1 (voir l'entrée « Réparation manuelle d'un compte réel (Myriam) » juste en dessous, et le BUG 1 lui-même dans l'entrée Phase 2). **Même cause, symptôme différent** : ici la ligne `profiles` existait bien — c'est le *chemin UPDATE* de l'upsert qui échouait, pas la création de la ligne. Résultat : `prenom`/`email`/`objectif` corrects (posés à l'INSERT initial), mais `poids` et `taille` restés NULL depuis le 2026-07-09, alors qu'ils avaient bien été saisis à l'onboarding.
