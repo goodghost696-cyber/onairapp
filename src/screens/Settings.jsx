@@ -104,7 +104,10 @@ export default function Settings() {
   // two lines were the entire "load". The onboarding wizard does persist
   // the real values (profiles.poids/taille via updateUserProfile), this
   // screen just never read them back.
-  const [profile, setProfile] = useState({ name: user?.name || '', email: user?.email || '', weight: '', height: '', age: '' })
+  // `email` retiré de cet état (2026-08-16) : il n'est plus éditable, et
+  // l'adresse affichée vient désormais de `user.email` (AuthContext), c'est-
+  // à-dire de l'identité de connexion réelle — voir le bloc Email du rendu.
+  const [profile, setProfile] = useState({ name: user?.name || '', weight: '', height: '', age: '' })
   const [profileSaving, setProfileSaving] = useState(false)
   const [profileSaved, setProfileSaved] = useState(false)
   // Race condition rapportée en test réel (2026-08-14, investigation
@@ -126,7 +129,7 @@ export default function Settings() {
   useEffect(() => {
     if (!user?.id) return
     let cancelled = false
-    supabase.from('profiles').select('prenom, email, poids, taille, age').eq('user_id', user.id).maybeSingle()
+    supabase.from('profiles').select('prenom, poids, taille, age').eq('user_id', user.id).maybeSingle()
       .then(({ data, error }) => {
         if (cancelled) return
         if (error) { console.error('[Settings] profile fetch failed', error); return }
@@ -134,7 +137,6 @@ export default function Settings() {
           const touched = touchedProfileFields.current
           setProfile(p => ({
             name: !touched.has('name') && data.prenom ? data.prenom : p.name,
-            email: !touched.has('email') && data.email ? data.email : p.email,
             weight: !touched.has('weight') && data.poids != null ? String(data.poids) : p.weight,
             height: !touched.has('height') && data.taille != null ? String(data.taille) : p.height,
             age: !touched.has('age') && data.age != null ? String(data.age) : p.age,
@@ -152,9 +154,12 @@ export default function Settings() {
   // never wired up here.
   async function saveProfile() {
     setProfileSaving(true)
+    // `email` volontairement absent du payload : le modifier ici ne changeait
+    // pas l'identité de connexion (voir le bloc Email du rendu). Omis, donc
+    // upsertOwnProfile ne touche pas la colonne — il ne filtre que les
+    // `undefined`, exactement comme pour `age`.
     await updateUserProfile({
       name: profile.name,
-      email: profile.email,
       weight: profile.weight,
       height: profile.height,
     })
@@ -235,10 +240,34 @@ export default function Settings() {
         </div>
         <div className="card card-animated" style={{ '--delay': '0ms' }}>
           <Field label={t('first_name')} value={profile.name} onChange={v => updateProfileField('name', v)} />
-          <Field label={t('email')} value={profile.email} onChange={v => updateProfileField('email', v)} type="email" />
+          {/* Était un champ éditable qui mentait (audit 2026-08-16) : le
+              saisir affichait « ✓ Enregistré » et écrivait la nouvelle
+              adresse dans profiles.email + user_metadata, mais JAMAIS dans
+              auth.users.email — l'identité de connexion. Mesuré en test réel
+              : après « enregistrement », la connexion avec la nouvelle
+              adresse échouait ("Invalid login credentials") et seule
+              l'ancienne fonctionnait encore. Le membre se croyait donc sur
+              une adresse qui ne lui ouvrait plus rien, la réinitialisation de
+              mot de passe partait toujours vers l'ancienne boîte, et le coach
+              voyait la nouvelle dans ClientsList — une adresse à laquelle le
+              compte n'est pas rattaché.
+              Un vrai changement d'adresse (auth.updateUser({ email })) est
+              impossible sur ce projet aujourd'hui : testé, il répond 500
+              « Error sending email change email », l'email transactionnel
+              étant toujours en bac à sable (voir JOURNAL.md 2026-08-12).
+              En lecture seule tant que ce flux n'existe pas — l'adresse
+              affichée vient de user.email, donc de l'identité réelle et non
+              de profiles.email, qui a pu diverger. */}
+          <div className="set-field">
+            <span className="set-field-label">{t('email')}</span>
+            <span className="set-field-value">{user?.email || '—'}</span>
+          </div>
           <Field label={t('weight')} value={profile.weight} onChange={v => updateProfileField('weight', v)} type="number" />
           <Field label={t('height')} value={profile.height} onChange={v => updateProfileField('height', v)} type="number" />
         </div>
+        <p className="text-xs text-muted" style={{ margin: '8px 2px 0' }}>
+          Ton adresse e-mail sert à te connecter et ne peut pas être modifiée ici pour l'instant.
+        </p>
         <button className="btn-ghost set-outline-btn" onClick={saveProfile} disabled={profileSaving} style={{ opacity: profileSaving ? 0.6 : 1 }}>
           {profileSaving ? '...' : profileSaved ? '✓ Enregistré' : 'Enregistrer le profil'}
         </button>
