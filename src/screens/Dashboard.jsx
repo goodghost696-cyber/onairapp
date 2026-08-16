@@ -327,12 +327,14 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Calorie card — was a ring (CalorieRing.jsx) on a plain dark
-            surface; converted to the same flat gold-gradient "hero" card
-            Nutrition.jsx already uses, matching the mockup's "Calories du
-            jour" card and keeping the two calorie displays in the app
-            visually consistent with each other. CalorieRing.jsx itself is
-            untouched/still available, just not used here anymore. */}
+        {/* Calorie card — était un anneau (CalorieRing.jsx) sur une surface
+            sombre ; converti en la même carte « hero » que Nutrition.jsx
+            utilise déjà, pour garder les deux affichages de calories
+            cohérents entre eux. CalorieRing.jsx (et son hook useCountUp)
+            ont été supprimés en Phase 3 : plus importés nulle part depuis
+            ce changement, et issus d'une direction visuelle abandonnée
+            depuis le restyle « pastel chaud ». Récupérables dans l'historique
+            git si le besoin revient. */}
         <div className="db-calorie-card card-animated" style={{ '--delay': '0ms' }}>
           <div className="db-calorie-top">
             <div>
