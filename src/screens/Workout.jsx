@@ -19,6 +19,9 @@ export default function Workout() {
   const [program, setProgram] = useState(null)
   const [loading, setLoading] = useState(false)
   const [generated, setGenerated] = useState(false)
+  // Voir handleStartSession plus bas — sheet de choix quand une séance est
+  // déjà en cours, au lieu de l'effacer sans prévenir.
+  const [askRestart, setAskRestart] = useState(false)
   // Programmes assignés par le coach — veille produit 2026-08-11, prop. 4.
   const [coachPrograms, setCoachPrograms] = useState([])
 
@@ -50,7 +53,23 @@ export default function Workout() {
     { key: 'dehors', name: t('outdoor_exercises'), sub: t('outdoor') },
   ]
 
+  // Ce bouton appelait clearActiveSession() inconditionnellement : un membre
+  // en pleine séance qui tapait "Ma séance du jour" — juste sous la bannière
+  // "SÉANCE EN COURS", donc le geste naturel pour la rejoindre — perdait
+  // d'un coup tous ses exercices, séries, reps et kg, sans confirmation ni
+  // message (confirmé en test réel, audit 2026-08-16). C'était aussi le seul
+  // moyen d'abandonner une séance dans l'app (WorkoutSession n'a que
+  // "TERMINER LA SÉANCE"), d'où un choix explicite plutôt qu'un simple
+  // garde-fou : les deux intentions restent accessibles, aucune n'est
+  // déclenchée par accident.
   function handleStartSession() {
+    if (activeSession.exercises.length > 0) { setAskRestart(true); return }
+    clearActiveSession()
+    navigate('/workout/session')
+  }
+
+  function restartSession() {
+    setAskRestart(false)
     clearActiveSession()
     navigate('/workout/session')
   }
@@ -288,6 +307,46 @@ Donne exactement 4-5 exercices adaptés à l'objectif.`
         </div>
       </div>
 
+      {/* Même forme de sheet que DeleteAccountButton.jsx (overlay + panneau
+          bas, styles inline) — seule convention de confirmation existante
+          dans l'app, l'app n'utilise nulle part window.confirm. */}
+      {askRestart && (
+        <>
+          <div onClick={() => setAskRestart(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 199 }} />
+          <div style={{
+            position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)',
+            width: '100%', maxWidth: 480, background: 'var(--surface-solid)',
+            borderRadius: '20px 20px 0 0', borderTop: '1px solid var(--glass-border)',
+            padding: '24px 20px 40px', zIndex: 200,
+          }}>
+            <h2 className="text-lg bold" style={{ marginBottom: 8 }}>Une séance est déjà en cours</h2>
+            <p className="text-sm text-muted" style={{ marginBottom: 20 }}>
+              {activeSession.exercises.length} exercice{activeSession.exercises.length > 1 ? 's' : ''}, démarrée à {activeSession.startTime}. En démarrer une nouvelle effacera tout ce que tu y as noté.
+            </p>
+            <button
+              onClick={() => { setAskRestart(false); navigate('/workout/session') }}
+              style={{
+                width: '100%', padding: 16, marginBottom: 10, background: 'var(--accent)',
+                color: 'var(--accent-ink)', border: 'none', borderRadius: 12, fontSize: 13,
+                fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', cursor: 'pointer',
+              }}
+            >
+              Reprendre la séance
+            </button>
+            <button
+              onClick={restartSession}
+              style={{
+                width: '100%', padding: 16, marginBottom: 10, background: 'transparent',
+                border: '2px solid var(--danger)', color: 'var(--danger)', borderRadius: 12,
+                fontSize: 13, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', cursor: 'pointer',
+              }}
+            >
+              Démarrer une nouvelle séance
+            </button>
+            <button className="btn-ghost" onClick={() => setAskRestart(false)}>Annuler</button>
+          </div>
+        </>
+      )}
     </div>
   )
 }
