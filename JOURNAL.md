@@ -78,6 +78,58 @@ Pas un agent agentique à function calling. Une requête planifiée : réutilise
 
 **Pourquoi ne pas commencer maintenant** : coder un mécanisme de consentement avant d'avoir tranché opt-in vs opt-out et la formulation exacte reviendrait à jeter le travail, ou pire à afficher au membre une formulation juridiquement fausse. La clarification juridique vient d'abord, le code ensuite.
 
+## 🎨 2026-08-16 — Effet frost sur la bottom nav (opacité 25%, blur 15px)
+
+Demande : `backdrop-filter: blur(15px)` (+ préfixe `-webkit-` pour Safari/iOS) et opacité de fond à une valeur cible fixe de 25%, sur la nav partagée présente sur tous les écrans membre.
+
+### Le piège du périmètre : modifier `nav.css` seul n'aurait rien changé
+C'est le point le plus important de cette tâche. Depuis le 2026-08-14, **9 écrans restylés surchargent la nav** via un sélecteur sibling scopé (`.XXX-redesign ~ .bottom-nav`) avec `background: #1C1A17` opaque et surtout **`backdrop-filter: none`**. Ces surcharges gagnent sur `nav.css`. Un changement limité à `nav.css` n'aurait donc été visible que sur les écrans non restylés (Landing, Splash) — c'est-à-dire nulle part où l'utilisateur passe son temps.
+
+Les 9 surcharges ont donc été mises à jour avec les mêmes valeurs. Ce sont des règles de la nav ; elles vivent dans les fichiers par écran pour une raison technique documentée (les custom properties d'un wrapper n'atteignent pas un sibling). `global.css` n'a pas été touché, comme demandé.
+
+### Correction d'une idée reçue sur l'historique
+La demande mentionnait « une régression de translucidité déjà documentée, perte de l'effet visuel après un fix de z-index ». **L'historique dit autre chose**, et ça change la nature de la tâche.
+
+L'entrée du 2026-08-14 (« Nav pill Dashboard : régression du fix précédent + translucidité ») est explicite : la translucidité n'a pas été perdue accidentellement, elle a été **délibérément supprimée**. Le `git diff` de l'époque sur `nav.css`/`global.css` était vide — ce n'était donc pas un effet de bord du fix de z-index. Le motif était un retour sur capture réelle : les cartes pastel pleines (Eau lavande, Sommeil rose) se voyaient à travers la pill translucide, jugé sale. Le fond opaque a été posé sur Dashboard, puis généralisé aux 8 autres écrans.
+
+Revenir au frost **inverse donc un arbitrage produit**, ce n'est pas réparer une régression. Le contenu redevient partiellement visible derrière la pill — c'est le comportement demandé, mais c'est un choix, pas une correction. Les commentaires des deux fichiers de référence (`dashboard.css`, `nutrition-redesign.css`) ont été réécrits, l'ancien texte étant devenu faux.
+
+### Le frost seul cassait la lisibilité — mesuré, pas supposé
+Premier déploiement de preview avec uniquement les valeurs demandées : l'effet frost fonctionne, mais **les icônes deviennent quasi invisibles**. Cause mécanique : elles étaient en crème (`#F7F1E6` à 55%) et l'actif en lavande, choix cohérents tant que la pill était un aplat **sombre opaque**. À 25%, la pill devient **claire** sur les 9 écrans (fond effectif mesuré : `rgb(192,187,178)` sur crème, `rgb(129,137,196)` sur la carte Eau). Des icônes claires sur une plaque claire.
+
+Contrastes mesurés sur le rendu déployé, **avant** correction (minimum requis pour un composant d'interface : 3:1) :
+
+| Fond derrière la pill | Icône inactive | Icône active |
+|---|---|---|
+| Crème (Nutrition, Workout) | **1,35:1** | **1,10:1** |
+| Carte Eau lavande (Dashboard) | **1,90:1** | **1,59:1** |
+| Carte Sommeil rose (Dashboard) | **1,59:1** | **1,19:1** |
+
+Aucune valeur au-dessus de 1,9 — très loin du seuil, et confirmé visuellement sur capture zoomée (les icônes de droite disparaissent littéralement dans la plaque).
+
+### Correction : icônes repassées en encre
+Contrepartie logique d'une plaque devenue claire. Options chiffrées avant de trancher : encre 55% échoue sur lavande (2,52), magenta échoue sur lavande et rose (1,81 / 2,41), encre 70% et 100% passent partout. Retenu : **inactif `rgba(28,26,23,0.7)`, actif `#1C1A17`** — ce qui conserve une différence de poids visible entre les deux états.
+
+Contrastes après correction, mesurés sur le rendu déployé :
+
+| Fond derrière la pill | Icône inactive | Icône active |
+|---|---|---|
+| Crème (Nutrition, Workout) | 4,60:1 ✅ | 9,11:1 ✅ |
+| Carte Eau lavande (Dashboard) | 3,30:1 ✅ | 5,22:1 ✅ |
+| Carte Sommeil rose (Dashboard) | 3,94:1 ✅ | 6,96:1 ✅ |
+
+**Effet de bord assumé, à trancher côté produit** : l'onglet actif perd sa teinte lavande au profit de l'encre. Le récupérer supposerait de remonter l'opacité du fond au-dessus des 25% demandés — la lavande sur une plaque à 25% plafonne à 1,59:1 sur la carte Eau, elle ne peut pas passer à cette opacité. Les valeurs de frost demandées n'ont pas été touchées pour compenser.
+
+La teinte du frost est restée **sombre** (`rgba(28,26,23,·)`) et non le glass blanc de `nav.css` : à 25% elle assombrit juste assez le contenu qui transparaît pour que les icônes en encre gardent leur contraste, ce qu'un frost blanc ne ferait pas.
+
+### Vérifications
+`saturate(1.5)` retiré de `nav.css`, la demande spécifiant `blur(15px)` seul. Build vérifié ; CSS compilé contrôlé : `blur(15px)` sur les 10 règles, **plus aucun `backdrop-filter:none`**, fonds minifiés en `#1c1a1740` et `#ffffff40` (`0x40` = 25%), icônes en `#1c1a17b3` (70%) et `#1c1a17` sur les 9 écrans. La seule occurrence restante de lavande active est le défaut de `nav.css`, hors périmètre (écrans non restylés).
+
+Rendu réel vérifié sur **3 écrans à fonds différents** — Dashboard (cartes pastel lavande/rose sous la pill), Nutrition (crème + éléments orange/rouge), Workout (crème uniforme) — captures zoomées sur la nav + mesures de contraste programmatiques à chaque fois, avant et après correction.
+
+### Nettoyage des données de test — vérifié à 0
+1 compte de test créé pour ces vérifications (avec repas + activité du jour, pour que les cartes pastel du Dashboard soient remplies sous la pill) puis supprimé avec toutes ses lignes : `repas` (1), `activite_jour` (1), `api_rate_limit` (1), `profiles` (1), `auth.users` (1). Contrôle après coup : **0** compte de test, **0** profil de test, **0** ligne orpheline (`profiles`/`repas`/`activite_jour`/`api_rate_limit`), **0** objet Storage orphelin. Base à l'identique : 5 `auth.users`, 5 profils. `localStorage` vidé sur les origines utilisées.
+
 ## 🧹 2026-08-16 — Phase 3 (qualité de code) : 5 lots traités, et l'audit complet est bouclé
 
 Dernière phase de l'audit. Périmètre : les 5 candidats accumulés au fil des Phases 1-2 (tous notés « pas des bugs » au moment où ils ont été repérés), plus un balayage large — mock data résiduelle, code mort, cohérence des messages d'erreur, accessibilité. Correctifs re-testés en réel sur la preview de la PR #137.

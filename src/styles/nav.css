@@ -28,9 +28,15 @@
   align-items: center;
   padding: 10px 12px;
   border-radius: 999px;
-  background: var(--nav-glass);
-  backdrop-filter: blur(28px) saturate(1.5);
-  -webkit-backdrop-filter: blur(28px) saturate(1.5);
+  /* Effet frost demandé le 2026-08-16 : opacité de fond fixée à 25% et
+     flou ramené à 15px, sur la nav partagée ET sur les 9 surcharges par
+     écran (voir plus bas). Valeur littérale plutôt que var(--nav-glass)
+     (qui vaut 0.28) : le token vit dans global.css, hors périmètre de ce
+     changement. Le `saturate(1.5)` d'origine est retiré, la demande
+     spécifiant `blur(15px)` seul. */
+  background: rgba(255,255,255,0.25);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
   border: 1px solid var(--nav-border);
   box-shadow: 0 8px 32px rgba(120,40,10,0.22), 0 2px 10px rgba(0,0,0,0.08);
   /* Keeps the blur+background contained to the pill's own rounded shape —

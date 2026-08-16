@@ -60,29 +60,34 @@ body.nutrition-body-bg {
   background: #EFE7D9;
 }
 
-/* Fond opaque sombre (.bottom-nav) — généralisation (2026-08-14) du fix
-   posé initialement sur Dashboard.jsx uniquement (dashboard.css, commit
-   75ce568) : la nav pill partagée (nav.css, --nav-glass glass translucide
-   délibéré) tranchait visuellement avec le fond opaque du Dashboard dès
-   qu'on naviguait vers un autre écran restylé — pas une régression, juste
-   ce fix jamais répliqué au-delà du premier écran où le besoin avait été
-   rapporté. Mêmes valeurs, même technique (sélecteur sibling scopé à ce
-   wrapper, couleurs en dur car <body>/.bottom-nav sont des ancêtres/
-   siblings, pas des descendants — les custom properties ne les
-   atteignent pas). Écrans pas encore restylés (Landing, Messages, AI
-   Coach...) non concernés, gardent le fond translucide d'origine tant
-   qu'ils n'ont pas eux-mêmes leur restyle. */
+/* Fond frost sombre (.bottom-nav) — règle partagée par les 9 écrans
+   restylés, explication de référence ici (les autres fichiers y renvoient).
+   Deux temps, parce que l'arbitrage a été inversé :
+   - 2026-08-14 : posée en `#1C1A17` OPAQUE + `backdrop-filter: none`,
+     généralisation du fix Dashboard (le glass clair de nav.css laissait
+     voir les cartes pastel pleines derrière la pill).
+   - 2026-08-16 : demande explicite d'un effet frost — opacité de fond à
+     25%, flou à 15px, ici ET dans nav.css. C'est une DÉCISION PRODUIT
+     INVERSÉE, pas une correction de bug : le contenu redevient
+     partiellement visible derrière la pill, cette fois voulu.
+   Technique inchangée (sélecteur sibling scopé à ce wrapper, couleurs en
+   dur car .bottom-nav est un sibling, pas un descendant — les custom
+   properties du wrapper ne l'atteignent pas). Teinte sombre conservée (et
+   non le glass blanc de nav.css) : à 25% elle assombrit juste assez le
+   contenu qui transparaît pour que les icônes en encre gardent leur
+   contraste — voir dashboard.css pour les mesures. */
 .nutrition-redesign ~ .bottom-nav {
-  background: #1C1A17;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
+  background: rgba(28,26,23,0.25);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
 }
 .nutrition-redesign ~ .bottom-nav .nav-btn svg {
-  color: rgba(247,241,230,0.55);
+  color: rgba(28,26,23,0.7);
 }
 .nutrition-redesign ~ .bottom-nav .nav-btn.active svg {
-  /* Lavande plutôt que crème — voir dashboard.css pour l'explication. */
-  color: #A3AEFE;
+  /* Encre plutôt que lavande — contrepartie du frost, voir dashboard.css
+     pour les contrastes mesurés. */
+  color: #1C1A17;
 }
 
 .nutrition-screen {

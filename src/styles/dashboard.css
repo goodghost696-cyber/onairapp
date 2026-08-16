@@ -100,42 +100,49 @@ body.dashboard-body-bg {
   bottom: env(safe-area-inset-bottom);
 }
 
-/* Fond opaque sombre (.bottom-nav) — la maquette de référence veut une
-   pill opaque noir/charbon sur le Dashboard restylé, mais le fond global
-   de nav.css (--nav-glass: rgba(255,255,255,0.28), glass "frost léger"
-   délibéré, voir nav.css) n'a jamais été touché par les fixs précédents
-   (vérifié : aucun diff sur nav.css/global.css dans les 3 commits
-   précédents) — ce n'est pas une régression introduite ici, c'est ce
-   glass translucide préexistant qui devient gênant maintenant que la
-   grille d'activité a des cartes pastel pleines (Eau lavande, Sommeil
-   rose) derrière. Override scopé au Dashboard uniquement, pas touché
-   ailleurs. Couleur en dur (pas var(--db-ink)) : les custom properties de
+/* Fond frost sombre (.bottom-nav). Historique de cette règle, parce qu'elle
+   a déjà changé de sens une fois :
+   - 2026-08-14 : posée en `#1C1A17` OPAQUE + `backdrop-filter: none`, parce
+     que le glass clair de nav.css laissait voir les cartes pastel pleines
+     (Eau lavande, Sommeil rose) juste derrière — jugé sale sur capture
+     réelle. Généralisée ensuite aux 8 autres écrans restylés.
+   - 2026-08-16 : demande explicite de revenir à un effet frost, opacité de
+     fond fixée à 25% et flou à 15px. C'est donc un ARBITRAGE PRODUIT
+     INVERSÉ, pas la correction d'un bug : les cartes pastel redeviennent
+     partiellement visibles derrière la pill, cette fois assumé.
+   Couleur toujours en dur (pas var(--db-ink)) : les custom properties de
    .dashboard-redesign n'atteignent pas .bottom-nav, qui est un sibling,
-   pas un descendant — même contrainte que le fix du fond de <body>
-   plus haut ; #1C1A17 doit rester en sync manuel avec --db-ink. */
+   pas un descendant — rgba(28,26,23,·) doit rester en sync manuel avec
+   --db-ink. Teinte sombre volontairement conservée (et non le glass blanc
+   de nav.css) : à 25% elle assombrit juste assez le contenu qui transparaît
+   pour que les icônes en encre gardent leur contraste, ce qu'un frost blanc
+   ne ferait pas. */
 .dashboard-redesign ~ .bottom-nav {
-  background: #1C1A17;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
+  background: rgba(28,26,23,0.25);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
 }
 
-/* Conséquence directe du fond opaque sombre ci-dessus, pas un changement à
-   part : .nav-btn svg (nav.css) est colorée en var(--text-secondary)/
-   var(--text-primary), de l'encre foncée pensée pour rester lisible sur le
-   glass clair — sur fond #1C1A17 ces icônes deviendraient quasi
-   invisibles. Repassées en clair (crème --db-cream, en dur pour la même
-   raison de sibling que ci-dessus), même logique que .dashboard-cta-btn
-   plus bas dans ce fichier (fond encre, texte crème). Le glow corail de
-   l'onglet actif (nav.css, non touché) reste inchangé — il ressort mieux
-   sur fond sombre, pas moins bien. */
+/* Conséquence directe du passage au frost 25% ci-dessus, pas un choix
+   esthétique séparé. Ces icônes étaient en crème (#F7F1E6 à 55%) et l'actif
+   en lavande — cohérent tant que la pill était un aplat SOMBRE opaque. Avec
+   un fond à 25%, la pill devient claire sur tous ces écrans (fond effectif
+   mesuré : rgb(192,187,178) sur crème, rgb(129,137,196) sur la carte Eau) :
+   des icônes claires sur une plaque claire. Contrastes mesurés avant
+   correction — inactif 1,35:1 sur crème et 1,90:1 sur la carte lavande,
+   actif 1,10:1 — contre un minimum de 3:1 pour un composant d'interface.
+   Autrement dit : quasiment invisibles, vérifié sur capture réelle.
+   Repassées en encre, la contrepartie logique d'une plaque devenue claire :
+   inactif à 70% (mesuré 3,3 à 4,6:1 selon le fond), actif à 100% (5,2 à
+   9,1:1), ce qui garde une différence de poids visible entre les deux.
+   L'actif perd donc sa teinte lavande — c'est le prix du frost sur fond
+   clair ; le récupérer supposerait de remonter l'opacité au-dessus de 25%.
+   Couleurs en dur pour la même raison de sibling que ci-dessus. */
 .dashboard-redesign ~ .bottom-nav .nav-btn svg {
-  color: rgba(247,241,230,0.55);
+  color: rgba(28,26,23,0.7);
 }
 .dashboard-redesign ~ .bottom-nav .nav-btn.active svg {
-  /* Lavande plutôt que crème — légère augmentation de la présence de
-     cette teinte dans la palette (retouche, cf. JOURNAL.md), et cohérent
-     avec le changement de nav.css (glow rouge -> couleur lavande). */
-  color: #A3AEFE;
+  color: #1C1A17;
 }
 
 .dashboard-screen {
