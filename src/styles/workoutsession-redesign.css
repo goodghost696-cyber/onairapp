@@ -327,6 +327,21 @@ body.workoutsession-body-bg {
   z-index: 90;
 }
 
+/* Le minuteur de repos (.rest-timer, RestTimer.css : fixed, bottom:100px,
+   z-index:96) et ce bouton occupaient la même bande depuis que ce restyle a
+   rendu le bouton `position: fixed` — il était dans le flux avant (voir
+   WorkoutSession.css), donc aucune collision n'était possible. Or le
+   minuteur s'ouvre automatiquement à chaque série validée, dernière série
+   comprise : il recouvrait donc le bouton exactement au moment de s'en
+   servir. Confirmé par hit-test réel (audit 2026-08-16) —
+   elementFromPoint() au centre du bouton renvoyait .rest-timer, et le clic
+   ne partait pas. Rien n'indiquait qu'il fallait taper SKIP d'abord.
+   Le minuteur remonte donc au-dessus : 76 (clearance nav pill, même valeur
+   que le bouton) + 56 (hauteur mesurée du bouton) + 12 d'air. */
+.workoutsession-redesign .rest-timer {
+  bottom: calc(144px + env(safe-area-inset-bottom));
+}
+
 /* ── État vide ── */
 .workoutsession-redesign .empty-session {
   background: var(--ws-card);
