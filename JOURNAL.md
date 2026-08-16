@@ -78,6 +78,120 @@ Pas un agent agentique à function calling. Une requête planifiée : réutilise
 
 **Pourquoi ne pas commencer maintenant** : coder un mécanisme de consentement avant d'avoir tranché opt-in vs opt-out et la formulation exacte reviendrait à jeter le travail, ou pire à afficher au membre une formulation juridiquement fausse. La clarification juridique vient d'abord, le code ensuite.
 
+## 🧹 2026-08-16 — Phase 3 (qualité de code) : 5 lots traités, et l'audit complet est bouclé
+
+Dernière phase de l'audit. Périmètre : les 5 candidats accumulés au fil des Phases 1-2 (tous notés « pas des bugs » au moment où ils ont été repérés), plus un balayage large — mock data résiduelle, code mort, cohérence des messages d'erreur, accessibilité. Correctifs re-testés en réel sur la preview de la PR #137.
+
+**Ce qui change par rapport aux phases précédentes** : ici on ne cherchait pas des bugs mais de la dette. Trois des cinq candidats se sont pourtant révélés être de vrais défauts visibles par l'utilisateur, et deux défauts supplémentaires ont été trouvés en chemin.
+
+### 1. 🟠 La séance perdait le nom du programme dont elle partait
+`activeSession.type` n'était **jamais** renseigné : aucun des trois points d'entrée d'une séance ne le posait. `finishSession()` retombait donc systématiquement sur son défaut « SÉANCE » — y compris pour une séance générée par l'IA en « PUSH DAY », ou pour un programme assigné par le coach avec un titre explicite.
+
+- **Trois effets concrets**, au-delà du libellé : l'historique du membre affiche « SÉANCE » sur toutes les lignes ; le coach voit la même chose sur `MemberDetail` pour tous ses membres ; et le générateur de programme IA construit son contexte « Dernières séances » depuis `sessionHistory.map(s => s.type)` — il recevait donc « SÉANCE, SÉANCE, SÉANCE », soit aucune information exploitable, alors que ce champ existe précisément pour ça.
+- **Un second défaut trouvé en investiguant, plus vicieux** : même si le type avait été posé, `addExerciseToSession()` l'aurait **effacé**. Cette fonction reconstruit l'objet `activeSession` champ par champ et ne reconduisait pas `type` — ajouter un exercice de la bibliothèque à une séance démarrée depuis un programme nommé lui faisait perdre son nom en cours de route.
+- **Re-testé en réel** : programme IA « PUSH DAY » → `activeSession.type = "PUSH DAY"` ; ajout d'un exercice de la bibliothèque → le nom **survit** ; séance terminée → `seances.nom = "PUSH DAY"` en base, contre « SÉANCE » avant.
+
+### 2. 📄 Catalogue wger mal catégorisé — documenté, pas corrigé
+« Développé incliné à la Smith machine » apparaît dans la section **Maison** (« Bodyweight · Sans équipement »). C'est une donnée tierce (wger.de, CC-BY-SA) mal catégorisée à la source, pas un défaut de notre code.
+
+**Volontairement non corrigé.** Un filtrage par mots-clés (« machine », « barre », « poulie »…) écarterait des exercices légitimes et en laisserait passer d'autres : on remplacerait une donnée imparfaite par un comportement imprévisible, plus difficile à diagnostiquer. Les vraies options sont soit un recatalogage manuel du JSON statique (`src/data/exercisesLibrary.json`, généré par `scripts/fetch-wger-exercises.js`), soit l'acceptation du bruit. À trancher côté produit, pas en passe qualité.
+
+### 3. ⚡ Le fetch du classement partait à chaque montage du Bilan, pour rien
+Le classement est masqué côté produit depuis le 2026-08-13 (rendu mis en commentaire JSX). Son fetch, lui, continuait de partir à **chaque montage** du Bilan pour alimenter un état que plus rien ne lisait — une requête réseau par visite, et qui plus est sur `leaderboard_weekly`, la vue SECURITY DEFINER dont la Phase 1 a dû reboucher la fuite cross-salle.
+
+Retiré : l'état, l'appel, l'import. `utils/leaderboard.js` et le rendu commenté sont **conservés** — la décision produit était « repoussée, pas abandonnée », et les trois éléments à remettre pour rebrancher sont documentés sur place.
+
+### 4. 📄 `repas.portion` — documenté, pas migré
+Confirmé en base : les 12 lignes réelles ont toutes `portion = '100g'`, la valeur par défaut, et la colonne n'est **jamais** lue ni écrite par `src/`. La quantité réelle vit dans le nom du repas.
+
+**Une seconde colonne vestigiale trouvée au passage** : `repas.type` (distincte de `type_repas`, qui est la bonne) — 10 lignes à NULL et 2 valeurs héritées d'un schéma de créneaux plus ancien (« Snack », « Petit-déjeuner »).
+
+**Volontairement non migré.** Supprimer deux colonnes sur une base de production n'apporte aucun gain fonctionnel, comporte un risque non nul, et détruirait la seule trace de l'ancien schéma de créneaux. Documenté ici ; à faire dans une vraie passe de migration de schéma si l'occasion se présente.
+
+### 5. ♿ Accessibilité : 14 éléments cliquables inaccessibles au clavier
+Le point de départ (Phase 2) : l'outil de test automatisé ne trouvait aucun élément interactif sur la carte d'habitude du Dashboard, alors qu'elle se clique. C'est exactement ce que vit un utilisateur au clavier ou au lecteur d'écran — l'élément n'est ni atteignable en Tab, ni annoncé comme un contrôle, ni activable par Entrée/Espace. `cursor: pointer` ne rend rien accessible.
+
+Le balayage a montré que ce n'était **pas un cas isolé mais un pattern** : 14 éléments porteurs d'un `onClick` sans être des contrôles natifs.
+
+Nouveau helper `src/utils/a11y.js` (`activable`) plutôt que de répéter le même `onKeyDown` 14 fois. Traité : carte d'habitude (`role="checkbox"` + `aria-checked` — c'est un état, pas une action), cartes d'activité du Dashboard, bannière de séance en cours, cartes de programme coach, cartes de section de bibliothèque, cartes d'historique, cartes de navigation (Messages, CoachMessages, ClientsList, CoachDashboard ×2), ligne de résultat d'aliment, ligne « Synchroniser mes données », les deux interrupteurs de notifications (`role="switch"`), et la puce « ✕ » de `CoachPrograms` qui retire un programme à un membre — une action **destructive** qui était un simple `<span>`, passée en vrai `<button>`.
+
+**Deux cas volontairement non traités, signalés plutôt que devinés** :
+- La ligne d'exercice de `WorkoutLibrary.jsx` embarque son propre bouton « + AJOUTER ». Mettre `role="button"` sur le conteneur créerait un contrôle dans un contrôle, invalide en ARIA, et **casserait** la navigation clavier au lieu de l'améliorer. Le vrai correctif est une restructuration de la ligne — hors périmètre.
+- Les fonds d'overlay (`sheet-overlay`, `modal-overlay`) sont des zones de fermeture au clic, pas des contrôles ; chaque sheet a déjà un bouton « Annuler »/« Fermer » explicite, qui est le chemin clavier légitime.
+
+**Re-testé en réel** : focus reçu au clavier sur une carte de bibliothèque, puis Entrée → navigation effective vers `/workout/maison`. Pas seulement la présence des attributs.
+
+### 6. ✅ Balayage anti-mock data — rien trouvé
+`RunContent.jsx` (le cas de référence) n'existe plus que dans un commentaire historique. Aucune simulation de GPS/allure/BPM résiduelle. Les `Math.random()` restants sont légitimes (génération d'id, mélange de suggestions de recettes). Tous les tableaux constants des écrans sont de la configuration (filtres, couleurs, étapes d'assistant, définitions d'outils IA), pas des données utilisateur fabriquées. **Le pattern `RunContent` ne s'est pas reproduit ailleurs.**
+
+### 7. 🧹 Code mort supprimé
+Balayage systématique : chaque module comparé à ce qui l'importe réellement.
+
+- **`components/ShaderBackground.jsx`** (6 ko) — fond WebGL de la Landing. Son propre commentaire affirmait « Loaded via React.lazy from Landing.jsx », mais `Landing.jsx` ne l'importe plus depuis sa refonte : le commentaire décrivait un câblage qui n'existait plus.
+- **`components/CalorieRing.jsx`** — remplacé sur le Dashboard, marqué « still available » dans un commentaire ; issu d'une direction visuelle abandonnée depuis le restyle « pastel chaud ».
+- **`hooks/useCountUp.js`** — seul consommateur : `CalorieRing`.
+- **86 clés de traduction sur 165 (52 %)** — résidus des écrans supprimés (onglet Course : `pace`, `distance`, `elevation`, `gps_strong`, `run` ; écran Sommeil : `bedtime_wake`, `last_sleep`, `quality_*`…). 258 lignes retirées sur les 3 langues.
+
+**Vérifié avant** : aucun appel `t()` dynamique dans le codebase (tous passent un littéral), donc une clé non trouvée par grep est réellement morte. **Vérifié après** : 79 clés uniques restantes, 79 utilisées, 0 manquante.
+
+**⚠️ Incident évité de justesse** : une première tentative de suppression via `Set-Content` a **double-encodé tous les accents** (« Bon aprÃ¨s-midi ») — et le build passait quand même, donc ça partait en production sans rien signaler. Repris avec les API .NET en UTF-8 explicite, et accents relus **dans le bundle compilé** (« Bon après-midi », « Entraînement ») avant commit. Leçon : sur ce poste Windows, ne jamais réécrire un fichier source contenant des accents avec `Get-Content`/`Set-Content`.
+
+### 8. 🟠 Des messages techniques anglais fuyaient jusqu'à l'écran
+Deux fuites distinctes, vérifiées sur le code réel.
+
+- **Les écrans IA** (Nutrition ×4, Scan ×1) affichaient le message d'erreur brut tel quel. Or `api/claude.js` répond en **anglais** et en langage technique : « Too many requests, try again shortly », « Quota exceeded », « Unauthorized », « API key not configured », voire le message brut d'Anthropic. Un membre qui atteignait simplement le plafond IA de sa salle voyait donc un message anglais incompréhensible, dans une app par ailleurs entièrement en français.
+- **`CoachSignup.jsx`** faisait `signUpError.message || fallbackFR` — exactement le pattern que `mapAuthError` a été écrit pour corriger sur `Login.jsx`/`ResetPassword.jsx` (le fallback ne se déclenche jamais, `message` n'étant jamais vide), mais cet écran-là avait été oublié. Un coach s'inscrivant avec un email déjà pris voyait un message anglais, **sur l'écran d'acquisition**.
+
+Nouveau `utils/apiErrors.js` (`mapApiError`), pendant de `mapAuthError`. Choix de conception : on ne traduit **que ce qu'on reconnaît**, tout le reste passe tel quel — l'app lève elle-même beaucoup de messages déjà en français qu'il serait absurde de remplacer par un message générique.
+
+**Vérifié par exécution, pas par relecture** : les 9 cas (5 messages techniques anglais, échec réseau, code HTTP, 2 messages FR de l'app, message vide) donnent le résultat attendu, y compris le passage intact des messages français.
+
+**Signalé, non modifié** : `api/claude.js` émet ces chaînes en anglais à la source — assainir l'API elle-même serait plus propre, à faire quand le contrat de ces routes sera revu. Idem `PlatformAdmin.jsx`, qui affiche des messages Supabase bruts : écran interne réservé à l'admin plateforme, pas un parcours utilisateur.
+
+### Nettoyage des données de test — vérifié à 0
+1 compte de test créé puis supprimé, avec toutes ses lignes (`seances` 1, `api_rate_limit` 10, `profiles` 1). Contrôle après coup : **0** compte de test, **0** profil de test, **0** salle de test, **0** ligne orpheline (`profiles`/`seances`/`api_rate_limit`), **0** objet Storage orphelin. Base à l'identique : 5 `auth.users`, 5 profils, 2 séances. `localStorage` vidé sur les 2 origines utilisées.
+
+**Un résidu assumé** : l'appel « Programme IA » du test a incrémenté `ai_usage` de la vraie salle VOLTA FITNESS — compteur gym-scoped, pas de ligne de test à supprimer. Même situation qu'en Phase 2.
+
+---
+
+## 📊 Bilan de l'audit complet (Phases 1 + 2 + 3)
+
+**19 défauts trouvés et corrigés**, tous en test réel ou par requête en base, aucun par simple relecture de code.
+
+| | Phase 1 (sécurité) | Phase 2 (fonctionnel) | Phase 3 (qualité) | Total |
+|---|---|---|---|---|
+| Défauts corrigés | 2 | 12 | 5 | **19** |
+| dont failles de sécurité | **2** | 1 (TOCTOU) | 0 | **3** |
+| dont pertes de données | 0 | **5** | 0 | **5** |
+| Documenté sans correctif | 0 | 0 | 2 | 2 |
+
+**Les 3 failles de sécurité** — toutes exploitables, toutes fermées :
+1. **Escalade de privilèges sur `profiles`** : un membre authentifié pouvait se promouvoir `is_platform_admin = true`. Confirmée par exploitation réelle avant correctif. Introduite la veille par un « correctif » trop large qui avait effacé une allowlist de colonnes dont le commentaire mettait explicitement en garde contre ce réflexe exact.
+2. **Fuite cross-tenant via `leaderboard_weekly`** : vue SECURITY DEFINER sans filtre de salle, `SELECT` accordé à `authenticated` — n'importe quel utilisateur connecté pouvait lire prénom + assiduité de **tous** les membres de **toutes** les salles. Dormante dans l'UI, bien vivante au niveau de l'API REST.
+3. **TOCTOU sur `/api/create-gym`** : deux POST concurrents créaient deux salles, dont une orpheline avec son propre code d'invitation. Reproduite pour de vrai, pas théorique.
+
+**Les 5 pertes de données** — c'est la catégorie la plus instructive, parce qu'aucune n'était visible depuis l'UI :
+1. Toutes les écritures client sur `profiles` échouaient en 42501 — un nouveau membre arrivait **anonyme** chez son coach. 2 comptes réels réparés à la main.
+2. Enregistrer un objectif depuis Bilan **effaçait poids et taille**.
+3. La séance en cours était perdue au moindre rechargement (jamais persistée).
+4. « Ma séance du jour » effaçait la séance en cours en un tap, sans confirmation.
+5. La photo de profil **survivait à la suppression du compte**, et restait servie publiquement — alors que l'écran promet « effacées pour toujours ».
+
+**Ce que l'audit a changé dans la façon de travailler**, au-delà des correctifs :
+- **Le test réel trouve ce que la relecture ne trouve pas.** Sur les 19 défauts, la quasi-totalité affichait quelque chose de parfaitement crédible à l'écran pendant que la base recevait autre chose — ou rien.
+- **Vérifier en base, pas à l'écran.** Plusieurs bugs n'ont été visibles qu'en comparant l'affichage à la ligne réellement écrite.
+- **Attention aux mesures prises trop tôt.** Trois fois sur cette série, j'ai conclu à tort qu'un correctif ne marchait pas : une animation CSS capturée en plein vol, un cache CDN, et une divergence d'état lue pendant une transition. Les trois fois, le correctif était bon et c'est la mesure qui était fausse.
+- **Deux flux sont passés sans aucun bug** : la messagerie et l'espace coach — les deux plus récents, et les seuls écrits après que le projet a commencé à documenter ses décisions dans les commentaires de code.
+
+**Reste ouvert après l'audit** (rien de bloquant, tout est tracé) :
+- Consentement au partage de données coach↔membre — point juridique, bloquant avant acquisition de coachs pilotes (voir « Chantiers ouverts » en haut de ce fichier).
+- Un vrai flux « changer mon adresse e-mail », qui dépend d'abord de la sortie du bac à sable pour l'email transactionnel.
+- Protection des mots de passe compromis (advisor Supabase) — décision produit.
+- Assainir les messages d'erreur de `api/claude.js` à la source.
+- Accessibilité : la ligne d'exercice de `WorkoutLibrary` (restructuration), et l'app n'a jamais eu de passe a11y complète.
+- Recatalogage éventuel du JSON wger, et les 2 colonnes vestigiales de `repas`.
+
 ## 🚨 2026-08-16 — Audit sécurité (Phase 2, suite 3) : Réglages + espace coach — 1 bug, et la Phase 2 est bouclée
 
 Dernière tranche de la Phase 2. Périmètre demandé : **Réglages** (tous les champs éditables, déconnexion, suppression de compte, upload d'avatar) et **espace coach** (`CoachDashboard`, `ClientsList`, `MemberDetail` sur des données réelles multi-membres, programmes, habitudes). Tests réels dans le navigateur sur la production, correctif re-testé sur la preview de la PR #134 avant merge.
