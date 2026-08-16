@@ -78,6 +78,89 @@ Pas un agent agentique à function calling. Une requête planifiée : réutilise
 
 **Pourquoi ne pas commencer maintenant** : coder un mécanisme de consentement avant d'avoir tranché opt-in vs opt-out et la formulation exacte reviendrait à jeter le travail, ou pire à afficher au membre une formulation juridiquement fausse. La clarification juridique vient d'abord, le code ensuite.
 
+## 🚨 2026-08-16 — Audit sécurité (Phase 2, suite 3) : Réglages + espace coach — 1 bug, et la Phase 2 est bouclée
+
+Dernière tranche de la Phase 2. Périmètre demandé : **Réglages** (tous les champs éditables, déconnexion, suppression de compte, upload d'avatar) et **espace coach** (`CoachDashboard`, `ClientsList`, `MemberDetail` sur des données réelles multi-membres, programmes, habitudes). Tests réels dans le navigateur sur la production, correctif re-testé sur la preview de la PR #134 avant merge.
+
+**Deux bugs, tous deux hors de l'espace coach** : un dans Réglages (champ Email), un dans le chemin de suppression de compte (photo de profil conservée) — celui-là trouvé par accident, en nettoyant les données de test. **L'espace coach n'a rien révélé** : deuxième flux consécutif à passer intégralement, après la messagerie.
+
+**Note de méthode — un vrai locataire de test.** Plutôt qu'un compte isolé : 1 coach + 3 membres dans une salle QA dédiée, avec des données d'activité **délibérément différenciées** pour produire les trois statuts (`ON TRACK` / `AT RISK` / `INACTIVE`) et pouvoir recouper chaque chiffre du tableau de bord coach contre ce qui avait été semé. Sans ça, un dashboard « qui affiche des nombres » passe pour correct sans qu'on sache s'ils veulent dire quelque chose.
+
+### 🔴 BUG 11 (critique) — le champ Email de Réglages affichait « ✓ Enregistré » sans rien changer
+`updateUserProfile()` appelle `supabase.auth.updateUser({ data: profile })` — qui ne touche que les **métadonnées**. La nouvelle adresse partait donc bien dans `profiles.email` et dans `user_metadata`, mais **jamais dans `auth.users.email`**, l'identité de connexion.
+
+- **Mesuré en réel, pas déduit** : après « enregistrement », la connexion avec la **nouvelle** adresse échoue (`Invalid login credentials`, 400) et seule l'**ancienne** fonctionne encore (200). `auth.users.email` inchangé, `email_change` vide — aucun flux de confirmation n'avait même démarré.
+- **Trois conséquences concrètes** : (1) le membre se croit sur une adresse qui ne lui ouvre plus rien ; (2) la réinitialisation de mot de passe part toujours vers l'ancienne boîte, puisqu'elle s'appuie sur l'email d'authentification ; (3) le coach voit la nouvelle adresse dans `ClientsList`/`CoachMessages` — une adresse à laquelle le compte n'est pas rattaché.
+- **Pourquoi pas un vrai flux de changement d'adresse** : testé, `auth.updateUser({ email })` répond **500 « Error sending email change email »** sur ce projet. L'email transactionnel est toujours en bac à sable (voir l'entrée du 2026-08-12) : le mail de confirmation ne peut pas partir. L'implémenter maintenant laisserait `profiles.email` déjà modifié pour un changement qui n'aboutit jamais — strictement pire que l'état actuel. C'est le genre de décision qui ne se prend qu'en testant l'endpoint, pas en lisant la doc.
+- **Correctif** : champ en lecture seule, alimenté par `user.email` (l'identité réelle, **pas** `profiles.email` qui a pu diverger), avec une ligne d'explication. `email` retiré du payload de `saveProfile` — `upsertOwnProfile` ne filtrant que les `undefined`, la colonne n'est plus touchée du tout.
+- **Pattern vérifié ailleurs** : `CoachSettings.jsx` affichait **déjà** l'email en lecture seule depuis `user?.email` — jamais concerné. Le correctif aligne donc l'écran membre sur une convention qui existait déjà côté coach. Et après correctif, **plus aucun appelant de `updateUserProfile` ne passe `email`** (Weekly et Settings ne l'envoient plus, Onboarding envoie `user.email`, soit l'adresse d'authentification elle-même) : `profiles.email` n'est plus écrit que par `register()`, à l'inscription, depuis la vraie adresse. La source de divergence est fermée, pas juste masquée.
+- **Aucun compte réel affecté** — vérifié en base : les 5 profils réels ont `profiles.email == auth.users.email`. Rien à réparer à la main cette fois.
+- **Re-testé en réel après déploiement** : le champ n'est plus éditable (3 champs au lieu de 4) et affiche bien l'adresse **d'authentification** alors que `profiles.email` du compte de test était encore divergent — exactement le comportement voulu. Une sauvegarde de profil met à jour le poids (83 → 84) en laissant `profiles.email` intact, ce qui prouve que la colonne n'est plus écrite.
+
+### 🔴 BUG 12 (critique, confidentialité) — la photo de profil survivait à la suppression du compte
+Trouvé **par accident**, en cherchant simplement à nettoyer les données de test : le fichier avatar d'un compte de test supprimé était toujours là.
+
+- **Root cause** : `delete-account.js` ne faisait qu'un `admin.auth.admin.deleteUser()`, en comptant sur les `on delete cascade` du schéma. Ça couvre bien `profiles`, `repas`, `seances`, `activite_jour`, `objectifs`, `push_subscriptions`… mais **pas `storage.objects`**, qui n'a aucune clé étrangère vers `auth.users` (juste une colonne `owner` en uuid nu). Aucune cascade ne l'atteint.
+- **Mesuré en réel** : compte de test avec avatar → `POST /api/delete-account` → 200 `{"success":true}`, `auth.users` bien supprimé, toutes les tables publiques vidées… et le fichier toujours dans le bucket. Pire : **toujours servi publiquement**, `GET` sur l'URL publique → HTTP 200, `image/jpeg`, 5 140 octets, *après* la suppression du compte. La policy SELECT du bucket `avatars` est `bucket_id = 'avatars'`, sans aucun contrôle de propriétaire.
+- **Pourquoi c'est sérieux** : l'écran de confirmation promet « Toutes tes données seront effacées pour toujours… C'est irréversible. » C'est un écart entre ce que l'app affirme et ce qu'elle fait, sur une donnée personnelle (une photo de visage), pour un utilisateur qui a explicitement demandé l'effacement. À rapprocher directement du point juridique ajouté aujourd'hui en haut de ce fichier.
+- **Découverte annexe** : il n'existe **aucune policy DELETE sur `storage.objects`** (vérifié dans `pg_policies` : seulement INSERT, SELECT, UPDATE). Un client authentifié ne peut donc pas nettoyer derrière lui — confirmé en essayant, l'API répond 200 avec une liste vide. Seul le chemin service_role peut le faire, d'où un correctif côté serveur et non côté client.
+- **Correctif** : listage puis suppression du dossier `avatars/<user_id>` **avant** la suppression du compte. Ordre délibéré — en cas d'échec on s'arrête et le compte existe toujours, donc l'utilisateur peut réessayer ; dans l'ordre inverse, un échec laisserait un fichier orphelin que plus rien ne rattache à personne.
+- **Re-testé en réel sur la production après merge** (les routes `/api/*` ne tournant pas en Preview) : nouveau compte + avatar uploadé par le vrai chemin client → suppression → la ligne `storage.objects` a bien disparu, et l'URL publique renvoie **400**.
+- **⚠️ Erreur de méthode, à noter pour la prochaine fois** : j'ai d'abord conclu que le correctif ne marchait pas, parce que l'URL publique répondait encore 200 juste après. C'était le **cache CDN de Supabase** qui servait une copie de l'URL récupérée quelques secondes plus tôt. Avec un paramètre anti-cache : 400 pour l'objet supprimé après le correctif, mais toujours 200 pour l'orphelin créé avant — ce qui prouve que le comportement a bien changé. **Deuxième session consécutive où une mesure prise trop vite me fait conclure à tort qu'un correctif est KO** (la première fois c'était une animation CSS capturée en plein vol). Vérifier la mesure avant de conclure à l'échec.
+- **Résidu assumé, hors du contrôle de l'app** : une photo supprimée reste servie par le cache CDN jusqu'à expiration de cette entrée. C'est borné dans le temps mais réel — à savoir si la question se pose un jour dans un cadre RGPD.
+
+### Ce qui a été testé et qui marche (vérifié en base, pas seulement à l'écran)
+
+**Réglages**
+- **Édition profil** : prénom / poids / taille persistés dans `profiles`, et `objectif` **non écrasé** au passage — le correctif de perte de données de la session précédente (BUG 4) tient, revérifié ici par un chemin différent.
+- **Upload d'avatar** : PNG de 11 402 o → redimensionné côté client en JPEG de 5 140 o, déposé dans Storage sous `<user_id>/avatar.jpg`, `profiles.avatar_url` mis à jour avec cache-buster. Le GRANT réparé le 2026-08-15 tient.
+- **Déconnexion** : 15 clés `onair_*` → 0, session vidée, retour au Landing.
+- **Suppression de compte** : garde-fou « tape SUPPRIMER » (bouton désactivé tant que le mot n'est pas saisi), puis suppression **complète** — `auth.users`, `profiles`, `objectifs`, `activite_jour` supprimés en cascade, **zéro orphelin** vérifié après coup, déconnexion et redirection.
+
+**Espace coach — chaque chiffre recoupé avec les données semées**
+- **`CoachDashboard`** : 3 clients, 3 séances (7j), 2 alertes, 1 actif ; graphique d'activité sur les bons jours (Mer/Ven/Dim) ; répartition 1 `ON TRACK` / 1 `AT RISK` / 1 `INACTIVE` ; « nécessite attention » avec les bons libellés (« dernière activité hier », « il y a 10j »). Tout correspond exactement.
+- **`ClientsList`** : objectif, dernière activité, nombre de séances, streak. Les 4 filtres et la recherche isolent exactement les bons membres, état vide compris. Le streak 🔥 2j a été **recalculé à la main contre l'algorithme** (`calculateStreakDetails`, tolérance d'un jour de repos par semaine) plutôt que pris pour argent comptant : conforme.
+- **`MemberDetail`** : poids/taille, séances 7j, calories moyennes (415 = 220 + 195 sur un seul jour loggé), sommeil 7,5 h, pas 9 200, bande de la semaine surlignant les deux bons jours, derniers repas et dernières séances exacts.
+- **Actions du coach** : objectifs d'un membre modifiés (3100 / 175 / 12 000 / 3000) → persistés **sans écraser** glucides/lipides (l'upsert ne touche que les 4 colonnes envoyées) ; note privée enregistrée **et rechargée** au retour sur la fiche ; habitude assignée ; programme créé avec 2 exercices puis assigné à 2 membres.
+- **Boucle complète coach → membre → coach**, de bout en bout : le membre reçoit le programme dans « MES PROGRAMMES » et il se charge correctement dans sa séance (4 × « 8-10 » à 70 kg, 3 × « 10 » à 10 kg) ; il voit l'habitude sur son Dashboard, la valide (0/4 → 1/4, ligne `habitude_logs` créée) ; le coach voit la progression 1/4 sur sa fiche. Les objectifs fixés par le coach apparaissent aussi côté membre (protéines 50/175, glucides 42/320).
+
+**RLS vérifiée par test réel, pas par lecture de policy**
+
+| Tentative | Résultat |
+|---|---|
+| Le membre concerné lit `coach_notes` | **0 ligne** |
+| Le membre concerné cherche sa propre note par contenu | **0 ligne** |
+| Un autre membre lit `coach_notes` | **0 ligne** |
+| Le membre lit ses propres `habitudes` | 1 ligne ✅ (attendu) |
+| Un autre membre lit les `habitudes` d'autrui | **0 ligne** |
+
+La note privée du coach est donc bien invisible du membre qu'elle concerne — la garantie que le commentaire de `fetchCoachNote` annonce, désormais vérifiée plutôt que supposée.
+
+**Scoping multi-salles, à nouveau confirmé sous une vraie 2ᵉ salle** : le coach de test ne voit que ses 3 membres, aucun des membres réels de VOLTA FITNESS. À noter, même remarque que pour `fetchPrimaryCoach` la session précédente : `ClientsList` fait `select * from profiles where role='member'` **sans filtre `gym_id`** — c'est la policy « Coaches can view same-gym profiles » qui fait tout le travail. Correct aujourd'hui, mais c'est une garantie qui repose entièrement sur la RLS ; à garder en tête si cette requête devait un jour passer en service_role.
+
+### Reste à faire
+- **Phase 2 : terminée.** Les 9 flux prévus ont été testés en conditions réelles (signup membre/coach, Dashboard, Nutrition, Bilan, Workout, Settings, messagerie temps réel, espace coach). Bilan de la phase : **12 bugs trouvés, dont 5 pertes de données silencieuses**, tous corrigés et re-testés en réel après déploiement. Les deux flux passés sans aucun bug sont la messagerie et l'espace coach — les deux plus récents, et les seuls écrits après que le projet a commencé à écrire ses décisions dans les commentaires de code.
+- **⚠️ Rappel de méthode pour la Phase 3** : sur les deux dernières sessions, j'ai conclu **deux fois à tort** qu'un correctif ne fonctionnait pas, sur des mesures prises trop tôt (une animation CSS en plein vol, puis un cache CDN). Dans les deux cas le correctif était bon. Avant de déclarer un fix KO, vérifier d'abord que la mesure est stable.
+- **Phase 3** — qualité de code. Candidats accumulés au fil de la Phase 2, volontairement **pas** traités (ce ne sont pas des bugs) :
+  - `activeSession.type` jamais renseigné → toutes les séances s'enregistrent sous « SÉANCE », y compris celles issues d'un programme IA qui affiche pourtant un `session_type` ;
+  - `fetchWeeklyLeaderboard` appelée à chaque montage du Bilan pour un rendu masqué ;
+  - `repas.portion` toujours à `'100g'`, jamais écrite ni lue ;
+  - qualité du catalogue wger (« Développé incliné à la Smith machine » dans la section Maison) ;
+  - pluriel en dur : « 1 séries » sur la carte d'historique Workout ;
+  - **accessibilité** : la carte d'habitude du Dashboard est un `div` cliquable sans `role="button"` ni équivalent clavier — invisible dans l'arbre d'accessibilité en tant que contrôle. Repéré parce que l'outil de test ne trouvait aucun élément interactif à cliquer. L'app n'a jamais eu de passe a11y ; c'est un chantier à part entière, pas un correctif ponctuel.
+- **Chantier produit ouvert** : un vrai flux « changer mon adresse e-mail » reste à construire — il dépend d'abord de la sortie du bac à sable pour l'email transactionnel (domaine expéditeur vérifié). Voir BUG 11.
+- Toujours en attente décision produit : protection des mots de passe compromis (advisor WARN, Phase 1).
+- Voir aussi la section « Chantiers ouverts » en haut de ce fichier : consentement au partage de données coach↔membre (point juridique, bloquant avant acquisition de coachs pilotes).
+
+### Nettoyage des données de test — vérifié à 0, sauf un fichier à supprimer à la main
+1 salle de test (`QA GYM COACH`) et 5 comptes au total (1 coach + 4 membres, dont 2 supprimés via le vrai bouton « Supprimer mon compte » pour tester ce flux) supprimés, avec toutes leurs lignes : `programmes` (1), `programme_assignations` (1), `habitudes`, `habitude_logs`, `coach_notes`, `seances`, `repas`, `activite_jour`, `objectifs`, `api_rate_limit`, `profiles`, `gyms`.
+
+Les **15 tables du schéma balayées**, pas seulement celles touchées. Contrôle après coup : **0** compte de test, **0** profil de test, **0** salle de test, **0** programme de test, **0** ligne orpheline sur les 13 tables user-scoped, **0** profil rattaché à une salle inexistante, **0** `ai_usage` sans salle.
+
+Base revenue à son état d'avant session : 5 `auth.users`, 5 profils, 1 salle (VOLTA FITNESS), 2 séances, 6 messages, 3 objectifs, 32 `activite_jour`, 12 repas, 0 programme, 0 habitude, 0 note coach. `api_rate_limit` est à 41 contre 39 en début de session : les 2 lignes supplémentaires appartiennent au **compte réel d'Arnaud** (endpoint `exercises`), pas aux tests — vérifié, et laissées intactes.
+
+**🔧 Une action manuelle reste à faire de ton côté** : un fichier orphelin dans Storage, `avatars/2eafe9c7-b018-4bfe-9e87-2417af9b88df/avatar.jpg` (5 140 o). C'est l'avatar du compte de test qui a servi à **démontrer** le BUG 12 — il a été supprimé *avant* que le correctif existe, donc rien ne l'a nettoyé. Je ne peux pas le retirer moi-même : la suppression SQL directe est bloquée par un garde-fou (`storage.protect_delete`), il n'existe aucune policy DELETE pour un client authentifié, et son compte propriétaire n'existe plus. **À supprimer depuis le dashboard Supabase** (Storage → bucket `avatars` → dossier `2eafe9c7-b018-4bfe-9e87-2417af9b88df`). Aucun compte réel n'est concerné, et le correctif empêche que ce cas se reproduise.
+
 ## 🚨 2026-08-16 — Audit sécurité (Phase 2, suite 2) : Workout + messagerie temps réel, 3 bugs dont 2 pertes de séance
 
 Suite directe des deux entrées Phase 2 plus bas. Périmètre demandé pour cette session : **Workout** (séance complète — démarrage, ajout d'exercices depuis la bibliothèque, complétion, sauvegarde en base ; navigation `WorkoutLibrary` ; cohérence hub ↔ `WorkoutSession`) et **messagerie membre↔coach** (temps réel Supabase Realtime avec deux comptes connectés simultanément, persistance, et test RLS réel qu'un membre ne peut pas lire la conversation d'un autre membre avec le coach). Tests réels dans le navigateur sur la production, puis re-tests des correctifs sur le déploiement de preview de la PR #131.
