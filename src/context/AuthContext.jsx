@@ -318,8 +318,24 @@ export function AuthProvider({ children }) {
       const { error: profileError } = await upsertOwnProfile(userId, {
         prenom: profile.name || profile.prenom,
         email: profile.email,
-        poids: profile.weight ? parseFloat(profile.weight) : null,
-        taille: profile.height ? parseFloat(profile.height) : null,
+        // Omitted (not null) when absent, comme `age` juste en dessous.
+        // Écrivaient `null` jusqu'ici, ce qui EFFAÇAIT poids/taille chez
+        // tout appelant qui ne les fournit pas — et le seul dans ce cas
+        // est Weekly.jsx (« Enregistrer les objectifs » du Bilan, qui
+        // n'envoie que l'objectif et les cibles caloriques). Mesuré en
+        // test réel le 2026-08-16 : profil à 82kg/180cm avant la
+        // sauvegarde d'objectif, poids ET taille à NULL juste après.
+        // Ce chemin n'était pas destructeur avant le 2026-08-16 : toutes
+        // les écritures `profiles` du client échouaient alors en 42501
+        // (BUG 1), donc le correctif d'hier est ce qui a rendu cette
+        // perte de données effective. Aucun compte réel touché à ce jour
+        // (vérifié en base : Arnaud 76/188 et Myriam 65/160 intacts).
+        // Impact au-delà de l'affichage : `poids` alimente
+        // AppContext.weightKg (dépense de la course, utils/metabolism.js),
+        // le recalcul d'objectif du Bilan lui-même, et la fiche membre
+        // vue par le coach (ClientsList.jsx).
+        ...(profile.weight ? { poids: parseFloat(profile.weight) } : {}),
+        ...(profile.height ? { taille: parseFloat(profile.height) } : {}),
         // Omitted (not null) when absent — e.g. Settings.jsx's profile
         // save doesn't collect age, and upsertOwnProfile only touches
         // columns actually present in the payload, so this never wipes a
