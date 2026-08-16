@@ -9,6 +9,7 @@ import { dailyRemainingCalories } from '../utils/metabolism'
 import { fetchStreakDetails } from '../utils/streak'
 import { fetchHabitsWithProgress, checkHabitToday, uncheckHabitToday } from '../utils/habits'
 import { useSwipeToDismiss } from '../hooks/useSwipeToDismiss'
+import { activable } from '../utils/a11y'
 import quotes from '../data/quotes.json'
 import Avatar from '../components/Avatar'
 import '../styles/dashboard.css'
@@ -384,7 +385,10 @@ export default function Dashboard() {
               key={card.key}
               className={`activity-card-compact card-animated${card.key === 'water' ? ' activity-card-accent' : ''}`}
               style={{ '--delay': `${80 + i * 40}ms` }}
-              onClick={() => { setEditingCard(card.key); setInputVal(''); setGoalInputVal(String(card.target)) }}
+              {...activable(
+                () => { setEditingCard(card.key); setInputVal(''); setGoalInputVal(String(card.target)) },
+                { label: `${card.label} — modifier` },
+              )}
             >
               <span className="activity-card-icon-badge" style={{ background: card.tint }}>{card.icon}</span>
               <p className="activity-card-label">{card.label}</p>
@@ -447,7 +451,11 @@ export default function Dashboard() {
                   key={h.id}
                   className="db-habit-card card-animated"
                   style={{ '--delay': `${360 + i * 40}ms`, '--db-habit-accent': i % 2 === 0 ? 'var(--db-olive)' : 'var(--db-lavender)' }}
-                  onClick={() => toggleHabitToday(h)}
+                  {...activable(() => toggleHabitToday(h), {
+                    role: 'checkbox',
+                    'aria-checked': !!h.doneToday,
+                    label: `${h.titre} — marquer comme fait aujourd'hui`,
+                  })}
                 >
                   <div className={`db-habit-check${h.doneToday ? ' done' : ''}`}>
                     {h.doneToday ? '✓' : ''}

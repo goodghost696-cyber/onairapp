@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { fetchConversationSummaries } from '../utils/messages'
 import CoachNav from '../components/CoachNav'
 import Icon from '../components/Icon'
+import { activable } from '../utils/a11y'
 
 function formatTime(iso) {
   const d = new Date(iso)
@@ -64,7 +65,7 @@ export default function CoachMessages() {
             const summary = summaries[m.user_id]
             const unread = summary?.unreadCount > 0
             return (
-              <div key={m.id} className="card card-animated" style={{ cursor: 'pointer', marginBottom: 8, '--delay': `${Math.min(i, 6) * 40}ms` }} onClick={() => navigate(`/coach/messages/${m.id}`)}>
+              <div key={m.id} className="card card-animated" style={{ cursor: 'pointer', marginBottom: 8, '--delay': `${Math.min(i, 6) * 40}ms` }} {...activable(() => navigate(`/coach/messages/${m.id}`), { label: `Conversation avec ${m.prenom}${unread ? ' — messages non lus' : ''}` })}>
                 <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                   <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: 'var(--accent-ink)', flexShrink: 0 }}>{m.prenom?.[0] || '?'}</div>
                   <div style={{ flex: 1, minWidth: 0 }}>

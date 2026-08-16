@@ -10,15 +10,19 @@ import { uploadAvatar } from '../utils/avatar'
 import DeleteAccountButton from '../components/DeleteAccountButton'
 import Avatar from '../components/Avatar'
 import { storageKey } from '../components/OnboardingTour'
+import { activable } from '../utils/a11y'
 import '../styles/settings-redesign.css'
 
 // Recoloré pour le restyle "pastel chaud" (2026-08-14, handoff dédié) —
 // piste + pastille en dur via .set-toggle/.set-toggle-knob
 // (settings-redesign.css) plutôt qu'en inline comme avant : mêmes deux
 // classes réutilisables si un autre écran adopte ce composant plus tard.
-function Toggle({ on, onToggle }) {
+// `role="switch"` + aria-checked plutôt que `button` : c'est un interrupteur
+// à deux états, et sans ça un lecteur d'écran l'annonçait comme rien du tout
+// (div nu, non atteignable au clavier). Même traitement dans CoachSettings.jsx.
+function Toggle({ on, onToggle, label }) {
   return (
-    <div onClick={onToggle} className={`set-toggle ${on ? 'on' : 'off'}`}>
+    <div {...activable(onToggle, { role: 'switch', 'aria-checked': !!on, label })} className={`set-toggle ${on ? 'on' : 'off'}`}>
       <div className="set-toggle-knob" />
     </div>
   )
@@ -307,7 +311,7 @@ export default function Settings() {
                 <div className="text-sm text-secondary">Notifications push</div>
                 {pushState === 'denied' && <div className="text-xs" style={{ color: 'var(--danger)', marginTop: 2 }}>Bloquées dans les réglages du navigateur</div>}
               </div>
-              <Toggle on={pushState === 'subscribed'} onToggle={handleTogglePush} />
+              <Toggle on={pushState === 'subscribed'} onToggle={handleTogglePush} label="Notifications push" />
             </div>
           )}
           {/* Was rendering nothing at all here when unsupported — on iOS
@@ -366,7 +370,7 @@ export default function Settings() {
 
         <div className="section-label">SANTÉ & CAPTEURS</div>
         <div className="card card-animated" style={{ '--delay': '300ms' }}>
-          <div className="flex justify-between items-center" style={{ padding: '14px 0', cursor: 'pointer' }} onClick={() => setShowHealthSync(true)}>
+          <div className="flex justify-between items-center" style={{ padding: '14px 0', cursor: 'pointer' }} {...activable(() => setShowHealthSync(true), { label: 'Synchroniser mes données' })}>
             <div>
               <p className="text-sm text-secondary">Synchroniser mes données</p>
               <p className="text-xs text-muted">Pas, sommeil · Intégration Apple Health sur app native</p>
