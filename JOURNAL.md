@@ -65,6 +65,19 @@ Pas un agent agentique à function calling. Une requête planifiée : réutilise
 
 **Pourquoi ne pas commencer maintenant** : priorité au socle avant toute nouvelle feature. Tant que la Phase 2 et la Phase 3 de l'audit et le restyle coach (`CoachDashboard`, `ClientsList`, `MemberDetail`) ne sont pas faits, enchaîner les features reproduirait le pattern `RunContent` — du contenu fabriqué resté en production pendant des mois sur une base non stabilisée.
 
+### ⚖️ Consentement au partage de données coach↔membre — point juridique non traité
+**Statut : identifié, non traité à ce jour. Bloquant avant toute acquisition de coachs pilotes ou contact influenceur. Aucun développement technique à démarrer tant que la clarification juridique n'est pas tranchée.**
+
+**Le constat** : le membre n'est informé **nulle part**, de façon explicite, que son coach a accès à ses données de nutrition, d'activité, de poids et de sommeil via `CoachDashboard` / `MemberDetail`. L'accès existe et fonctionne (il est même la raison d'être du produit côté coach), mais rien dans le parcours d'inscription ni dans l'app ne le dit au membre.
+
+**Ce que ce point n'est pas** : à distinguer du RGPD « général » (base légale de la collecte elle-même). Ici c'est spécifiquement le **partage vers un tiers humain identifié** — le coach — qui doit être formalisé. Deux sujets différents, à ne pas confondre dans le traitement.
+
+**Piste envisagée, pas tranchée** : un mécanisme d'opt-in explicite, soit à l'inscription, soit au moment du rattachement à un coach. Reste à décider : **opt-in ou opt-out**, et la **formulation exacte** du consentement.
+
+**À traiter avec** les CGU et la politique de confidentialité, dans le même chantier.
+
+**Pourquoi ne pas commencer maintenant** : coder un mécanisme de consentement avant d'avoir tranché opt-in vs opt-out et la formulation exacte reviendrait à jeter le travail, ou pire à afficher au membre une formulation juridiquement fausse. La clarification juridique vient d'abord, le code ensuite.
+
 ## 🚨 2026-08-16 — Audit sécurité (Phase 2, suite 2) : Workout + messagerie temps réel, 3 bugs dont 2 pertes de séance
 
 Suite directe des deux entrées Phase 2 plus bas. Périmètre demandé pour cette session : **Workout** (séance complète — démarrage, ajout d'exercices depuis la bibliothèque, complétion, sauvegarde en base ; navigation `WorkoutLibrary` ; cohérence hub ↔ `WorkoutSession`) et **messagerie membre↔coach** (temps réel Supabase Realtime avec deux comptes connectés simultanément, persistance, et test RLS réel qu'un membre ne peut pas lire la conversation d'un autre membre avec le coach). Tests réels dans le navigateur sur la production, puis re-tests des correctifs sur le déploiement de preview de la PR #131.
