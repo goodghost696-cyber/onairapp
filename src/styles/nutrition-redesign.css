@@ -72,20 +72,22 @@ body.nutrition-body-bg {
      partiellement visible derrière la pill, cette fois voulu.
    Technique inchangée (sélecteur sibling scopé à ce wrapper, couleurs en
    dur car .bottom-nav est un sibling, pas un descendant — les custom
-   properties du wrapper ne l'atteignent pas). Le fond reste SOMBRE et non
-   le glass blanc de nav.css : les icônes de ces écrans sont en crème (règle
-   juste en dessous) et deviendraient illisibles sur un frost clair. */
+   properties du wrapper ne l'atteignent pas). Teinte sombre conservée (et
+   non le glass blanc de nav.css) : à 25% elle assombrit juste assez le
+   contenu qui transparaît pour que les icônes en encre gardent leur
+   contraste — voir dashboard.css pour les mesures. */
 .nutrition-redesign ~ .bottom-nav {
   background: rgba(28,26,23,0.25);
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
 }
 .nutrition-redesign ~ .bottom-nav .nav-btn svg {
-  color: rgba(247,241,230,0.55);
+  color: rgba(28,26,23,0.7);
 }
 .nutrition-redesign ~ .bottom-nav .nav-btn.active svg {
-  /* Lavande plutôt que crème — voir dashboard.css pour l'explication. */
-  color: #A3AEFE;
+  /* Encre plutôt que lavande — contrepartie du frost, voir dashboard.css
+     pour les contrastes mesurés. */
+  color: #1C1A17;
 }
 
 .nutrition-screen {

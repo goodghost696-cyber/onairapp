@@ -77,11 +77,11 @@ body.aicoach-body-bg {
   -webkit-backdrop-filter: blur(15px);
 }
 .aicoach-redesign ~ .bottom-nav .nav-btn svg {
-  color: rgba(247,241,230,0.55);
+  color: rgba(28,26,23,0.7);
 }
 .aicoach-redesign ~ .bottom-nav .nav-btn.active svg {
   /* Lavande plutôt que crème — voir dashboard.css pour l'explication. */
-  color: #A3AEFE;
+  color: #1C1A17;
 }
 
 /* ── En-tête ── */
