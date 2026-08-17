@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import CoachNav from '../components/CoachNav'
 import { supabase, authHeader } from '../lib/supabase'
-import { fetchMemberActivitySummaries, lastSeenLabel } from '../utils/coachStats'
+import { fetchMemberActivitySummaries, lastSeenLabel, fetchCoachRoster, consentLabel } from '../utils/coachStats'
 import { fetchStreaksForUsers } from '../utils/streak'
 import Icon from '../components/Icon'
 import { activable } from '../utils/a11y'
@@ -36,23 +36,31 @@ export default function ClientsList() {
     let cancelled = false
     async function fetchMembers() {
       setLoading(true)
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('role', 'member')
+      // Roster complet (identité hors consentement) plutôt qu'un
+      // `profiles.select('*')` : ce dernier est gaté par le consentement, un
+      // membre qui refuse disparaissait donc entièrement de la liste — le
+      // coach ne voyait même pas qu'il existait.
+      const data = await fetchCoachRoster()
       if (cancelled) return
-      if (error || !data) { setLoading(false); return }
+      if (!data.length) { setMembers([]); setLoading(false); return }
       // Same pattern as CoachDashboard.jsx — this screen was pulling only
       // profiles.* and never merging real activity, so every card silently
       // showed "Vu — · — séances" and the status filter chips never matched
       // anything (m.status was always undefined).
-      const userIds = data.map(m => m.user_id)
+      // Statistiques demandées uniquement pour les membres qui partagent.
+      // Les interroger pour les autres ne renverrait de toute façon rien
+      // (RLS), mais surtout : leur attribuer un résumé vide produirait un
+      // « Vu jamais · 0 séance » indistinguable d'un membre réellement
+      // inactif. Un refus de partage n'est pas une absence d'activité.
+      const sharingIds = data.filter(m => m.sharesData).map(m => m.user_id)
       const [summaries, streaks] = await Promise.all([
-        fetchMemberActivitySummaries(userIds),
-        fetchStreaksForUsers(userIds),
+        fetchMemberActivitySummaries(sharingIds),
+        fetchStreaksForUsers(sharingIds),
       ])
       if (cancelled) return
-      setMembers(data.map(m => ({ ...m, ...summaries[m.user_id], streak: streaks[m.user_id] || 0 })))
+      setMembers(data.map(m => m.sharesData
+        ? { ...m, ...summaries[m.user_id], streak: streaks[m.user_id] || 0 }
+        : m))
       setLoading(false)
     }
     fetchMembers()
@@ -148,19 +156,31 @@ export default function ClientsList() {
                 <div style={{ flex: 1 }}>
                   <div className="flex justify-between items-center" style={{ marginBottom: 2 }}>
                     <span className="text-base bold">{m.prenom}</span>
-                    <span className="status-badge" style={{ color: GOAL_COLORS[m.objectif] || 'var(--text-muted)' }}>{m.objectif || '-'}</span>
-                  </div>
-                  <div className="text-xs text-muted">
-                    Vu {lastSeenLabel(m.lastActiveDate).toLowerCase()} · {m.sessionsThisWeek ?? 0} séance{m.sessionsThisWeek > 1 ? 's' : ''}
-                    {m.streak > 0 && (
-                      <span style={{ color: m.streak >= 3 ? 'var(--accent)' : 'var(--text-muted)', fontWeight: m.streak >= 3 ? 700 : 400 }}>
-                        {' '}· 🔥 {m.streak}j
-                      </span>
+                    {m.sharesData && (
+                      <span className="status-badge" style={{ color: GOAL_COLORS[m.objectif] || 'var(--text-muted)' }}>{m.objectif || '-'}</span>
                     )}
                   </div>
-                  <div className="progress-bar" style={{ marginTop: 6 }}>
-                    <div className="progress-fill" style={{ width: `${Math.min((m.sessionsThisWeek || 0)/8*100,100)}%` }} />
-                  </div>
+                  {/* Deux rendus distincts, pas un même bloc avec des valeurs
+                      vides : un membre qui ne partage pas doit se lire comme
+                      « pas de données accessibles », jamais comme « membre à
+                      zéro d'activité ». */}
+                  {m.sharesData ? (
+                    <>
+                      <div className="text-xs text-muted">
+                        Vu {lastSeenLabel(m.lastActiveDate).toLowerCase()} · {m.sessionsThisWeek ?? 0} séance{m.sessionsThisWeek > 1 ? 's' : ''}
+                        {m.streak > 0 && (
+                          <span style={{ color: m.streak >= 3 ? 'var(--accent)' : 'var(--text-muted)', fontWeight: m.streak >= 3 ? 700 : 400 }}>
+                            {' '}· 🔥 {m.streak}j
+                          </span>
+                        )}
+                      </div>
+                      <div className="progress-bar" style={{ marginTop: 6 }}>
+                        <div className="progress-fill" style={{ width: `${Math.min((m.sessionsThisWeek || 0)/8*100,100)}%` }} />
+                      </div>
+                    </>
+                  ) : (
+                    <div className="consent-none">{consentLabel(m.consentState)}</div>
+                  )}
                 </div>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
               </div>

@@ -1226,3 +1226,77 @@ alter policy "Coaches can update same-gym objectifs" on public.objectifs
 -- assigne PAR le coach, absent de la liste de la politique de
 -- confidentialite) et push_subscriptions (notification, pas donnee de
 -- sante). Voir JOURNAL.md 2026-08-17.
+-- ── 2026-08-17 (suite) : habitude_logs gate + vue d'identite ──────────
+-- Migration : consent_habitude_logs_and_identity_view
+--
+-- 1) Les validations d'habitudes sont une donnee de SUIVI du membre, au
+-- meme titre que ses repas ou ses seances -> elles rejoignent le perimetre
+-- du consentement. habitudes (l'intitule assigne PAR le coach) reste
+-- hors perimetre, pour qu'il puisse continuer a gerer ses assignations.
+alter policy "Coaches can view same-gym habitude logs" on public.habitude_logs
+  using (is_coach() and exists (
+           select 1 from public.profiles p
+           where p.user_id = habitude_logs.user_id and p.gym_id = public.my_gym_id())
+         and public.member_shares_with_coach(habitude_logs.user_id));
+
+-- 2) Identite minimale, HORS perimetre du consentement.
+-- Postgres n'a pas de RLS au niveau colonne : poids/taille/objectif vivent
+-- sur la meme ligne profiles que le prenom. Gater la ligne entiere
+-- coupait bien l'acces aux donnees sensibles mais faisait disparaitre le
+-- membre de toutes les listes du coach (clients, tableau de bord,
+-- messagerie). Cette vue repond uniquement a "qui fait partie de ma
+-- salle".
+--
+-- SECURITY DEFINER a dessein (en invoker, la RLS de profiles
+-- reappliquerait le gate et la vue ne servirait a rien).
+-- ATTENTION : c'est le motif exact de la faille leaderboard_weekly de la
+-- Phase 1 (vue definer SANS filtre de salle). Les deux garde-fous du corps
+-- ci-dessous ne sont pas negociables :
+--   is_coach()            -> seuls les coachs voient quelque chose
+--   gym_id = my_gym_id()  -> et uniquement leur propre salle
+create or replace view public.coach_member_identity
+with (security_invoker = false) as
+  select p.id, p.user_id, p.prenom, p.gym_id,
+         p.created_at as rattache_le,
+         p.coach_data_consent, p.coach_data_consent_at
+  from public.profiles p
+  where p.role = 'member'
+    and p.gym_id = public.my_gym_id()
+    and public.is_coach();
+
+revoke all on public.coach_member_identity from public, anon;
+grant select on public.coach_member_identity to authenticated;
+-- ── 2026-08-17 (suite 2) : is_same_gym_member, effet de bord du gate ──
+-- Migration : same_gym_member_helper_unblocks_coach_actions
+--
+-- Decouvert PAR LE TEST : depuis que la policy SELECT de profiles est
+-- gatee par le consentement, toutes les policies coach qui verifiaient
+-- l'appartenance a la salle via
+--   exists (select 1 from profiles p where p.user_id = X and p.gym_id = my_gym_id())
+-- echouaient pour un membre non consentant — ce sous-select subit lui aussi
+-- la RLS de profiles. Mesure : le coach ne pouvait plus assigner une
+-- habitude (42501), ni un programme (42501), ni ENVOYER UN MESSAGE. Aucune
+-- de ces actions ne releve du partage de donnees de suivi.
+create or replace function public.is_same_gym_member(member_user_id uuid)
+returns boolean language sql stable security definer set search_path to 'public' as $$
+  select exists (
+    select 1 from public.profiles p
+    where p.user_id = member_user_id
+      and p.gym_id is not null
+      and p.gym_id = public.my_gym_id()
+  );
+$$;
+revoke all on function public.is_same_gym_member(uuid) from public;
+grant execute on function public.is_same_gym_member(uuid) to authenticated;
+
+-- Actions coach sans rapport avec les donnees de suivi -> debloquees :
+--   habitudes (assign/select/update), programme_assignations
+--   (assign/select/unassign), push_subscriptions (select/delete),
+--   messages (branche coach -> membre).
+-- Donnees de suivi -> meme helper pour la salle, le CONSENTEMENT reste le
+-- seul et unique gate :
+--   repas, activite_jour, seances, objectifs (select + update),
+--   habitude_logs.
+-- Chaque policy dit desormais explicitement "meme salle ET consentement",
+-- au lieu de dependre du fait que le sous-select echouait deja de lui-meme.
+-- Voir la migration pour le texte exact des 15 alter policy.

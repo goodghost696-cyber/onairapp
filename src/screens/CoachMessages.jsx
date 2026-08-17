@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { fetchConversationSummaries } from '../utils/messages'
+import { fetchCoachRoster } from '../utils/coachStats'
 import CoachNav from '../components/CoachNav'
 import Icon from '../components/Icon'
 import { activable } from '../utils/a11y'
@@ -27,12 +28,16 @@ export default function CoachMessages() {
     if (!user?.id) return
     let cancelled = false
     async function load() {
-      const [{ data: membersData, error }, summariesData] = await Promise.all([
-        supabase.from('profiles').select('*').eq('role', 'member'),
+      // Roster d'identité : ne pas partager ses données de suivi n'a rien à
+      // voir avec le fait de pouvoir échanger avec son coach. Avec un
+      // `profiles.select('*')` (gaté), ces membres disparaissaient de la
+      // messagerie — un effet de bord que le consentement n'a jamais visé.
+      const [membersData, summariesData] = await Promise.all([
+        fetchCoachRoster(),
         fetchConversationSummaries(user.id),
       ])
       if (cancelled) return
-      if (!error && membersData) setMembers(membersData)
+      setMembers(membersData)
       setSummaries(summariesData)
       setLoading(false)
     }

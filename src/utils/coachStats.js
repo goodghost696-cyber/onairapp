@@ -2,6 +2,63 @@ import { supabase } from '../lib/supabase'
 
 const ACTIVITY_WINDOW_DAYS = 14
 
+// Trois états possibles pour un membre vis-à-vis du partage de ses données.
+// Le booléen seul n'en distinguerait que deux : c'est `coach_data_consent_at`
+// qui permet de séparer « n'a jamais répondu » de « a dit non ».
+export const CONSENT_SHARED = 'shared'
+export const CONSENT_WITHDRAWN = 'withdrawn'
+export const CONSENT_UNDECIDED = 'undecided'
+
+export function consentLabel(state) {
+  if (state === CONSENT_WITHDRAWN) return "A retiré l'accès à ses données"
+  if (state === CONSENT_UNDECIDED) return "N'a pas encore partagé ses données"
+  return null
+}
+
+// Roster du coach : l'identité de TOUS les membres de sa salle, qu'ils aient
+// consenti ou non, fusionnée avec leurs données de profil quand elles sont
+// accessibles.
+//
+// Deux sources, à dessein :
+//   - `coach_member_identity` : vue hors périmètre du consentement, qui ne
+//     porte que prénom / rattachement / date / état du consentement. C'est
+//     elle qui répond à « qui fait partie de ma salle ».
+//   - `profiles` : toujours gaté par le consentement en RLS, donc ne renvoie
+//     que les membres qui partagent. C'est là que vivent poids/taille/
+//     objectif/email.
+// La fusion donne : identité pour tout le monde, données de suivi seulement
+// pour ceux qui ont accepté. Aucun filtrage côté client — si `profiles` ne
+// renvoie pas la ligne, c'est la base qui a tranché, pas nous.
+export async function fetchCoachRoster() {
+  const [{ data: identities, error: e1 }, { data: profiles, error: e2 }] = await Promise.all([
+    supabase.from('coach_member_identity').select('*'),
+    supabase.from('profiles').select('*').eq('role', 'member'),
+  ])
+  if (e1) { console.error('[coachStats] fetchCoachRoster: identity fetch failed', e1); return [] }
+  if (e2) console.error('[coachStats] fetchCoachRoster: profiles fetch failed', e2)
+
+  const profileByUser = {}
+  for (const p of profiles || []) profileByUser[p.user_id] = p
+
+  return (identities || []).map(idn => {
+    const shares = !!idn.coach_data_consent
+    return {
+      // Le profil d'abord, l'identité ensuite : sur un membre consentant les
+      // deux portent les mêmes valeurs, mais l'identité doit rester la
+      // référence — c'est la seule source garantie présente.
+      ...(profileByUser[idn.user_id] || {}),
+      id: idn.id,
+      user_id: idn.user_id,
+      prenom: idn.prenom,
+      rattacheLe: idn.rattache_le,
+      sharesData: shares,
+      consentState: shares
+        ? CONSENT_SHARED
+        : (idn.coach_data_consent_at ? CONSENT_WITHDRAWN : CONSENT_UNDECIDED),
+    }
+  })
+}
+
 function isoDaysAgo(days) {
   return new Date(Date.now() - days * 86400000).toISOString().slice(0, 10)
 }

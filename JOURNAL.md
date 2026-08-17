@@ -82,6 +82,60 @@ Le texte ci-dessous est conservé pour mémoire du point de départ.
 
 **Pourquoi ne pas commencer maintenant** : coder un mécanisme de consentement avant d'avoir tranché opt-in vs opt-out et la formulation exacte reviendrait à jeter le travail, ou pire à afficher au membre une formulation juridiquement fausse. La clarification juridique vient d'abord, le code ensuite.
 
+## ⚖️ 2026-08-17 (suite) — Consentement : habitudes gatées, identité séparée du suivi
+
+Les **deux arbitrages** laissés ouverts par l'entrée précédente sont tranchés et implémentés.
+
+### 1. `habitude_logs` rejoint le périmètre du consentement
+Les validations quotidiennes sont une donnée de **suivi du membre** (ce qu'il a fait, quand), au même titre que ses repas ou ses séances. `habitudes` elle-même reste hors périmètre : c'est l'intitulé **assigné par le coach**, qui doit pouvoir continuer à gérer ses assignations.
+
+Résultat net, vérifié : le coach voit ce qu'il a assigné, sans voir si le membre l'a fait.
+
+### 2. Identité séparée des données de suivi
+**Investigation d'abord.** Les 5 écrans coach (`CoachDashboard`, `ClientsList`, `MemberDetail`, `CoachMessages`, `CoachPrograms`) listaient **tous** via `profiles.select('*')`. Cette table étant gatée par le consentement, un membre qui refusait disparaissait entièrement — au point que `ClientsList` affichait « Ta salle est prête, personne ne l'a encore rejointe » alors que quelqu'un avait rejoint puis refusé. La messagerie le perdait aussi, ce que le consentement n'a jamais visé.
+
+Cause de fond : Postgres n'a pas de RLS au niveau colonne, et `poids`/`taille`/`objectif` vivent sur la même ligne `profiles` que le prénom. Impossible de couper les uns sans masquer l'autre.
+
+**Solution** : vue `coach_member_identity`, hors périmètre du consentement, qui ne porte que de quoi répondre à « qui fait partie de ma salle » — prénom, rattachement, date de rattachement, et l'état du consentement (pour que l'interface affiche le bon message). Aucune donnée de suivi, pas d'email, pas de poids/taille/objectif.
+
+`SECURITY DEFINER` à dessein : en invoker, la RLS de `profiles` réappliquerait le gate et la vue ne servirait à rien. **C'est exactement le motif de la faille `leaderboard_weekly` de la Phase 1** (vue definer sans filtre de salle, qui exposait les membres de toutes les salles) — le corps porte donc lui-même ses deux garde-fous, `is_coach()` et `gym_id = my_gym_id()`, documentés comme non négociables. Vérifié : un membre non-coach voit **0 ligne**.
+
+Nouveau `fetchCoachRoster()` : fusionne la vue d'identité (tout le monde) avec `profiles` (gaté, donc seulement les consentants). Aucun filtrage côté client — si `profiles` ne renvoie pas la ligne, c'est la base qui a tranché.
+
+### 🔴 Effet de bord trouvé PAR LE TEST — le coach ne pouvait plus travailler avec un membre non consentant
+En testant l'assignation d'une habitude à un membre ayant refusé : **42501**. Puis l'assignation d'un programme : **42501**. Puis l'envoi d'un message : bloqué aussi.
+
+Cause : toutes les policies coach vérifiaient l'appartenance à la salle via `exists (select 1 from profiles p where ...)` — et ce sous-select subit lui aussi la RLS de `profiles`, désormais gatée. Le gate de consentement débordait donc largement au-delà des données de suivi.
+
+C'est un défaut que la relecture de policy n'aurait pas montré : chaque policy prise isolément semble correcte, c'est leur composition qui casse.
+
+**Correctif** : helper `is_same_gym_member(uuid)` en SECURITY DEFINER, qui répond à la seule question « ce membre est-il dans ma salle ? » sans dépendre de la visibilité de la ligne. Appliqué aux 15 policies concernées. Les actions sans rapport avec le suivi sont débloquées (habitudes, programmes, push, messagerie) ; les données de suivi gardent le consentement comme **seul et unique** gate. Chaque policy dit maintenant explicitement « même salle ET consentement », au lieu de dépendre du fait que le sous-select échouait déjà de lui-même.
+
+### Test réel — 3 membres dans 3 états, un locataire dédié
+| Ce que voit le coach | QaAccepte (a accepté) | QaRefuse (a refusé) | QaIndecis (jamais tranché) |
+|---|---|---|---|
+| Vue d'identité | ✅ | ✅ | ✅ |
+| `profiles` (poids/taille) | ✅ | **0** | **0** |
+| repas / séances / activité / objectifs | ✅ | **0** | **0** |
+| **`habitude_logs` (validations)** | ✅ | **0** | **0** |
+| Habitude assignée par le coach | ✅ | ✅ | ✅ |
+| Assigner une habitude / un programme | ✅ | ✅ | ✅ |
+| Envoyer un message | ✅ | ✅ | ✅ |
+
+`QaRefuse` avait bien validé une habitude (log créé avec son propre token) : le coach ne le voit pas. C'est le nouveau gate qui fonctionne, pas une absence de donnée.
+
+**Rendu vérifié à l'écran** (preview, UI coach réelle) :
+- `ClientsList` : « 3 MEMBRES », QaAccepte avec ses stats, QaRefuse « A retiré l'accès à ses données », QaIndecis « N'a pas encore partagé ses données ». Les deux états sont bien distingués, et aucun compteur à zéro.
+- `CoachDashboard` : « 3 CLIENTS » (identité), mais alertes/actifs/répartition calculés uniquement sur les consentants — pas d'« INACTIFS 2 » trompeur. Section neutre **DONNÉES NON PARTAGÉES**, volontairement séparée de « Nécessite attention » : ne pas partager n'est pas un problème d'assiduité.
+- `MemberDetail` d'un membre refusant : fiche d'identité avec la date de rattachement, note du coach et bouton message conservés, aucune tuile à « — ».
+- `MemberDetail` d'un membre consentant : inchangé, habitudes comprises (1/5).
+
+### Politique de confidentialité
+« vos validations d'habitudes » ajouté à la liste ; paragraphe sur l'identité toujours visible ; et surtout un **avertissement explicite** : cette liste est une promesse et doit être maintenue à jour à chaque nouvelle feature de suivi. Les deux gestes vont ensemble — ajouter `member_shares_with_coach()` à la policy, **et** ajouter la catégorie à la liste. Oublier le premier crée une fuite, oublier le second fait mentir le document. Le cas s'est déjà produit avec `habitude_logs`.
+
+### Nettoyage — vérifié à 0
+1 salle et 4 comptes de test supprimés avec toutes leurs lignes (`habitude_logs` 2, `habitudes` 3, `programmes` 1, `messages` 1, `repas` 3, `seances` 3, `activite_jour` 3, `objectifs` 3, `api_rate_limit` 4, `profiles` 4, `gyms` 1). Contrôle : **0** résidu sur les 13 tables balayées + Storage. Base à l'identique : 5 `auth.users`, 5 profils, 1 salle.
+
 ## ⚖️ 2026-08-17 — Consentement opt-in au partage de données coach↔membre (implémenté)
 
 Le point juridique ouvert le 2026-08-16 (voir « Chantiers ouverts » en haut) est **implémenté côté technique**, opt-in tranché. Le chantier reste ouvert sur un seul volet : la relecture juridique du texte.

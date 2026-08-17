@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
-import { fetchMemberActivitySummaries, fetchGymWeeklyActivity, lastSeenLabel } from '../utils/coachStats'
+import { fetchMemberActivitySummaries, fetchGymWeeklyActivity, lastSeenLabel, fetchCoachRoster, consentLabel } from '../utils/coachStats'
 import CoachNav from '../components/CoachNav'
 import Icon from '../components/Icon'
 import { activable } from '../utils/a11y'
@@ -20,20 +20,18 @@ export default function CoachDashboard() {
     let cancelled = false
     async function fetchMembers() {
       setLoading(true)
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('role', 'member')
+      // Identité de tous les membres (hors consentement), statistiques
+      // seulement pour ceux qui partagent — voir fetchCoachRoster.
+      const data = await fetchCoachRoster()
       if (cancelled) return
-      if (error || !data) { setLoading(false); return }
 
-      const userIds = data.map(m => m.user_id)
+      const sharingIds = data.filter(m => m.sharesData).map(m => m.user_id)
       const [summaries, weekly] = await Promise.all([
-        fetchMemberActivitySummaries(userIds),
-        fetchGymWeeklyActivity(userIds),
+        fetchMemberActivitySummaries(sharingIds),
+        fetchGymWeeklyActivity(sharingIds),
       ])
       if (cancelled) return
-      setMembers(data.map(m => ({ ...m, ...summaries[m.user_id] })))
+      setMembers(data.map(m => m.sharesData ? { ...m, ...summaries[m.user_id] } : m))
       setWeeklyActivity(weekly)
       setLoading(false)
     }
@@ -41,21 +39,28 @@ export default function CoachDashboard() {
     return () => { cancelled = true }
   }, [])
 
-  const alerts = members.filter(m => m.status && m.status !== 'ON TRACK')
-  const activeToday = members.filter(m => m.lastActiveDate && lastSeenLabel(m.lastActiveDate) === "Aujourd'hui")
-  const sessionsThisWeekTotal = members.reduce((sum, m) => sum + (m.sessionsThisWeek || 0), 0)
+  // Toutes les agrégations ci-dessous ne portent que sur les membres qui
+  // partagent : un membre sans consentement n'a pas de statut, et le compter
+  // comme « inactif » ou « à risque » serait une conclusion tirée d'une
+  // absence de données, pas d'une absence d'activité. Le compteur CLIENTS,
+  // lui, compte bien tout le monde — c'est le seul chiffre d'identité.
+  const sharingMembers = members.filter(m => m.sharesData)
+  const notSharing = members.filter(m => !m.sharesData)
+  const alerts = sharingMembers.filter(m => m.status && m.status !== 'ON TRACK')
+  const activeToday = sharingMembers.filter(m => m.lastActiveDate && lastSeenLabel(m.lastActiveDate) === "Aujourd'hui")
+  const sessionsThisWeekTotal = sharingMembers.reduce((sum, m) => sum + (m.sessionsThisWeek || 0), 0)
   // Falls back to the most recently active members when nobody's active
   // *today* specifically — otherwise this section (and often the whole
   // dashboard below the stat tiles) reads as blank most of the day.
   const recentFallback = activeToday.length === 0
-    ? [...members].filter(m => m.lastActiveDate).sort((a, b) => (b.lastActiveDate || '').localeCompare(a.lastActiveDate || '')).slice(0, 5)
+    ? [...sharingMembers].filter(m => m.lastActiveDate).sort((a, b) => (b.lastActiveDate || '').localeCompare(a.lastActiveDate || '')).slice(0, 5)
     : []
 
   const maxSessions = Math.max(...weeklyActivity.map(d => d.sessions), 1)
   const statusCounts = {
-    'ON TRACK': members.filter(m => m.status === 'ON TRACK').length,
-    'AT RISK': members.filter(m => m.status === 'AT RISK').length,
-    'INACTIVE': members.filter(m => !m.status || m.status === 'INACTIVE').length,
+    'ON TRACK': sharingMembers.filter(m => m.status === 'ON TRACK').length,
+    'AT RISK': sharingMembers.filter(m => m.status === 'AT RISK').length,
+    'INACTIVE': sharingMembers.filter(m => !m.status || m.status === 'INACTIVE').length,
   }
 
   return (
@@ -168,6 +173,28 @@ export default function CoachDashboard() {
             </>
           )}
         </div>
+
+        {/* Section neutre, volontairement séparée de « Nécessite attention » :
+            ne pas partager ses données n'est pas un problème d'assiduité et
+            ne doit pas être présenté comme une alerte. Le coach voit
+            simplement que ces membres existent et pourquoi il n'a rien
+            d'autre à leur sujet. */}
+        {!loading && notSharing.length > 0 && (
+          <>
+            <div className="section-label">DONNÉES NON PARTAGÉES</div>
+            <div className="coach-grid">
+              {notSharing.map((m, i) => (
+                <div key={m.id} className="card card-animated" style={{ marginBottom: 8, cursor: 'pointer', '--delay': `${Math.min(i, 6) * 40}ms` }} {...activable(() => navigate(`/coach/member/${m.id}`), { label: `Voir la fiche de ${m.prenom}` })}>
+                  <div className="flex justify-between items-center">
+                    <span className="text-base bold">{m.prenom}</span>
+                    <span className="text-xs text-accent">VOIR →</span>
+                  </div>
+                  <div className="consent-none">{consentLabel(m.consentState)}</div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
 
         {alerts.length > 0 && (
           <>
