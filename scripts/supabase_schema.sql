@@ -227,8 +227,15 @@ grant execute on function public.is_platform_admin() to authenticated;
 -- self-editable by any member (confirmed by a real exploit test). Reclosed
 -- by migration reclose_profiles_update_grant_hole: allowlist restored (with
 -- avatar_url added), and the trigger extended to gym_id/is_platform_admin.
+--
+-- 2026-08-17 : coach_data_consent / coach_data_consent_at rejoignent
+-- l'allowlist (migration coach_data_consent_optin). Le membre doit pouvoir
+-- poser ET retirer lui-meme son consentement au partage avec son coach —
+-- c'est tout l'interet du dispositif. Ajoutes a l'allowlist, jamais par un
+-- grant table-wide, pour la raison exacte decrite ci-dessus.
 revoke update on public.profiles from authenticated, anon;
-grant update (prenom, email, poids, taille, age, objectif, avatar_url) on public.profiles to authenticated;
+grant update (prenom, email, poids, taille, age, objectif, avatar_url,
+              coach_data_consent, coach_data_consent_at) on public.profiles to authenticated;
 
 -- Defense in depth on top of the GRANT restriction above: block any change
 -- to a privilege column coming through PostgREST as `authenticated`, so a
@@ -1139,3 +1146,83 @@ create or replace view public.leaderboard_weekly
 grant select on public.leaderboard_weekly to authenticated;
 
 create index if not exists push_subscriptions_user_idx on push_subscriptions (user_id);
+
+-- ══════════════════════════════════════════════════════════════════════
+-- Consentement au partage de donnees coach<->membre (2026-08-17)
+-- Migration : coach_data_consent_optin
+--
+-- Point juridique ouvert depuis le 2026-08-16 (JOURNAL.md) : le membre
+-- n'etait informe nulle part que son coach accede a ses donnees. Ce n'est
+-- pas le RGPD "general" (base legale de la collecte) mais le partage vers
+-- un TIERS HUMAIN identifie, qui demande un consentement explicite.
+--
+-- Place en fin de fichier a dessein : ces lter policy portent sur des
+-- tables definies plus haut, ils doivent donc s'executer apres elles.
+--
+-- Choix de conception :
+--   - Colonnes sur profiles plutot qu'une table dediee : la relation
+--     coach<->membre n'est pas materialisee en base (pas de table de
+--     jointure), elle se deduit de profiles.gym_id + un coach par salle.
+--     Une table dediee n'aurait rien apporte de plus qu'une jointure.
+--   - Defaut false, JAMAIS pose automatiquement, y compris pour les
+--     comptes deja rattaches a un coach au moment de la migration.
+--   - Le gate est en RLS et non dans l'UI : retirer le consentement doit
+--     reellement couper l'acces, pas seulement masquer un affichage.
+-- ══════════════════════════════════════════════════════════════════════
+
+alter table public.profiles
+  add column if not exists coach_data_consent boolean not null default false,
+  add column if not exists coach_data_consent_at timestamptz;
+
+create or replace function public.member_shares_with_coach(member_user_id uuid)
+returns boolean language sql stable security definer set search_path to 'public' as $$
+  select coalesce(
+    (select coach_data_consent from public.profiles where user_id = member_user_id),
+    false
+  );
+$$;
+revoke all on function public.member_shares_with_coach(uuid) from public;
+grant execute on function public.member_shares_with_coach(uuid) to authenticated;
+
+-- Les 6 policies par lesquelles un coach atteint les donnees listees dans
+-- la politique de confidentialite : profil (poids/taille/objectif),
+-- nutrition, activite/sommeil, seances, objectifs (lecture ET ecriture).
+alter policy "Coaches can view same-gym profiles" on public.profiles
+  using (is_coach() and gym_id = public.my_gym_id()
+         and public.member_shares_with_coach(user_id));
+
+alter policy "Coaches can view same-gym repas" on public.repas
+  using (is_coach() and exists (
+           select 1 from public.profiles p
+           where p.user_id = repas.user_id and p.gym_id = public.my_gym_id())
+         and public.member_shares_with_coach(repas.user_id));
+
+alter policy "Coaches can view same-gym activite_jour" on public.activite_jour
+  using (is_coach() and exists (
+           select 1 from public.profiles p
+           where p.user_id = activite_jour.user_id and p.gym_id = public.my_gym_id())
+         and public.member_shares_with_coach(activite_jour.user_id));
+
+alter policy "Coaches can view same-gym seances" on public.seances
+  using (is_coach() and exists (
+           select 1 from public.profiles p
+           where p.user_id = seances.user_id and p.gym_id = public.my_gym_id())
+         and public.member_shares_with_coach(seances.user_id));
+
+alter policy "Coaches can view same-gym objectifs" on public.objectifs
+  using (is_coach() and exists (
+           select 1 from public.profiles p
+           where p.user_id = objectifs.user_id and p.gym_id = public.my_gym_id())
+         and public.member_shares_with_coach(objectifs.user_id));
+
+alter policy "Coaches can update same-gym objectifs" on public.objectifs
+  using (is_coach() and exists (
+           select 1 from public.profiles p
+           where p.user_id = objectifs.user_id and p.gym_id = public.my_gym_id())
+         and public.member_shares_with_coach(objectifs.user_id));
+
+-- NON gatees, volontairement, et a confirmer cote produit :
+-- habitudes / habitude_logs / programmes / programme_assignations (contenu
+-- assigne PAR le coach, absent de la liste de la politique de
+-- confidentialite) et push_subscriptions (notification, pas donnee de
+-- sante). Voir JOURNAL.md 2026-08-17.

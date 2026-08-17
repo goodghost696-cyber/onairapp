@@ -11,6 +11,7 @@ import DeleteAccountButton from '../components/DeleteAccountButton'
 import Avatar from '../components/Avatar'
 import { storageKey } from '../components/OnboardingTour'
 import { activable } from '../utils/a11y'
+import { fetchConsentState, setCoachDataConsent } from '../utils/consent'
 import '../styles/settings-redesign.css'
 
 // Recoloré pour le restyle "pastel chaud" (2026-08-14, handoff dédié) —
@@ -80,6 +81,36 @@ export default function Settings() {
     if (!isPushSupported()) { setPushState('unsupported'); return }
     getPushSubscriptionState().then(setPushState)
   }, [])
+
+  // Consentement au partage avec le coach — voir la section Confidentialité
+  // plus bas et utils/consent.js.
+  const [consentState, setConsentState] = useState(null)
+  const [consentSaving, setConsentSaving] = useState(false)
+  const [consentError, setConsentError] = useState('')
+
+  useEffect(() => {
+    if (!user?.id) return
+    let cancelled = false
+    fetchConsentState(user.id).then(s => { if (!cancelled) setConsentState(s) })
+    return () => { cancelled = true }
+  }, [user?.id])
+
+  async function toggleCoachConsent() {
+    if (!consentState || consentSaving) return
+    const next = !consentState.consent
+    setConsentSaving(true)
+    setConsentError('')
+    const { success } = await setCoachDataConsent(user.id, next)
+    setConsentSaving(false)
+    if (success) {
+      // État local recalé sur ce qui vient d'être écrit, pas sur une
+      // supposition : si l'écriture échoue, le toggle ne bouge pas et
+      // l'utilisateur ne croit pas avoir retiré un accès toujours actif.
+      setConsentState(s => ({ ...s, consent: next, hasDecided: true }))
+    } else {
+      setConsentError("Impossible d'enregistrer — réessaie dans un instant.")
+    }
+  }
 
   // Même fix que les 6 écrans précédents (voir dashboard.css/JOURNAL.md) :
   // couvre le rubber-band iOS. Classe active seulement tant que ce screen
@@ -340,6 +371,38 @@ export default function Settings() {
               real scheduled-reminder system gets built, this is where the
               toggles would come back, wired to something real. */}
         </div>
+
+        {/* Confidentialité — retrait du consentement au partage avec le
+            coach (chantier juridique, JOURNAL.md 2026-08-17). Affichée
+            uniquement si le membre a effectivement un coach : sans salle
+            rattachée, il n'y a rien à partager et la section n'aurait aucun
+            sens. Le toggle écrit `coach_data_consent`, que les policies RLS
+            lisent — le retrait coupe réellement l'accès du coach, ce n'est
+            pas un masquage d'affichage. */}
+        {consentState?.hasCoach && (
+          <>
+            <div className="section-label">CONFIDENTIALITÉ</div>
+            <div className="card card-animated" style={{ '--delay': '180ms' }}>
+              <div className="privacy-row">
+                <div className="privacy-row-text">
+                  <div className="privacy-row-title">Partager mes données avec mon coach</div>
+                  <div className="privacy-row-sub">
+                    Nutrition, poids, activité, sommeil et entraînement. Le retrait
+                    coupe immédiatement l'accès de ton coach à ces données ; elles
+                    restent conservées et utilisables par toi.
+                  </div>
+                  {consentSaving && <div className="privacy-row-sub" style={{ marginTop: 6 }}>Enregistrement...</div>}
+                  {consentError && <div className="privacy-row-sub" style={{ marginTop: 6, color: 'var(--danger)' }}>{consentError}</div>}
+                </div>
+                <Toggle
+                  on={consentState.consent}
+                  onToggle={toggleCoachConsent}
+                  label="Partager mes données avec mon coach"
+                />
+              </div>
+            </div>
+          </>
+        )}
 
         {/* Section "Apparence" (toggle Mode sombre/clair) retirée
             (2026-08-15, tâche 4 du rapport d'investigation JOURNAL.md) :
