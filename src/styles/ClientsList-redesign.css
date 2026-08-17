@@ -1,0 +1,310 @@
+/* ══════════════════════════════════════════════════════════════════════
+   Restyle coach (handoff "Redesign interface VOLTA (8)", design_handoff_coach/
+   ClientsList.reference.html) — écran 2/6. Même méthode que
+   CoachDashboard-redesign.css (voir ce fichier pour le contexte général) :
+   tokens en custom properties scopées sur .clientslist-redesign, jamais
+   touché global.css ni coach.css, importé uniquement par ClientsList.jsx.
+   ══════════════════════════════════════════════════════════════════════ */
+.clientslist-redesign {
+  --cl-bg: #EFE7D9;
+  --cl-screen-bg: #F7F1E6;
+  --cl-card: #FFFFFF;
+  --cl-card-sunken: #F2ECE2;
+  --cl-track: #EFE7D9;
+  --cl-ink: #1C1A17;
+  --cl-text-secondary: #4A443C;
+  --cl-text-tertiary: #6E675C;
+  --cl-text-muted: #736C60;
+  --cl-placeholder: #A9A196;
+  --cl-olive: #EBEB7D;
+  --cl-olive-ink: #55522E;
+  --cl-lavender: #A3AEFE;
+  --cl-lavender-ink: #3F4780;
+  --cl-pink: #FFBEF0;
+  --cl-pink-ink: #6B3F5F;
+  --cl-magenta: #B62472;
+  font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+  min-height: calc(var(--app-height, 100dvh) - env(safe-area-inset-top));
+  background: var(--cl-bg);
+  position: relative;
+}
+.clientslist-redesign::before {
+  content: '';
+  position: absolute;
+  top: calc(-1 * env(safe-area-inset-top));
+  left: 0;
+  right: 0;
+  height: env(safe-area-inset-top);
+  background: var(--cl-bg);
+  z-index: 0;
+}
+body.clientslist-body-bg {
+  background: #EFE7D9;
+}
+
+.clientslist-screen {
+  position: relative;
+  z-index: 1;
+  background: var(--cl-screen-bg);
+  color: var(--cl-ink);
+  padding: 0 20px calc(132px + env(safe-area-inset-bottom));
+}
+
+.cl-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 22px 4px 18px;
+}
+.cl-title {
+  font-size: 23px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--cl-ink);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.cl-count {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--cl-text-tertiary);
+  flex-shrink: 0;
+}
+
+.cl-search {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--cl-card);
+  border-radius: 999px;
+  padding: 15px 22px;
+  margin-bottom: 14px;
+}
+.cl-search svg {
+  color: var(--cl-text-muted);
+  flex-shrink: 0;
+}
+.cl-search input {
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: 13.5px;
+  color: var(--cl-ink);
+  flex: 1;
+  min-width: 0;
+  outline: none;
+}
+.cl-search input::placeholder {
+  color: var(--cl-placeholder);
+}
+
+.cl-filters {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.cl-filter-chip {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--cl-text-secondary);
+  background: var(--cl-card);
+  border: none;
+  border-radius: 999px;
+  padding: 9px 16px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cl-filter-chip.active {
+  font-weight: 600;
+  color: var(--cl-ink);
+  background: var(--cl-olive);
+}
+
+.cl-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.cl-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--cl-card);
+  border-radius: 26px;
+  padding: 16px 18px;
+  cursor: pointer;
+  border: none;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+  transition: transform 120ms ease;
+}
+.cl-card:active {
+  transform: scale(0.985);
+}
+.cl-card.unshared {
+  background: var(--cl-card-sunken);
+}
+.cl-avatar {
+  display: flex;
+  width: 46px;
+  height: 46px;
+  border-radius: 999px;
+  background: var(--cl-screen-bg);
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  font-weight: 700;
+  flex-shrink: 0;
+  border: 1.5px solid var(--cl-track);
+  color: var(--cl-text-muted);
+}
+.cl-avatar.status-on-track { border-color: var(--cl-olive); color: var(--cl-olive-ink); }
+.cl-avatar.status-at-risk { border-color: var(--cl-lavender); color: var(--cl-lavender-ink); }
+.cl-avatar.status-inactive { border-color: var(--cl-pink); color: var(--cl-pink-ink); }
+
+.cl-body {
+  flex: 1;
+  min-width: 0;
+}
+.cl-row-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+.cl-name {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--cl-ink);
+}
+.cl-goal-tag {
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.cl-sub {
+  font-size: 11px;
+  color: var(--cl-text-muted);
+  margin-bottom: 8px;
+}
+.cl-streak {
+  font-weight: 400;
+}
+.cl-streak.hot {
+  color: var(--cl-magenta);
+  font-weight: 700;
+}
+.cl-progress-track {
+  height: 5px;
+  border-radius: 999px;
+  background: var(--cl-track);
+  overflow: hidden;
+}
+.cl-progress-fill {
+  height: 100%;
+  background: var(--cl-olive);
+  transition: width 500ms ease-out;
+}
+
+/* Traitement neutre pour un membre non consentant — même logique que
+   CoachDashboard-redesign.css (.cd-unshared-*) : pas de couleur d'alerte,
+   pas de barre de progression fantôme, juste le libellé d'état. Remplace
+   le patch consent.css (.consent-none) pour cet écran. */
+.cl-unshared-label {
+  font-size: 11.5px;
+  font-style: italic;
+  color: var(--cl-text-muted);
+}
+
+.cl-chevron {
+  color: var(--cl-text-muted);
+  flex-shrink: 0;
+}
+
+.cl-loading,
+.cl-empty-search {
+  font-size: 13px;
+  color: var(--cl-text-muted);
+  padding: 8px 4px;
+}
+
+/* ── État vide (salle sans membre) ── */
+.cl-empty-card {
+  background: var(--cl-card);
+  border-radius: 30px;
+  padding: 32px 26px;
+  text-align: center;
+}
+.cl-empty-title {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--cl-ink);
+  margin-bottom: 6px;
+}
+.cl-empty-sub {
+  font-size: 12.5px;
+  color: var(--cl-text-tertiary);
+  margin-bottom: 20px;
+}
+.cl-invite-box {
+  background: var(--cl-screen-bg);
+  border: 1.5px solid var(--cl-olive);
+  border-radius: 20px;
+  padding: 16px;
+  margin-bottom: 14px;
+}
+.cl-invite-label {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--cl-text-muted);
+  margin-bottom: 6px;
+}
+.cl-invite-code {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--cl-ink);
+  font-variant-numeric: tabular-nums;
+}
+.cl-copy-btn {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--cl-ink);
+  background: none;
+  border: 1.5px solid var(--cl-ink);
+  border-radius: 999px;
+  padding: 12px 24px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+@media (min-width: 900px) {
+  .clientslist-screen {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding-left: 48px;
+    padding-right: 48px;
+  }
+  .cl-search {
+    max-width: 480px;
+  }
+  .cl-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 12px;
+    align-items: start;
+  }
+}

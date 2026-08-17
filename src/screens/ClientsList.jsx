@@ -1,20 +1,21 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import CoachNav from '../components/CoachNav'
+import CoachNavBar from '../components/CoachNavBar'
 import { supabase, authHeader } from '../lib/supabase'
 import { fetchMemberActivitySummaries, lastSeenLabel, fetchCoachRoster, consentLabel } from '../utils/coachStats'
 import { fetchStreaksForUsers } from '../utils/streak'
 import Icon from '../components/Icon'
 import { activable } from '../utils/a11y'
+import '../styles/ClientsList-redesign.css'
 
-const STATUS_COLORS = { 'ON TRACK': 'var(--success)', 'AT RISK': 'var(--warning)', 'INACTIVE': 'var(--danger)' }
+const STATUS_CLASS = { 'ON TRACK': 'status-on-track', 'AT RISK': 'status-at-risk', 'INACTIVE': 'status-inactive' }
 // Keys match the exact values Onboarding.jsx's goal step writes to
 // profiles.objectif — see STEPS[1].options there.
 const GOAL_COLORS = {
-  'Prise de masse': 'var(--accent)',
-  'Perte de poids': 'var(--warning)',
-  'Performance': 'var(--success)',
-  'Nutrition': '#2EA8FF',
+  'Prise de masse': 'var(--cl-olive-ink)',
+  'Perte de poids': 'var(--cl-magenta)',
+  'Performance': 'var(--cl-lavender-ink)',
+  'Nutrition': 'var(--cl-olive-ink)',
 }
 const FILTERS = ['TOUS', 'ON TRACK', 'AT RISK', 'INACTIVE']
 
@@ -32,6 +33,14 @@ export default function ClientsList() {
   const [inviteCode, setInviteCode] = useState(null)
   const [copied, setCopied] = useState(false)
 
+  // Même raison que CoachDashboard-redesign.css : évite que le rubber-band
+  // iOS au-delà des limites du wrapper ne retombe sur le dégradé corail
+  // partagé de <body>.
+  useEffect(() => {
+    document.body.classList.add('clientslist-body-bg')
+    return () => document.body.classList.remove('clientslist-body-bg')
+  }, [])
+
   useEffect(() => {
     let cancelled = false
     async function fetchMembers() {
@@ -43,10 +52,6 @@ export default function ClientsList() {
       const data = await fetchCoachRoster()
       if (cancelled) return
       if (!data.length) { setMembers([]); setLoading(false); return }
-      // Same pattern as CoachDashboard.jsx — this screen was pulling only
-      // profiles.* and never merging real activity, so every card silently
-      // showed "Vu — · — séances" and the status filter chips never matched
-      // anything (m.status was always undefined).
       // Statistiques demandées uniquement pour les membres qui partagent.
       // Les interroger pour les autres ne renverrait de toute façon rien
       // (RLS), mais surtout : leur attribuer un résumé vide produirait un
@@ -92,103 +97,87 @@ export default function ClientsList() {
   })
 
   return (
-    <div className="app-wrapper">
-      <div className="screen">
-        <div className="screen-header" style={{ padding: '20px 0 8px' }}>
-          <h1 className="text-xl bold" style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Icon name="users" size={20} /> Mes Clients</h1>
-          <span className="text-xs text-muted">{loading ? '...' : `${members.length} membres`}</span>
+    <div className="app-wrapper clientslist-redesign">
+      <div className="clientslist-screen">
+        <div className="cl-topbar">
+          <h1 className="cl-title"><Icon name="users" size={19} /> Mes Clients</h1>
+          <span className="cl-count">{loading ? '...' : `${members.length} membres`}</span>
         </div>
 
-        {/* .coach-toolbar caps this at a sane width on desktop — left
-            unwrapped, the search input (width:100%) would stretch into a
-            giant, mostly-empty text box on the wider shell. */}
-        <div className="coach-toolbar" style={{ position: 'relative', marginBottom: 12 }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="1.5" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+        <div className="cl-search">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
             <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
           </svg>
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher un client..." style={{ paddingLeft: 40 }} />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher un client..." />
         </div>
 
-        <div style={{ display: 'flex', gap: 8, marginBottom: 16, overflowX: 'auto', paddingBottom: 4 }}>
+        <div className="cl-filters">
           {FILTERS.map(f => (
-            <button key={f} className={`goal-chip${filter === f ? ' active' : ''}`} onClick={() => setFilter(f)} style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>{f}</button>
+            <button key={f} className={`cl-filter-chip${filter === f ? ' active' : ''}`} onClick={() => setFilter(f)}>{f}</button>
           ))}
         </div>
 
-        {loading && <p className="text-sm text-muted">Chargement des clients...</p>}
+        {loading && <p className="cl-loading">Chargement des clients...</p>}
 
         {!loading && members.length === 0 && (
-          <div className="card card-animated" style={{ textAlign: 'center', padding: '32px 24px' }}>
-            <p className="text-base bold" style={{ margin: '0 0 6px' }}>Ta salle est prête, personne ne l'a encore rejointe</p>
-            <p className="text-sm text-muted" style={{ margin: '0 0 20px' }}>
-              Partage ce code à tes premiers membres pour qu'ils s'inscrivent.
-            </p>
+          <div className="cl-empty-card">
+            <p className="cl-empty-title">Ta salle est prête, personne ne l'a encore rejointe</p>
+            <p className="cl-empty-sub">Partage ce code à tes premiers membres pour qu'ils s'inscrivent.</p>
             {inviteCode && (
               <>
-                <div style={{
-                  background: 'var(--surface-2)', border: '2px solid var(--accent)', borderRadius: 14,
-                  padding: '16px', marginBottom: 14,
-                }}>
-                  <div style={{ fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 6 }}>
-                    Code d'invitation
-                  </div>
-                  <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: '0.1em', color: 'var(--text-primary)', fontVariantNumeric: 'tabular-nums' }}>
-                    {inviteCode}
-                  </div>
+                <div className="cl-invite-box">
+                  <div className="cl-invite-label">Code d'invitation</div>
+                  <div className="cl-invite-code">{inviteCode}</div>
                 </div>
-                <button className="btn-ghost" onClick={copyCode}>{copied ? '✓ Copié' : 'Copier le code'}</button>
+                <button className="cl-copy-btn" onClick={copyCode}>{copied ? '✓ Copié' : 'Copier le code'}</button>
               </>
             )}
           </div>
         )}
 
         {!loading && members.length > 0 && filtered.length === 0 && (
-          <p className="text-sm text-muted">Aucun client ne correspond à cette recherche.</p>
+          <p className="cl-empty-search">Aucun client ne correspond à cette recherche.</p>
         )}
 
-        <div className="coach-grid">
-          {!loading && filtered.map((m, i) => (
-            <div key={m.id} className="card card-animated" style={{ '--delay': `${i*40}ms`, cursor: 'pointer', marginBottom: 8 }} {...activable(() => navigate(`/coach/member/${m.id}`), { label: `Voir la fiche de ${m.prenom}` })}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--surface-2)', border: `1.5px solid ${STATUS_COLORS[m.status] || 'var(--border)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 16, color: STATUS_COLORS[m.status] || 'var(--text-muted)', flexShrink: 0 }}>
-                  {m.prenom?.[0] || '?'}
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div className="flex justify-between items-center" style={{ marginBottom: 2 }}>
-                    <span className="text-base bold">{m.prenom}</span>
-                    {m.sharesData && (
-                      <span className="status-badge" style={{ color: GOAL_COLORS[m.objectif] || 'var(--text-muted)' }}>{m.objectif || '-'}</span>
-                    )}
-                  </div>
-                  {/* Deux rendus distincts, pas un même bloc avec des valeurs
-                      vides : un membre qui ne partage pas doit se lire comme
-                      « pas de données accessibles », jamais comme « membre à
-                      zéro d'activité ». */}
-                  {m.sharesData ? (
-                    <>
-                      <div className="text-xs text-muted">
-                        Vu {lastSeenLabel(m.lastActiveDate).toLowerCase()} · {m.sessionsThisWeek ?? 0} séance{m.sessionsThisWeek > 1 ? 's' : ''}
-                        {m.streak > 0 && (
-                          <span style={{ color: m.streak >= 3 ? 'var(--accent)' : 'var(--text-muted)', fontWeight: m.streak >= 3 ? 700 : 400 }}>
-                            {' '}· 🔥 {m.streak}j
-                          </span>
-                        )}
-                      </div>
-                      <div className="progress-bar" style={{ marginTop: 6 }}>
-                        <div className="progress-fill" style={{ width: `${Math.min((m.sessionsThisWeek || 0)/8*100,100)}%` }} />
-                      </div>
-                    </>
-                  ) : (
-                    <div className="consent-none">{consentLabel(m.consentState)}</div>
+        <div className="cl-list">
+          {!loading && filtered.map(m => (
+            <button key={m.id} className={`cl-card${m.sharesData ? '' : ' unshared'}`} {...activable(() => navigate(`/coach/member/${m.id}`), { label: `Voir la fiche de ${m.prenom}` })}>
+              <div className={`cl-avatar ${STATUS_CLASS[m.status] || ''}`}>
+                {m.prenom?.[0] || '?'}
+              </div>
+              <div className="cl-body">
+                <div className="cl-row-top">
+                  <span className="cl-name">{m.prenom}</span>
+                  {m.sharesData && (
+                    <span className="cl-goal-tag" style={{ color: GOAL_COLORS[m.objectif] || 'var(--cl-text-muted)' }}>{m.objectif || '-'}</span>
                   )}
                 </div>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+                {/* Deux rendus distincts, pas un même bloc avec des valeurs
+                    vides : un membre qui ne partage pas doit se lire comme
+                    « pas de données accessibles », jamais comme « membre à
+                    zéro d'activité ». */}
+                {m.sharesData ? (
+                  <>
+                    <div className="cl-sub">
+                      Vu {lastSeenLabel(m.lastActiveDate).toLowerCase()} · {m.sessionsThisWeek ?? 0} séance{m.sessionsThisWeek > 1 ? 's' : ''}
+                      {m.streak > 0 && (
+                        <span className={`cl-streak${m.streak >= 3 ? ' hot' : ''}`}> · 🔥 {m.streak}j</span>
+                      )}
+                    </div>
+                    <div className="cl-progress-track">
+                      <div className="cl-progress-fill" style={{ width: `${Math.min((m.sessionsThisWeek || 0)/8*100,100)}%` }} />
+                    </div>
+                  </>
+                ) : (
+                  <div className="cl-unshared-label">{consentLabel(m.consentState)}</div>
+                )}
               </div>
-            </div>
+              <svg className="cl-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
           ))}
         </div>
       </div>
-      <CoachNav />
+      <CoachNavBar />
     </div>
   )
 }
