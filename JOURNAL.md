@@ -82,6 +82,88 @@ Le texte ci-dessous est conservé pour mémoire du point de départ.
 
 **Pourquoi ne pas commencer maintenant** : coder un mécanisme de consentement avant d'avoir tranché opt-in vs opt-out et la formulation exacte reviendrait à jeter le travail, ou pire à afficher au membre une formulation juridiquement fausse. La clarification juridique vient d'abord, le code ensuite.
 
+## 🎨 2026-08-18 — Restyle espace coach (1/6, 2/6) : CoachDashboard, ClientsList
+
+Handoff Claude Design reçu (`design_handoff_coach/`, dossier "Redesign
+interface VOLTA (8)") : 6 écrans coach, périmètre visuel uniquement —
+structure/logique/state inchangés. Cette session : les deux premiers,
+**CoachDashboard** et **ClientsList**, un écran à la fois, chacun buildé
+et testé en réel avant de passer au suivant, comme demandé.
+
+**CSS scopé par écran**, jamais touché `global.css` ni `coach.css`
+partagé : `CoachDashboard-redesign.css` (`.coachdashboard-redesign`/
+`.coachdashboard-screen`) et `ClientsList-redesign.css`
+(`.clientslist-redesign`/`.clientslist-screen`), même méthode que le
+restyle membre (`dashboard.css` etc.) — tokens en custom properties
+scopées au wrapper, `::before` pour la zone de statut/notch, classe
+`body.xxx-body-bg` pilotée en `useEffect` pour le rubber-band iOS.
+
+**Nav coach mutualisée, nouveau composant.** `CoachNavBar.jsx` +
+`coach-nav-redesign.css`, indépendant de l'ancien `CoachNav.jsx` (encore
+utilisé tel quel par CoachMessages/CoachPrograms/CoachSettings, pas migrés
+cette session — les deux nav coexistent le temps de la migration écran
+par écran). Pastille de sélection : **exactement le même mécanisme** que
+la nav membre (`BottomNav.jsx`/`nav.css`, session du 17/08) —
+`--nav-active-index`/`--nav-tab-count`, `transform` + `transition: 240ms
+cubic-bezier(0.4,0,0.2,1)`, demandé explicitement pour ne pas
+réimplémenter une deuxième version différente. Écart assumé vs la
+maquette statique : celle-ci dessine une pilule active à largeur
+variable (au contenu) contre des icônes seules à largeur fixe pour les
+onglets inactifs ; le mécanisme à slots égaux (repris du membre) impose
+une largeur fixe entre les 4 onglets — compromis nécessaire pour
+réutiliser la même mécanique plutôt que d'en écrire une seconde.
+
+**États de consentement intégrés proprement**, remplaçant le patch
+`consent.css` (`.consent-none`) pour ces deux écrans : traitement neutre
+(fond légèrement enfoncé, pas de couleur d'alerte, pas de CTA pressant)
+distinct des cartes actives/alertes — `.cd-unshared-card` sur
+CoachDashboard (section « Données non partagées », volontairement séparée
+de « Nécessite attention »), `.cl-card.unshared` sur ClientsList. Les deux
+sous-états déjà distingués côté logique (`consentLabel()`,
+`coach_data_consent_at`) s'affichent bien séparément : « A retiré l'accès
+à ses données » vs « N'a pas encore partagé ses données ».
+
+**Test réel obligatoire, un locataire QA dédié** (1 coach + 3 membres,
+signup + onboarding complets via le vrai formulaire, production —
+`onairapp.vercel.app`, chaque push sur `claude/charming-mendel-dj1GQ`
+déploie directement en production, confirmé via l'API Vercel avant de
+commencer) :
+
+| Membre | Consentement | Activité semée | Résultat attendu |
+|---|---|---|---|
+| QaOnTrack | Accepté | 3 séances (J, J-2, J-4), objectif Prise de masse | Stats visibles, statut ON TRACK |
+| QaWithdrawn | Refusé (« Valider sans partager ») | objectif Perte de poids | Carte neutre, « A retiré l'accès à ses données » |
+| QaUndecided | Jamais tranché | — | Carte neutre, « N'a pas encore partagé ses données » |
+
+Vérifié à l'écran sur les deux écrans réels : `CoachDashboard` affiche
+« 3 CLIENTS », 0 alerte, 0 actif (dernière activité hier, pas
+aujourd'hui), graphique 7 jours avec les bonnes barres, section « Données
+non partagées » avec les deux libellés distincts, QaOnTrack en
+« Activité récente » avec badge ON TRACK. `ClientsList` affiche les 3
+membres, QaOnTrack en carte blanche avec objectif/streak/barre de
+progression, les deux autres en carte beige avec le bon libellé italique
+— **aucune fuite de donnée de suivi**. Pastille de nav confirmée sous
+l'onglet actif sur les deux écrans après un vrai clic (Board → Clients).
+
+Reconfirmé au passage (retrouvé en creusant l'échec du test devtools de
+la session précédente sur la nav membre) : le blocage n'était qu'un
+artefact de l'outil d'automatisation sur des éléments injectés
+manuellement dans un `position:fixed` — ici, en navigation réelle avec le
+vrai composant monté par React, la pastille glisse normalement, confirmé
+visuellement sur les deux écrans.
+
+**Nettoyage** : les 4 comptes de test supprimés via le vrai flux
+« Supprimer mon compte » (repris depuis chaque compte, cascade réelle
+vérifiée : `profiles`/`seances` à 0 après suppression des 4 comptes) ; la
+salle, orpheline après suppression du coach (pas de cascade `gyms` depuis
+`auth.users`), supprimée séparément par SQL. Vérifié à 0 : base identique
+au baseline (5 `auth.users`, 5 `profiles`, 1 `gyms`).
+
+**Reste à faire** (sessions suivantes, un écran à la fois comme demandé) :
+MemberDetail, CoachMessages, CoachPrograms, CoachSettings. Une fois les 6
+migrés, retirer `CoachNav.jsx`/`nav.css` côté coach (devenu mort) et
+supprimer `consent.css` si plus aucun écran ne le référence.
+
 ## 🎨 2026-08-17 (suite 2) — Pastille de la bottom nav membre : glissement animé
 
 Demande : la pastille de sélection changeait d'onglet instantanément, sans
