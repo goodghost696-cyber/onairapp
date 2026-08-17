@@ -65,8 +65,12 @@ Pas un agent agentique à function calling. Une requête planifiée : réutilise
 
 **Pourquoi ne pas commencer maintenant** : priorité au socle avant toute nouvelle feature. Tant que la Phase 2 et la Phase 3 de l'audit et le restyle coach (`CoachDashboard`, `ClientsList`, `MemberDetail`) ne sont pas faits, enchaîner les features reproduirait le pattern `RunContent` — du contenu fabriqué resté en production pendant des mois sur une base non stabilisée.
 
-### ⚖️ Consentement au partage de données coach↔membre — point juridique non traité
-**Statut : identifié, non traité à ce jour. Bloquant avant toute acquisition de coachs pilotes ou contact influenceur. Aucun développement technique à démarrer tant que la clarification juridique n'est pas tranchée.**
+### ⚖️ Consentement au partage de données coach↔membre — technique FAITE, relecture juridique en attente
+**Statut au 2026-08-17 : opt-in tranché et implémenté** (colonnes + gate RLS + écran opt-in + retrait depuis Réglages + section de politique), voir l'entrée datée du 2026-08-17. **Ce qui reste ouvert : la relecture juridique du texte**, `POLITIQUE_DE_CONFIDENTIALITE.md` n'étant qu'une base non validée et incomplète. Toujours bloquant avant acquisition de coachs pilotes ou contact influenceur, mais pour cette raison-là désormais, plus pour l'absence de dispositif. Deux arbitrages produit restent aussi à rendre (périmètre des habitudes/programmes, disparition du membre des listes du coach) — détaillés dans l'entrée du 2026-08-17.
+
+Le texte ci-dessous est conservé pour mémoire du point de départ.
+
+**Statut d'origine : identifié, non traité. Aucun développement technique à démarrer tant que la clarification juridique n'est pas tranchée.**
 
 **Le constat** : le membre n'est informé **nulle part**, de façon explicite, que son coach a accès à ses données de nutrition, d'activité, de poids et de sommeil via `CoachDashboard` / `MemberDetail`. L'accès existe et fonctionne (il est même la raison d'être du produit côté coach), mais rien dans le parcours d'inscription ni dans l'app ne le dit au membre.
 
@@ -77,6 +81,71 @@ Pas un agent agentique à function calling. Une requête planifiée : réutilise
 **À traiter avec** les CGU et la politique de confidentialité, dans le même chantier.
 
 **Pourquoi ne pas commencer maintenant** : coder un mécanisme de consentement avant d'avoir tranché opt-in vs opt-out et la formulation exacte reviendrait à jeter le travail, ou pire à afficher au membre une formulation juridiquement fausse. La clarification juridique vient d'abord, le code ensuite.
+
+## ⚖️ 2026-08-17 — Consentement opt-in au partage de données coach↔membre (implémenté)
+
+Le point juridique ouvert le 2026-08-16 (voir « Chantiers ouverts » en haut) est **implémenté côté technique**, opt-in tranché. Le chantier reste ouvert sur un seul volet : la relecture juridique du texte.
+
+### Investigation d'abord — ce que le schéma disait vraiment
+Avant d'écrire quoi que ce soit :
+- **Aucune table de jointure coach↔membre n'existe.** La relation se déduit de `profiles.gym_id` + un coach par salle. Une table dédiée n'aurait donc rien apporté de plus qu'une jointure → les deux colonnes vont sur `profiles`.
+- **Le rattachement à un coach a un seul point d'entrée** : le signup avec code d'invitation (`Login.jsx` → `register()` → `/api/invite`, qui pose `gym_id` en service_role). Il n'existe aucun flux d'assignation séparé.
+- **6 policies** donnent au coach l'accès aux données listées dans la politique : `profiles` (poids/taille/objectif), `repas`, `activite_jour`, `seances`, `objectifs` (SELECT **et** UPDATE).
+- L'allowlist UPDATE de `profiles` comptait 7 colonnes ; les triggers `prevent_self_role_escalation` / `prevent_self_privilege_insert` ne gardent que `role`/`gym_id`/`is_platform_admin` — les nouvelles colonnes sont donc librement éditables par leur propriétaire sans les affaiblir.
+
+### 1. Base — le verrou est en RLS, pas dans l'UI
+Migration `coach_data_consent_optin` : `coach_data_consent` (boolean not null default false) et `coach_data_consent_at` (timestamptz nullable) sur `profiles`.
+
+Les 2 colonnes rejoignent l'**allowlist de colonnes UPDATE** (9 au total), jamais par un grant table-wide — c'est exactement le réflexe qui avait rouvert l'escalade de privilèges corrigée en Phase 1, et le commentaire du schéma le documente noir sur blanc.
+
+Helper `member_shares_with_coach(uuid)`, SECURITY DEFINER + `search_path` figé, même forme que `is_coach()`/`my_gym_id()`, `execute` révoqué de `public` et accordé à `authenticated` seulement. Les 6 policies coach reçoivent la condition.
+
+`coach_data_consent_at` sert à distinguer **trois** états là où le booléen seul n'en distingue que deux : jamais répondu (NULL), a accepté, a refusé/retiré. C'est cette distinction qui permet de relancer uniquement ceux qui n'ont jamais tranché.
+
+### 2. Un seul écran pour les deux cas demandés
+Plutôt qu'une case dans le formulaire d'inscription **plus** un rattrapage séparé, un seul composant (`CoachConsentGate`, monté dans `MemberLayout`) couvre les deux, parce que la condition est identique : le membre a une salle et n'a jamais tranché.
+
+C'est le choix le plus sûr : une case ajoutée au formulaire d'inscription n'aurait pas couvert un lien profond, une reprise de PWA, ni les comptes créés avant le dispositif. Là, **aucun parcours ne peut y échapper**.
+
+Non refermable tant que le choix n'est pas fait, case **non** pré-cochée, texte exact tel que fourni. Refuser est possible et s'enregistre comme un vrai choix (`consent=false` + horodatage) : sans ça, refuser ferait revenir la question à chaque ouverture.
+
+### 3. Réglages → Confidentialité
+Nouvelle section, affichée seulement si le membre a effectivement une salle. L'état local n'est recalé qu'**après** une écriture réussie — sinon le membre croirait avoir retiré un accès toujours actif.
+
+### 4. Aucun consentement présumé pour les comptes existants
+Les 5 comptes réels sont à `false` avec `coach_data_consent_at` NULL. **Vérifié en base** que la condition de relance est bien remplie pour les 3 membres concernés :
+
+| Compte | A un coach | A déjà tranché | Écran opt-in à la prochaine connexion |
+|---|---|---|---|
+| Arnaud | oui | non | **oui** |
+| Gisèle | oui | non | **oui** |
+| Myriam | oui | non | **oui** |
+| Coach (role coach) | non | — | non |
+| Ghost (role admin) | non | — | non |
+
+Tant qu'ils ne se connectent pas, leurs données **ne sont pas visibles du coach** — le défaut est fermé, pas ouvert.
+
+### 5. Politique de confidentialité
+`POLITIQUE_DE_CONFIDENTIALITE.md` créé (aucun fichier n'existait), avec un avertissement en tête : ce n'est **qu'une section**, rien n'a été relu par un juriste, et le document ne doit pas être publié en l'état. Une note technique fait la correspondance entre chaque affirmation du texte et sa mise en œuvre réelle.
+
+### Test réel du cycle complet — 4 étapes, pas une relecture de policy
+Locataire de test dédié (1 coach + 1 membre avec des données dans les 5 tables concernées), interrogé avec le **vrai token du coach** :
+
+| Étape | Profils membres | Repas | Séances | Activité | Objectifs |
+|---|---|---|---|---|---|
+| A — consentement `false` (défaut) | **0** | **0** | **0** | **0** | **0** |
+| B — accepté via l'écran opt-in réel | 1 (avec poids 77 / taille 180) | 1 | 1 | 1 | 1 |
+| C — retiré via Réglages → Confidentialité | **0** | **0** | **0** | **0** | **0** |
+| D — rétabli (contrôle positif) | 1 | 1 | 1 | 1 | 1 |
+
+Et dans l'**UI réelle du coach** : `ClientsList` affiche « 0 MEMBRES » après le retrait, puis « 1 MEMBRES · VU AUJOURD'HUI · 1 SÉANCE » une fois rétabli. Le non-refermable a aussi été testé : clic sur le fond, touche Échap, recherche d'une croix — l'écran reste, et la nav est inatteignable derrière (`elementFromPoint` renvoie la sheet).
+
+### Deux points à arbitrer côté produit
+1. **Habitudes et programmes hors périmètre.** `habitudes`, `habitude_logs`, `programmes`, `programme_assignations` ne sont pas gatés : ce sont des contenus que le coach a lui-même créés et assignés, et ils n'apparaissent pas dans la liste de la politique. Mais `habitude_logs` contient bien une donnée de suivi du membre (ses validations). À trancher : les ajouter au périmètre, ou les mentionner explicitement dans le texte.
+2. **Un membre sans consentement disparaît des listes du coach** (clients, tableau de bord, conversations). PostgreSQL n'a pas de RLS au niveau colonne, et `poids`/`taille`/`objectif` vivent sur la ligne `profiles` : couper réellement l'accès à ces trois champs impose de masquer la ligne entière. C'est cohérent avec un refus de partage, mais l'écran coach affiche alors l'état « Ta salle est prête, personne ne l'a encore rejointe », ce qui est trompeur quand quelqu'un a rejoint puis refusé. À reprendre si ce cas devient réel.
+
+### Nettoyage des données de test — vérifié à 0
+1 salle et 2 comptes de test supprimés avec toutes leurs lignes (`repas` 1, `seances` 1, `activite_jour` 1, `objectifs` 1, `api_rate_limit` 2, `profiles` 2, `gyms` 1). Contrôle : **0** compte, **0** profil, **0** salle de test, **0** ligne orpheline sur les 6 tables user-scoped, **0** objet Storage orphelin. Base à l'identique : 5 `auth.users`, 5 profils, 1 salle.
 
 ## 🎨 2026-08-16 — Effet frost sur la bottom nav (opacité 25%, blur 15px)
 
