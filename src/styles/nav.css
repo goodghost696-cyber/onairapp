@@ -45,7 +45,37 @@
   overflow: hidden;
 }
 
+/* Pastille de sélection (nav membre uniquement — BottomNav.jsx, pas
+   CoachNav.jsx). Glisse d'un onglet à l'autre via transform, plutôt que le
+   swap de couleur instantané sur l'icône (conservé par ailleurs). Largeur
+   calée en pur CSS sur le nombre d'onglets (--nav-tab-count) : les 5
+   boutons sont `flex:1` sans gap, donc à largeur strictement égale entre
+   eux — pas besoin de mesurer le DOM en JS. `left: 12px` reprend le padding
+   horizontal de .bottom-nav ci-dessus ; translateX(n * 100%) déplace donc
+   la pastille d'exactement un slot par index, 100% se référant à SA propre
+   largeur (= un slot). Teinte encre à faible opacité : les 5 écrans qui
+   affichent réellement cette nav (Dashboard/Nutrition/AICoach/Weekly/
+   Workout, voir les *-redesign.css correspondants) surchargent tous
+   l'icône active en #1C1A17 sur un fond frost rgba(28,26,23,0.25) — une
+   seule teinte suffit donc à rester cohérente partout, pas de surcharge
+   par écran nécessaire ici. */
+.nav-indicator {
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  left: 12px;
+  width: calc((100% - 24px) / var(--nav-tab-count, 5));
+  border-radius: 999px;
+  background: rgba(28,26,23,0.12);
+  transform: translateX(calc(var(--nav-active-index, 0) * 100%));
+  transition: transform 240ms cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+  z-index: 0;
+}
+
 .nav-btn {
+  position: relative;
+  z-index: 1;
   flex: 1;
   min-width: 0;
   background: none;

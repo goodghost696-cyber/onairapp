@@ -23,8 +23,21 @@ export default function BottomNav() {
     return location.pathname === tab.path
   }
 
+  // Jusqu'ici l'état actif n'était qu'un swap de couleur (+ weight
+  // regular->fill, deux tracés SVG Phosphor différents, non interpolables)
+  // directement sur l'icône : rien ne se déplaçait, donc rien ne pouvait
+  // glisser. La pastille ci-dessous est un élément à part, positionné en
+  // absolu ; seul son transform change d'un onglet à l'autre, ce qui laisse
+  // la transition CSS (nav.css) faire le glissement.
+  const activeIndex = tabs.findIndex(isActive)
+
   return (
     <nav className="bottom-nav">
+      <span
+        className="nav-indicator"
+        style={{ '--nav-tab-count': tabs.length, '--nav-active-index': activeIndex }}
+        aria-hidden="true"
+      />
       {tabs.map(tab => {
         const active = isActive(tab)
         return (

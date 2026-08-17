@@ -82,6 +82,63 @@ Le texte ci-dessous est conservé pour mémoire du point de départ.
 
 **Pourquoi ne pas commencer maintenant** : coder un mécanisme de consentement avant d'avoir tranché opt-in vs opt-out et la formulation exacte reviendrait à jeter le travail, ou pire à afficher au membre une formulation juridiquement fausse. La clarification juridique vient d'abord, le code ensuite.
 
+## 🎨 2026-08-17 (suite 2) — Pastille de la bottom nav membre : glissement animé
+
+Demande : la pastille de sélection changeait d'onglet instantanément, sans
+transition. **Investigation d'abord** (comme demandé) : il n'existait en
+réalité **aucune pastille séparée**. L'état actif était un simple swap de
+couleur (+ `weight` Phosphor `regular`→`fill`, deux tracés SVG différents,
+non interpolables) directement sur l'icône du bouton — rien n'était
+positionné, donc rien ne pouvait glisser visuellement.
+
+Ajouté un vrai élément indicateur (`.nav-indicator`, `BottomNav.jsx` +
+`nav.css`), en `position:absolute` dans `.bottom-nav`, dont seul le
+`transform` change à la navigation (`--nav-active-index`, posé en style
+inline) — la transition CSS (`240ms cubic-bezier(0.4,0,0.2,1)`, sans
+rebond) fait le glissement. Largeur calée en CSS pur sur
+`--nav-tab-count` : les 5 boutons sont `flex:1` sans gap, donc à largeur
+strictement égale entre eux, pas besoin de mesurer le DOM en JS.
+
+**Vérifié que le piège du frost (suite du 2026-08-16) ne se reproduisait
+pas** : passage en revue des 9 fichiers `*-redesign.css` — aucun ne
+surcharge le `padding`/`flex` de `.bottom-nav`/`.nav-btn`, seulement fond
+et couleur d'icône. Les 5 écrans qui affichent réellement cette nav
+(Dashboard/Nutrition/AICoach/Weekly/Workout) utilisent tous exactement la
+même paire fond/actif (`rgba(28,26,23,0.25)` / `#1C1A17`) — une seule
+teinte d'indicateur (`rgba(28,26,23,0.12)`) suffit donc, pas de surcharge
+par écran nécessaire. `CoachNav.jsx` non touché (hors périmètre, nav coach
+séparée à 4 onglets).
+
+`npm run build` OK, grep du bundle confirmé (`nav-indicator`,
+`nav-active-index`, `nav-tab-count` présents dans le CSS et le JS
+compilés). PR #141, déploiement preview Vercel READY.
+
+**Test réel incomplet, et pourquoi.** Deux blocages rencontrés en essayant
+de vérifier le glissement en conditions réelles sur Dashboard/Nutrition/
+Workout :
+1. Le signup est cassé sur l'environnement Preview de Vercel —
+   `SUPABASE_SERVICE_ROLE_KEY not configured` (confirmé par les logs
+   runtime), un trou d'infra préexistant, sans lien avec ce changement.
+   Non corrigé : modifier des secrets Vercel est hors de ce qui se fait
+   sans validation explicite.
+2. Repli DevTools (fallback explicitement autorisé par la consigne) :
+   injection du markup réel dans la page et lecture de `computedStyle`.
+   Le mécanisme est confirmé correct — la règle CSS est bien déployée,
+   `transform: translateX(calc(var(--nav-active-index) * 100%))` atteint
+   bien la valeur cible une fois testé hors contexte `position:fixed`.
+   Mais **dans ce contexte précis** (élément niché dans `.bottom-nav`, qui
+   est `position:fixed` — préexistant, pas cet ajout), le `transform` ne
+   prenait visuellement aucun effet dans l'outil d'automatisation
+   utilisé, même en `!important` sur une valeur statique sans rapport
+   avec le CSS ajouté — un artefact de l'outillage de test, pas un bug
+   reproductible en dehors de ce contexte.
+
+Les deux blocages remontés à l'utilisateur avant de continuer : décision
+prise de **merger sans test visuel supplémentaire**, sur la base de la
+vérification faite (mécanisme confirmé isolément + revue statique des 9
+écrans). À garder en tête pour une session future : revalider ce
+glissement sur un vrai téléphone si l'occasion se présente.
+
 ## ⚖️ 2026-08-17 (suite) — Consentement : habitudes gatées, identité séparée du suivi
 
 Les **deux arbitrages** laissés ouverts par l'entrée précédente sont tranchés et implémentés.
