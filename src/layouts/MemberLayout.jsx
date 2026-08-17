@@ -3,8 +3,10 @@ import { useNavigate, useLocation, Outlet } from 'react-router-dom'
 import BottomNav from '../components/BottomNav'
 import OnboardingTour from '../components/OnboardingTour'
 import SyncIndicator from '../components/SyncIndicator'
+import CoachConsentGate from '../components/CoachConsentGate'
 import '../styles/fab.css'
 import '../styles/member.css'
+import '../styles/consent.css'
 
 const MemberLayout = () => {
   const navigate = useNavigate()
@@ -36,6 +38,10 @@ const MemberLayout = () => {
       <BottomNav />
       <OnboardingTour variant="member" />
       <SyncIndicator />
+      {/* Monté ici plutôt que sur un écran précis : il doit s'imposer quelle
+          que soit la route membre par laquelle on entre dans l'app, y
+          compris un lien profond ou une reprise de PWA. */}
+      <CoachConsentGate />
 
       {!hideFAB && (
         <div className="fab-container">

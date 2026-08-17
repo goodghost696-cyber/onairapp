@@ -1,0 +1,101 @@
+/* Écran de consentement au partage de données coach (CoachConsentGate.jsx).
+   z-index au-dessus de la nav pill (100) et du FAB (95) : tant que le choix
+   n'est pas fait, rien ne doit être atteignable derrière — ni la nav, ni le
+   bouton messages. */
+.consent-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(28,26,23,0.55);
+  z-index: 400;
+}
+
+.consent-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 480px;
+  background: #F7F1E6;
+  border-radius: 24px 24px 0 0;
+  padding: 28px 22px calc(32px + env(safe-area-inset-bottom));
+  z-index: 401;
+  font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+  color: #1C1A17;
+  max-height: 90dvh;
+  overflow-y: auto;
+}
+
+.consent-title {
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 14px;
+}
+
+.consent-body {
+  font-size: 14px;
+  line-height: 1.55;
+  color: #4A443C;
+  margin-bottom: 12px;
+}
+
+.consent-checkbox-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 18px 0 6px;
+  padding: 14px;
+  background: #FFFFFF;
+  border-radius: 16px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+/* Case volontairement grande : c'est le geste qui porte le consentement,
+   il ne doit pas être un détail de 13px qu'on coche sans le voir. */
+.consent-checkbox-row input[type="checkbox"] {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  accent-color: #1C1A17;
+  cursor: pointer;
+  margin: 0;
+}
+
+.consent-error {
+  font-size: 13px;
+  color: #B62472;
+  margin: 10px 0 0;
+}
+
+.consent-submit {
+  width: 100%;
+  margin-top: 18px;
+  padding: 16px;
+  border: none;
+  border-radius: 999px;
+  background: #1C1A17;
+  color: #F7F1E6;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.consent-submit:disabled { opacity: 0.6; cursor: default; }
+
+/* ── Réglages → Confidentialité ── */
+.privacy-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 0;
+}
+.privacy-row-text { flex: 1; min-width: 0; }
+.privacy-row-title { font-size: 13.5px; font-weight: 600; margin-bottom: 3px; }
+.privacy-row-sub { font-size: 11.5px; line-height: 1.45; color: #736C60; }
