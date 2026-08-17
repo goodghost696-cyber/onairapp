@@ -1266,3 +1266,37 @@ with (security_invoker = false) as
 
 revoke all on public.coach_member_identity from public, anon;
 grant select on public.coach_member_identity to authenticated;
+-- ── 2026-08-17 (suite 2) : is_same_gym_member, effet de bord du gate ──
+-- Migration : same_gym_member_helper_unblocks_coach_actions
+--
+-- Decouvert PAR LE TEST : depuis que la policy SELECT de profiles est
+-- gatee par le consentement, toutes les policies coach qui verifiaient
+-- l'appartenance a la salle via
+--   exists (select 1 from profiles p where p.user_id = X and p.gym_id = my_gym_id())
+-- echouaient pour un membre non consentant — ce sous-select subit lui aussi
+-- la RLS de profiles. Mesure : le coach ne pouvait plus assigner une
+-- habitude (42501), ni un programme (42501), ni ENVOYER UN MESSAGE. Aucune
+-- de ces actions ne releve du partage de donnees de suivi.
+create or replace function public.is_same_gym_member(member_user_id uuid)
+returns boolean language sql stable security definer set search_path to 'public' as $$
+  select exists (
+    select 1 from public.profiles p
+    where p.user_id = member_user_id
+      and p.gym_id is not null
+      and p.gym_id = public.my_gym_id()
+  );
+$$;
+revoke all on function public.is_same_gym_member(uuid) from public;
+grant execute on function public.is_same_gym_member(uuid) to authenticated;
+
+-- Actions coach sans rapport avec les donnees de suivi -> debloquees :
+--   habitudes (assign/select/update), programme_assignations
+--   (assign/select/unassign), push_subscriptions (select/delete),
+--   messages (branche coach -> membre).
+-- Donnees de suivi -> meme helper pour la salle, le CONSENTEMENT reste le
+-- seul et unique gate :
+--   repas, activite_jour, seances, objectifs (select + update),
+--   habitude_logs.
+-- Chaque policy dit desormais explicitement "meme salle ET consentement",
+-- au lieu de dependre du fait que le sous-select echouait deja de lui-meme.
+-- Voir la migration pour le texte exact des 15 alter policy.
