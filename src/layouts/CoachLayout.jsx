@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+// États « données non partagées » côté coach (voir consent.css) — la feuille
+// est aussi importée par MemberLayout, l'import explicite ici évite de
+// dépendre du hasard de l'ordre des chunks.
+import '../styles/consent.css'
 import { supabase, authHeader } from '../lib/supabase'
 import { isGymAccessActive } from '../utils/billing'
 import OnboardingTour from '../components/OnboardingTour'

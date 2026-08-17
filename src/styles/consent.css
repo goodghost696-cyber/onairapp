@@ -88,6 +88,25 @@
 }
 .consent-submit:disabled { opacity: 0.6; cursor: default; }
 
+/* ── Côté coach : membre dont les données ne sont pas partagées ──
+   Volontairement neutre et non alarmiste : ce n'est ni une erreur ni un
+   membre en décrochage, juste un choix de confidentialité à respecter. */
+.consent-none {
+  font-size: 11.5px;
+  font-style: italic;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+.consent-none-panel {
+  border: 1px dashed var(--border);
+  border-radius: 16px;
+  padding: 18px 16px;
+  text-align: center;
+  margin-bottom: 12px;
+}
+.consent-none-panel-title { font-size: 13.5px; font-weight: 600; margin-bottom: 6px; }
+.consent-none-panel-sub { font-size: 11.5px; line-height: 1.5; color: var(--text-muted); }
+
 /* ── Réglages → Confidentialité ── */
 .privacy-row {
   display: flex;

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
+import { fetchCoachRoster } from '../utils/coachStats'
 import { fetchProgramLibrary, fetchAssignationsForPrograms, createProgram, deleteProgram, assignProgram, unassignProgram } from '../utils/programs'
 import CoachNav from '../components/CoachNav'
 
@@ -34,10 +35,12 @@ export default function CoachPrograms() {
     setLoading(true)
     const [lib, mem] = await Promise.all([
       fetchProgramLibrary(),
-      supabase.from('profiles').select('user_id, prenom').eq('role', 'member'),
+      // Roster d'identité : un programme est un contenu que le coach assigne,
+      // il ne dépend pas du consentement au partage des données de suivi.
+      fetchCoachRoster(),
     ])
     setLibrary(lib)
-    setMembers(mem.data || [])
+    setMembers(mem)
     setAssignations(await fetchAssignationsForPrograms(lib.map(p => p.id)))
     setLoading(false)
   }

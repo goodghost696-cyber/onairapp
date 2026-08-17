@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
-import { fetchMemberDetailStats, fetchMemberRecentActivity, fetchCoachNote, saveCoachNote, saveMemberObjectifs, lastSeenLabel } from '../utils/coachStats'
+import { fetchMemberDetailStats, fetchMemberRecentActivity, fetchCoachNote, saveCoachNote, saveMemberObjectifs, lastSeenLabel, fetchCoachRoster, consentLabel } from '../utils/coachStats'
 import { fetchHabitsWithProgress, assignHabit, archiveHabit } from '../utils/habits'
 import CoachNav from '../components/CoachNav'
 import { authHeader } from '../lib/supabase'
@@ -59,14 +59,31 @@ export default function MemberDetail() {
     let cancelled = false
     async function load() {
       setLoading(true)
-      const { data: profile, error } = await supabase.from('profiles').select('*').eq('id', id).single()
+      // L'identité passe par le roster (hors consentement) : sinon la fiche
+      // d'un membre qui ne partage pas renvoyait "introuvable", alors qu'il
+      // est bien membre de la salle.
+      const roster = await fetchCoachRoster()
       if (cancelled) return
-      if (error || !profile) {
+      const profile = roster.find(m => m.id === id)
+      if (!profile) {
         setNotFound(true)
         setLoading(false)
         return
       }
       setMember(profile)
+
+      // Pas de consentement : on n'interroge même pas les tables de suivi.
+      // La RLS les couperait de toute façon, mais s'arrêter ici évite
+      // surtout de peupler l'écran de zéros qui se liraient comme un membre
+      // inactif. La note du coach, elle, lui appartient et reste accessible.
+      if (!profile.sharesData) {
+        const existingNote = user?.id ? await fetchCoachNote(user.id, profile.user_id) : ''
+        if (cancelled) return
+        setNote(existingNote)
+        setLoading(false)
+        return
+      }
+
       const [detail, activity, existingNote, memberHabits] = await Promise.all([
         fetchMemberDetailStats(profile.user_id),
         fetchMemberRecentActivity(profile.user_id),
@@ -148,6 +165,53 @@ export default function MemberDetail() {
   )
   if (notFound || !member) return (
     <div className="app-wrapper"><div className="screen"><p className="text-base text-muted" style={{ marginTop: 40 }}>Membre introuvable.</p></div></div>
+  )
+
+  // Membre sans consentement : fiche d'identité seule. Rendu distinct plutôt
+  // que la fiche habituelle avec des tuiles à « — » partout, qui se lirait
+  // comme un membre inscrit et totalement inactif. La note du coach reste
+  // accessible (elle lui appartient) et le bouton message aussi : ne pas
+  // partager ses données n'empêche pas d'échanger avec son coach.
+  if (!member.sharesData) return (
+    <div className="app-wrapper">
+      <div className="screen coach-narrow">
+        <div className="screen-header" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '20px 0 8px' }}>
+          <button className="icon-btn" onClick={() => navigate('/coach')}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" strokeWidth="1.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <h1 className="text-xl bold" style={{ flex: 1 }}>{member.prenom}</h1>
+        </div>
+
+        <div className="consent-none-panel">
+          <div className="consent-none-panel-title">{consentLabel(member.consentState)}</div>
+          <div className="consent-none-panel-sub">
+            {member.prenom} fait bien partie de ta salle
+            {member.rattacheLe ? ` depuis le ${new Date(member.rattacheLe).toLocaleDateString('fr-FR')}` : ''}, mais
+            n'a pas donné son accord pour partager ses données de suivi (nutrition,
+            poids, activité, sommeil, entraînement, habitudes). Ce choix lui
+            appartient et se modifie depuis ses réglages.
+          </div>
+        </div>
+
+        <div className="section-label">NOTES COACH</div>
+        <div className="card card-animated" style={{ marginBottom: 8 }}>
+          <textarea
+            value={note}
+            onChange={e => setNote(e.target.value)}
+            placeholder="Note privée sur ce membre..."
+            style={{ width: '100%', minHeight: 90, background: 'transparent', border: 'none', color: 'var(--text-primary)', fontFamily: 'inherit', fontSize: 14, resize: 'vertical' }}
+          />
+          <button className="btn-ghost" onClick={handleSaveNote} disabled={noteSaving} style={{ marginTop: 8 }}>
+            {noteSaving ? '...' : noteSaved ? '✓ ENREGISTRÉ' : 'ENREGISTRER LA NOTE'}
+          </button>
+        </div>
+
+        <button className="btn-accent" onClick={() => navigate(`/coach/messages/${member.id}`)}>
+          ENVOYER UN MESSAGE
+        </button>
+      </div>
+      <CoachNav />
+    </div>
   )
 
   const color = STATUS_COLORS[stats?.status] || 'var(--text-muted)'
