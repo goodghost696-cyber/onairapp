@@ -1,0 +1,434 @@
+/* ══════════════════════════════════════════════════════════════════════
+   Restyle coach (handoff "Redesign interface VOLTA (8)", design_handoff_coach/
+   CoachDashboard.reference.html) — écran 1/6. Même méthode que le restyle
+   membre (dashboard.css) : toutes les couleurs/tokens en custom properties
+   scopées sur .coachdashboard-redesign (wrapper racine de CoachDashboard.jsx),
+   jamais touché ni global.css ni coach.css — ce fichier n'est importé que
+   par CoachDashboard.jsx, aucun risque de fuite vers les écrans coach pas
+   encore migrés (ClientsList mis à part, migré dans la même session, voir
+   ClientsList-redesign.css).
+   ══════════════════════════════════════════════════════════════════════ */
+.coachdashboard-redesign {
+  --cd-bg: #EFE7D9;
+  --cd-screen-bg: #F7F1E6;
+  --cd-card: #FFFFFF;
+  --cd-card-sunken: #F2ECE2;
+  --cd-track: #EFE7D9;
+  --cd-ink: #1C1A17;
+  --cd-text-secondary: #4A443C;
+  --cd-text-tertiary: #6E675C;
+  --cd-text-muted: #736C60;
+  --cd-olive: #EBEB7D;
+  --cd-olive-ink: #55522E;
+  --cd-lavender: #A3AEFE;
+  --cd-lavender-ink: #3F4780;
+  --cd-pink: #FFBEF0;
+  --cd-pink-ink: #6B3F5F;
+  --cd-magenta: #B62472;
+  font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+  /* Même raison que dashboard.css (membre) : #root reste transparent sur la
+     zone de statut/notch et sous un contenu plus court que le viewport,
+     laissant transparaître le dégradé corail du body si rien ne le repeint
+     ici. */
+  min-height: calc(var(--app-height, 100dvh) - env(safe-area-inset-top));
+  background: var(--cd-bg);
+  position: relative;
+}
+.coachdashboard-redesign::before {
+  content: '';
+  position: absolute;
+  top: calc(-1 * env(safe-area-inset-top));
+  left: 0;
+  right: 0;
+  height: env(safe-area-inset-top);
+  background: var(--cd-bg);
+  z-index: 0;
+}
+body.coachdashboard-body-bg {
+  background: #EFE7D9;
+}
+
+.coachdashboard-screen {
+  position: relative;
+  z-index: 1;
+  background: var(--cd-screen-bg);
+  color: var(--cd-ink);
+  padding: 0 20px calc(132px + env(safe-area-inset-bottom));
+}
+
+/* ── En-tête ── */
+.cd-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 22px 4px 4px;
+}
+.cd-brand {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.cd-brand-mark {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--cd-ink);
+}
+.cd-brand-sub {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--cd-text-tertiary);
+}
+.cd-logout {
+  display: flex;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: var(--cd-card);
+  align-items: center;
+  justify-content: center;
+  color: var(--cd-text-tertiary);
+  border: none;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.cd-logout:active {
+  transform: scale(0.92);
+}
+
+.cd-title {
+  font-size: 25px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--cd-ink);
+  padding: 10px 4px 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── Tuiles stats ── */
+.cd-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.cd-stat-tile {
+  background: var(--cd-card);
+  border-radius: 20px;
+  padding: 14px 6px;
+  text-align: center;
+}
+.cd-stat-tile.danger {
+  background: var(--cd-pink);
+}
+.cd-stat-value {
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--cd-ink);
+}
+.cd-stat-label {
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--cd-text-muted);
+  margin-top: 4px;
+}
+.cd-stat-tile.danger .cd-stat-label {
+  color: var(--cd-pink-ink);
+}
+
+/* ── Boutons pleine largeur ── */
+.cd-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 22px;
+}
+.cd-action-btn {
+  width: 100%;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--cd-ink);
+  background: var(--cd-card);
+  border: none;
+  border-radius: 999px;
+  padding: 14px 0;
+  cursor: pointer;
+  font-family: inherit;
+  transition: transform 120ms ease;
+}
+.cd-action-btn:active {
+  transform: scale(0.985);
+}
+
+.cd-section-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--cd-text-muted);
+  padding: 0 6px 12px;
+}
+.cd-section-label.alert {
+  color: var(--cd-magenta);
+}
+
+/* ── Graphique activité 7 jours ── */
+.cd-chart-card {
+  background: var(--cd-card);
+  border-radius: 30px;
+  padding: 22px 20px 16px;
+  margin-bottom: 22px;
+}
+.cd-chart-bars {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  height: 90px;
+}
+.cd-chart-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  justify-content: flex-end;
+  height: 100%;
+}
+.cd-chart-value {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--cd-lavender-ink);
+  min-height: 1em;
+}
+.cd-chart-bar {
+  width: 100%;
+  border-radius: 6px 6px 3px 3px;
+  background: var(--cd-lavender);
+  transition: height 500ms ease-out;
+}
+.cd-chart-bar.empty {
+  border-radius: 3px;
+  background: var(--cd-track);
+}
+.cd-chart-day {
+  font-size: 9.5px;
+  color: var(--cd-text-muted);
+  text-transform: capitalize;
+}
+
+/* ── Répartition des membres ── */
+.cd-distribution-card {
+  background: var(--cd-card);
+  border-radius: 30px;
+  padding: 20px 22px;
+  margin-bottom: 22px;
+}
+.cd-distribution-bar {
+  display: flex;
+  height: 10px;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+.cd-distribution-legend {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.cd-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--cd-text-secondary);
+}
+.cd-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+.cd-legend-item strong {
+  color: var(--cd-ink);
+}
+
+/* ── Cartes membre communes (alertes / actifs / non partagé) ── */
+.cd-member-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 22px;
+}
+.cd-alert-card {
+  background: var(--cd-card);
+  border-radius: 24px;
+  padding: 16px 20px;
+  cursor: pointer;
+  transition: transform 120ms ease;
+  border: none;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+}
+.cd-alert-card:active {
+  transform: scale(0.985);
+}
+.cd-alert-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+.cd-alert-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--cd-ink);
+}
+.cd-alert-cta {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--cd-magenta);
+}
+.cd-alert-sub {
+  font-size: 11.5px;
+  color: var(--cd-text-tertiary);
+}
+
+.cd-active-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--cd-card);
+  border-radius: 24px;
+  padding: 14px 18px;
+  cursor: pointer;
+  transition: transform 120ms ease;
+  border: none;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+}
+.cd-active-card:active {
+  transform: scale(0.985);
+}
+.cd-avatar {
+  display: flex;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: var(--cd-screen-bg);
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.cd-active-body {
+  flex: 1;
+  min-width: 0;
+}
+.cd-active-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.cd-active-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--cd-ink);
+}
+.cd-status-badge {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  padding: 3px 9px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.cd-active-sub {
+  font-size: 11px;
+  color: var(--cd-text-muted);
+  margin-top: 2px;
+}
+
+/* Statuts — même palette que la barre de répartition ci-dessus. */
+.cd-status-on-track { background: var(--cd-olive); color: var(--cd-olive-ink); }
+.cd-avatar.status-on-track { background: var(--cd-screen-bg); border: 1.5px solid var(--cd-olive); color: var(--cd-olive-ink); }
+.cd-status-at-risk { background: var(--cd-lavender); color: var(--cd-lavender-ink); }
+.cd-avatar.status-at-risk { background: var(--cd-screen-bg); border: 1.5px solid var(--cd-lavender); color: var(--cd-lavender-ink); }
+.cd-status-inactive { background: var(--cd-pink); color: var(--cd-pink-ink); }
+.cd-avatar.status-inactive { background: var(--cd-screen-bg); border: 1.5px solid var(--cd-pink); color: var(--cd-pink-ink); }
+
+/* ── Données non partagées — traitement neutre, volontairement distinct
+   des cartes d'alerte (pas de magenta, pas de "VOIR →" pressant) : ce n'est
+   ni une erreur ni un décrochage, juste un choix de confidentialité à
+   respecter. Fond légèrement enfoncé plutôt que blanc plein, pour que l'œil
+   distingue ces cartes des cartes "actives" au premier coup d'œil, sans
+   recourir à une couleur d'alerte. Remplace le patch consent.css
+   (.consent-none) pour cet écran. */
+.cd-unshared-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  background: var(--cd-card-sunken);
+  border-radius: 24px;
+  padding: 16px 20px;
+  cursor: pointer;
+  transition: transform 120ms ease;
+  border: none;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+}
+.cd-unshared-card:active {
+  transform: scale(0.985);
+}
+.cd-unshared-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--cd-ink);
+}
+.cd-unshared-label {
+  font-size: 11px;
+  font-style: italic;
+  color: var(--cd-text-muted);
+  margin-top: 2px;
+}
+.cd-unshared-arrow {
+  font-size: 13px;
+  color: var(--cd-text-muted);
+  flex-shrink: 0;
+}
+
+.cd-empty-note {
+  font-size: 12.5px;
+  color: var(--cd-text-muted);
+}
+
+@media (min-width: 900px) {
+  .coachdashboard-screen {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding-left: 48px;
+    padding-right: 48px;
+  }
+  .cd-stats {
+    max-width: 640px;
+  }
+  .cd-member-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 12px;
+  }
+}

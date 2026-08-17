@@ -1,0 +1,120 @@
+/* Nav coach du restyle — voir CoachNavBar.jsx pour le contexte (nouveau
+   composant, coexiste avec l'ancien CoachNav.jsx/nav.css tant que les 6
+   écrans coach ne sont pas tous migrés). Fichier dédié, n'importe rien de
+   coach.css ni nav.css et n'est importé que par CoachNavBar.jsx : les
+   écrans pas encore migrés ne voient jamais ces règles.
+
+   Tokens du handoff (README design_handoff_coach) : fond encre #1C1A17
+   opaque, pilule 999px, pastille olive #EBEB7D. */
+.coach-nav {
+  position: fixed;
+  left: 20px;
+  right: 20px;
+  bottom: max(22px, env(safe-area-inset-bottom));
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #1C1A17;
+  border-radius: 999px;
+  padding: 10px 12px;
+  box-shadow: 0 18px 34px -12px rgba(28,26,23,0.5);
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+/* Pastille de sélection — même mécanisme que la nav membre (BottomNav.jsx/
+   nav.css) à dessein, demandé explicitement pour n'écrire cette logique
+   qu'une fois : largeur calée sur --nav-tab-count (4 boutons, flex:1 sans
+   gap → largeur strictement égale entre eux, pas de mesure DOM), position
+   pilotée par --nav-active-index (posé en style inline par CoachNavBar.jsx),
+   seul le transform change à la navigation.
+
+   Écart assumé par rapport à la maquette statique du handoff : celle-ci
+   dessine une pilule active à largeur variable (au contenu) contre des
+   icônes seules à largeur fixe 42px pour les onglets inactifs. Le mécanisme
+   à slots égaux demandé ici impose des largeurs égales entre les 4 onglets
+   — l'icône+libellé actif se centre dans son propre slot au lieu de le
+   déborder. Compromis nécessaire pour réutiliser la même mécanique que la
+   nav membre plutôt que d'en écrire une seconde, différente. */
+.coach-nav-indicator {
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  left: 12px;
+  width: calc((100% - 24px) / var(--nav-tab-count, 4));
+  background: #EBEB7D;
+  border-radius: 999px;
+  transform: translateX(calc(100% * var(--nav-active-index, 0)));
+  transition: transform 240ms cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 0;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .coach-nav-indicator {
+    transition: none;
+  }
+}
+
+.coach-nav-item {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  border-radius: 999px;
+  padding: 10px 12px;
+  cursor: pointer;
+  color: rgba(247,241,230,0.55);
+  -webkit-tap-highlight-color: transparent;
+}
+.coach-nav-item svg {
+  flex-shrink: 0;
+}
+.coach-nav-item.active {
+  color: #1C1A17;
+}
+
+.coach-nav-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  /* Léger fade demandé par le handoff (facultatif si trivial) — le fond
+     glisse en 240ms, le libellé apparaît juste après plutôt que d'être
+     traîné avec lui. */
+  animation: coachNavLabelFade 150ms ease 120ms both;
+}
+@keyframes coachNavLabelFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .coach-nav-label {
+    animation: none;
+  }
+}
+
+.coach-nav-badge {
+  position: absolute;
+  top: 2px;
+  right: 20%;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #B62472;
+  border: 1.5px solid #1C1A17;
+}
+
+@media (min-width: 900px) {
+  .coach-nav {
+    max-width: 720px;
+  }
+}
