@@ -82,6 +82,79 @@ Le texte ci-dessous est conservé pour mémoire du point de départ.
 
 **Pourquoi ne pas commencer maintenant** : coder un mécanisme de consentement avant d'avoir tranché opt-in vs opt-out et la formulation exacte reviendrait à jeter le travail, ou pire à afficher au membre une formulation juridiquement fausse. La clarification juridique vient d'abord, le code ensuite.
 
+## 🎨 2026-08-18 (suite) — Restyle espace coach (3/6, 4/6) : MemberDetail, CoachMessages
+
+Suite directe de l'entrée précédente. Cette session : **MemberDetail** et
+**CoachMessages**, un écran à la fois, chacun buildé et testé en réel
+avant de passer au suivant. `CoachNavBar.jsx` réutilisé tel quel sur
+CoachMessages (aucune nouvelle implémentation de nav).
+
+**MemberDetail n'a pas de nav** — le handoff le confirme explicitement
+(README, section Screens : « Fiche Membre ... n'en ont pas, ce sont des
+écrans secondaires »). `<CoachNav />` retiré, pas de `<CoachNavBar />` sur
+cet écran, cohérent avec la maquette.
+
+**État sans consentement, vérifié spécifiquement comme demandé** (pas
+seulement l'état « tout accepté ») : le early-return existant (identité
+seule, la logique n'appelle même pas les fonctions de fetch des tables de
+suivi — RLS les couperait de toute façon, mais s'arrêter avant évite de
+peupler l'écran de zéros trompeurs) repris à l'identique côté logique.
+Seul l'habillage change : `.md-unshared-panel` remplace
+`.consent-none-panel` (`consent.css`), même traitement neutre (fond
+enfoncé, pas de couleur d'alerte) que CoachDashboard/ClientsList. Notes
+coach + bouton message conservés dans les deux états — refuser le partage
+de données de suivi n'empêche pas d'échanger avec son coach.
+
+Formulaires d'édition (objectifs, assignation d'habitude) : absents de la
+maquette statique (états d'interaction propres à l'app réelle, pas
+couverts par un handoff qui ne montre que les vues « au repos »),
+stylisés dans le même langage que le reste (champs sur fond crème, boutons
+pilule) plutôt que laissés en styles legacy.
+
+**CoachMessages — email conditionnel.** Un membre qui ne partage pas ses
+données de suivi n'a pas d'email dans `coach_member_identity` (colonne
+volontairement absente de la vue). La ligne email est simplement omise
+plutôt que d'afficher un vide — pas de patch `consent.css` nécessaire ici,
+cet écran n'affichait déjà aucune donnée de suivi, juste l'identité et les
+messages.
+
+**Test réel, locataire QA dédié** (1 coach + 2 membres — accepté/refusé,
+signup complet via le vrai formulaire, données de séances/repas/activité
+semées par SQL, sur production) :
+
+- **MemberDetail, état complet (QaOnTrack)** : 6 tuiles stats exactes,
+  graphique 7 jours avec les bonnes barres foncées, objectifs affichés,
+  derniers repas/séances avec les bons montants/durées. Note coach
+  enregistrée en réel (« ✓ ENREGISTRÉ », rechargée après). Habitude
+  assignée en réel via le formulaire (« Boire 2L d'eau par jour », 0/7,
+  grille de pastilles crème) — persistance confirmée par le re-rendu.
+- **MemberDetail, état sans consentement (QaWithdrawn)** : panneau neutre
+  avec le bon libellé et la bonne date de rattachement, **aucune tuile à
+  vide**, note coach et bouton message conservés et fonctionnels (ouvre
+  bien la conversation).
+- **CoachMessages** : les deux membres listés, email affiché pour
+  QaOnTrack et **omis** pour QaWithdrawn (pas de fuite), envoi d'un
+  message réel confirmé (aperçu tronqué + horodatage corrects, tri
+  conversation-récente-d'abord).
+
+**Nettoyage — un imprévu.** Le login du deuxième membre créé
+(`QaOnTrack`) a échoué en boucle après la clôture du test MemberDetail
+(400 sur `/auth/v1/token`, probablement un throttle Supabase après
+plusieurs tentatives), alors que le compte existait bien en base
+(vérifié). Plutôt que de s'acharner sur la reconnexion, suppression
+directe par SQL (`delete from auth.users where id = ...`) — la cascade a
+été vérifiée explicitement table par table (`profiles`, `seances`,
+`activite_jour`, `repas`, `coach_notes`, `habitudes`) à 0 après coup,
+plutôt que supposée. Salle QA orpheline (le coach est supprimé séparément
+via le vrai flux applicatif, sans cascade vers `gyms`) supprimée par SQL
+comme les sessions précédentes. Vérifié à 0 : base identique au baseline
+(5 `auth.users`, 5 `profiles`, 1 `gyms`).
+
+**Reste à faire** (sessions suivantes) : CoachPrograms, CoachSettings. Une
+fois les 6 écrans migrés, retirer `CoachNav.jsx`/`nav.css` côté coach
+(devenu mort) et supprimer `consent.css` si plus aucun écran ne le
+référence.
+
 ## 🎨 2026-08-18 — Restyle espace coach (1/6, 2/6) : CoachDashboard, ClientsList
 
 Handoff Claude Design reçu (`design_handoff_coach/`, dossier "Redesign
