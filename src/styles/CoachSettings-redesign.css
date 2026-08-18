@@ -1,0 +1,277 @@
+/* ══════════════════════════════════════════════════════════════════════
+   Restyle coach (handoff "Redesign interface VOLTA (8)", design_handoff_coach/
+   CoachSettings.reference.html) — écran 6/6, dernier de la série. Même
+   méthode que les 5 écrans déjà migrés : tokens en custom properties
+   scopées sur .coachsettings-redesign, jamais touché global.css ni
+   coach.css, importé uniquement par CoachSettings.jsx. Réutilise
+   CoachNavBar.jsx tel quel (aucune nouvelle implémentation de nav).
+   ══════════════════════════════════════════════════════════════════════ */
+.coachsettings-redesign {
+  --cs-bg: #EFE7D9;
+  --cs-screen-bg: #F7F1E6;
+  --cs-card: #FFFFFF;
+  --cs-card-sunken: #F2ECE2;
+  --cs-divider: #F2ECE2;
+  --cs-ink: #1C1A17;
+  --cs-text-secondary: #4A443C;
+  --cs-text-tertiary: #6E675C;
+  --cs-text-muted: #736C60;
+  --cs-track: #EFE7D9;
+  --cs-olive: #EBEB7D;
+  --cs-olive-ink: #55522E;
+  --cs-lavender: #A3AEFE;
+  --cs-magenta: #B62472;
+  --cs-danger: #B62472;
+  font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+  min-height: calc(var(--app-height, 100dvh) - env(safe-area-inset-top));
+  background: var(--cs-bg);
+  position: relative;
+}
+.coachsettings-redesign::before {
+  content: '';
+  position: absolute;
+  top: calc(-1 * env(safe-area-inset-top));
+  left: 0;
+  right: 0;
+  height: env(safe-area-inset-top);
+  background: var(--cs-bg);
+  z-index: 0;
+}
+body.coachsettings-body-bg {
+  background: #EFE7D9;
+}
+
+.coachsettings-screen {
+  position: relative;
+  z-index: 1;
+  background: var(--cs-screen-bg);
+  color: var(--cs-ink);
+  padding: 0 20px calc(132px + env(safe-area-inset-bottom));
+}
+
+.cs-title {
+  font-size: 23px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--cs-ink);
+  padding: 22px 4px 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cs-section-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--cs-text-muted);
+  padding: 0 6px 12px;
+}
+
+.cs-card {
+  background: var(--cs-card);
+  border-radius: 30px;
+  padding: 6px 22px;
+  margin-bottom: 20px;
+}
+.cs-card.padded {
+  padding: 20px 22px;
+}
+.cs-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 0;
+  border-bottom: 1px solid var(--cs-divider);
+  gap: 12px;
+}
+.cs-row:last-child {
+  border-bottom: none;
+}
+.cs-row-label {
+  font-size: 13px;
+  color: var(--cs-text-secondary);
+}
+.cs-row-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--cs-ink);
+  text-align: right;
+}
+.cs-row-value.accent {
+  color: var(--cs-magenta);
+  font-weight: 700;
+}
+.cs-row-value.success {
+  color: var(--cs-olive-ink);
+}
+.cs-row-value.danger {
+  color: var(--cs-danger);
+}
+
+/* ── Facturation / actions pleine largeur ── */
+.cs-error {
+  font-size: 11.5px;
+  color: var(--cs-danger);
+  padding: 10px 0 0;
+}
+.cs-btn-ghost {
+  width: 100%;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--cs-ink);
+  background: var(--cs-card-sunken);
+  border: none;
+  border-radius: 999px;
+  padding: 13px 0;
+  cursor: pointer;
+  font-family: inherit;
+  transition: transform 120ms ease;
+}
+.cs-btn-ghost:active {
+  transform: scale(0.985);
+}
+.cs-btn-ghost:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.cs-btn-accent {
+  width: 100%;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--cs-ink);
+  background: var(--cs-olive);
+  border: none;
+  border-radius: 999px;
+  padding: 13px 0;
+  cursor: pointer;
+  font-family: inherit;
+  transition: transform 120ms ease;
+}
+.cs-btn-accent:active {
+  transform: scale(0.985);
+}
+.cs-btn-accent:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* ── Usage IA ── */
+.cs-usage-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.cs-usage-bar-track {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--cs-track);
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+.cs-usage-bar-fill {
+  height: 100%;
+  background: var(--cs-lavender);
+  transition: width 400ms ease;
+}
+.cs-usage-bar-fill.danger {
+  background: var(--cs-danger);
+}
+.cs-usage-note {
+  font-size: 11px;
+  color: var(--cs-text-muted);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* ── Notifications ── */
+.cs-notif-sub {
+  font-size: 11px;
+  color: var(--cs-danger);
+  margin-top: 2px;
+}
+.cs-notif-unsupported-note {
+  font-size: 11px;
+  color: var(--cs-text-muted);
+  margin-top: 4px;
+  line-height: 1.5;
+}
+
+/* Toggle — même mécanisme que Toggle() du composant (role=switch), seul
+   l'habillage change ici (olive actif au lieu de --accent). */
+.cs-toggle {
+  width: 44px;
+  height: 26px;
+  border-radius: 13px;
+  position: relative;
+  cursor: pointer;
+  transition: background 200ms ease;
+  flex-shrink: 0;
+}
+.cs-toggle.on {
+  background: var(--cs-olive);
+}
+.cs-toggle.off {
+  background: var(--cs-track);
+}
+.cs-toggle-knob {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background: var(--cs-ink);
+  border-radius: 50%;
+  top: 3px;
+  left: 3px;
+  transition: transform 200ms ease;
+}
+.cs-toggle.on .cs-toggle-knob {
+  transform: translateX(18px);
+  background: #FFFFFF;
+}
+
+/* ── Compte ── */
+.cs-account-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.cs-btn-danger {
+  width: 100%;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #FFFFFF;
+  background: var(--cs-magenta);
+  border: none;
+  border-radius: 999px;
+  padding: 15px 0;
+  cursor: pointer;
+  font-family: inherit;
+  transition: transform 120ms ease;
+}
+.cs-btn-danger:active {
+  transform: scale(0.985);
+}
+
+/* DeleteAccountButton.jsx est un composant partagé (member + coach), stylé
+   inline — non touché ici. Il rend son propre bouton "Supprimer mon
+   compte" ; laissé tel quel plutôt que forker le composant pour un habillage
+   custom sur cet unique écran. */
+
+@media (min-width: 900px) {
+  .coachsettings-screen {
+    max-width: 900px;
+    margin: 0 auto;
+    padding-left: 48px;
+    padding-right: 48px;
+  }
+}

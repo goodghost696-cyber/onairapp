@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import CoachNav from '../components/CoachNav'
+import CoachNavBar from '../components/CoachNavBar'
 import { supabase, authHeader } from '../lib/supabase'
 import { isPushSupported, getPushSubscriptionState, subscribeToPush, unsubscribeFromPush, isIOSNotStandalone } from '../utils/push'
 import DeleteAccountButton from '../components/DeleteAccountButton'
@@ -10,18 +10,21 @@ import { useGymConfig } from '../hooks/useGymConfig'
 import { isGymAccessActive, trialDaysLeft } from '../utils/billing'
 import Icon from '../components/Icon'
 import { activable } from '../utils/a11y'
+import '../styles/CoachSettings-redesign.css'
 
 // `role="switch"` + aria-checked plutôt que `button` : c'est un interrupteur
 // à deux états, et sans ça un lecteur d'écran l'annonçait comme rien du tout
 // (div nu, non atteignable au clavier). Même traitement dans Settings.jsx.
 function Toggle({ on, onToggle, label }) {
   return (
-    <div {...activable(onToggle, { role: 'switch', 'aria-checked': !!on, label })} style={{ width: 44, height: 26, background: on ? 'var(--accent)' : 'var(--border)', borderRadius: 13, position: 'relative', cursor: 'pointer', transition: 'background 200ms ease', flexShrink: 0 }}>
-      <div style={{ position: 'absolute', width: 20, height: 20, background: 'white', borderRadius: '50%', top: 3, left: 3, transform: on ? 'translateX(18px)' : 'none', transition: 'transform 200ms ease' }} />
+    <div {...activable(onToggle, { role: 'switch', 'aria-checked': !!on, label })} className={`cs-toggle ${on ? 'on' : 'off'}`}>
+      <div className="cs-toggle-knob" />
     </div>
   )
 }
 
+// Restyle coach (handoff "Redesign interface VOLTA (8)") — écran 6/6,
+// dernier de la série. Réutilise CoachNavBar.jsx tel quel.
 export default function CoachSettings() {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
@@ -32,6 +35,14 @@ export default function CoachSettings() {
   const [aiUsage, setAiUsage] = useState(null)
   const [billingBusy, setBillingBusy] = useState(false)
   const [billingError, setBillingError] = useState('')
+
+  // Même raison que les autres écrans coach restylés : évite que le
+  // rubber-band iOS au-delà des limites du wrapper ne retombe sur le
+  // dégradé corail partagé de <body>.
+  useEffect(() => {
+    document.body.classList.add('coachsettings-body-bg')
+    return () => document.body.classList.remove('coachsettings-body-bg')
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -118,39 +129,37 @@ export default function CoachSettings() {
   }
 
   return (
-    <div className="app-wrapper">
-      <div className="screen coach-narrow">
-        <div className="screen-header" style={{ padding: '20px 0 12px' }}>
-          <h1 className="text-xl bold" style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Icon name="settings" size={20} /> Paramètres</h1>
+    <div className="app-wrapper coachsettings-redesign">
+      <div className="coachsettings-screen">
+        <h1 className="cs-title"><Icon name="settings" size={20} /> Paramètres</h1>
+
+        <div className="cs-section-label">Profil coach</div>
+        <div className="cs-card">
+          <div className="cs-row">
+            <span className="cs-row-label">Nom</span><span className="cs-row-value">{user?.name}</span>
+          </div>
+          <div className="cs-row">
+            <span className="cs-row-label">Email</span><span className="cs-row-value">{user?.email}</span>
+          </div>
         </div>
 
-        <div className="section-label">PROFIL COACH</div>
-        <div className="card card-animated" style={{ '--delay': '0ms' }}>
-          <div style={{ padding: '14px 0', borderBottom: '2px solid var(--border)', display: 'flex', justifyContent: 'space-between' }}>
-            <span className="text-sm text-secondary">Nom</span><span className="text-sm">{user?.name}</span>
+        <div className="cs-section-label">Salle</div>
+        <div className="cs-card">
+          <div className="cs-row">
+            <span className="cs-row-label">Salle</span><span className="cs-row-value">{gymConfig.name}{gymConfig.city ? ` ${gymConfig.city}` : ''}</span>
           </div>
-          <div style={{ padding: '14px 0', borderBottom: '2px solid var(--border)', display: 'flex', justifyContent: 'space-between' }}>
-            <span className="text-sm text-secondary">Email</span><span className="text-sm">{user?.email}</span>
-          </div>
-        </div>
-
-        <div className="section-label">SALLE</div>
-        <div className="card card-animated" style={{ '--delay': '60ms' }}>
-          <div style={{ padding: '14px 0', borderBottom: '2px solid var(--border)', display: 'flex', justifyContent: 'space-between' }}>
-            <span className="text-sm text-secondary">Salle</span><span className="text-sm">{gymConfig.name}{gymConfig.city ? ` ${gymConfig.city}` : ''}</span>
-          </div>
-          <div style={{ padding: '14px 0', display: 'flex', justifyContent: 'space-between' }}>
-            <span className="text-sm text-secondary">Code accès</span><span className="text-sm text-accent bold">{inviteCode}</span>
+          <div className="cs-row">
+            <span className="cs-row-label">Code accès</span><span className="cs-row-value accent">{inviteCode}</span>
           </div>
         </div>
 
         {!user?.isPlatformAdmin && gym && (
           <>
-            <div className="section-label">FACTURATION</div>
-            <div className="card card-animated" style={{ '--delay': '90ms' }}>
-              <div style={{ padding: '14px 0', borderBottom: '2px solid var(--border)', display: 'flex', justifyContent: 'space-between' }}>
-                <span className="text-sm text-secondary">Statut</span>
-                <span className="text-sm bold" style={{ color: isGymAccessActive(gym) ? 'var(--success)' : 'var(--danger)' }}>
+            <div className="cs-section-label">Facturation</div>
+            <div className="cs-card padded">
+              <div className="cs-row">
+                <span className="cs-row-label">Statut</span>
+                <span className={`cs-row-value ${isGymAccessActive(gym) ? 'success' : 'danger'}`}>
                   {gym.subscription_status === 'active' && 'Actif'}
                   {gym.subscription_status === 'trialing' && (isGymAccessActive(gym) ? `Essai — ${trialDaysLeft(gym)} j restants` : 'Essai terminé')}
                   {gym.subscription_status === 'past_due' && 'Paiement en échec'}
@@ -158,43 +167,39 @@ export default function CoachSettings() {
                   {!['active', 'trialing', 'past_due', 'canceled'].includes(gym.subscription_status) && gym.subscription_status}
                 </span>
               </div>
-              {billingError && <div style={{ padding: '10px 0' }}><span className="text-xs" style={{ color: 'var(--danger)' }}>{billingError}</span></div>}
-              <div style={{ padding: '14px 0 0' }}>
-                {gym.subscription_status === 'active' ? (
-                  <button className="btn-ghost" disabled={billingBusy} onClick={() => handleBillingAction('portal')}>
-                    {billingBusy ? '...' : 'Gérer mon abonnement'}
-                  </button>
-                ) : (
-                  <button className="btn-accent" disabled={billingBusy} onClick={() => handleBillingAction('checkout')}>
-                    {billingBusy ? '...' : "S'abonner"}
-                  </button>
-                )}
-              </div>
+              {billingError && <p className="cs-error">{billingError}</p>}
+              {gym.subscription_status === 'active' ? (
+                <button className="cs-btn-ghost" disabled={billingBusy} onClick={() => handleBillingAction('portal')}>
+                  {billingBusy ? '...' : 'Gérer mon abonnement'}
+                </button>
+              ) : (
+                <button className="cs-btn-accent" disabled={billingBusy} onClick={() => handleBillingAction('checkout')}>
+                  {billingBusy ? '...' : "S'abonner"}
+                </button>
+              )}
             </div>
           </>
         )}
 
         {!user?.isPlatformAdmin && gym && aiUsage && (
           <>
-            <div className="section-label">USAGE IA</div>
-            <div className="card card-animated" style={{ '--delay': '120ms' }}>
-              <div style={{ padding: '14px 0', display: 'flex', justifyContent: 'space-between' }}>
-                <span className="text-sm text-secondary">Ce mois-ci</span>
-                <span className="text-sm bold">
+            <div className="cs-section-label">Usage IA</div>
+            <div className="cs-card padded">
+              <div className="cs-usage-row">
+                <span className="cs-row-label">Ce mois-ci</span>
+                <span className="cs-row-value">
                   {aiUsage.calls || 0}{gym.ai_quota_calls != null ? ` / ${gym.ai_quota_calls}` : ''} requêtes
                 </span>
               </div>
               {gym.ai_quota_calls != null && (
-                <div style={{ height: 6, borderRadius: 3, background: 'var(--border)', overflow: 'hidden' }}>
-                  <div style={{
-                    height: '100%',
-                    width: `${Math.min(100, Math.round(((aiUsage.calls || 0) / gym.ai_quota_calls) * 100))}%`,
-                    background: (aiUsage.calls || 0) >= gym.ai_quota_calls ? 'var(--danger)' : 'var(--accent)',
-                    transition: 'width 400ms ease',
-                  }} />
+                <div className="cs-usage-bar-track">
+                  <div
+                    className={`cs-usage-bar-fill${(aiUsage.calls || 0) >= gym.ai_quota_calls ? ' danger' : ''}`}
+                    style={{ width: `${Math.min(100, Math.round(((aiUsage.calls || 0) / gym.ai_quota_calls) * 100))}%` }}
+                  />
                 </div>
               )}
-              <p className="text-xs text-muted" style={{ margin: '10px 0 0', lineHeight: 1.5 }}>
+              <p className="cs-usage-note">
                 {gym.ai_quota_calls == null
                   ? 'Aucune limite sur ton offre.'
                   : 'Coach IA, recettes et scan. Le compteur repart le 1er du mois.'}
@@ -203,13 +208,13 @@ export default function CoachSettings() {
           </>
         )}
 
-        <div className="section-label">NOTIFICATIONS</div>
-        <div className="card card-animated" style={{ '--delay': '120ms' }}>
+        <div className="cs-section-label">Notifications</div>
+        <div className="cs-card padded">
           {pushState !== 'unsupported' && (
-            <div className="flex justify-between items-center" style={{ padding: '14px 0', borderBottom: '2px solid var(--border)' }}>
+            <div className="cs-row" style={{ padding: 0, border: 'none' }}>
               <div>
-                <div className="text-sm text-secondary">Nouveaux messages</div>
-                {pushState === 'denied' && <div className="text-xs" style={{ color: 'var(--danger)', marginTop: 2 }}>Bloquées dans les réglages du navigateur</div>}
+                <div className="cs-row-label">Nouveaux messages</div>
+                {pushState === 'denied' && <div className="cs-notif-sub">Bloquées dans les réglages du navigateur</div>}
               </div>
               <Toggle on={pushState === 'subscribed'} onToggle={handleTogglePush} label="Notifications push" />
             </div>
@@ -219,9 +224,9 @@ export default function CoachSettings() {
               available in an installed home-screen app) is the default
               case, not an edge case. */}
           {pushState === 'unsupported' && (
-            <div style={{ padding: '14px 0' }}>
-              <div className="text-sm text-secondary">Nouveaux messages</div>
-              <div className="text-xs text-muted" style={{ marginTop: 4, lineHeight: 1.5 }}>
+            <div>
+              <div className="cs-row-label">Nouveaux messages</div>
+              <div className="cs-notif-unsupported-note">
                 {isIOSNotStandalone()
                   ? "Indisponibles depuis Safari sur iPhone — ajoute VOLTA à ton écran d'accueil (icône de partage → \"Sur l'écran d'accueil\") pour pouvoir les activer."
                   : "Non prises en charge par ce navigateur."}
@@ -237,26 +242,28 @@ export default function CoachSettings() {
 
         {user?.isPlatformAdmin && (
           <>
-            <div className="section-label">VOLTA</div>
-            <button className="btn-ghost" onClick={() => navigate('/admin')} style={{ marginBottom: 12 }}>
+            <div className="cs-section-label">VOLTA</div>
+            <button className="cs-btn-ghost" onClick={() => navigate('/admin')} style={{ marginBottom: 12 }}>
               Console admin — toutes les salles
             </button>
           </>
         )}
 
-        <div className="section-label">COMPTE</div>
-        <button className="btn-ghost" onClick={replayTour} style={{ marginBottom: 8 }}>
-          Revoir le didacticiel
-        </button>
-        {/* Même course que Settings.jsx (côté membre) — logout() doit être
-            attendu avant navigate(), sinon AuthContext.user est encore
-            peuplé au moment où /login réévalue sa garde de route. */}
-        <button className="btn-danger" onClick={async () => { await logout(); navigate('/') }} style={{ marginBottom: 12 }}>
-          SE DÉCONNECTER
-        </button>
-        <DeleteAccountButton />
+        <div className="cs-section-label">Compte</div>
+        <div className="cs-account-list">
+          <button className="cs-btn-ghost" onClick={replayTour}>
+            Revoir le didacticiel
+          </button>
+          {/* Même course que Settings.jsx (côté membre) — logout() doit être
+              attendu avant navigate(), sinon AuthContext.user est encore
+              peuplé au moment où /login réévalue sa garde de route. */}
+          <button className="cs-btn-danger" onClick={async () => { await logout(); navigate('/') }}>
+            Se déconnecter
+          </button>
+          <DeleteAccountButton />
+        </div>
       </div>
-      <CoachNav />
+      <CoachNavBar />
     </div>
   )
 }
