@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { fetchMemberDetailStats, fetchMemberRecentActivity, fetchCoachNote, saveCoachNote, saveMemberObjectifs, lastSeenLabel, fetchCoachRoster, consentLabel } from '../utils/coachStats'
 import { fetchHabitsWithProgress, assignHabit, archiveHabit } from '../utils/habits'
-import CoachNav from '../components/CoachNav'
 import { authHeader } from '../lib/supabase'
 import { BOUNDS, clamp } from '../utils/validation'
+import '../styles/MemberDetail-redesign.css'
 
 function formatShortDate(iso) {
   if (!iso) return ''
@@ -14,7 +13,7 @@ function formatShortDate(iso) {
   return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })
 }
 
-const STATUS_COLORS = { 'ON TRACK': 'var(--success)', 'AT RISK': 'var(--warning)', 'INACTIVE': 'var(--danger)' }
+const STATUS_CLASS = { 'ON TRACK': 'md-status-on-track', 'AT RISK': 'md-status-at-risk', 'INACTIVE': 'md-status-inactive' }
 
 const weekDays = ['L', 'M', 'M', 'J', 'V', 'S', 'D']
 
@@ -54,6 +53,14 @@ export default function MemberDetail() {
   const [newHabitTitre, setNewHabitTitre] = useState('')
   const [newHabitFreq, setNewHabitFreq] = useState(7)
   const [habitSaving, setHabitSaving] = useState(false)
+
+  // Même raison que les autres écrans coach restylés : évite que le
+  // rubber-band iOS au-delà des limites du wrapper ne retombe sur le
+  // dégradé corail partagé de <body>.
+  useEffect(() => {
+    document.body.classList.add('memberdetail-body-bg')
+    return () => document.body.classList.remove('memberdetail-body-bg')
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -161,10 +168,10 @@ export default function MemberDetail() {
   }
 
   if (loading) return (
-    <div className="app-wrapper"><div className="screen"><p className="text-base text-muted" style={{ marginTop: 40 }}>Chargement...</p></div></div>
+    <div className="app-wrapper memberdetail-redesign"><div className="memberdetail-screen"><p className="md-loading">Chargement...</p></div></div>
   )
   if (notFound || !member) return (
-    <div className="app-wrapper"><div className="screen"><p className="text-base text-muted" style={{ marginTop: 40 }}>Membre introuvable.</p></div></div>
+    <div className="app-wrapper memberdetail-redesign"><div className="memberdetail-screen"><p className="md-loading">Membre introuvable.</p></div></div>
   )
 
   // Membre sans consentement : fiche d'identité seule. Rendu distinct plutôt
@@ -173,18 +180,18 @@ export default function MemberDetail() {
   // accessible (elle lui appartient) et le bouton message aussi : ne pas
   // partager ses données n'empêche pas d'échanger avec son coach.
   if (!member.sharesData) return (
-    <div className="app-wrapper">
-      <div className="screen coach-narrow">
-        <div className="screen-header" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '20px 0 8px' }}>
-          <button className="icon-btn" onClick={() => navigate('/coach')}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" strokeWidth="1.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+    <div className="app-wrapper memberdetail-redesign">
+      <div className="memberdetail-screen">
+        <div className="md-topbar">
+          <button className="md-back" aria-label="Retour" onClick={() => navigate('/coach')}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
           </button>
-          <h1 className="text-xl bold" style={{ flex: 1 }}>{member.prenom}</h1>
+          <h1 className="md-name">{member.prenom}</h1>
         </div>
 
-        <div className="consent-none-panel">
-          <div className="consent-none-panel-title">{consentLabel(member.consentState)}</div>
-          <div className="consent-none-panel-sub">
+        <div className="md-unshared-panel">
+          <div className="md-unshared-title">{consentLabel(member.consentState)}</div>
+          <div className="md-unshared-sub">
             {member.prenom} fait bien partie de ta salle
             {member.rattacheLe ? ` depuis le ${new Date(member.rattacheLe).toLocaleDateString('fr-FR')}` : ''}, mais
             n'a pas donné son accord pour partager ses données de suivi (nutrition,
@@ -193,28 +200,26 @@ export default function MemberDetail() {
           </div>
         </div>
 
-        <div className="section-label">NOTES COACH</div>
-        <div className="card card-animated" style={{ marginBottom: 8 }}>
+        <div className="md-section-label"><span className="md-section-label-text">Notes coach</span></div>
+        <div className="md-notes-card">
           <textarea
             value={note}
             onChange={e => setNote(e.target.value)}
             placeholder="Note privée sur ce membre..."
-            style={{ width: '100%', minHeight: 90, background: 'transparent', border: 'none', color: 'var(--text-primary)', fontFamily: 'inherit', fontSize: 14, resize: 'vertical' }}
           />
-          <button className="btn-ghost" onClick={handleSaveNote} disabled={noteSaving} style={{ marginTop: 8 }}>
-            {noteSaving ? '...' : noteSaved ? '✓ ENREGISTRÉ' : 'ENREGISTRER LA NOTE'}
-          </button>
         </div>
+        <button className="md-pill-btn" onClick={handleSaveNote} disabled={noteSaving} style={{ marginBottom: 20 }}>
+          {noteSaving ? '...' : noteSaved ? '✓ Enregistré' : 'Enregistrer la note'}
+        </button>
 
-        <button className="btn-accent" onClick={() => navigate(`/coach/messages/${member.id}`)}>
-          ENVOYER UN MESSAGE
+        <button className="md-pill-btn" onClick={() => navigate(`/coach/messages/${member.id}`)}>
+          Envoyer un message
         </button>
       </div>
-      <CoachNav />
     </div>
   )
 
-  const color = STATUS_COLORS[stats?.status] || 'var(--text-muted)'
+  const statusClass = STATUS_CLASS[stats?.status] || ''
   const sessionDays = last7Days().map(d => ({ ...d, done: stats?.weekSessionDates?.has(d.iso) }))
 
   async function generateAnalysis() {
@@ -245,17 +250,17 @@ export default function MemberDetail() {
   }
 
   return (
-    <div className="app-wrapper">
-      <div className="screen coach-narrow">
-        <div className="screen-header" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '20px 0 8px' }}>
-          <button className="icon-btn" onClick={() => navigate('/coach')}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" strokeWidth="1.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+    <div className="app-wrapper memberdetail-redesign">
+      <div className="memberdetail-screen">
+        <div className="md-topbar">
+          <button className="md-back" aria-label="Retour" onClick={() => navigate('/coach')}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
           </button>
-          <h1 className="text-xl bold" style={{ flex: 1 }}>{member.prenom}</h1>
-          <span className="status-badge" style={{ color }}>{stats.status}</span>
+          <h1 className="md-name">{member.prenom}</h1>
+          <span className={`md-status-badge ${statusClass}`}>{stats.status}</span>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+        <div className="md-stats">
           {[
             { label: 'Poids', val: member.poids ? `${member.poids} kg` : '—' },
             { label: 'Taille', val: member.taille ? `${member.taille} cm` : '—' },
@@ -264,25 +269,23 @@ export default function MemberDetail() {
             { label: 'Sommeil moy.', val: stats.avgSleepH ? `${stats.avgSleepH}h` : '—' },
             { label: 'Pas/jour moy.', val: stats.avgSteps ? stats.avgSteps.toLocaleString() : '—' },
           ].map(s => (
-            <div key={s.label} className="card card-animated" style={{ '--delay': '0ms', padding: '12px 16px' }}>
-              <div className="text-xs text-muted">{s.label}</div>
-              <div className="text-sm bold" style={{ marginTop: 4 }}>{s.val}</div>
+            <div key={s.label} className="md-stat-tile">
+              <div className="md-stat-label">{s.label}</div>
+              <div className="md-stat-value">{s.val}</div>
             </div>
           ))}
         </div>
 
         {/* Weekly sessions chart */}
-        <div className="section-label">SÉANCES CETTE SEMAINE</div>
-        <div className="card card-animated" style={{ marginBottom: 8, '--delay': '60ms' }}>
-          <div style={{ width: '100%' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
-              {sessionDays.map((d, i) => (
-                <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                  <div style={{ width: '100%', height: d.done ? 36 : 6, background: d.done ? 'var(--accent)' : 'var(--border)', borderRadius: '3px 3px 0 0' }} />
-                  <span style={{ fontSize: 9, color: 'var(--text-muted)', overflow: 'hidden', width: '100%', textAlign: 'center' }}>{d.label}</span>
-                </div>
-              ))}
-            </div>
+        <div className="md-section-label"><span className="md-section-label-text">Séances cette semaine</span></div>
+        <div className="md-week-card">
+          <div className="md-week-grid">
+            {sessionDays.map((d, i) => (
+              <div key={i} className="md-week-col">
+                <div className={`md-week-bar${d.done ? ' done' : ''}`} style={{ height: d.done ? 34 : 6 }} />
+                <span className="md-week-day">{d.label}</span>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -290,193 +293,191 @@ export default function MemberDetail() {
             Modifiables par le coach depuis le 2026-08-11 (veille produit,
             proposition n°1 : "le coach observe mais n'agit pas" — c'est le
             premier vrai geste d'action donné au coach sur un membre). */}
-        <div className="section-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>OBJECTIFS</span>
+        <div className="md-section-label">
+          <span className="md-section-label-text">Objectifs</span>
           {!editingObjectifs && (
-            <button className="text-action-btn" onClick={startEditObjectifs}>
+            <button className="md-section-action" onClick={startEditObjectifs}>
               {objectifsSaved ? '✓ Enregistré' : 'Modifier'}
             </button>
           )}
         </div>
-        <div className="card card-animated" style={{ marginBottom: 8, '--delay': '120ms' }}>
-          {editingObjectifs ? (
-            <>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
-                {[
-                  { key: 'calorieGoal', label: 'Calories/jour', unit: 'kcal' },
-                  { key: 'proteinGoal', label: 'Protéines/jour', unit: 'g' },
-                  { key: 'stepsGoal', label: 'Pas/jour', unit: 'pas' },
-                  { key: 'waterGoal', label: 'Eau/jour', unit: 'ml' },
-                ].map(f => (
-                  <label key={f.key} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    <span className="text-xs text-muted">{f.label}</span>
-                    <input
-                      type="number"
-                      value={objectifsForm[f.key]}
-                      onChange={e => setObjectifsForm(prev => ({ ...prev, [f.key]: e.target.value }))}
-                      style={{ padding: '10px 12px', fontSize: 14 }}
-                    />
-                  </label>
-                ))}
-              </div>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button className="btn-accent" onClick={handleSaveObjectifs} disabled={objectifsSaving} style={{ flex: 1, opacity: objectifsSaving ? 0.7 : 1 }}>
-                  {objectifsSaving ? '...' : 'ENREGISTRER'}
+        {editingObjectifs ? (
+          <div className="md-list-card" style={{ padding: '14px 20px 20px' }}>
+            <div className="md-form" style={{ border: 'none', marginBottom: 0, paddingBottom: 0 }}>
+              {[
+                { key: 'calorieGoal', label: 'Calories/jour' },
+                { key: 'proteinGoal', label: 'Protéines/jour' },
+                { key: 'stepsGoal', label: 'Pas/jour' },
+                { key: 'waterGoal', label: 'Eau/jour' },
+              ].map(f => (
+                <div key={f.key} className="md-form-field">
+                  <label>{f.label}</label>
+                  <input
+                    type="number"
+                    value={objectifsForm[f.key]}
+                    onChange={e => setObjectifsForm(prev => ({ ...prev, [f.key]: e.target.value }))}
+                  />
+                </div>
+              ))}
+              <div className="md-form-actions">
+                <button className="md-pill-btn solid" onClick={handleSaveObjectifs} disabled={objectifsSaving} style={{ flex: 1 }}>
+                  {objectifsSaving ? '...' : 'Enregistrer'}
                 </button>
-                <button className="btn-ghost" onClick={() => setEditingObjectifs(false)} style={{ flex: 1 }}>
-                  ANNULER
+                <button className="md-pill-btn" onClick={() => setEditingObjectifs(false)} style={{ flex: 1 }}>
+                  Annuler
                 </button>
               </div>
-            </>
-          ) : stats.objectifs ? [
-            `${stats.objectifs.calories_jour} kcal/jour`,
-            `${stats.objectifs.proteines}g de protéines/jour`,
-            `${stats.objectifs.pas_jour?.toLocaleString()} pas/jour`,
-            `${stats.objectifs.eau_ml} ml d'eau/jour`,
-          ].map((obj, i, arr) => (
-            <div key={i} style={{ padding: '8px 0', borderBottom: i < arr.length - 1 ? '2px solid var(--border)' : 'none' }}>
-              <span className="text-sm">{obj}</span>
             </div>
-          )) : (
-            <p className="text-sm text-muted">Aucun objectif enregistré pour ce membre.</p>
-          )}
-        </div>
+          </div>
+        ) : (
+          <div className="md-list-card">
+            {stats.objectifs ? [
+              ['Calories/jour', `${stats.objectifs.calories_jour} kcal`],
+              ['Protéines/jour', `${stats.objectifs.proteines} g`],
+              ['Pas/jour', stats.objectifs.pas_jour?.toLocaleString()],
+              ['Eau/jour', `${stats.objectifs.eau_ml} ml`],
+            ].map(([label, val]) => (
+              <div key={label} className="md-list-row">
+                <span className="md-list-row-label">{label}</span>
+                <span className="md-list-row-value">{val}</span>
+              </div>
+            )) : (
+              <p className="md-empty-note">Aucun objectif enregistré pour ce membre.</p>
+            )}
+          </div>
+        )}
 
         {/* Habitudes/défis assignés — veille produit 2026-08-11, proposition
             n°3 : le coach assigne, le membre coche au quotidien depuis son
             Dashboard. Bande de 7 points façon streak, la plus récente à
             droite, même lecture visuelle que la grille SÉANCES au-dessus. */}
-        <div className="section-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>HABITUDES</span>
+        <div className="md-section-label">
+          <span className="md-section-label-text">Habitudes</span>
           {!assigningHabit && (
-            <button className="text-action-btn" onClick={() => setAssigningHabit(true)}>
+            <button className="md-section-action" onClick={() => setAssigningHabit(true)}>
               + Assigner
             </button>
           )}
         </div>
-        <div className="card card-animated" style={{ marginBottom: 8, '--delay': '150ms' }}>
+        <div className="md-habits-card">
           {assigningHabit && (
-            <div style={{ marginBottom: habits.length > 0 ? 14 : 0, paddingBottom: habits.length > 0 ? 14 : 0, borderBottom: habits.length > 0 ? '2px solid var(--border)' : 'none' }}>
-              <label style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 10 }}>
-                <span className="text-xs text-muted">Habitude ou défi</span>
+            <div className="md-form">
+              <div className="md-form-field">
+                <label>Habitude ou défi</label>
                 <input
                   type="text"
                   value={newHabitTitre}
                   onChange={e => setNewHabitTitre(e.target.value)}
                   placeholder="Ex: Boire 2L d'eau par jour"
-                  style={{ padding: '10px 12px', fontSize: 14 }}
                 />
-              </label>
-              <label style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 12 }}>
-                <span className="text-xs text-muted">Fréquence visée</span>
-                <select value={newHabitFreq} onChange={e => setNewHabitFreq(e.target.value)} style={{ padding: '10px 12px', fontSize: 14 }}>
+              </div>
+              <div className="md-form-field">
+                <label>Fréquence visée</label>
+                <select value={newHabitFreq} onChange={e => setNewHabitFreq(e.target.value)}>
                   {[1, 2, 3, 4, 5, 6, 7].map(n => (
                     <option key={n} value={n}>{n}x / semaine</option>
                   ))}
                 </select>
-              </label>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button className="btn-accent" onClick={handleAssignHabit} disabled={habitSaving || !newHabitTitre.trim()} style={{ flex: 1, opacity: habitSaving ? 0.7 : 1 }}>
-                  {habitSaving ? '...' : 'ASSIGNER'}
+              </div>
+              <div className="md-form-actions">
+                <button className="md-pill-btn solid" onClick={handleAssignHabit} disabled={habitSaving || !newHabitTitre.trim()} style={{ flex: 1 }}>
+                  {habitSaving ? '...' : 'Assigner'}
                 </button>
-                <button className="btn-ghost" onClick={() => { setAssigningHabit(false); setNewHabitTitre('') }} style={{ flex: 1 }}>
-                  ANNULER
+                <button className="md-pill-btn" onClick={() => { setAssigningHabit(false); setNewHabitTitre('') }} style={{ flex: 1 }}>
+                  Annuler
                 </button>
               </div>
             </div>
           )}
-          {habits.length > 0 ? habits.map((h, i) => (
-            <div key={h.id} style={{ padding: '10px 0', borderBottom: i < habits.length - 1 ? '2px solid var(--border)' : 'none' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                <span className="text-sm">{h.titre}</span>
-                <button className="text-action-btn muted" onClick={() => handleArchiveHabit(h.id)}>
+          {habits.length > 0 ? habits.map(h => (
+            <div key={h.id} className="md-habit-row">
+              <div className="md-habit-top">
+                <span className="md-habit-title">{h.titre}</span>
+                <button className="md-section-action muted" onClick={() => handleArchiveHabit(h.id)}>
                   Archiver
                 </button>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <div style={{ display: 'flex', gap: 3 }}>
+              <div className="md-habit-progress">
+                <div className="md-habit-dots">
                   {h.last7Days.map((done, j) => (
-                    <div key={j} style={{ width: 16, height: 16, borderRadius: 4, background: done ? 'var(--accent)' : 'var(--border)' }} />
+                    <div key={j} className={`md-habit-dot${done ? ' done' : ''}`} />
                   ))}
                 </div>
-                <span className="text-xs text-muted" style={{ marginLeft: 4 }}>{h.countThisWeek}/{h.frequenceParSemaine}</span>
+                <span className="md-habit-count">{h.countThisWeek}/{h.frequenceParSemaine}</span>
               </div>
             </div>
           )) : !assigningHabit && (
-            <p className="text-sm text-muted">Aucune habitude assignée à ce membre.</p>
+            <p className="md-empty-note">Aucune habitude assignée à ce membre.</p>
           )}
         </div>
 
         {/* Recent activity — the averages above are good for a trend, but
             spotting a specific problem (a bad meal, a skipped session)
             needs the actual entries. */}
-        <div className="section-label">DERNIERS REPAS</div>
-        <div className="card card-animated" style={{ marginBottom: 8, '--delay': '180ms' }}>
+        <div className="md-section-label"><span className="md-section-label-text">Derniers repas</span></div>
+        <div className="md-list-card">
           {recent.recentMeals.length > 0 ? recent.recentMeals.map((r, i) => (
-            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: i < recent.recentMeals.length - 1 ? '2px solid var(--border)' : 'none' }}>
+            <div key={i} className="md-entry-row">
               <div>
-                <div className="text-sm">{r.nom}</div>
-                <div className="text-xs text-muted">{formatShortDate(r.date)}{r.type_repas ? ` · ${r.type_repas}` : ''}</div>
+                <div className="md-entry-name">{r.nom}</div>
+                <div className="md-entry-sub">{formatShortDate(r.date)}{r.type_repas ? ` · ${r.type_repas}` : ''}</div>
               </div>
-              <span className="text-sm bold">{r.calories} kcal</span>
+              <span className="md-entry-value">{r.calories} kcal</span>
             </div>
           )) : (
-            <p className="text-sm text-muted">Aucun repas enregistré récemment.</p>
+            <p className="md-empty-note">Aucun repas enregistré récemment.</p>
           )}
         </div>
 
-        <div className="section-label">DERNIÈRES SÉANCES</div>
-        <div className="card card-animated" style={{ marginBottom: 8, '--delay': '240ms' }}>
+        <div className="md-section-label"><span className="md-section-label-text">Dernières séances</span></div>
+        <div className="md-list-card">
           {recent.recentSessions.length > 0 ? recent.recentSessions.map((s, i) => (
-            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: i < recent.recentSessions.length - 1 ? '2px solid var(--border)' : 'none' }}>
+            <div key={i} className="md-entry-row">
               <div>
-                <div className="text-sm">{s.nom}</div>
-                <div className="text-xs text-muted">{formatShortDate(s.date)} · {(s.exercices || []).length} exercice{(s.exercices || []).length > 1 ? 's' : ''}</div>
+                <div className="md-entry-name">{s.nom}</div>
+                <div className="md-entry-sub">{formatShortDate(s.date)} · {(s.exercices || []).length} exercice{(s.exercices || []).length > 1 ? 's' : ''}</div>
               </div>
-              <span className="text-sm bold">{s.duree_min} min</span>
+              <span className="md-entry-value">{s.duree_min} min</span>
             </div>
           )) : (
-            <p className="text-sm text-muted">Aucune séance enregistrée récemment.</p>
+            <p className="md-empty-note">Aucune séance enregistrée récemment.</p>
           )}
         </div>
 
         {/* Coach notes — private to this coach, never visible to the
             member (RLS scoped to auth.uid() = coach_id, no member policy
             exists at all). */}
-        <div className="section-label">NOTES COACH</div>
-        <div className="card card-animated" style={{ marginBottom: 8, '--delay': '300ms' }}>
+        <div className="md-section-label"><span className="md-section-label-text">Notes coach</span></div>
+        <div className="md-notes-card">
           <textarea
             value={note}
             onChange={e => setNote(e.target.value)}
             placeholder="Note privée sur ce membre (blessure, objectif particulier...)"
-            style={{ width: '100%', minHeight: 80, background: 'var(--surface-2)', border: '2px solid var(--border)', borderRadius: 10, color: 'var(--text-primary)', fontSize: 14, padding: 12, resize: 'vertical', outline: 'none', fontFamily: 'inherit' }}
           />
-          <button className="btn-ghost" onClick={handleSaveNote} disabled={noteSaving} style={{ marginTop: 10 }}>
-            {noteSaving ? '...' : noteSaved ? '✓ ENREGISTRÉ' : 'ENREGISTRER LA NOTE'}
-          </button>
         </div>
+        <button className="md-pill-btn" onClick={handleSaveNote} disabled={noteSaving} style={{ marginBottom: 20 }}>
+          {noteSaving ? '...' : noteSaved ? '✓ Enregistré' : 'Enregistrer la note'}
+        </button>
 
         {/* Message button — opens the real persisted conversation (messages
             table) instead of the fake local-state modal this used to be,
             which looked like it sent something but never persisted it. */}
-        <button className="btn-ghost" style={{ marginBottom: 16 }} onClick={() => navigate(`/coach/messages/${member.id}`)}>
-          ENVOYER UN MESSAGE
+        <button className="md-pill-btn" style={{ marginBottom: 20 }} onClick={() => navigate(`/coach/messages/${member.id}`)}>
+          Envoyer un message
         </button>
 
         {/* AI Analysis */}
-        <div className="section-label">ANALYSE IA</div>
-        <button className="btn-accent" onClick={generateAnalysis} disabled={analysisLoading} style={{ opacity: analysisLoading ? 0.7 : 1, marginBottom: analysis ? 0 : 16 }}>
-          {analysisLoading ? 'GÉNÉRATION EN COURS...' : 'GÉNÉRER ANALYSE IA'}
+        <div className="md-section-label"><span className="md-section-label-text">Analyse IA</span></div>
+        <button className="md-pill-btn solid" onClick={generateAnalysis} disabled={analysisLoading}>
+          {analysisLoading ? 'Génération en cours...' : 'Générer analyse IA'}
         </button>
         {analysis && (
-          <div className="card" style={{ marginTop: 12, animation: 'fadeIn 400ms ease-out' }}>
-            <p className="text-base" style={{ lineHeight: '24px' }}>{analysis}</p>
-            <p className="text-xs text-muted" style={{ marginTop: 10 }}>Généré par AI Coach VOLTA</p>
+          <div className="md-ai-card fresh" style={{ marginTop: 12 }}>
+            <p className="md-ai-text">{analysis}</p>
+            <p className="md-ai-credit">Généré par AI Coach VOLTA</p>
           </div>
         )}
-        <style>{`@keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }`}</style>
       </div>
-      <CoachNav />
     </div>
   )
 }

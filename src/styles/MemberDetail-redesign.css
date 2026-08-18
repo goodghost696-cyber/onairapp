@@ -1,0 +1,461 @@
+/* ══════════════════════════════════════════════════════════════════════
+   Restyle coach (handoff "Redesign interface VOLTA (8)", design_handoff_coach/
+   MemberDetail.reference.html) — écran 3/6. Même méthode que les écrans
+   précédents : tokens en custom properties scopées sur .memberdetail-
+   redesign, jamais touché global.css ni coach.css, importé uniquement par
+   MemberDetail.jsx. Pas de nav sur cet écran (le handoff le confirme :
+   "Fiche Membre ... n'en ont pas, ce sont des écrans secondaires").
+   ══════════════════════════════════════════════════════════════════════ */
+.memberdetail-redesign {
+  --md-bg: #EFE7D9;
+  --md-screen-bg: #F7F1E6;
+  --md-card: #FFFFFF;
+  --md-card-sunken: #F2ECE2;
+  --md-track: #EFE7D9;
+  --md-divider: #F2ECE2;
+  --md-ink: #1C1A17;
+  --md-cream: #F7F1E6;
+  --md-text-secondary: #4A443C;
+  --md-text-tertiary: #6E675C;
+  --md-text-muted: #736C60;
+  --md-text-faint: #8A8378;
+  --md-olive: #EBEB7D;
+  --md-olive-ink: #55522E;
+  --md-lavender: #A3AEFE;
+  --md-lavender-ink: #3F4780;
+  --md-pink: #FFBEF0;
+  --md-pink-ink: #6B3F5F;
+  --md-magenta: #B62472;
+  font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+  min-height: calc(var(--app-height, 100dvh) - env(safe-area-inset-top));
+  background: var(--md-bg);
+  position: relative;
+}
+.memberdetail-redesign::before {
+  content: '';
+  position: absolute;
+  top: calc(-1 * env(safe-area-inset-top));
+  left: 0;
+  right: 0;
+  height: env(safe-area-inset-top);
+  background: var(--md-bg);
+  z-index: 0;
+}
+body.memberdetail-body-bg {
+  background: #EFE7D9;
+}
+
+.memberdetail-screen {
+  position: relative;
+  z-index: 1;
+  background: var(--md-screen-bg);
+  color: var(--md-ink);
+  /* Pas de nav sur cet écran : padding-bottom "normal", pas la réserve de
+     132px des écrans avec CoachNavBar. */
+  padding: 0 20px 40px;
+}
+
+/* ── En-tête ── */
+.md-topbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 22px 0 18px;
+}
+.md-back {
+  display: flex;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: var(--md-card);
+  align-items: center;
+  justify-content: center;
+  color: var(--md-ink);
+  border: none;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.md-back:active {
+  transform: scale(0.92);
+}
+.md-name {
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--md-ink);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.md-status-badge {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  padding: 5px 11px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.md-status-on-track { color: var(--md-olive-ink); background: var(--md-olive); }
+.md-status-at-risk { color: var(--md-lavender-ink); background: var(--md-lavender); }
+.md-status-inactive { color: var(--md-pink-ink); background: var(--md-pink); }
+
+/* ── Tuiles stats ── */
+.md-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.md-stat-tile {
+  background: var(--md-card);
+  border-radius: 20px;
+  padding: 13px 16px;
+}
+.md-stat-label {
+  font-size: 10px;
+  color: var(--md-text-muted);
+  margin-bottom: 4px;
+}
+.md-stat-value {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--md-ink);
+}
+
+.md-section-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 0 6px 12px;
+}
+.md-section-label-text {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--md-text-muted);
+}
+.md-section-action {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--md-magenta);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  padding: 0;
+}
+.md-section-action.muted {
+  color: var(--md-text-faint);
+  font-weight: 600;
+  font-size: 10.5px;
+}
+
+/* ── Séances cette semaine ── */
+.md-week-card {
+  background: var(--md-card);
+  border-radius: 24px;
+  padding: 18px 16px;
+  margin-bottom: 20px;
+}
+.md-week-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+.md-week-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+.md-week-bar {
+  width: 100%;
+  border-radius: 3px 3px 0 0;
+  background: var(--md-track);
+}
+.md-week-bar.done {
+  background: var(--md-ink);
+}
+.md-week-day {
+  font-size: 9px;
+  color: var(--md-text-muted);
+}
+
+/* ── Objectifs / Derniers repas — listes à rangées séparées ── */
+.md-list-card {
+  background: var(--md-card);
+  border-radius: 24px;
+  padding: 6px 20px;
+  margin-bottom: 20px;
+}
+.md-list-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--md-divider);
+}
+.md-list-row:last-child {
+  border-bottom: none;
+}
+.md-list-row-label {
+  font-size: 13px;
+  color: var(--md-text-secondary);
+}
+.md-list-row-value {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--md-ink);
+  white-space: nowrap;
+}
+.md-empty-note {
+  font-size: 13px;
+  color: var(--md-text-muted);
+  padding: 12px 0;
+}
+
+/* Derniers repas / séances : deux colonnes (nom+date / valeur) plutôt que
+   label/valeur alignés — reprend .md-list-row pour la structure commune
+   (bordures, padding) avec un contenu à gauche sur deux lignes. */
+.md-entry-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--md-divider);
+}
+.md-entry-row:last-child {
+  border-bottom: none;
+}
+.md-entry-name {
+  font-size: 13px;
+  color: var(--md-ink);
+}
+.md-entry-sub {
+  font-size: 10.5px;
+  color: var(--md-text-muted);
+  margin-top: 2px;
+}
+.md-entry-value {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--md-ink);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Habitudes ── */
+.md-habits-card {
+  background: var(--md-card);
+  border-radius: 24px;
+  padding: 18px 20px;
+  margin-bottom: 20px;
+}
+.md-habit-row {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--md-divider);
+}
+.md-habit-row:last-child {
+  border-bottom: none;
+}
+.md-habit-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  gap: 12px;
+}
+.md-habit-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--md-ink);
+}
+.md-habit-progress {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.md-habit-dots {
+  display: flex;
+  gap: 3px;
+}
+.md-habit-dot {
+  width: 15px;
+  height: 15px;
+  border-radius: 4px;
+  background: var(--md-track);
+  flex-shrink: 0;
+}
+.md-habit-dot.done {
+  background: var(--md-lavender);
+}
+.md-habit-count {
+  font-size: 11px;
+  color: var(--md-text-muted);
+  margin-left: 6px;
+}
+
+/* Formulaires (assigner habitude / éditer objectifs) — pas dans la
+   maquette statique (états d'interaction propres à l'app réelle), stylés
+   dans le même langage : champs blancs sur fond crème, boutons pilule. */
+.md-form {
+  margin-bottom: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--md-divider);
+}
+.md-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.md-form-field label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--md-text-muted);
+}
+.md-form-field input,
+.md-form-field select {
+  padding: 12px 14px;
+  font-size: 14px;
+  font-family: inherit;
+  border: none;
+  background: var(--md-screen-bg);
+  border-radius: 12px;
+  color: var(--md-ink);
+  outline: none;
+}
+.md-form-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* ── Boutons pilule pleine largeur (notes, message, assigner, IA) ── */
+.md-pill-btn {
+  width: 100%;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--md-ink);
+  background: var(--md-card);
+  border: none;
+  border-radius: 999px;
+  padding: 14px 0;
+  cursor: pointer;
+  font-family: inherit;
+  transition: transform 120ms ease;
+}
+.md-pill-btn:active {
+  transform: scale(0.985);
+}
+.md-pill-btn:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+.md-pill-btn.solid {
+  background: var(--md-ink);
+  color: var(--md-cream);
+}
+.md-pill-btn.outline {
+  background: none;
+  border: 1.5px solid var(--md-ink);
+}
+
+/* ── Notes coach ── */
+.md-notes-card {
+  background: var(--md-card);
+  border-radius: 24px;
+  padding: 18px 20px;
+  margin-bottom: 8px;
+}
+.md-notes-card textarea {
+  width: 100%;
+  min-height: 90px;
+  background: var(--md-screen-bg);
+  border: none;
+  border-radius: 14px;
+  padding: 12px 14px;
+  color: var(--md-ink);
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+  resize: vertical;
+  outline: none;
+}
+
+/* ── Analyse IA ── */
+.md-ai-card {
+  background: var(--md-ink);
+  border-radius: 24px;
+  padding: 20px 22px;
+}
+.md-ai-text {
+  font-size: 12.5px;
+  color: var(--md-cream);
+  line-height: 1.6;
+  margin-bottom: 10px;
+}
+.md-ai-credit {
+  font-size: 10px;
+  color: rgba(247,241,230,0.55);
+}
+
+/* ── État sans consentement — remplace .consent-none-panel (consent.css)
+   pour cet écran, même traitement neutre que CoachDashboard/ClientsList :
+   fond enfoncé, pas de couleur d'alerte. L'identité (prénom, rattachement)
+   reste visible, les données de suivi ne sont simplement jamais
+   demandées côté logique (voir MemberDetail.jsx : le early-return évite
+   même l'appel réseau). */
+.md-unshared-panel {
+  background: var(--md-card-sunken);
+  border-radius: 24px;
+  padding: 22px 20px;
+  text-align: center;
+  margin-bottom: 20px;
+}
+.md-unshared-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--md-ink);
+  margin-bottom: 8px;
+}
+.md-unshared-sub {
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--md-text-muted);
+}
+
+.md-loading {
+  font-size: 13px;
+  color: var(--md-text-muted);
+  margin-top: 40px;
+  padding: 0 6px;
+}
+
+@keyframes mdFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.md-ai-card.fresh {
+  animation: mdFadeIn 400ms ease-out;
+}
+
+@media (min-width: 900px) {
+  .memberdetail-screen {
+    max-width: 720px;
+    margin: 0 auto;
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
