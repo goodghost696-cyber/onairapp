@@ -82,6 +82,57 @@ Le texte ci-dessous est conservé pour mémoire du point de départ.
 
 **Pourquoi ne pas commencer maintenant** : coder un mécanisme de consentement avant d'avoir tranché opt-in vs opt-out et la formulation exacte reviendrait à jeter le travail, ou pire à afficher au membre une formulation juridiquement fausse. La clarification juridique vient d'abord, le code ensuite.
 
+## 🎨 2026-08-20 — Trois finitions oubliées du restyle (3/3) : loading/skeleton
+
+Dernier des trois points de la session. **Inventaire complet fait avant tout
+changement, comme demandé, présenté à Arnaud pour arbitrage sur les cas ambigus.**
+
+**Déjà restylés pastel chaud, rien à faire** : `.wk-skeleton-block`
+(`CalorieBarsSkeleton`/`SummaryListSkeleton`/`LiftsSkeleton`, Weekly.jsx,
+`weekly-redesign.css`), `.btn-spinner` overridé dans `workout-redesign.css`,
+`.set-avatar-spinner` (`settings-redesign.css`), textes "Chargement..." déjà
+scopés dans chaque `*-redesign.css` (CoachDashboard `.cd-empty-note`,
+CoachPrograms `.cp-loading`, Messages `.msg-empty`, WorkoutLibrary `.wl-loading`).
+
+**Trouvé et corrigé** : `RouteLoadingFallback` (`App.jsx`) — le spinner de
+`<Suspense>` affiché à **chaque** changement d'écran lazy-loaded, donc traversé
+en continu par tout le monde (membre et coach), le seul état de chargement
+réellement transverse à toute l'app plutôt que scopé à un écran. Toujours sur
+`var(--border)`/`var(--accent)` (tokens corail/or globaux), sans fond propre —
+un flash de corail pouvait apparaître entre deux écrans crème sur un chunk lent.
+Recoloré fond crème `#EFE7D9` + anneau encre `#1C1A17`, mêmes valeurs que
+`auth-redesign.css`/`manifest.json` (point 2).
+
+**Deux cas remontés à Arnaud avant modification, tranchés délibérément hors
+scope** :
+- **`.recipe-loading-orb`/`.voice-mode-orb`** (dégradé or/violet, Nutrition +
+  VoiceMode) — jamais touché par aucune passe de restyle, documenté plus haut
+  dans ce journal comme l'identité IA délibérée de l'app ("la sphère elle-même
+  est l'indicateur IA", suite 20-21). **Laissé tel quel** — un choix de marque
+  assumé, pas un oubli, à ne pas casser dans une session de finitions.
+- **`Scan.jsx`** (`.scan-loading-ring`, global.css) — mais c'est l'écran
+  **entier** qui n'a jamais été restylé (`app-wrapper`/`screen` nus, pas de
+  `Scan-redesign.css`), pas juste son loading. **Laissé tel quel** et signalé
+  ici comme 4ᵉ écran non couvert par le chantier restyle (après
+  Login/CoachSignup traités ce jour), décision produit séparée à prendre —
+  même traitement que Conversation.jsx (déjà documenté hors périmètre) et
+  PlatformAdmin.jsx (outil interne, jamais customer-facing).
+
+**Test réel** : délai artificiel de 2,5s ajouté temporairement sur l'import
+lazy de CoachSignup (`new Promise(r => setTimeout(r, 2500)).then(...)`),
+`npm run build` + `npm run preview`, navigation vers `/coach-signup` en Chrome
+— fallback capturé à l'écran (fond crème, anneau encre visible pendant le
+délai), confirmé, délai retiré avant le build final. `git diff` vérifié après
+coup pour confirmer qu'aucun résidu du délai de test n'est resté dans le commit.
+
+**Bilan des trois finitions (session complète)** : Login/CoachSignup restylés
+(1/3), manifest/theme-color corrigés pour le splash natif — testé par Arnaud
+en réel après déploiement (2/3), RouteLoadingFallback restylé (3/3). Deux
+chantiers ouverts identifiés en creusant, non traités par choix : régénération
+de `icon-192.png`/`icon-512.png` (fond noir baked-in, point 2) et restyle de
+l'écran `Scan.jsx` en entier (point 3) — tous deux nécessitent plus qu'un fix
+de config/CSS isolé.
+
 ## 🎨 2026-08-20 — Trois finitions oubliées du restyle (2/3) : splash natif iOS/PWA
 
 Suite directe du point 1 (Login/CoachSignup). **Symptôme signalé : flash visible de

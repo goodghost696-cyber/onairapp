@@ -31,19 +31,26 @@ import MemberLayout from './layouts/MemberLayout'
 import CoachLayout from './layouts/CoachLayout'
 import PublicLayout from './layouts/PublicLayout'
 
-// Fallback shown while a lazy-loaded screen chunk is fetched. Reuses the
-// app's existing ring-spinner visual language (see .btn-spinner in
+// Fallback shown while a lazy-loaded screen chunk is fetched — crosses
+// every route change in the app, member and coach alike, so it's the one
+// loading state that's genuinely global rather than scoped to a single
+// screen. Ring-spinner visual language kept (see .btn-spinner in
 // Workout.css / .scan-loading-ring in global.css: border ring + accent
-// top-border + the global `spin` keyframe from global.css) instead of
-// introducing a new loading pattern.
+// top-border + the global `spin` keyframe from global.css), but recolored
+// pastel chaud (2026-08-20, finitions oubliées du restyle, point 3) — was
+// still on var(--border)/var(--accent) (tokens corail/or globaux) with no
+// background of its own, meaning a flash of corail could show through
+// between two crème screens on a slow chunk fetch. Explicit crème
+// background + ink ring, same values as auth-redesign.css/manifest.json
+// rather than the old global tokens.
 function RouteLoadingFallback() {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#EFE7D9' }}>
       <div style={{
         width: 32,
         height: 32,
-        border: '2px solid var(--border)',
-        borderTopColor: 'var(--accent)',
+        border: '2px solid rgba(28,26,23,0.2)',
+        borderTopColor: '#1C1A17',
         borderRadius: '50%',
         animation: 'spin 800ms linear infinite',
       }} />
