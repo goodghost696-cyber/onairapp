@@ -82,6 +82,43 @@ Le texte ci-dessous est conservé pour mémoire du point de départ.
 
 **Pourquoi ne pas commencer maintenant** : coder un mécanisme de consentement avant d'avoir tranché opt-in vs opt-out et la formulation exacte reviendrait à jeter le travail, ou pire à afficher au membre une formulation juridiquement fausse. La clarification juridique vient d'abord, le code ensuite.
 
+## 🎨 2026-08-20 — Trois finitions oubliées du restyle (1/3) : écrans Connexion/Inscription
+
+Le restyle membre + coach ("pastel chaud") est terminé sur les écrans applicatifs, mais trois finitions visuelles étaient restées sur l'ancien habillage. Session dédiée à les traiter une par une, chacune investiguée avant modification, testée en réel, commit atomique séparé.
+
+**Point 1 : Login.jsx (connexion + inscription membre, onglets) et CoachSignup.jsx
+(création de salle coach).** Investigation : les deux écrans utilisaient des styles
+inline référençant les tokens globaux de `global.css` (`--surface`, `--accent`,
+`--text-primary`...), jamais migrés vers un `*-redesign.css` scopé comme le reste de
+l'app — `--bg` de `global.css` (toujours corail `#E8552B`, jamais retouché par choix
+sur l'ensemble du chantier) transparaissait donc derrière ces deux écrans, seuls
+restés visuellement "ancien design". Aucun handoff Claude Design dédié pour ces deux
+écrans (jamais couverts par aucun package reçu) — mêmes valeurs hex exactes que les
+écrans déjà migrés (`settings-redesign.css`/`dashboard.css`), pas de nouvelle teinte
+inventée.
+
+`auth-redesign.css` (nouveau, scopé `.auth-redesign`) : un seul fichier pour les deux
+écrans (structure identique, mêmes styles inline avant ce commit) — fond crème
+`#EFE7D9`, cartes/champs blancs, onglet actif olive `#EBEB7D`, focus lavande
+`#A3AEFE`, CTA pilule pleine encre `#1C1A17` (même convention que le CTA Dashboard),
+carte code d'invitation bordée magenta `#B62472`, Poppins. Même mécanisme de classe
+`body.auth-body-bg` que `settings-redesign.css` pour couvrir le fond derrière
+`.app-wrapper` (overscroll iOS compris). Logique JS intacte des deux écrans —
+seul l'habillage change (styles inline remplacés par des classes).
+
+**Test réel** (pas juste lecture de code) : serveur Vite local avec des clés
+Supabase factices (`.env` local, gitignored, jamais commité — juste pour lever le
+crash `supabaseUrl is required` qui rendait l'app blanche sans clés, aucun besoin
+d'appel réseau réel pour valider le rendu visuel de ces deux écrans publics).
+Vérifiés via Chrome : Login onglet Connexion, onglet Inscription (5 champs), état
+"mot de passe oublié", et CoachSignup (formulaire "Créer ma salle") — tous rendus
+avec la palette pastel chaud attendue, pas de fond corail résiduel. `.env` de test
+supprimé après vérification, serveur Vite arrêté.
+
+`npm run build` + grep du bundle compilé : chunk dédié
+`auth-redesign-[hash].css` confirmé présent (partagé par les deux routes lazy),
+`EFE7D9`/`auth-redesign`/`auth-primary-btn` confirmés dans le CSS et le JS compilés.
+
 ## 🎨 2026-08-18/20 — Restyle espace coach (5/6, 6/6) : CoachPrograms, CoachSettings — chantier terminé (6/6)
 
 Suite directe des deux entrées précédentes. Cette session : les deux

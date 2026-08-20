@@ -1,0 +1,197 @@
+/* ══════════════════════════════════════════════════════════════════════
+   Restyle VOLTA "pastel chaud" — Login.jsx (connexion + inscription
+   membre, onglets) et CoachSignup.jsx (création de salle coach), les deux
+   derniers écrans du parcours d'authentification restés sur l'ancien
+   habillage (--bg corail hérité de global.css) après que le reste de
+   l'app connectée (membre + coach) est passé au système pastel chaud —
+   voir *-redesign.css existants et JOURNAL.md.
+
+   Pas de handoff dédié pour ces deux écrans (jamais couverts par un
+   package Claude Design) — mêmes valeurs hex exactes que les écrans déjà
+   migrés (settings-redesign.css/dashboard.css), pas de nouvelle teinte
+   inventée. Un seul fichier pour les deux écrans : structure identique
+   (form empilé, mêmes styles inline avant ce commit), même scope
+   `.auth-redesign` posé sur `.app-wrapper` dans les deux JSX.
+
+   Fond simple (pas de système à deux fonds façon Settings/Dashboard) :
+   ces écrans sont un formulaire plein écran, pas une liste de cartes sur
+   fond distinct — cohérent avec splash-redesign.css, même cas de figure. */
+.auth-redesign {
+  --auth-bg: #EFE7D9;
+  --auth-card: #FFFFFF;
+  --auth-field-border: #F2ECE2;
+  --auth-ink: #1C1A17;
+  --auth-text-secondary: #4A443C;
+  --auth-text-muted: #736C60;
+  --auth-olive: #EBEB7D;
+  --auth-lavender: #A3AEFE;
+  --auth-magenta: #B62472;
+  font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+  background: var(--auth-bg);
+  color: var(--auth-ink);
+  min-height: calc(var(--app-height, 100dvh) - env(safe-area-inset-top));
+  position: relative;
+}
+
+/* Même fix de bande safe-area que settings-redesign.css/dashboard.css —
+   sans lui, le notch/l'encoche laisse voir le fond --bg (corail) de
+   global.css derrière le contenu. */
+.auth-redesign::before {
+  content: '';
+  position: absolute;
+  top: calc(-1 * env(safe-area-inset-top));
+  left: 0;
+  right: 0;
+  height: env(safe-area-inset-top);
+  background: var(--auth-bg);
+  z-index: 0;
+}
+
+body.auth-body-bg {
+  background: #EFE7D9;
+}
+
+.auth-title {
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--auth-ink);
+  margin: 0 0 8px;
+}
+
+.auth-subtitle {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--auth-text-secondary);
+  margin: 0 0 22px;
+}
+
+/* ── Onglets Connexion/Inscription (Login.jsx) ── */
+.auth-tabs {
+  display: flex;
+  gap: 8px;
+  background: var(--auth-card);
+  border-radius: 16px;
+  padding: 4px;
+  margin-bottom: 22px;
+}
+.auth-tab {
+  flex: 1;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--auth-text-muted);
+  background: transparent;
+  border-radius: 12px;
+  padding: 10px 0;
+  transition: all 150ms ease;
+}
+.auth-tab.active {
+  background: var(--auth-olive);
+  color: var(--auth-ink);
+}
+
+/* ── Champs de formulaire ── */
+.auth-field {
+  background: var(--auth-card);
+  border: 1.5px solid var(--auth-field-border);
+  color: var(--auth-ink);
+  padding: 16px;
+  font-size: 15px;
+  font-weight: 600;
+  width: 100%;
+  outline: none;
+  border-radius: 14px;
+  font-family: inherit;
+}
+.auth-field::placeholder {
+  color: var(--auth-text-muted);
+}
+.auth-field:focus {
+  border-color: var(--auth-lavender) !important;
+  outline: none;
+}
+
+.auth-error {
+  font-size: 11px;
+  color: var(--danger);
+  letter-spacing: 0.05em;
+}
+.auth-success {
+  font-size: 12px;
+  color: var(--success);
+}
+
+/* ── Boutons ── */
+.auth-primary-btn {
+  width: 100%;
+  background: var(--auth-ink);
+  color: var(--auth-bg);
+  border: none;
+  border-radius: 999px;
+  padding: 18px 16px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.auth-primary-btn:disabled {
+  opacity: 0.7;
+}
+
+/* Bouton secondaire plein (récap code d'invitation, CoachSignup.jsx). */
+.auth-secondary-btn {
+  background: var(--auth-card);
+  color: var(--auth-ink);
+  border: 1.5px solid var(--auth-field-border);
+}
+
+.auth-link-btn {
+  background: none;
+  border: none;
+  color: var(--auth-text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+  text-align: center;
+  margin-top: 4px;
+  font-family: inherit;
+  padding: 0;
+}
+.auth-link-btn.align-end {
+  align-self: flex-end;
+  text-align: right;
+}
+
+/* ── Carte code d'invitation (CoachSignup.jsx, étape "done") ── */
+.auth-invite-card {
+  background: var(--auth-card);
+  border: 2px solid var(--auth-magenta);
+  border-radius: 16px;
+  padding: 20px;
+  text-align: center;
+  margin-bottom: 20px;
+}
+.auth-invite-eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--auth-text-muted);
+  margin-bottom: 8px;
+}
+.auth-invite-code {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: var(--auth-ink);
+  font-variant-numeric: tabular-nums;
+}

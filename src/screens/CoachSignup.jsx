@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase, authHeader } from '../lib/supabase'
 import { mapAuthError } from '../utils/authErrors'
 import { mapApiError } from '../utils/apiErrors'
+import '../styles/auth-redesign.css'
 
 // Self-service "créer ma salle" — the follow-up explicitly flagged as out
 // of scope when the multi-tenant foundation (gyms table, gym_id, RLS
@@ -24,6 +25,13 @@ export default function CoachSignup() {
   const [submitting, setSubmitting] = useState(false)
   const [gym, setGym] = useState(null)
   const [copied, setCopied] = useState(false)
+
+  // Même mécanisme que Login.jsx/auth-redesign.css — couvre le fond
+  // derrière .app-wrapper (overscroll iOS compris).
+  useEffect(() => {
+    document.body.classList.add('auth-body-bg')
+    return () => document.body.classList.remove('auth-body-bg')
+  }, [])
 
   async function handleSubmit() {
     setError('')
@@ -96,41 +104,30 @@ export default function CoachSignup() {
     setTimeout(() => setCopied(false), 2000)
   }
 
-  const inputStyle = {
-    background: 'var(--surface)', border: '2px solid var(--border-strong)', color: 'var(--text-primary)',
-    padding: '16px', fontSize: 15, fontWeight: 700, width: '100%', outline: 'none', borderRadius: 14,
-    fontFamily: 'inherit',
-  }
-  const pillButtonStyle = {
-    width: '100%', background: 'var(--accent)', color: 'var(--accent-ink)', border: 'none', borderRadius: 999,
-    padding: '18px 16px', fontSize: 14, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase',
-    fontFamily: 'inherit', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-  }
-
   return (
-    <div className="app-wrapper">
+    <div className="app-wrapper auth-redesign">
       <div style={{ padding: '80px 28px 28px', display: 'flex', flexDirection: 'column', minHeight: '100dvh' }}>
         {step === 'form' ? (
           <>
-            <h1 style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--text-primary)', margin: '0 0 8px' }}>
+            <h1 className="auth-title" style={{ fontSize: 28 }}>
               Créer ma salle
             </h1>
-            <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '0 0 22px' }}>
+            <p className="auth-subtitle">
               Ton propre espace coach VOLTA, avec ton code d'invitation pour tes membres.
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <input style={inputStyle} type="text" placeholder="Nom de la salle" value={data.gymName} onChange={e => setData(d => ({ ...d, gymName: e.target.value }))} />
-              <input style={inputStyle} type="text" placeholder="Ton prénom" value={data.firstName} onChange={e => setData(d => ({ ...d, firstName: e.target.value }))} />
-              <input style={inputStyle} type="email" placeholder="Email" value={data.email} onChange={e => setData(d => ({ ...d, email: e.target.value }))} />
-              <input style={inputStyle} type="password" placeholder="Mot de passe" value={data.password} onChange={e => setData(d => ({ ...d, password: e.target.value }))} />
-              <input style={inputStyle} type="password" placeholder="Confirme le mot de passe" value={data.confirm} onChange={e => setData(d => ({ ...d, confirm: e.target.value }))} onKeyDown={e => e.key === 'Enter' && handleSubmit()} />
-              {error && <span style={{ fontSize: 11, color: 'var(--danger)' }}>{error}</span>}
-              <button onClick={handleSubmit} disabled={submitting} style={{ ...pillButtonStyle, marginTop: 4, opacity: submitting ? 0.7 : 1 }}>
+              <input className="auth-field" type="text" placeholder="Nom de la salle" value={data.gymName} onChange={e => setData(d => ({ ...d, gymName: e.target.value }))} />
+              <input className="auth-field" type="text" placeholder="Ton prénom" value={data.firstName} onChange={e => setData(d => ({ ...d, firstName: e.target.value }))} />
+              <input className="auth-field" type="email" placeholder="Email" value={data.email} onChange={e => setData(d => ({ ...d, email: e.target.value }))} />
+              <input className="auth-field" type="password" placeholder="Mot de passe" value={data.password} onChange={e => setData(d => ({ ...d, password: e.target.value }))} />
+              <input className="auth-field" type="password" placeholder="Confirme le mot de passe" value={data.confirm} onChange={e => setData(d => ({ ...d, confirm: e.target.value }))} onKeyDown={e => e.key === 'Enter' && handleSubmit()} />
+              {error && <span className="auth-error">{error}</span>}
+              <button onClick={handleSubmit} disabled={submitting} className="auth-primary-btn" style={{ marginTop: 4 }}>
                 {submitting ? '...' : <>CRÉER MA SALLE <span>→</span></>}
               </button>
               <button
                 onClick={() => navigate('/login', { state: { tab: 'login' } })}
-                style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: 12, cursor: 'pointer', textAlign: 'center', marginTop: 4, fontFamily: 'inherit' }}
+                className="auth-link-btn"
               >
                 J'ai déjà un compte coach
               </button>
@@ -138,48 +135,40 @@ export default function CoachSignup() {
           </>
         ) : step === 'needsConfirmation' ? (
           <>
-            <h1 style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--text-primary)', margin: '0 0 8px' }}>
+            <h1 className="auth-title" style={{ fontSize: 28 }}>
               Vérifie ta boîte mail
             </h1>
-            <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '0 0 22px' }}>
+            <p className="auth-subtitle">
               Compte créé — vérifie ta boîte mail pour confirmer ton adresse. Ta salle sera prête dès ta première connexion.
             </p>
-            <button onClick={() => navigate('/login', { state: { tab: 'login' } })} style={pillButtonStyle}>
+            <button onClick={() => navigate('/login', { state: { tab: 'login' } })} className="auth-primary-btn">
               ALLER À LA CONNEXION <span>→</span>
             </button>
           </>
         ) : (
           <>
-            <h1 style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--text-primary)', margin: '0 0 8px' }}>
+            <h1 className="auth-title" style={{ fontSize: 28 }}>
               {gym?.name} est prête 🎉
             </h1>
-            <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '0 0 22px' }}>
+            <p className="auth-subtitle">
               Voici le code à donner à tes membres pour qu'ils rejoignent ta salle. Tu le retrouveras aussi dans tes réglages coach.
             </p>
-            <div style={{
-              background: 'var(--surface)', border: '2px solid var(--accent)', borderRadius: 16,
-              padding: '20px', textAlign: 'center', marginBottom: 20,
-            }}>
-              <div style={{ fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 8 }}>
+            <div className="auth-invite-card">
+              <div className="auth-invite-eyebrow">
                 Code d'invitation
               </div>
-              <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: '0.1em', color: 'var(--text-primary)', fontVariantNumeric: 'tabular-nums' }}>
+              <div className="auth-invite-code">
                 {gym?.invite_code}
               </div>
             </div>
-            <button onClick={copyCode} style={{ ...pillButtonStyle, marginBottom: 12, background: 'var(--surface)', color: 'var(--text-primary)', border: '2px solid var(--border-strong)' }}>
+            <button onClick={copyCode} className="auth-primary-btn auth-secondary-btn" style={{ marginBottom: 12 }}>
               {copied ? '✓ Copié' : 'Copier le code'}
             </button>
-            <button onClick={() => navigate('/coach')} style={pillButtonStyle}>
+            <button onClick={() => navigate('/coach')} className="auth-primary-btn">
               ALLER À MON ESPACE COACH <span>→</span>
             </button>
           </>
         )}
-
-        <style>{`
-          input::placeholder { color: #9A9A9A; }
-          input:focus { border-color: var(--accent) !important; outline: none; }
-        `}</style>
       </div>
     </div>
   )
