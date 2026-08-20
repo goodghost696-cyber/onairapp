@@ -82,6 +82,112 @@ Le texte ci-dessous est conservé pour mémoire du point de départ.
 
 **Pourquoi ne pas commencer maintenant** : coder un mécanisme de consentement avant d'avoir tranché opt-in vs opt-out et la formulation exacte reviendrait à jeter le travail, ou pire à afficher au membre une formulation juridiquement fausse. La clarification juridique vient d'abord, le code ensuite.
 
+## 🎨 2026-08-18/20 — Restyle espace coach (5/6, 6/6) : CoachPrograms, CoachSettings — chantier terminé (6/6)
+
+Suite directe des deux entrées précédentes. Cette session : les deux
+derniers écrans, **CoachPrograms** et **CoachSettings**, un écran à la fois,
+chacun buildé et testé en réel avant de passer au suivant — même discipline
+que les 4 précédents. Le restyle coach est désormais **intégralement
+terminé (6/6)**.
+
+**CoachPrograms** — confirmé sans nav par le handoff (README : « Fiche
+Membre ... et Programmes n'en ont pas, ce sont des écrans secondaires »),
+cohérent avec MemberDetail déjà migré. `CoachPrograms-redesign.css`
+(nouveau, scopé `.coachprograms-redesign`/`.coachprograms-screen`) :
+formulaire de création, cartes programme, puces membres assignés
+(`<button>` avec `aria-label`, pas de `<span>` cliquable), et **sheet
+d'assignation** en bas d'écran (overlay + panneau `position:fixed`,
+premier sheet de ce type dans le restyle coach — même langage que le
+bottom sheet de `DeleteAccountButton`). Logique intacte : `fetchCoachRoster`
+(roster d'identité, indépendant du consentement au suivi — un programme
+est assigné, pas une donnée de suivi), création/suppression/assignation/
+retrait de programme inchangés.
+
+**CoachSettings** — dernier écran avec nav, réutilise `CoachNavBar.jsx` tel
+quel (4ᵉ et dernier écran à migrer dessus). `CoachSettings-redesign.css`
+(nouveau, scopé `.coachsettings-redesign`/`.coachsettings-screen`) :
+sections Profil/Salle/Facturation/Usage IA/Notifications/Compte en cartes
+`.cs-card`, toggle notifications restylé (`.cs-toggle`, même mécanisme
+`role="switch"` qu'avant, habillage olive au lieu de `--accent`).
+`DeleteAccountButton.jsx` (partagé membre/coach) laissé tel quel — pas de
+fork pour un habillage custom sur ce seul écran. Point 3 de la consigne de
+session (rapport avec le consentement ?) vérifié : rien de pertinent, cet
+écran ne montre aucun état de consentement d'un membre en particulier —
+ignoré comme prévu.
+
+**Test réel, un locataire QA dédié** (1 coach + 1 membre consentant,
+signup + onboarding complets via le vrai formulaire, production) :
+- **CoachPrograms** : programme créé (« PUSH DAY QA test », 1 exercice),
+  carte affichée correctement, sheet d'assignation ouverte, membre coché
+  (case pleine encre), assigné → chip visible sur la carte, retrait de
+  l'assignation (✕ sur la chip) confirmé, suppression du programme avec le
+  double-tap de confirmation (« Supprimer » → « Confirmer ? » en magenta →
+  suppression) confirmée, retour à l'état vide correct.
+- **CoachSettings** : toutes les sections affichées avec les bonnes
+  données réelles (profil, salle + code d'accès, facturation essai en
+  cours, usage IA 0/2000, notifications, compte). Navigation testée en
+  réel entre Réglages et Clients : la pastille glisse correctement d'un
+  onglet à l'autre.
+
+**Nettoyage — un imprévu découvert en creusant l'étape « retirer le code
+mort » (point 6 de la consigne de session).** L'hypothèse de départ
+(`CoachNav.jsx`/`nav.css` deviennent morts une fois les 6 écrans migrés)
+était **fausse** : `Conversation.jsx` (l'écran de conversation individuelle,
+`/coach/messages/:id`, hors périmètre du handoff — celui-ci ne couvre que
+les 6 écrans listés) importe et rend encore `<CoachNav />` côté coach.
+Confirmé côté build également : avant cette session `CoachNav-*.js` était
+un chunk séparé (~22 kB, partagé par 3 écrans) ; une fois
+CoachPrograms/CoachSettings migrés, Vite l'a automatiquement inliné dans
+le chunk `Conversation-*.js` (passé de 4,5 à 26 kB) — signe qu'il n'a plus
+qu'un seul importeur restant, mais un importeur bien réel. **`CoachNav.jsx`
+n'a donc *pas* été supprimé** — le supprimer aurait cassé la nav de
+`Conversation.jsx` côté coach en production. Idem pour `nav.css` : partagé
+avec `BottomNav.jsx` (nav membre), jamais un fichier dédié à `CoachNav.jsx`
+seul, donc de toute façon pas supprimable indépendamment.
+
+`consent.css` : même vérification, même conclusion partielle. Le fichier
+**reste nécessaire** — `CoachConsentGate.jsx` (sheet d'opt-in membre,
+`.consent-overlay`/`.consent-sheet`/`.consent-submit`/...) et `Settings.jsx`
+(`.privacy-row`, section Confidentialité) en dépendent toujours activement.
+Seule la portion réellement morte a été retirée : `.consent-none` et
+`.consent-none-panel*` (traitement coach-side « membre non partagé »),
+remplacés dès les sessions précédentes par le traitement scopé propre à
+chaque écran (`.cd-unshared-card`, `.cl-card.unshared`,
+`.md-unshared-panel`, etc.) — plus aucun JSX ne les référençait. `npm run
+build` + grep du bundle confirment `consent-none` absent, `consent-sheet`/
+`privacy-row` toujours présents.
+
+**Si un futur chantier veut aller au bout du ménage nav** : migrer
+`Conversation.jsx` vers `CoachNavBar.jsx` (hors périmètre du handoff « 8 »,
+décision produit à prendre séparément — cet écran n'a pas de maquette
+dédiée dans ce handoff) est le seul chemin qui rendrait `CoachNav.jsx`
+réellement mort.
+
+**Compte de test, nettoyage vérifié à 0** (1 coach + 1 membre, suppression
+via le vrai flux applicatif « Supprimer mon compte » pour les deux
+comptes ; salle orpheline — pas de cascade `gyms` depuis `auth.users`,
+comme les sessions précédentes — supprimée séparément par SQL) : base
+revérifiée identique au baseline (5 `auth.users`, 5 `profiles`, 1 `gyms`).
+
+**Bilan global du chantier restyle coach (6/6, terminé) :**
+- 6 écrans migrés vers le handoff « Redesign interface VOLTA (8) » :
+  CoachDashboard, ClientsList, MemberDetail, CoachMessages, CoachPrograms,
+  CoachSettings — un écran à la fois sur 3 sessions (18-20/08), chacun
+  buildé + grep du bundle + testé en réel avant le suivant.
+- 1 composant de nav mutualisé créé (`CoachNavBar.jsx` + pastille glissante
+  animée, mécanisme repris à l'identique de la nav membre).
+- 6 feuilles CSS scopées créées (`*-redesign.css`), `global.css`/`coach.css`
+  jamais touchés.
+- Aucun bug fonctionnel introduit détecté pendant les tests réels
+  (fonctionnalités inchangées par construction — le handoff n'était que
+  visuel) ; le seul imprévu réel du chantier était l'échec de reconnexion
+  d'un compte QA pendant la session MemberDetail/CoachMessages (throttle
+  Supabase, contourné par suppression SQL directe, voir entrée du 18/08).
+- Dette identifiée mais **non traitée par choix** (hors périmètre du
+  handoff, décision produit séparée à prendre) : `CoachNav.jsx`/`nav.css`
+  restent en usage pour `Conversation.jsx` côté coach — ce n'est pas du
+  code mort, juste un composant non encore couvert par le nouveau design.
+
 ## 🎨 2026-08-18 (suite) — Restyle espace coach (3/6, 4/6) : MemberDetail, CoachMessages
 
 Suite directe de l'entrée précédente. Cette session : **MemberDetail** et
