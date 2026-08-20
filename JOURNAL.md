@@ -82,6 +82,45 @@ Le texte ci-dessous est conservé pour mémoire du point de départ.
 
 **Pourquoi ne pas commencer maintenant** : coder un mécanisme de consentement avant d'avoir tranché opt-in vs opt-out et la formulation exacte reviendrait à jeter le travail, ou pire à afficher au membre une formulation juridiquement fausse. La clarification juridique vient d'abord, le code ensuite.
 
+## 🎨 2026-08-20 — Trois finitions oubliées du restyle (2/3) : splash natif iOS/PWA
+
+Suite directe du point 1 (Login/CoachSignup). **Symptôme signalé : flash visible de
+l'ancien fond pendant environ une demi-seconde à l'ouverture depuis l'écran d'accueil
+du téléphone.** À distinguer de `SplashIntro.jsx`/`splash-redesign.css` (l'animation
+JS affichée une fois par visite sur Landing, déjà migrée pastel chaud, cf. entrée du
+restyle membre) — ici c'est le **splash natif généré par l'OS** (iOS "Add to Home
+Screen" / Android PWA install) à partir de `manifest.json`, peint plein écran avant
+qu'aucun CSS ou JS de l'app ne charge.
+
+**Cause trouvée** : `public/manifest.json` avait `background_color: "#0A0A0A"` (noir,
+identité pré-corail — jamais touché depuis, ni au pivot corail ni au pastel chaud) et
+`theme_color: "#EF6B41"` (corail, pré-pastel-chaud). `index.html` portait le même
+`theme-color` corail obsolète. Les trois passés à `#EFE7D9` (crème), la couleur que
+patchent déjà tous les `*-redesign.css` sur leur bande `safe-area-inset-top` — il n'y
+a donc plus qu'une seule teinte du splash natif jusqu'au premier paint, au lieu de
+trois différentes (noir → corail → crème).
+
+**Trouvaille annexe, pas traitée cette session** : `icon-192.png`/`icon-512.png`
+(mêmes fichiers utilisés pour composer le splash ET l'icône d'app sur l'écran
+d'accueil) ont un **fond noir plein baked-in dans le PNG lui-même**, avec un mark
+plein (pas le tracé stroke-only actuel de `Logo.jsx`/`logo-volta.svg`) — un asset
+antérieur même à l'identité corail. `background_color` du manifest ne peut pas
+compenser un pixel opaque dans l'icône composée par-dessus. Corriger ça demande une
+régénération d'image cohérente avec le mark actuel, pas un fix de config — laissé en
+chantier ouvert, à traiter avec un vrai outil de design plutôt qu'improvisé ici.
+
+**Vérifié dans le build compilé** : `npm run build`, `dist/manifest.json` et
+`dist/index.html` servis en local (`npm run preview`) confirment
+`background_color`/`theme_color`/`theme-color` à `#EFE7D9` partout, JSON valide.
+
+**Test réel — limite explicite de cet environnement.** Cette session tourne sur une
+machine Windows sans iPhone/Mac ni simulateur iOS connecté : impossible de
+reproduire ici le vrai scénario demandé (fermeture complète de l'app + réouverture
+depuis l'écran d'accueil). Seule la validité du manifest servi a pu être vérifiée
+via Chrome. **Arnaud a choisi de tester lui-même sur son téléphone après déploiement**
+plutôt que de laisser ce point en attente — à confirmer dans une session
+suivante si le flash a bien disparu.
+
 ## 🎨 2026-08-20 — Trois finitions oubliées du restyle (1/3) : écrans Connexion/Inscription
 
 Le restyle membre + coach ("pastel chaud") est terminé sur les écrans applicatifs, mais trois finitions visuelles étaient restées sur l'ancien habillage. Session dédiée à les traiter une par une, chacune investiguée avant modification, testée en réel, commit atomique séparé.
