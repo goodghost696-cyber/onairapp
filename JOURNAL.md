@@ -82,6 +82,41 @@ Le texte ci-dessous est conservé pour mémoire du point de départ.
 
 **Pourquoi ne pas commencer maintenant** : coder un mécanisme de consentement avant d'avoir tranché opt-in vs opt-out et la formulation exacte reviendrait à jeter le travail, ou pire à afficher au membre une formulation juridiquement fausse. La clarification juridique vient d'abord, le code ensuite.
 
+## 🎨 2026-08-29 — Icônes PWA (`icon-192.png`/`icon-512.png`) : fond noir régénéré en crème
+
+Chantier ouvert identifié dans l'entrée du 2026-08-20 (point 2/3, splash natif) :
+les deux PNG utilisés à la fois pour l'icône d'app (écran d'accueil iOS/Android)
+et pour composer le splash natif avaient un **fond noir plein baked-in dans le
+pixel lui-même** (`#0A0A0A`, identité pré-corail), avec un mark plein différent
+du tracé stroke-only actuel — `background_color` du manifest (déjà corrigé le
+2026-08-20 en `#EFE7D9`) ne pouvait rien y changer, un pixel opaque composé
+par-dessus ne laisse pas voir la couleur de fond en dessous.
+
+**Régénérées** (`scripts/generate-pwa-icons.ps1`, nouveau, gardé pour toute
+régénération future si le mark change à nouveau) : fond crème plein `#EFE7D9`
++ mark repris à l'identique de `public/logo-volta.svg`/`Logo.jsx` (mêmes points
+de tracé, `#F0C14B`, cap/join arrondis), recentré et mis à l'échelle dans
+chaque canevas (192×192 et 512×512, les deux seules tailles listées dans
+`manifest.json` — pas de variante `maskable` déclarée, donc pas de zone de
+sécurité supplémentaire à gérer). Généré via `System.Drawing` (.NET, déjà
+disponible sous PowerShell, pas de nouvelle dépendance npm ajoutée pour un
+besoin ponctuel) plutôt qu'un rendu navigateur, pour un contrôle pixel exact
+des deux tailles.
+
+**Rien d'autre à mettre à jour** : `manifest.json` référence déjà les deux
+mêmes chemins/tailles (non touché), `index.html` (`apple-touch-icon`) et
+`sw.js` (icône/badge de notification push) pointent sur les mêmes fichiers,
+pas de chemin à changer. `npm run build` : `dist/icon-192.png`/`icon-512.png`
+confirmés identiques (hash) aux nouveaux fichiers de `public/`.
+
+**Test réel — limite explicite de cet environnement, comme le point 2/3 du
+2026-08-20.** Aucun appareil iOS/Android connecté ici pour réinstaller la PWA
+sur un vrai écran d'accueil. Seule la génération des PNG a pu être vérifiée
+visuellement (rendu correct, fond crème plein, mark lisible aux deux tailles).
+**Arnaud a choisi de tester lui-même après déploiement** (suppression de
+l'icône existante + réinstallation via « Ajouter à l'écran d'accueil ») plutôt
+que de laisser ce point en attente — à confirmer dans une session suivante.
+
 ## 🎨 2026-08-20 — Trois finitions oubliées du restyle (3/3) : loading/skeleton
 
 Dernier des trois points de la session. **Inventaire complet fait avant tout
