@@ -2,6 +2,7 @@ import {
   Home, Utensils, Dumbbell, MessageCircle, Settings, Users, BarChart3,
   Clipboard, Droplet, Moon, Zap, Award, Key, Mic, Camera, Link as LinkIcon,
   Sun, Salad, Apple, Flame, Sparkles, Check, Footprints, Activity,
+  Images, Barcode,
 } from 'lucide-react'
 
 // Was a hand-drawn SVG path set (no browser in this sandbox to visually
@@ -27,6 +28,8 @@ const ICONS = {
   key: Key,
   mic: Mic,
   camera: Camera,
+  gallery: Images,
+  barcode: Barcode,
   link: LinkIcon,
   sun: Sun,
   salad: Salad,

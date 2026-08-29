@@ -82,6 +82,83 @@ Le texte ci-dessous est conservé pour mémoire du point de départ.
 
 **Pourquoi ne pas commencer maintenant** : coder un mécanisme de consentement avant d'avoir tranché opt-in vs opt-out et la formulation exacte reviendrait à jeter le travail, ou pire à afficher au membre une formulation juridiquement fausse. La clarification juridique vient d'abord, le code ensuite.
 
+## 🎨 2026-08-29 (suite) — Restyle Scan.jsx + fusion caméra/pellicule sur Nutrition.jsx
+
+Dernier écran applicatif resté sur l'ancien habillage (`.scan-btn`/
+`.scan-loading-ring`/`.scan-macro*`/`.meal-chip` de `global.css`, jamais
+migrés), signalé comme chantier ouvert dans l'entrée du 2026-08-20 (point
+3/3, loading/skeleton). Session en deux parties : le restyle visuel, et la
+fusion demandée du point d'entrée caméra/pellicule sur Nutrition.jsx.
+
+**Investigation d'abord, comme demandé.** `Nutrition.jsx` avait un seul
+bouton icône (`.nu-scan-btn`, header) qui faisait `navigate('/scan')` —
+aller simple vers `Scan.jsx`, qui affichait lui-même un toggle **Repas/
+Code-barres** puis deux boutons **Caméra**/**Galerie**. Précédent exact
+déjà dans le code pour ce type de fusion : **"Décrire un repas"** avait été
+retiré de `Scan.jsx` et déplacé en bottom sheet sur `Nutrition.jsx`
+(`describeSheetOpen`, classe `.nu-sheet`), justifié *"no separate screen
+for something this central"* — patron repris ici à l'identique.
+
+**Deux arbitrages soumis à Arnaud avant implémentation** (la demande ne
+tranchait pas le sort du mode Code-barres ni où se ferait l'analyse) :
+1. Le mode Code-barres reste sur `Scan.jsx`, **hors** du sheet rapide de
+   Nutrition (pas de 3ᵉ choix, pas de suppression) — accessible via un lien
+   discret sous les deux options du sheet.
+2. Une fois le fichier choisi (photo ou pellicule) dans le sheet, navigation
+   vers `/scan` avec le fichier déjà en main (`location.state`) — l'analyse/
+   résultat restent sur `Scan.jsx`, qui saute directement l'étape de choix.
+
+**Implémentation.**
+- `Scan-redesign.css` (nouveau, scopé `.scan-redesign`/`.scan-screen`) :
+  mêmes valeurs hex exactes que les redesigns existants (crème `#EFE7D9`,
+  olive `#EBEB7D`, lavande `#A3AEFE`, magenta `#B62472`, encre `#1C1A17`,
+  Poppins). Classes entièrement renommées `sc-*` plutôt que les anciennes
+  `.scan-*`/`.meal-chip` de `global.css` scopées : `.scan-retry-btn` en
+  particulier reste utilisée telle quelle par le flux recette de
+  `Nutrition.jsx` (`nutrition-redesign.css` la surchargeait déjà sous
+  `.nu-sheet`) — la renommer ici écarte tout risque d'y toucher, même
+  indirectement, plutôt que de la surcharger une deuxième fois sous un
+  autre scope.
+- `Scan.jsx` : `location.state?.file` (posé par le sheet Nutrition) déclenche
+  l'analyse directement au montage (`useEffect`, état nettoyé ensuite via
+  `navigate(..., {replace:true, state:{}})` pour qu'un retour arrière ne
+  relance pas l'analyse avec le même `File`) — `loading` initialisé
+  directement à `true` dans ce cas pour éviter un flash d'une frame de
+  l'écran de choix. Sans fichier pré-choisi (lien Code-barres, ou accès
+  direct), l'écran de choix caméra/galerie + toggle reste affiché comme
+  avant, `scanMode` pré-sélectionné sur `location.state?.mode` si fourni.
+  Logique de reconnaissance (prompt Claude, lookup OFF, édition des
+  grammes/items) entièrement inchangée.
+- `Icon.jsx` (composant d'icônes partagé, lucide-react) : ajout de
+  `gallery`/`barcode` (`Images`/`Barcode`), remplace les 3 SVG dessinés à la
+  main que `Scan.jsx` définissait localement (caméra/galerie/code-barres) —
+  cohérent avec la bascule déjà documentée dans ce fichier vers lucide-react
+  plutôt que du SVG maison.
+- `Nutrition.jsx` : le bouton scan du header ouvre désormais un sheet
+  (`scanSheetOpen`, même `.nu-sheet`) avec 2 options pleine largeur (icône
+  dans un rond olive/lavande, nouvelles classes `.nu-scan-option*` dans
+  `nutrition-redesign.css`) + un lien discret "Scanner un code-barres à la
+  place" qui navigue sans fichier pré-choisi. Les deux options déclenchent
+  chacune leur `<input type="file">` caché (avec/sans `capture`), puis
+  `navigate('/scan', {state:{file, mode:'food'}})`.
+
+**Vérifié** : `npm run build` OK, grep du bundle compilé confirme les
+classes `sc-*`/`nu-scan-option*` présentes dans les chunks `Scan`/
+`Nutrition`, et l'absence de régression sur `.scan-retry-btn` (toujours
+utilisée telle quelle par `Nutrition.jsx`, jamais touchée).
+
+**Test réel — limite explicite de cet environnement, comme les points
+précédents.** Les deux chemins demandés (photo caméra live + import
+pellicule) nécessitent un appareil réel avec caméra ET un compte membre
+connecté (écran protégé par `ProtectedRoute` — aucune session disponible
+ici, et en créer une est hors de ce que je fais sans confirmation
+explicite). Impossible de les exécuter moi-même dans cet environnement.
+**Arnaud teste lui-même après déploiement**, sur son téléphone, avec son
+compte membre réel — à confirmer dans une session suivante. Contrairement
+aux finitions purement visuelles précédentes, ce chantier touche à de la
+logique de navigation/state neuve : si le test réel révèle un problème,
+correction immédiate à prévoir.
+
 ## 🎨 2026-08-29 — Icônes PWA (`icon-192.png`/`icon-512.png`) : fond noir régénéré en crème
 
 Chantier ouvert identifié dans l'entrée du 2026-08-20 (point 2/3, splash natif) :
