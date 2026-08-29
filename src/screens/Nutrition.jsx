@@ -12,6 +12,7 @@ import { estimateFoodsFromText, computeItemsTotal } from '../utils/foodEstimate'
 import { activable } from '../utils/a11y'
 import { mapApiError } from '../utils/apiErrors'
 import NutriscoreBadge from '../components/NutriscoreBadge'
+import Icon from '../components/Icon'
 import SwipeableRow from '../components/SwipeableRow'
 import { useSwipeToDismiss } from '../hooks/useSwipeToDismiss'
 import '../styles/nutrition.css'
@@ -113,6 +114,16 @@ export default function Nutrition() {
   // Scan.jsx onto this screen directly and promoted above Idée recette
   // (explicit request: same reasoning as the single-item helper above —
   // no separate screen for something this central to the flow).
+  // Choix caméra/pellicule du bouton scan (icône du header) — jusqu'ici
+  // un aller simple vers Scan.jsx (navigate('/scan')), qui affichait ce
+  // choix sur son propre écran. Déplacé ici en sheet, même raison que
+  // "Décrire un repas" juste en dessous : "no separate screen for
+  // something this central". Le mode Code-barres (toggle existant sur
+  // Scan.jsx) reste volontairement hors de ce sheet rapide — accessible
+  // via le lien discret plus bas, qui atterrit sur l'écran Scan.jsx classique
+  // sans fichier pré-choisi (voir JOURNAL.md pour l'arbitrage).
+  const [scanSheetOpen, setScanSheetOpen] = useState(false)
+
   const [describeSheetOpen, setDescribeSheetOpen] = useState(false)
   const [describeInput, setDescribeInput] = useState('')
   const [describeLoading, setDescribeLoading] = useState(false)
@@ -934,7 +945,7 @@ Réponds en français.`
             <h1 className="nu-title">Ton assiette<br />du jour.</h1>
             <p className="nu-subtitle">{new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'short' })}</p>
           </div>
-          <button onClick={() => navigate('/scan')} className="nu-scan-btn">
+          <button onClick={() => setScanSheetOpen(true)} className="nu-scan-btn">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h.01M18 14h.01M14 18h.01M18 18h.01M14 14v4h4v-4z" strokeLinejoin="round"/></svg>
           </button>
         </div>
@@ -1342,6 +1353,73 @@ Réponds en français.`
           </>
         )}
       </div>
+
+      {/* Choix caméra/pellicule (bouton scan du header) — overlay + sheet */}
+      {scanSheetOpen && <div onClick={() => setScanSheetOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 199 }} />}
+      {scanSheetOpen && (
+        <div className="nu-sheet nu-scan-sheet" style={{
+          position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)',
+          width: '100%', maxWidth: 480,
+          borderRadius: '20px 20px 0 0',
+          padding: '24px 20px 40px', zIndex: 200,
+        }}>
+          <h2 className="text-lg bold" style={{ marginBottom: 16 }}>Scanner un repas</h2>
+
+          <label htmlFor="nu-scan-camera" className="nu-scan-option">
+            <span className="nu-scan-option-icon camera"><Icon name="camera" size={22} /></span>
+            <span className="nu-scan-option-body">
+              <span className="nu-scan-option-title">{t('take_photo')}</span>
+              <span className="nu-scan-option-sub">Appareil photo · Reconnaissance produit</span>
+            </span>
+          </label>
+          <input
+            id="nu-scan-camera"
+            type="file"
+            accept="image/*"
+            capture="environment"
+            style={{ display: 'none' }}
+            onChange={(e) => {
+              const file = e.target.files[0]
+              e.target.value = ''
+              setScanSheetOpen(false)
+              if (file) navigate('/scan', { state: { file, mode: 'food' } })
+            }}
+          />
+
+          <label htmlFor="nu-scan-gallery" className="nu-scan-option">
+            <span className="nu-scan-option-icon gallery"><Icon name="gallery" size={22} /></span>
+            <span className="nu-scan-option-body">
+              <span className="nu-scan-option-title">{t('gallery')}</span>
+              <span className="nu-scan-option-sub">Importer depuis la pellicule</span>
+            </span>
+          </label>
+          <input
+            id="nu-scan-gallery"
+            type="file"
+            accept="image/*"
+            style={{ display: 'none' }}
+            onChange={(e) => {
+              const file = e.target.files[0]
+              e.target.value = ''
+              setScanSheetOpen(false)
+              if (file) navigate('/scan', { state: { file, mode: 'food' } })
+            }}
+          />
+
+          {/* Discret par choix : le code-barres reste une fonctionnalité à
+              part entière (toggle existant sur Scan.jsx), mais hors des
+              deux choix rapides ci-dessus — voir JOURNAL.md. Atterrit sur
+              Scan.jsx sans fichier pré-choisi, avec le mode Code-barres
+              pré-sélectionné. */}
+          <button
+            type="button"
+            className="nu-scan-barcode-link"
+            onClick={() => { setScanSheetOpen(false); navigate('/scan', { state: { mode: 'barcode' } }) }}
+          >
+            Scanner un code-barres à la place
+          </button>
+        </div>
+      )}
 
       {/* "Décrire plusieurs aliments" overlay + sheet */}
       {describeSheetOpen && <div onClick={() => setDescribeSheetOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 199 }} />}

@@ -322,3 +322,62 @@ body.nutrition-body-bg {
 .nu-sheet .scan-retry-btn {
   color: var(--nu-magenta) !important;
 }
+
+/* ── Sheet "Scanner un repas" (choix caméra/pellicule du bouton scan du
+   header) — mêmes cartes que le reste du redesign, icône dans un rond de
+   couleur (olive/lavande) plutôt que la teinte pleine .primary/.secondary
+   de l'ancien .scan-btn (global.css, resté utilisé tel quel par
+   Scan.jsx/JOURNAL.md — cette sheet-ci n'y touche pas, nouvelles classes
+   dédiées). */
+.nu-scan-option {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  background: var(--nu-card);
+  border: none;
+  border-radius: 20px;
+  padding: 16px 18px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  text-align: left;
+}
+.nu-scan-option-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--nu-ink);
+}
+.nu-scan-option-icon.camera { background: var(--nu-olive); }
+.nu-scan-option-icon.gallery { background: var(--nu-lavender); }
+.nu-scan-option-body { flex: 1; min-width: 0; }
+.nu-scan-option-title {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--nu-ink);
+}
+.nu-scan-option-sub {
+  display: block;
+  font-size: 11.5px;
+  color: var(--nu-text-muted);
+  margin-top: 2px;
+}
+.nu-scan-barcode-link {
+  display: block;
+  width: 100%;
+  background: none;
+  border: none;
+  color: var(--nu-text-secondary);
+  font-size: 12px;
+  text-align: center;
+  cursor: pointer;
+  padding: 4px 0 0;
+  font-family: inherit;
+}
