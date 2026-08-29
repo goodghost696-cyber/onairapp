@@ -82,6 +82,63 @@ Le texte ci-dessous est conservé pour mémoire du point de départ.
 
 **Pourquoi ne pas commencer maintenant** : coder un mécanisme de consentement avant d'avoir tranché opt-in vs opt-out et la formulation exacte reviendrait à jeter le travail, ou pire à afficher au membre une formulation juridiquement fausse. La clarification juridique vient d'abord, le code ensuite.
 
+## 🔧 2026-08-30 — `coach@onairapp.com` exempté définitivement du mur d'abonnement (`is_platform_admin`)
+
+**Contexte** : investigation read-only du 2026-08-29 sur le mur d'abonnement
+coach (`CoachLayout.jsx`/`CoachSettings.jsx`/`billing.js`) avait confirmé que
+`is_platform_admin` était déjà lu à deux endroits — skip du fetch `gyms` +
+exemption du `blocked` dans `CoachLayout.jsx` ; skip du fetch + masquage de
+la section Facturation dans `CoachSettings.jsx` — toujours pour **exempter**
+ce flag du gate, jamais pour le renforcer. Requête sur `coach@onairapp.com`
+avait montré `subscription_status='trialing'`, `trial_ends_at` daté du
+2026-08-24 (expiré) — cohérent avec le mur "Abonnement requis" vu sur ce
+compte en navigant sur `/coach/messages`.
+
+**Demande** : lever ce mur définitivement sur ce compte, accès illimité
+voulu.
+
+**Point signalé avant exécution, confirmé ensuite** : `is_platform_admin`
+n'est pas un simple flag "exempté du mur d'abonnement" — c'est le flag
+**superadmin cross-tenant** documenté dans `scripts/supabase_schema.sql`
+comme *"only ever true for Arnaud's own account"* : il donne aussi accès en
+lecture à **toutes les salles/profils/facturation de la plateforme** (les
+policies RLS `"Platform admins can view all gyms/profiles"`, idem
+`ai_usage`) et à la route `/admin` (`PlatformAdmin.jsx`). Poser ce flag sur
+`coach@onairapp.com` va donc au-delà d'une exemption de sa propre salle —
+portée cross-tenant confirmée explicitement avant exécution.
+
+**Un deuxième compte détecté en cours de route, signalé avant de
+continuer.** Un `SELECT ... WHERE is_platform_admin = true` a montré qu'un
+2ᵉ compte portait déjà ce flag : `goodghost696@gmail.com` (`role='member'`)
+— déjà `true` avant toute action de cette session, pas posé par erreur ici.
+Ce compte n'était **pas la cible** de cette action : `is_platform_admin`
+remis à `false` dessus (voir requête ci-dessous), en conservant `true`
+uniquement sur `coach@onairapp.com`.
+
+**Exécuté** (service_role, via Supabase MCP, projet `onairapp` /
+`wdwdigqxqctkverkbxyb`) :
+```sql
+update profiles set is_platform_admin = true where email = 'coach@onairapp.com';
+update profiles set is_platform_admin = false where email = 'goodghost696@gmail.com';
+```
+Re-sélection après chaque UPDATE pour confirmer :
+- `coach@onairapp.com` (`id` `2f9fc8dc-89b3-43fa-a1ca-38fd03e18034`,
+  `role='coach'`, `gym_id='30cd42d5-ece1-453d-8866-d4e874d8d103'`) —
+  `is_platform_admin` bien à `true`.
+- `goodghost696@gmail.com` (`id` `824b1a17-5623-4ea8-9bc2-e970c29bdaa0`,
+  `role='member'`) — `is_platform_admin` bien remis à `false`.
+
+État final vérifié (`SELECT ... WHERE is_platform_admin = true`) : **un seul
+compte** porte désormais ce flag, `coach@onairapp.com` — conforme à
+l'invariant documenté dans le schéma ("only ever true for Arnaud's own
+account", ici transféré intentionnellement à ce compte coach plutôt que
+laissé sur deux comptes à la fois).
+
+Action base de données uniquement — aucun fichier de code touché,
+`subscription_status`/`trial_ends_at` de la salle de `coach@onairapp.com`
+laissés tels quels (le compte n'y est simplement plus soumis, la salle
+elle-même reste "trialing"/expirée en base si ce flag était retiré un jour).
+
 ## 🎨 2026-08-29 (suite) — Restyle Scan.jsx + fusion caméra/pellicule sur Nutrition.jsx
 
 Dernier écran applicatif resté sur l'ancien habillage (`.scan-btn`/
