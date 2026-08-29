@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useLanguage } from '../context/LanguageContext'
 import { mapAuthError } from '../utils/authErrors'
+import '../styles/auth-redesign.css'
 
 export default function Login() {
   const navigate = useNavigate()
@@ -10,6 +11,14 @@ export default function Login() {
   const { login, register, sendPasswordResetEmail } = useAuth()
   const { t } = useLanguage()
   const [tab, setTab] = useState(location.state?.tab === 'signup' ? 'signup' : 'login')
+
+  // Même mécanisme que Settings.jsx (settings-redesign.css) — le body a
+  // besoin de sa propre classe pour couvrir le fond derrière le contenu
+  // (au-delà de .app-wrapper), notamment pendant l'overscroll iOS.
+  useEffect(() => {
+    document.body.classList.add('auth-body-bg')
+    return () => document.body.classList.remove('auth-body-bg')
+  }, [])
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -107,57 +116,18 @@ export default function Login() {
     }
   }
 
-  const inputStyle = {
-    background: 'var(--surface)',
-    border: '2px solid var(--border-strong)',
-    color: 'var(--text-primary)',
-    padding: '16px',
-    fontSize: 15,
-    fontWeight: 700,
-    width: '100%',
-    outline: 'none',
-    borderRadius: 14,
-    fontFamily: 'inherit',
-  }
-
-  const pillButtonStyle = {
-    width: '100%',
-    background: 'var(--accent)',
-    color: 'var(--accent-ink)',
-    border: 'none',
-    borderRadius: 999,
-    padding: '18px 16px',
-    fontSize: 14,
-    fontWeight: 700,
-    letterSpacing: '0.05em',
-    textTransform: 'uppercase',
-    fontFamily: 'inherit',
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  }
-
   return (
-    <div className="app-wrapper">
+    <div className="app-wrapper auth-redesign">
       <div style={{ padding: '80px 28px 28px', display: 'flex', flexDirection: 'column', minHeight: '100dvh' }}>
 
-        <h1 style={{ fontSize: 30, fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--text-primary)', margin: '0 0 22px' }}>
+        <h1 className="auth-title">
           Bienvenue.
         </h1>
 
         {/* Tabs */}
-        <div style={{ display: 'flex', gap: 8, background: 'var(--surface)', border: '2px solid var(--border-strong)', borderRadius: 16, padding: 4, marginBottom: 22 }}>
+        <div className="auth-tabs">
           {['login', 'signup'].map(tabKey => (
-            <button key={tabKey} onClick={() => { setTab(tabKey); setError(''); setSignupError(''); setForgotMode(false) }} style={{
-              flex: 1, border: 'none', cursor: 'pointer', fontFamily: 'inherit',
-              fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase',
-              color: tab === tabKey ? 'var(--accent-ink)' : 'var(--text-muted)',
-              background: tab === tabKey ? 'var(--accent)' : 'transparent',
-              borderRadius: 12, padding: '10px 0',
-              transition: 'all 150ms ease',
-            }}>
+            <button key={tabKey} onClick={() => { setTab(tabKey); setError(''); setSignupError(''); setForgotMode(false) }} className={`auth-tab${tab === tabKey ? ' active' : ''}`}>
               {tabKey === 'login' ? t('login_tab') : t('signup_tab')}
             </button>
           ))}
@@ -166,37 +136,37 @@ export default function Login() {
         {tab === 'login' ? (
           forgotMode ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '0 0 4px' }}>{t('reset_password_subtitle')}</p>
+              <p className="auth-subtitle" style={{ margin: '0 0 4px' }}>{t('reset_password_subtitle')}</p>
               {!forgotSent ? (
                 <>
-                  <input style={inputStyle} type="email" placeholder={t('email_placeholder')} value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSendReset()} />
-                  {forgotError && <span style={{ fontSize: 11, color: 'var(--danger)', letterSpacing: '0.05em' }}>{forgotError}</span>}
-                  <button onClick={handleSendReset} disabled={sendingReset} style={{ ...pillButtonStyle, marginTop: 4, opacity: sendingReset ? 0.7 : 1 }}>
+                  <input className="auth-field" type="email" placeholder={t('email_placeholder')} value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSendReset()} />
+                  {forgotError && <span className="auth-error">{forgotError}</span>}
+                  <button onClick={handleSendReset} disabled={sendingReset} className="auth-primary-btn" style={{ marginTop: 4 }}>
                     {sendingReset ? '...' : <>{t('send_reset_link_btn')} <span>→</span></>}
                   </button>
                 </>
               ) : (
-                <span style={{ fontSize: 12, color: 'var(--success)' }}>{t('reset_email_sent')}</span>
+                <span className="auth-success">{t('reset_email_sent')}</span>
               )}
               <button
                 onClick={() => { setForgotMode(false); setForgotSent(false); setForgotError(''); setForgotEmail('') }}
-                style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: 12, cursor: 'pointer', textAlign: 'center', marginTop: 4, fontFamily: 'inherit' }}
+                className="auth-link-btn"
               >
                 {t('back_to_login_btn')}
               </button>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <input style={inputStyle} type="email" placeholder={t('email_placeholder')} value={email} onChange={e => setEmail(e.target.value)} />
-              <input style={inputStyle} type="password" placeholder={t('password_placeholder')} value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleLogin()} />
-              {error && <span style={{ fontSize: 11, color: 'var(--danger)', letterSpacing: '0.05em' }}>{error}</span>}
+              <input className="auth-field" type="email" placeholder={t('email_placeholder')} value={email} onChange={e => setEmail(e.target.value)} />
+              <input className="auth-field" type="password" placeholder={t('password_placeholder')} value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleLogin()} />
+              {error && <span className="auth-error">{error}</span>}
               <button
                 onClick={() => { setForgotMode(true); setError('') }}
-                style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: 12, cursor: 'pointer', alignSelf: 'flex-end', fontFamily: 'inherit', padding: 0 }}
+                className="auth-link-btn align-end"
               >
                 {t('forgot_password_link')}
               </button>
-              <button onClick={handleLogin} disabled={loggingIn} style={{ ...pillButtonStyle, marginTop: 4, opacity: loggingIn ? 0.7 : 1 }}>
+              <button onClick={handleLogin} disabled={loggingIn} className="auth-primary-btn" style={{ marginTop: 4 }}>
                 {loggingIn ? '...' : <>{t('connect_btn')} <span>→</span></>}
               </button>
               {/* "Accès coach" (Landing.jsx) lands here to sign in — but until
@@ -206,7 +176,7 @@ export default function Login() {
                   prospective coach lands. */}
               <button
                 onClick={() => navigate('/coach-signup')}
-                style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: 12, cursor: 'pointer', textAlign: 'center', marginTop: 4, fontFamily: 'inherit' }}
+                className="auth-link-btn"
               >
                 Pas encore de salle ? Créer la mienne →
               </button>
@@ -214,15 +184,15 @@ export default function Login() {
           )
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <input style={inputStyle} type="text" placeholder={t('first_name_placeholder')} value={signupData.firstName} onChange={e => setSignupData(d => ({ ...d, firstName: e.target.value }))} />
-            <input style={inputStyle} type="email" placeholder={t('email_placeholder')} value={signupData.email} onChange={e => setSignupData(d => ({ ...d, email: e.target.value }))} />
-            <input style={inputStyle} type="password" placeholder={t('password_placeholder')} value={signupData.password} onChange={e => setSignupData(d => ({ ...d, password: e.target.value }))} />
-            <input style={inputStyle} type="password" placeholder={t('confirm_password')} value={signupData.confirm} onChange={e => setSignupData(d => ({ ...d, confirm: e.target.value }))} />
-            <input style={inputStyle} type="text" placeholder={t('access_code')} value={signupData.code} onChange={e => setSignupData(d => ({ ...d, code: e.target.value }))} />
-            {signupError && <span style={{ fontSize: 11, color: 'var(--danger)' }}>{signupError}</span>}
-            {signupSuccess && <span style={{ fontSize: 11, color: 'var(--success)' }}>{t('welcome_toast')} {signupData.firstName} 👋 {t('account_created')}</span>}
-            {needsConfirmation && <span style={{ fontSize: 11, color: 'var(--success)' }}>Compte créé — vérifie ta boîte mail pour confirmer ton adresse avant de te connecter.</span>}
-            <button onClick={handleSignup} disabled={signingUp} style={{ ...pillButtonStyle, marginTop: 4, opacity: signingUp ? 0.7 : 1 }}>
+            <input className="auth-field" type="text" placeholder={t('first_name_placeholder')} value={signupData.firstName} onChange={e => setSignupData(d => ({ ...d, firstName: e.target.value }))} />
+            <input className="auth-field" type="email" placeholder={t('email_placeholder')} value={signupData.email} onChange={e => setSignupData(d => ({ ...d, email: e.target.value }))} />
+            <input className="auth-field" type="password" placeholder={t('password_placeholder')} value={signupData.password} onChange={e => setSignupData(d => ({ ...d, password: e.target.value }))} />
+            <input className="auth-field" type="password" placeholder={t('confirm_password')} value={signupData.confirm} onChange={e => setSignupData(d => ({ ...d, confirm: e.target.value }))} />
+            <input className="auth-field" type="text" placeholder={t('access_code')} value={signupData.code} onChange={e => setSignupData(d => ({ ...d, code: e.target.value }))} />
+            {signupError && <span className="auth-error">{signupError}</span>}
+            {signupSuccess && <span className="auth-success">{t('welcome_toast')} {signupData.firstName} 👋 {t('account_created')}</span>}
+            {needsConfirmation && <span className="auth-success">Compte créé — vérifie ta boîte mail pour confirmer ton adresse avant de te connecter.</span>}
+            <button onClick={handleSignup} disabled={signingUp} className="auth-primary-btn" style={{ marginTop: 4 }}>
               {signingUp ? '...' : <>{t('signup_btn')} <span>→</span></>}
             </button>
             {/* Équivalent symétrique du lien "Pas encore de salle ? Créer la
@@ -235,17 +205,12 @@ export default function Login() {
             <button
               type="button"
               onClick={() => { setTab('login'); setSignupError(''); setError('') }}
-              style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: 12, cursor: 'pointer', textAlign: 'center', marginTop: 4, fontFamily: 'inherit' }}
+              className="auth-link-btn"
             >
               Déjà un compte ? Connecte-toi →
             </button>
           </div>
         )}
-
-        <style>{`
-          input::placeholder { color: #9A9A9A; }
-          input:focus { border-color: var(--accent) !important; outline: none; }
-        `}</style>
 
       </div>
     </div>

@@ -82,6 +82,168 @@ Le texte ci-dessous est conservé pour mémoire du point de départ.
 
 **Pourquoi ne pas commencer maintenant** : coder un mécanisme de consentement avant d'avoir tranché opt-in vs opt-out et la formulation exacte reviendrait à jeter le travail, ou pire à afficher au membre une formulation juridiquement fausse. La clarification juridique vient d'abord, le code ensuite.
 
+## 🎨 2026-08-29 — Icônes PWA (`icon-192.png`/`icon-512.png`) : fond noir régénéré en crème
+
+Chantier ouvert identifié dans l'entrée du 2026-08-20 (point 2/3, splash natif) :
+les deux PNG utilisés à la fois pour l'icône d'app (écran d'accueil iOS/Android)
+et pour composer le splash natif avaient un **fond noir plein baked-in dans le
+pixel lui-même** (`#0A0A0A`, identité pré-corail), avec un mark plein différent
+du tracé stroke-only actuel — `background_color` du manifest (déjà corrigé le
+2026-08-20 en `#EFE7D9`) ne pouvait rien y changer, un pixel opaque composé
+par-dessus ne laisse pas voir la couleur de fond en dessous.
+
+**Régénérées** (`scripts/generate-pwa-icons.ps1`, nouveau, gardé pour toute
+régénération future si le mark change à nouveau) : fond crème plein `#EFE7D9`
++ mark repris à l'identique de `public/logo-volta.svg`/`Logo.jsx` (mêmes points
+de tracé, `#F0C14B`, cap/join arrondis), recentré et mis à l'échelle dans
+chaque canevas (192×192 et 512×512, les deux seules tailles listées dans
+`manifest.json` — pas de variante `maskable` déclarée, donc pas de zone de
+sécurité supplémentaire à gérer). Généré via `System.Drawing` (.NET, déjà
+disponible sous PowerShell, pas de nouvelle dépendance npm ajoutée pour un
+besoin ponctuel) plutôt qu'un rendu navigateur, pour un contrôle pixel exact
+des deux tailles.
+
+**Rien d'autre à mettre à jour** : `manifest.json` référence déjà les deux
+mêmes chemins/tailles (non touché), `index.html` (`apple-touch-icon`) et
+`sw.js` (icône/badge de notification push) pointent sur les mêmes fichiers,
+pas de chemin à changer. `npm run build` : `dist/icon-192.png`/`icon-512.png`
+confirmés identiques (hash) aux nouveaux fichiers de `public/`.
+
+**Test réel — limite explicite de cet environnement, comme le point 2/3 du
+2026-08-20.** Aucun appareil iOS/Android connecté ici pour réinstaller la PWA
+sur un vrai écran d'accueil. Seule la génération des PNG a pu être vérifiée
+visuellement (rendu correct, fond crème plein, mark lisible aux deux tailles).
+**Arnaud a choisi de tester lui-même après déploiement** (suppression de
+l'icône existante + réinstallation via « Ajouter à l'écran d'accueil ») plutôt
+que de laisser ce point en attente — à confirmer dans une session suivante.
+
+## 🎨 2026-08-20 — Trois finitions oubliées du restyle (3/3) : loading/skeleton
+
+Dernier des trois points de la session. **Inventaire complet fait avant tout
+changement, comme demandé, présenté à Arnaud pour arbitrage sur les cas ambigus.**
+
+**Déjà restylés pastel chaud, rien à faire** : `.wk-skeleton-block`
+(`CalorieBarsSkeleton`/`SummaryListSkeleton`/`LiftsSkeleton`, Weekly.jsx,
+`weekly-redesign.css`), `.btn-spinner` overridé dans `workout-redesign.css`,
+`.set-avatar-spinner` (`settings-redesign.css`), textes "Chargement..." déjà
+scopés dans chaque `*-redesign.css` (CoachDashboard `.cd-empty-note`,
+CoachPrograms `.cp-loading`, Messages `.msg-empty`, WorkoutLibrary `.wl-loading`).
+
+**Trouvé et corrigé** : `RouteLoadingFallback` (`App.jsx`) — le spinner de
+`<Suspense>` affiché à **chaque** changement d'écran lazy-loaded, donc traversé
+en continu par tout le monde (membre et coach), le seul état de chargement
+réellement transverse à toute l'app plutôt que scopé à un écran. Toujours sur
+`var(--border)`/`var(--accent)` (tokens corail/or globaux), sans fond propre —
+un flash de corail pouvait apparaître entre deux écrans crème sur un chunk lent.
+Recoloré fond crème `#EFE7D9` + anneau encre `#1C1A17`, mêmes valeurs que
+`auth-redesign.css`/`manifest.json` (point 2).
+
+**Deux cas remontés à Arnaud avant modification, tranchés délibérément hors
+scope** :
+- **`.recipe-loading-orb`/`.voice-mode-orb`** (dégradé or/violet, Nutrition +
+  VoiceMode) — jamais touché par aucune passe de restyle, documenté plus haut
+  dans ce journal comme l'identité IA délibérée de l'app ("la sphère elle-même
+  est l'indicateur IA", suite 20-21). **Laissé tel quel** — un choix de marque
+  assumé, pas un oubli, à ne pas casser dans une session de finitions.
+- **`Scan.jsx`** (`.scan-loading-ring`, global.css) — mais c'est l'écran
+  **entier** qui n'a jamais été restylé (`app-wrapper`/`screen` nus, pas de
+  `Scan-redesign.css`), pas juste son loading. **Laissé tel quel** et signalé
+  ici comme 4ᵉ écran non couvert par le chantier restyle (après
+  Login/CoachSignup traités ce jour), décision produit séparée à prendre —
+  même traitement que Conversation.jsx (déjà documenté hors périmètre) et
+  PlatformAdmin.jsx (outil interne, jamais customer-facing).
+
+**Test réel** : délai artificiel de 2,5s ajouté temporairement sur l'import
+lazy de CoachSignup (`new Promise(r => setTimeout(r, 2500)).then(...)`),
+`npm run build` + `npm run preview`, navigation vers `/coach-signup` en Chrome
+— fallback capturé à l'écran (fond crème, anneau encre visible pendant le
+délai), confirmé, délai retiré avant le build final. `git diff` vérifié après
+coup pour confirmer qu'aucun résidu du délai de test n'est resté dans le commit.
+
+**Bilan des trois finitions (session complète)** : Login/CoachSignup restylés
+(1/3), manifest/theme-color corrigés pour le splash natif — testé par Arnaud
+en réel après déploiement (2/3), RouteLoadingFallback restylé (3/3). Deux
+chantiers ouverts identifiés en creusant, non traités par choix : régénération
+de `icon-192.png`/`icon-512.png` (fond noir baked-in, point 2) et restyle de
+l'écran `Scan.jsx` en entier (point 3) — tous deux nécessitent plus qu'un fix
+de config/CSS isolé.
+
+## 🎨 2026-08-20 — Trois finitions oubliées du restyle (2/3) : splash natif iOS/PWA
+
+Suite directe du point 1 (Login/CoachSignup). **Symptôme signalé : flash visible de
+l'ancien fond pendant environ une demi-seconde à l'ouverture depuis l'écran d'accueil
+du téléphone.** À distinguer de `SplashIntro.jsx`/`splash-redesign.css` (l'animation
+JS affichée une fois par visite sur Landing, déjà migrée pastel chaud, cf. entrée du
+restyle membre) — ici c'est le **splash natif généré par l'OS** (iOS "Add to Home
+Screen" / Android PWA install) à partir de `manifest.json`, peint plein écran avant
+qu'aucun CSS ou JS de l'app ne charge.
+
+**Cause trouvée** : `public/manifest.json` avait `background_color: "#0A0A0A"` (noir,
+identité pré-corail — jamais touché depuis, ni au pivot corail ni au pastel chaud) et
+`theme_color: "#EF6B41"` (corail, pré-pastel-chaud). `index.html` portait le même
+`theme-color` corail obsolète. Les trois passés à `#EFE7D9` (crème), la couleur que
+patchent déjà tous les `*-redesign.css` sur leur bande `safe-area-inset-top` — il n'y
+a donc plus qu'une seule teinte du splash natif jusqu'au premier paint, au lieu de
+trois différentes (noir → corail → crème).
+
+**Trouvaille annexe, pas traitée cette session** : `icon-192.png`/`icon-512.png`
+(mêmes fichiers utilisés pour composer le splash ET l'icône d'app sur l'écran
+d'accueil) ont un **fond noir plein baked-in dans le PNG lui-même**, avec un mark
+plein (pas le tracé stroke-only actuel de `Logo.jsx`/`logo-volta.svg`) — un asset
+antérieur même à l'identité corail. `background_color` du manifest ne peut pas
+compenser un pixel opaque dans l'icône composée par-dessus. Corriger ça demande une
+régénération d'image cohérente avec le mark actuel, pas un fix de config — laissé en
+chantier ouvert, à traiter avec un vrai outil de design plutôt qu'improvisé ici.
+
+**Vérifié dans le build compilé** : `npm run build`, `dist/manifest.json` et
+`dist/index.html` servis en local (`npm run preview`) confirment
+`background_color`/`theme_color`/`theme-color` à `#EFE7D9` partout, JSON valide.
+
+**Test réel — limite explicite de cet environnement.** Cette session tourne sur une
+machine Windows sans iPhone/Mac ni simulateur iOS connecté : impossible de
+reproduire ici le vrai scénario demandé (fermeture complète de l'app + réouverture
+depuis l'écran d'accueil). Seule la validité du manifest servi a pu être vérifiée
+via Chrome. **Arnaud a choisi de tester lui-même sur son téléphone après déploiement**
+plutôt que de laisser ce point en attente — à confirmer dans une session
+suivante si le flash a bien disparu.
+
+## 🎨 2026-08-20 — Trois finitions oubliées du restyle (1/3) : écrans Connexion/Inscription
+
+Le restyle membre + coach ("pastel chaud") est terminé sur les écrans applicatifs, mais trois finitions visuelles étaient restées sur l'ancien habillage. Session dédiée à les traiter une par une, chacune investiguée avant modification, testée en réel, commit atomique séparé.
+
+**Point 1 : Login.jsx (connexion + inscription membre, onglets) et CoachSignup.jsx
+(création de salle coach).** Investigation : les deux écrans utilisaient des styles
+inline référençant les tokens globaux de `global.css` (`--surface`, `--accent`,
+`--text-primary`...), jamais migrés vers un `*-redesign.css` scopé comme le reste de
+l'app — `--bg` de `global.css` (toujours corail `#E8552B`, jamais retouché par choix
+sur l'ensemble du chantier) transparaissait donc derrière ces deux écrans, seuls
+restés visuellement "ancien design". Aucun handoff Claude Design dédié pour ces deux
+écrans (jamais couverts par aucun package reçu) — mêmes valeurs hex exactes que les
+écrans déjà migrés (`settings-redesign.css`/`dashboard.css`), pas de nouvelle teinte
+inventée.
+
+`auth-redesign.css` (nouveau, scopé `.auth-redesign`) : un seul fichier pour les deux
+écrans (structure identique, mêmes styles inline avant ce commit) — fond crème
+`#EFE7D9`, cartes/champs blancs, onglet actif olive `#EBEB7D`, focus lavande
+`#A3AEFE`, CTA pilule pleine encre `#1C1A17` (même convention que le CTA Dashboard),
+carte code d'invitation bordée magenta `#B62472`, Poppins. Même mécanisme de classe
+`body.auth-body-bg` que `settings-redesign.css` pour couvrir le fond derrière
+`.app-wrapper` (overscroll iOS compris). Logique JS intacte des deux écrans —
+seul l'habillage change (styles inline remplacés par des classes).
+
+**Test réel** (pas juste lecture de code) : serveur Vite local avec des clés
+Supabase factices (`.env` local, gitignored, jamais commité — juste pour lever le
+crash `supabaseUrl is required` qui rendait l'app blanche sans clés, aucun besoin
+d'appel réseau réel pour valider le rendu visuel de ces deux écrans publics).
+Vérifiés via Chrome : Login onglet Connexion, onglet Inscription (5 champs), état
+"mot de passe oublié", et CoachSignup (formulaire "Créer ma salle") — tous rendus
+avec la palette pastel chaud attendue, pas de fond corail résiduel. `.env` de test
+supprimé après vérification, serveur Vite arrêté.
+
+`npm run build` + grep du bundle compilé : chunk dédié
+`auth-redesign-[hash].css` confirmé présent (partagé par les deux routes lazy),
+`EFE7D9`/`auth-redesign`/`auth-primary-btn` confirmés dans le CSS et le JS compilés.
+
 ## 🎨 2026-08-18/20 — Restyle espace coach (5/6, 6/6) : CoachPrograms, CoachSettings — chantier terminé (6/6)
 
 Suite directe des deux entrées précédentes. Cette session : les deux

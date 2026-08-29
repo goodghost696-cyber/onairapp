@@ -17,22 +17,24 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="VOLTA">
     <link rel="apple-touch-icon" href="/icon-192.png">
-    <!-- Direction corail (2026-08-06): was #0A0A0A (leftover from the old
-         dark identity, never updated in the coral pivot). This is the flat
-         color Safari/iOS paints its OWN chrome with — the status bar strip
-         at the very top of the screen (always, tab or standalone) and any
-         gap between rendered content and the true device viewport. #C6371E
-         (the gradient's 82% stop) was picked to "blend acceptably wherever
-         the gap lands" on the assumption the gap could appear anywhere —
-         but the status bar area is not a random gap, it's a FIXED strip at
-         the very top, exactly where the body gradient (global.css) is
-         brightest (radial-gradient centered at 18% -8%, i.e. just above
-         the top edge — #FF8355 at its 0% stop). #C6371E being a much
-         darker, later stop created a visible seam right at the top,
-         reported directly ("le haut de page est plus sombre") on a real
-         screenshot. Moved to a lighter tone closer to the gradient's own
-         top-of-screen color instead of the flat mid-gradient compromise. -->
-    <meta name="theme-color" content="#EF6B41">
+    <!-- Direction "pastel chaud" (2026-08-20): was #EF6B41 (corail, set
+         2026-08-06 — see git history for that session's reasoning, no
+         longer applicable). This is the flat color Safari/iOS paints its
+         OWN chrome with — the status bar strip at the very top of the
+         screen (always, tab or standalone) and any gap between rendered
+         content and the true device viewport. Every *-redesign.css screen
+         already patches its own safe-area-inset-top strip to its crème bg
+         (e.g. .auth-redesign::before, .settings-redesign::before) — this
+         meta tag was the one piece of "old design" still visibly behind
+         that patch (and, more importantly per public/manifest.json's
+         matching background_color, the color iOS/Android paint full-screen
+         for roughly half a second while generating the native "Add to Home
+         Screen" splash, before any CSS loads — was still #0A0A0A dark,
+         nothing to do with corail even, an even older leftover). #EFE7D9
+         matches manifest.json's background_color and every redesigned
+         screen's crème, so there's now one consistent tone from native
+         splash through to first paint instead of three different ones. -->
+    <meta name="theme-color" content="#EFE7D9">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <!-- Poppins ajouté pour le restyle VOLTA "pastel chaud" (Dashboard.jsx,
