@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useLanguage } from '../context/LanguageContext'
 import { mapAuthError } from '../utils/authErrors'
+import { Turnstile } from '@marsidev/react-turnstile'
 import '../styles/auth-redesign.css'
 
 export default function Login() {
@@ -35,6 +36,14 @@ export default function Login() {
   // is off — register() always returns a plain success.
   const [needsConfirmation, setNeedsConfirmation] = useState(false)
   const [signingUp, setSigningUp] = useState(false)
+
+  // Turnstile (formulaire Inscription uniquement — pas Connexion, pas de
+  // création de compte à protéger là). Token à usage unique côté Cloudflare :
+  // reset() du widget nécessaire après CHAQUE échec de handleSignup (pas
+  // seulement un échec de vérification anti-bot elle-même), sinon un
+  // deuxième essai renvoie un token déjà consommé.
+  const turnstileRef = useRef(null)
+  const [turnstileToken, setTurnstileToken] = useState('')
 
   const [forgotMode, setForgotMode] = useState(false)
   const [forgotEmail, setForgotEmail] = useState('')
@@ -80,6 +89,32 @@ export default function Login() {
     if (!firstName || !se || !sp || !confirm || !code) { setSignupError('Tous les champs sont requis'); return }
     if (sp !== confirm) { setSignupError(t('passwords_no_match')); return }
     setSigningUp(true)
+
+    // Vérifié serveur AVANT tout appel à /api/invite ou register() — un
+    // token client n'est qu'une déclaration, la vraie vérification vit dans
+    // /api/verify-turnstile (secret Cloudflare, jamais exposé au client).
+    try {
+      const tsRes = await fetch('/api/verify-turnstile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: turnstileToken }),
+      })
+      const { success } = await tsRes.json()
+      if (!success) {
+        setSigningUp(false)
+        setSignupError('Vérification anti-bot échouée, réessaie')
+        turnstileRef.current?.reset()
+        setTurnstileToken('')
+        return
+      }
+    } catch {
+      setSigningUp(false)
+      setSignupError('Vérification anti-bot échouée, réessaie')
+      turnstileRef.current?.reset()
+      setTurnstileToken('')
+      return
+    }
+
     try {
       // Pure UX pre-check (2026-08-10 suite 90) — just tells the user
       // "code invalide" before an account is even created. Does NOT
@@ -96,11 +131,15 @@ export default function Login() {
       if (!valid) {
         setSigningUp(false)
         setSignupError(t('invalid_code'))
+        turnstileRef.current?.reset()
+        setTurnstileToken('')
         return
       }
     } catch {
       setSigningUp(false)
       setSignupError("Erreur lors de la vérification du code")
+      turnstileRef.current?.reset()
+      setTurnstileToken('')
       return
     }
     const result = await register(firstName, se, sp, {}, code)
@@ -113,6 +152,8 @@ export default function Login() {
       setTimeout(() => navigate('/onboarding'), 800)
     } else {
       setSignupError(mapAuthError({ message: result.error }))
+      turnstileRef.current?.reset()
+      setTurnstileToken('')
     }
   }
 
@@ -192,6 +233,12 @@ export default function Login() {
             {signupError && <span className="auth-error">{signupError}</span>}
             {signupSuccess && <span className="auth-success">{t('welcome_toast')} {signupData.firstName} 👋 {t('account_created')}</span>}
             {needsConfirmation && <span className="auth-success">Compte créé — vérifie ta boîte mail pour confirmer ton adresse avant de te connecter.</span>}
+            <Turnstile
+              ref={turnstileRef}
+              siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
+              onSuccess={setTurnstileToken}
+              onExpire={() => setTurnstileToken('')}
+            />
             <button onClick={handleSignup} disabled={signingUp} className="auth-primary-btn" style={{ marginTop: 4 }}>
               {signingUp ? '...' : <>{t('signup_btn')} <span>→</span></>}
             </button>

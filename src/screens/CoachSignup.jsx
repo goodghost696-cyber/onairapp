@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase, authHeader } from '../lib/supabase'
 import { mapAuthError } from '../utils/authErrors'
 import { mapApiError } from '../utils/apiErrors'
+import { Turnstile } from '@marsidev/react-turnstile'
 import '../styles/auth-redesign.css'
 
 // Self-service "créer ma salle" — the follow-up explicitly flagged as out
@@ -25,6 +26,11 @@ export default function CoachSignup() {
   const [submitting, setSubmitting] = useState(false)
   const [gym, setGym] = useState(null)
   const [copied, setCopied] = useState(false)
+  // Turnstile — même raisonnement que Login.jsx (reset() nécessaire après
+  // TOUT échec de handleSubmit, pas seulement un échec anti-bot lui-même :
+  // le token est à usage unique côté Cloudflare).
+  const turnstileRef = useRef(null)
+  const [turnstileToken, setTurnstileToken] = useState('')
 
   // Même mécanisme que Login.jsx/auth-redesign.css — couvre le fond
   // derrière .app-wrapper (overscroll iOS compris).
@@ -46,6 +52,31 @@ export default function CoachSignup() {
     }
     setSubmitting(true)
 
+    // Vérifié serveur AVANT tout appel à supabase.auth.signUp() — un token
+    // client n'est qu'une déclaration, la vraie vérification vit dans
+    // /api/verify-turnstile (secret Cloudflare, jamais exposé au client).
+    try {
+      const tsRes = await fetch('/api/verify-turnstile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: turnstileToken }),
+      })
+      const { success } = await tsRes.json()
+      if (!success) {
+        setSubmitting(false)
+        setError('Vérification anti-bot échouée, réessaie')
+        turnstileRef.current?.reset()
+        setTurnstileToken('')
+        return
+      }
+    } catch {
+      setSubmitting(false)
+      setError('Vérification anti-bot échouée, réessaie')
+      turnstileRef.current?.reset()
+      setTurnstileToken('')
+      return
+    }
+
     // gymName/firstName also stashed in user_metadata (not just passed
     // straight to /api/create-gym below) so they can still be read and
     // replayed later — see AuthContext.jsx's resolveRole() self-heal path
@@ -64,6 +95,8 @@ export default function CoachSignup() {
       // déjà pris voyait donc « User already registered » en anglais, sur
       // l'écran d'acquisition.
       setError(mapAuthError(signUpError))
+      turnstileRef.current?.reset()
+      setTurnstileToken('')
       return
     }
 
@@ -94,6 +127,8 @@ export default function CoachSignup() {
       // `result.error` de /api/create-gym est déjà en FR ; ce qui pouvait
       // fuir ici, c'est l'échec de fetch() lui-même (« Failed to fetch »).
       setError(mapApiError(err, "Erreur lors de la création de la salle"))
+      turnstileRef.current?.reset()
+      setTurnstileToken('')
     }
     setSubmitting(false)
   }
@@ -122,6 +157,12 @@ export default function CoachSignup() {
               <input className="auth-field" type="password" placeholder="Mot de passe" value={data.password} onChange={e => setData(d => ({ ...d, password: e.target.value }))} />
               <input className="auth-field" type="password" placeholder="Confirme le mot de passe" value={data.confirm} onChange={e => setData(d => ({ ...d, confirm: e.target.value }))} onKeyDown={e => e.key === 'Enter' && handleSubmit()} />
               {error && <span className="auth-error">{error}</span>}
+              <Turnstile
+                ref={turnstileRef}
+                siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
+                onSuccess={setTurnstileToken}
+                onExpire={() => setTurnstileToken('')}
+              />
               <button onClick={handleSubmit} disabled={submitting} className="auth-primary-btn" style={{ marginTop: 4 }}>
                 {submitting ? '...' : <>CRÉER MA SALLE <span>→</span></>}
               </button>

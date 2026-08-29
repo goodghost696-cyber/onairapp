@@ -82,6 +82,70 @@ Le texte ci-dessous est conservé pour mémoire du point de départ.
 
 **Pourquoi ne pas commencer maintenant** : coder un mécanisme de consentement avant d'avoir tranché opt-in vs opt-out et la formulation exacte reviendrait à jeter le travail, ou pire à afficher au membre une formulation juridiquement fausse. La clarification juridique vient d'abord, le code ensuite.
 
+## 🔒 2026-08-30 (suite) — Cloudflare Turnstile sur les deux formulaires de signup
+
+Investigation préalable (session précédente) avait cartographié les deux
+formulaires (`Login.jsx` onglet Inscription pour le membre, `CoachSignup.jsx`
+pour le coach), leurs `onSubmit` exacts, les deux endpoints de création de
+compte (`api/create-gym.js` côté coach ; côté membre pas d'endpoint dédié,
+juste `supabase.auth.signUp()` client + `api/invite.js` pour le rattachement
+de salle) et confirmé l'absence de tout package Turnstile déjà installé.
+Cette session : intégration réelle, vérification serveur avant toute
+création de compte sur les deux parcours.
+
+**`@marsidev/react-turnstile`** installé (`package.json`/`package-lock.json`)
+— package React le plus maintenu pour Turnstile, ref exposant `.reset()`
+(nécessaire pour le point suivant).
+
+**`api/verify-turnstile.js`** (nouveau) : `POST { token }`, appelle
+`https://challenges.cloudflare.com/turnstile/v0/siteverify` avec
+`secret=process.env.TURNSTILE_SECRET_KEY` + `response=token`, renvoie
+`{ success }`. Volontairement public (pas de `requireUser()`) — appelé
+avant que le compte existe, donc avant toute session. Rate-limité en
+mémoire par IP (`checkMemoryRateLimit`, même mécanisme que la validation de
+code d'invitation dans `api/invite.js`, pour la même raison : pas encore de
+token utilisateur à scoper sur la table `api_rate_limit`).
+Fait passer le nombre de Serverless Functions du repo de 11 à 12 —
+exactement la limite du plan Vercel Hobby déjà documentée dans
+`stripe-billing.js`/`invite.js`. Toute nouvelle route à l'avenir devra être
+fusionnée dans un fichier existant plutôt qu'ajoutée séparément.
+
+**`Login.jsx`** (`handleSignup`) et **`CoachSignup.jsx`** (`handleSubmit`) :
+même schéma dans les deux — widget `<Turnstile siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY} onSuccess={setTurnstileToken} onExpire={...} />`
+juste avant le bouton de soumission (onglet Inscription uniquement côté
+Login.jsx, pas l'onglet Connexion), token en state, `fetch('/api/verify-turnstile')`
+en tout premier dans le handler — avant `/api/invite`/`register()` côté
+membre, avant `supabase.auth.signUp()` côté coach. Échec → message
+"Vérification anti-bot échouée, réessaie", **aucun appel** à
+`register()`/`signUp()`, fonction arrêtée.
+
+**Reset du widget après CHAQUE échec, pas seulement un échec anti-bot** : un
+token Turnstile est à usage unique côté Cloudflare — le laisser après un
+échec plus tardif (code d'invitation invalide, email déjà pris, échec
+`create-gym`) aurait bloqué un 2ᵉ essai avec un token déjà consommé.
+`turnstileRef.current?.reset()` + remise à `''` du state ajoutés sur
+**toutes** les branches d'erreur des deux `handleSignup`/`handleSubmit`, pas
+uniquement celle du nouveau check.
+
+**Vérifié** : `npm run build` deux fois — une fois avec `VITE_TURNSTILE_SITE_KEY`
+posée en local (`.env` gitignored, jamais commité, clé publique de test
+Cloudflare "always passes" `1x00000000000000000000AA`, pas une vraie clé),
+grep du bundle compilé confirme la valeur injectée + l'URL
+`challenges.cloudflare.com` présentes dans les chunks `Login-*.js` et
+`CoachSignup-*.js` ; une deuxième fois sans la variable (état réel du
+déploiement tant que `VITE_TURNSTILE_SITE_KEY`/`TURNSTILE_SECRET_KEY` ne
+sont pas posées dans Vercel) — build stable dans les deux cas, aucune
+erreur.
+
+**Reste à faire, hors scope de cette session (pas demandé)** : poser les
+deux variables d'environnement réelles dans Vercel (`VITE_TURNSTILE_SITE_KEY`
+côté client, `TURNSTILE_SECRET_KEY` côté serveur) — sans elles, `api/verify-turnstile.js`
+répond `{ error: 'Not configured' }` (500) et le widget ne se rend pas
+(site key vide). `.env.example` non touché (hors de la liste de fichiers
+autorisés pour cette session) — à mettre à jour séparément si utile. Aucun
+test réel de bout en bout possible ici (nécessite les vraies clés Cloudflare
++ un vrai domaine autorisé dans le dashboard Turnstile).
+
 ## 🔧 2026-08-30 — `coach@onairapp.com` exempté définitivement du mur d'abonnement (`is_platform_admin`)
 
 **Contexte** : investigation read-only du 2026-08-29 sur le mur d'abonnement
