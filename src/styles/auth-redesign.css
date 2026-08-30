@@ -51,6 +51,20 @@ body.auth-body-bg {
   background: #EFE7D9;
 }
 
+/* Login.jsx uniquement — remplace le style inline qui portait ces mêmes
+   valeurs directement dans le JSX (padding:'80px 28px 28px', display:flex,
+   flexDirection:column, minHeight:'100dvh'), converti en classe pour que
+   le split-screen desktop (public.css, @media min-width:900px) puisse le
+   surcharger proprement. Valeurs mobiles inchangées — CoachSignup.jsx
+   (même fichier CSS, voir en-tête) garde son propre style inline tel
+   quel, non concerné. */
+.auth-shell {
+  padding: 80px 28px 28px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
 .auth-title {
   font-size: 30px;
   font-weight: 700;

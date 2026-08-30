@@ -1,15 +1,45 @@
+/* Split-screen desktop (≥900px) pour Landing.jsx et Login.jsx — maquette
+ * Claude Design validée. Les wrappers ci-dessous (landing-split-left/
+ * -right, landing-center-group, auth-split-right) sont ajoutés dans le
+ * JSX des deux écrans spécifiquement pour ce layout ; en display:contents
+ * par défaut (les "-left"/"-center-group" wrappers, donc invisibles pour
+ * le rendu — leurs enfants deviennent des enfants directs de leur parent
+ * flex exactement comme avant, aucun changement de layout) ou display:none
+ * (les "-right" panneaux visuels, absents sous 900px), de sorte que le
+ * DOM mobile existant n'est perturbé par aucune de ces classes tant que
+ * la media query ci-dessous n'est pas active. Mobile reste donc pixel
+ * pour pixel identique — vérifié par diff, aucune règle mobile existante
+ * modifiée, seulement ces ajouts neutres.
+ */
+.landing-split-left,
+.landing-center-group {
+  display: contents;
+}
+.landing-split-right,
+.auth-split-right {
+  display: none;
+}
+
 /* Desktop layout for the 5 routes outside both MemberLayout and
  * CoachLayout (Landing, Login, ResetPassword, Onboarding, AppTour) — same
  * "unlock #root, cap+center the actual content wrapper" pattern as
  * member.css/coach.css, applied to whichever wrapper class each of these
  * screens happens to use (three different ones across five screens).
+ *
+ * Landing.jsx et Login.jsx (.app-wrapper.auth-redesign) sortent de ce
+ * pattern "cap+center" ci-dessous — remplacés par un vrai split-screen à
+ * deux colonnes (voir plus bas dans ce même media query). ResetPassword.jsx
+ * (.app-wrapper SANS .auth-redesign) et Onboarding/AppTour gardent le
+ * pattern cap+center inchangé : hors scope de cette session.
  */
 @media (min-width: 900px) {
   #root.public-shell {
     max-width: 100%;
   }
 
-  /* Login.jsx / ResetPassword.jsx */
+  /* ResetPassword.jsx uniquement (.app-wrapper sans .auth-redesign — voir
+     Login.jsx/auth-redesign.css ci-dessous pour le vrai split-screen).
+     Inchangé : hors scope de cette session. */
   #root.public-shell .app-wrapper {
     max-width: min(90vw, 720px);
     margin-left: auto;
@@ -24,14 +54,176 @@
     margin-right: auto;
   }
 
-  /* Landing.jsx — the marketing splash. Buttons/text are width:100% of
-     their container in landing.css, so widening this all the way to
-     member's 720px would stretch a CTA button into something absurd;
-     capped narrower, just enough to stop the huge black void either side
-     on a real wide screen without turning it into a full desktop redesign. */
+  /* ══════════════════════════════════════════════════════════════════
+     Landing.jsx — split-screen (maquette Claude Design). Remplace l'ancien
+     pattern "cap+center" (max-width:480px flottant dans un vide sur les
+     côtés) par deux colonnes réelles : gauche pour le contenu, droite pour
+     le visuel de marque. .landing devient la ligne flex elle-même (déjà
+     display:flex en mobile, colonne — juste réorienté en row ici et les
+     deux wrappers activés au-dessus prennent le relais du contenu).
+     ══════════════════════════════════════════════════════════════════ */
   #root.public-shell .landing {
-    max-width: min(90vw, 480px);
-    margin-left: auto;
-    margin-right: auto;
+    max-width: 100%;
+    margin: 0;
+    flex-direction: row;
+    align-items: stretch;
+    padding: 0;
+  }
+
+  #root.public-shell .landing-split-left {
+    display: flex;
+    flex-direction: column;
+    width: 560px;
+    flex-shrink: 0;
+    padding: 48px 64px;
+  }
+  /* Regroupe hero + CTAs (siblings dans le JSX, séparés du footer) dans un
+     seul bloc centré verticalement — sans ce wrapper, .landing-hero
+     (flex:1, déjà centré sur lui-même) pousserait les CTAs tout en bas de
+     la colonne, loin du sous-titre, au lieu du groupe compact de la
+     maquette. */
+  #root.public-shell .landing-center-group {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    justify-content: center;
+    gap: 20px;
+  }
+  #root.public-shell .landing-hero {
+    flex: none;
+    padding: 0;
+    justify-content: flex-start;
+  }
+  #root.public-shell .landing-content {
+    max-width: 400px;
+  }
+  #root.public-shell .landing-ctas {
+    max-width: 340px;
+    padding-bottom: 0;
+  }
+  #root.public-shell .landing-subtitle {
+    max-width: 340px;
+  }
+  #root.public-shell .landing-footer {
+    text-align: left;
+    padding: 0;
+  }
+
+  /* Colonne droite — fond encre, logo-volta.svg complet (pictogramme +
+     wordmark + tagline, voir public/logo-volta.svg) en grand format
+     centré, deux masses de couleur douces (olive/lavande, palette
+     existante) en dégradé subtil pour la profondeur — pas une copie
+     pixel-perfect de la maquette, juste le même esprit. */
+  #root.public-shell .landing-split-right {
+    flex: 1;
+    background: #1C1A17;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+  #root.public-shell .landing-split-right::before {
+    content: '';
+    position: absolute;
+    top: -140px;
+    right: -120px;
+    width: 480px;
+    height: 480px;
+    border-radius: 50%;
+    background: #EBEB7D;
+    opacity: 0.14;
+    filter: blur(60px);
+  }
+  #root.public-shell .landing-split-right::after {
+    content: '';
+    position: absolute;
+    bottom: -160px;
+    left: -100px;
+    width: 440px;
+    height: 440px;
+    border-radius: 50%;
+    background: #A3AEFE;
+    opacity: 0.16;
+    filter: blur(70px);
+  }
+  #root.public-shell .landing-split-logo {
+    position: relative;
+    width: 480px;
+    max-width: 70%;
+    height: auto;
+  }
+
+  /* ══════════════════════════════════════════════════════════════════
+     Login.jsx (.app-wrapper.auth-redesign) — même principe split-screen,
+     scopé à .auth-redesign pour ne pas toucher ResetPassword.jsx qui
+     partage .app-wrapper (règle "cap+center" ci-dessus, inchangée).
+     Sélecteur à la même spécificité que #root.public-shell .app-wrapper
+     ci-dessus + une classe, donc gagne sans avoir besoin de !important.
+     ══════════════════════════════════════════════════════════════════ */
+  #root.public-shell .app-wrapper.auth-redesign {
+    max-width: 100%;
+    margin: 0;
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    min-height: 100%;
+  }
+
+  /* .auth-shell remplace le style inline de Login.jsx (padding:'80px 28px
+     28px', display:flex, flexDirection:column, minHeight:'100dvh') — voir
+     Login.jsx : converti en classe pour pouvoir être surchargé ici. Centré
+     verticalement dans la colonne plutôt que poussé par un padding-top
+     fixe de 80px, qui créait un grand vide en haut sur une colonne haute
+     et large. */
+  #root.public-shell .auth-shell {
+    width: 560px;
+    flex-shrink: 0;
+    justify-content: center;
+    padding: 0 64px;
+    min-height: 0;
+  }
+  #root.public-shell .auth-shell > * {
+    max-width: 400px;
+  }
+
+  /* Colonne droite — même traitement que Landing.jsx, variante rose/
+     lavande pour différencier visuellement les deux écrans du parcours. */
+  #root.public-shell .auth-split-right {
+    flex: 1;
+    background: #1C1A17;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+  #root.public-shell .auth-split-right::before {
+    content: '';
+    position: absolute;
+    bottom: -150px;
+    right: -110px;
+    width: 460px;
+    height: 460px;
+    border-radius: 50%;
+    background: #FFBEF0;
+    opacity: 0.13;
+    filter: blur(65px);
+  }
+  #root.public-shell .auth-split-right::after {
+    content: '';
+    position: absolute;
+    top: -130px;
+    left: -90px;
+    width: 420px;
+    height: 420px;
+    border-radius: 50%;
+    background: #A3AEFE;
+    opacity: 0.16;
+    filter: blur(65px);
+  }
+  #root.public-shell .auth-split-logo {
+    position: relative;
+    width: 480px;
+    max-width: 70%;
+    height: auto;
   }
 }

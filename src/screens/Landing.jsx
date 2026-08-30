@@ -50,41 +50,61 @@ export default function Landing() {
   return (
     <div className="landing landing-redesign">
       {showSplash && <SplashIntro onDone={() => setShowSplash(false)} />}
-      <div className="landing-topbar">
-        <span className="landing-brand">{gym.name}</span>
-        {gym.city && <span className="landing-city">{gym.city}</span>}
-      </div>
 
-      <div className="landing-hero">
-        <div className={`landing-content${visible ? ' visible' : ''}`}>
-          <span className="landing-kicker">REPOUSSE TES LIMITES</span>
-          <Logo variant="lockup" orientation="row" size={44} className="landing-logo" />
-          <p className="landing-subtitle">
-            Suis ta nutrition, tes séances, ta progression. Ton coach dans ta poche.
-          </p>
+      {/* .landing-split-left / .landing-center-group — display:contents
+          sous 900px (public.css) : n'affectent pas le layout mobile, leurs
+          enfants restent des enfants directs de .landing (flex column)
+          exactement comme avant ce commit. .landing-center-group regroupe
+          hero+CTAs, siblings dans le DOM d'origine, pour qu'ils partagent
+          un seul bloc centré verticalement en desktop split-screen — sans
+          lui, .landing-hero (flex:1, déjà centré sur lui-même) pousserait
+          les CTAs tout en bas de la colonne desktop. */}
+      <div className="landing-split-left">
+        <div className="landing-topbar">
+          <span className="landing-brand">{gym.name}</span>
+          {gym.city && <span className="landing-city">{gym.city}</span>}
         </div>
-      </div>
 
-      <div className={`landing-ctas${visible ? ' visible' : ''}`}>
-        <button
-          className="landing-btn landing-btn-primary"
-          onClick={() => navigate('/login', { state: { tab: 'signup' } })}
-        >
-          Rejoindre la salle →
-        </button>
-        <button
-          className="landing-btn landing-btn-secondary"
-          onClick={() => navigate('/login', { state: { tab: 'login' } })}
-        >
-          Accès coach →
-        </button>
-      </div>
+        <div className="landing-center-group">
+          <div className="landing-hero">
+            <div className={`landing-content${visible ? ' visible' : ''}`}>
+              <span className="landing-kicker">REPOUSSE TES LIMITES</span>
+              <Logo variant="lockup" orientation="row" size={44} className="landing-logo" />
+              <p className="landing-subtitle">
+                Suis ta nutrition, tes séances, ta progression. Ton coach dans ta poche.
+              </p>
+            </div>
+          </div>
 
-      {gym.address && (
-        <div className="landing-footer">
-          {gym.name} · {gym.address}
+          <div className={`landing-ctas${visible ? ' visible' : ''}`}>
+            <button
+              className="landing-btn landing-btn-primary"
+              onClick={() => navigate('/login', { state: { tab: 'signup' } })}
+            >
+              Rejoindre la salle →
+            </button>
+            <button
+              className="landing-btn landing-btn-secondary"
+              onClick={() => navigate('/login', { state: { tab: 'login' } })}
+            >
+              Accès coach →
+            </button>
+          </div>
         </div>
-      )}
+
+        {gym.address && (
+          <div className="landing-footer">
+            {gym.name} · {gym.address}
+          </div>
+        )}
+      </div>
+
+      {/* Panneau de marque desktop — absent sous 900px (display:none par
+          défaut, voir public.css), inutile de le rendre conditionnellement
+          en JSX. */}
+      <div className="landing-split-right">
+        <img src="/logo-volta.svg" alt="VOLTA — Coaching Intelligent" className="landing-split-logo" />
+      </div>
     </div>
   )
 }

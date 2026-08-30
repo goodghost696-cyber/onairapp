@@ -82,6 +82,94 @@ Le texte ci-dessous est conservé pour mémoire du point de départ.
 
 **Pourquoi ne pas commencer maintenant** : coder un mécanisme de consentement avant d'avoir tranché opt-in vs opt-out et la formulation exacte reviendrait à jeter le travail, ou pire à afficher au membre une formulation juridiquement fausse. La clarification juridique vient d'abord, le code ensuite.
 
+## 🖥️ 2026-08-30 (suite) — Split-screen desktop (≥900px) pour Landing.jsx et Login.jsx
+
+**Contexte** : maquette Claude Design validée en session précédente (accueil
+pré-choix + écran de connexion). Deux allers-retours avant le vrai travail
+de cette session, tous les deux sur `public/logo-volta.svg` — HEAD local
+d'abord périmé de plusieurs commits (`git fetch` + `reset --hard` refait
+avant de continuer, confirmé contre `d12023c`), puis un contenu de fichier
+qui a changé entre-temps (le fichier ne contenait d'abord que le
+pictogramme seul — 280 octets —, puis, après resynchronisation, le SVG
+complet pictogramme + wordmark + tagline "Coaching Intelligent" attendu —
+1311 octets). Les deux fois signalé avant d'improviser, comme demandé.
+
+**1. Bug racine (`public.css`)** : `#root.public-shell .landing` et
+`.app-wrapper` se contentaient de `max-width: min(90vw, ...)` +
+`margin: auto` à ≥900px — un recentrage, pas un vrai layout desktop, d'où
+la colonne étroite flottant dans un vide disproportionné des deux côtés.
+Remplacé par un vrai split-screen à deux colonnes pour ces deux écrans
+précisément, scopé sans toucher au reste :
+- `.landing` (Landing.jsx) et `.app-wrapper.auth-redesign` (Login.jsx,
+  scopé pour ne PAS affecter `ResetPassword.jsx` qui partage la classe
+  `.app-wrapper` sans `.auth-redesign` — sa règle `cap+center` d'origine
+  reste intacte, hors scope de cette session) passent en
+  `display: flex; flex-direction: row` à ≥900px.
+- Colonne gauche fixe 560px (`.landing-split-left` / `.auth-shell`),
+  colonne droite `flex: 1` (`.landing-split-right` / `.auth-split-right`),
+  fond encre `#1C1A17`.
+
+**Mobile pixel pour pixel préservé** — technique : les nouveaux wrappers
+JSX (`.landing-split-left`, `.landing-center-group`) sont `display:
+contents` par défaut (hors media query) — aucune boîte propre, leurs
+enfants deviennent des enfants directs de leur parent flex exactement
+comme avant ce commit ; les panneaux visuels (`.landing-split-right`,
+`.auth-split-right`) sont `display: none` par défaut. Confirmé par `git
+diff` : les seules lignes supprimées dans `Landing.jsx`/`Login.jsx` sont
+de la ré-indentation (contenu inchangé, juste enveloppé), et dans
+`public.css` uniquement l'ancienne règle `cap+center` de `.landing`
+(remplacée) — rien d'autre touché.
+
+**2. Landing.jsx** : `.landing-hero` et `.landing-ctas` sont des *siblings*
+dans le JSX (pas parent/enfant) — sans intervention, le `flex:1` existant
+de `.landing-hero` se serait centré sur sa propre boîte et aurait poussé
+les CTAs tout en bas de la colonne desktop, loin du sous-titre. Nouveau
+wrapper `.landing-center-group` (lui aussi `display: contents` sous
+900px) regroupe hero+CTAs pour qu'ils partagent un seul bloc centré
+verticalement à ≥900px — la seule vraie restructuration de layout de
+cette session, aucune copy ni logique changée. Colonne droite : fond
+encre, `public/logo-volta.svg` complet (tel quel, non découpé) en grand
+format centré (480px, max 70% de la colonne), deux masses de couleur
+douces olive (`#EBEB7D`, haut-droite) / lavande (`#A3AEFE`, bas-gauche)
+en cercles flous à faible opacité — esprit du mockup, pas une réplique
+pixel-perfect (le mockup ne portait pas de valeurs px exactes à
+reproduire au pixel près).
+
+**3. Login.jsx** : le wrapper de formulaire était un style inline
+(`padding:'80px 28px 28px', display:'flex', flexDirection:'column',
+minHeight:'100dvh'`) — impossible à surcharger proprement en CSS sans
+`!important`. Converti en classe `.auth-shell` (`auth-redesign.css`, mêmes
+valeurs mobiles exactes) pour que `public.css` puisse le recentrer
+verticalement à ≥900px (`justify-content: center` au lieu du padding-top
+fixe de 80px qui créait un grand vide en haut sur une colonne haute).
+`CoachSignup.jsx`, qui partage `auth-redesign.css` mais avait son propre
+style inline distinct, non touché. Colonne droite : même traitement,
+variante rose (`#FFBEF0`) / lavande pour différencier visuellement les
+deux écrans du parcours. Champs, libellés, logique de formulaire
+strictement inchangés.
+
+**4. Wordmark blanc invisible sur fond clair — signalé, PAS corrigé**
+(hors scope confirmé, demande explicite de ne toucher que si confirmation) :
+`src/styles/brand.css:16` — `.brand-wordmark { color: #fff; ... }`, sans
+override de couleur nulle part pour le contexte clair. Deux occurrences
+réelles trouvées où ce composant `<Logo>` (pas le nouveau
+`logo-volta.svg` de cette session — le petit lockup React inline) rend ce
+texte blanc sur un fond clair, donc invisible :
+- `src/screens/Landing.jsx:72` — `<Logo variant="lockup" .../>` dans
+  `.landing-split-left`, fond crème `#EFE7D9`.
+- `src/screens/ResetPassword.jsx:69` — `<Logo variant="lockup" .../>` sur
+  `background: var(--surface)`, soit `#FFFFFF` dans les 3 variantes de
+  thème (`global.css:180/224/256`).
+
+**Vérifié** : `npm run build`, grep des bundles compilés — `logo-volta.svg`
+référencé dans `Landing-*.js` et `Login-*.js` ; `landing-split-left`/
+`landing-split-right`/`landing-center-group` confirmés dans `Landing-*.js` ;
+`auth-shell`/`auth-split-right` confirmés dans `Login-*.js` ; les 4
+nouvelles classes confirmées dans le CSS compilé (`index-*.css`).
+`dist/logo-volta.svg` copié tel quel par Vite (1311 octets, identique à la
+source). `git diff` confirme des changements ciblés — pas de ligne mobile
+existante modifiée hors ré-indentation.
+
 ## 🐛 2026-08-30 (suite) — Deux derniers écarts vs le mockup Claude Design : icônes sidebar + sous-titre du graphique
 
 **1. Icônes des onglets sidebar (`coach-nav-redesign.css`, `@media
