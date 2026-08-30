@@ -153,6 +153,7 @@ body.coachmessages-body-bg {
   .coachmessages-screen {
     max-width: 1600px;
     margin: 0 auto;
+    margin-left: 220px;
     padding-left: 48px;
     padding-right: 48px;
   }

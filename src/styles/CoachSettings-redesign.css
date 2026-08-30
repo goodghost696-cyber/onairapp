@@ -271,6 +271,7 @@ body.coachsettings-body-bg {
   .coachsettings-screen {
     max-width: 900px;
     margin: 0 auto;
+    margin-left: 220px;
     padding-left: 48px;
     padding-right: 48px;
   }

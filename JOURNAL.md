@@ -82,6 +82,67 @@ Le texte ci-dessous est conservé pour mémoire du point de départ.
 
 **Pourquoi ne pas commencer maintenant** : coder un mécanisme de consentement avant d'avoir tranché opt-in vs opt-out et la formulation exacte reviendrait à jeter le travail, ou pire à afficher au membre une formulation juridiquement fausse. La clarification juridique vient d'abord, le code ensuite.
 
+## 🖥️ 2026-08-30 (suite) — Sidebar verticale coach à partir de 900px (nav bottom-fixed inchangée en dessous)
+
+**Demande** : sur les écrans coach utilisant `CoachNavBar.jsx`, remplacer la
+nav bottom-fixed par une sidebar verticale à gauche uniquement à partir de
+900px (même seuil que les grilles `CoachDashboard-redesign.css`/
+`ClientsList-redesign.css`), pixel pour pixel identique en dessous.
+
+**Écart avec la demande initiale, vérifié dans le code avant de commencer** :
+la demande listait 5 écrans (`CoachDashboard`, `ClientsList`, `CoachMessages`,
+`CoachPrograms`, `CoachSettings`) comme utilisant `CoachNavBar.jsx`.
+`CoachPrograms.jsx` ne l'importe pas (`grep CoachNavBar` sur `src/screens/`
+confirme), et `CoachPrograms-redesign.css` documente explicitement "Pas de
+nav sur cet écran ... écran secondaire" (même chose pour `MemberDetail`,
+non listé). Seuls **4 écrans** rendent réellement `CoachNavBar.jsx` :
+`CoachDashboard`, `ClientsList`, `CoachMessages`, `CoachSettings` — c'est sur
+ces 4-là que le changement a été appliqué ; `CoachPrograms-redesign.css` et
+`CoachPrograms.jsx` non touchés, conformément au principe "ne pas casser par
+accident" plutôt que d'inventer une nav qui n'existe pas sur cet écran.
+
+**`coach-nav-redesign.css`** : nouveau bloc `@media (min-width: 900px)`
+remplaçant l'ancien (qui ne faisait que `max-width: 720px`). `.coach-nav`
+bascule `left:0;top:0;bottom:0;height:100vh;width:220px;flex-direction:column`,
+coins arrondis seulement à droite (`border-radius: 0 28px 28px 0`), ombre
+portée vers la droite au lieu du bas. Mêmes tokens (`#1C1A17` fond,
+`#EBEB7D` pastille). Mécanisme de la pastille glissante conservé à
+l'identique dans son principe (`--nav-active-index`/`--nav-tab-count`, un
+seul `transform` qui change à la navigation) — seule la formule d'inset
+change d'axe : `top/bottom` fixes + `height: calc((100% - 48px) / count)` +
+`transform: translateY(...)` au lieu de `left` fixe + `width: calc(...)` +
+`translateX(...)`, par simple symétrie avec la formule horizontale
+existante (inset = padding externe du nav sur l'axe concerné). Aucun
+problème technique inattendu sur ce point — la même mécanique se transpose
+proprement à la verticale. `.coach-nav-item` passe en
+`flex-direction: column` (icône au-dessus du libellé, empilés plutôt que
+côte à côte : rendu testé visuellement plus lisible dans une colonne de
+220px qu'une disposition côte à côte qui aurait forcé soit un libellé
+tronqué soit une sidebar plus large que demandé).
+
+**4 fichiers `*-redesign.css`** (`CoachDashboard`, `ClientsList`,
+`CoachMessages`, `CoachSettings`) : une ligne `margin-left: 220px;` ajoutée
+dans le bloc `@media (min-width: 900px)` déjà existant de chaque conteneur
+`.xxx-screen`, à côté du `max-width`/`margin: 0 auto` déjà en place — décale
+le contenu centré de la largeur de la sidebar sans toucher au reste du
+layout (grilles `auto-fit`, `max-width: 1600px`/`900px` selon l'écran,
+inchangés).
+
+**Vérifié** : `npm run build`, puis grep des 5 bundles CSS compilés
+(`CoachNavBar-*.css` pour la sidebar, les 4 `*-redesign.css` compilés pour
+le `margin-left: 220px`). Confirmé dans les chunks compilés :
+`width:220px`, `flex-direction:column`, `translateY(calc(100% * var(--nav-active-index, 0)))`
+et `border-radius:0 28px 28px 0` dans `CoachNavBar-CNLCJc11.css`, et
+`margin:0 auto 0 220px` dans les 4 CSS d'écran compilés — tous à l'intérieur
+de `@media (min-width: 900px)`, rien en dehors. `CoachNav.jsx`/
+`Conversation.jsx`/`coach.css` non touchés (hors scope, dette identifiée
+séparément).
+
+**Reste à faire, hors scope de cette session** : PR pas encore ouverte au
+moment de l'écriture de cette entrée (à faire dans l'enchaînement standard
+juste après) ; vérification visuelle réelle en desktop (>900px) seulement
+via lecture du CSS compilé ici, pas de capture d'écran prise.
+
 ## 🔒 2026-08-30 (suite) — Cloudflare Turnstile sur les deux formulaires de signup
 
 Investigation préalable (session précédente) avait cartographié les deux
