@@ -102,6 +102,21 @@
   }
 }
 
+/* Mobile (<900px, maquette d'origine — voir suite du 17/08 dans JOURNAL.md :
+   « pilule active à largeur variable contre des icônes seules à largeur
+   fixe pour les onglets inactifs », choix assumé, pas cet oubli-ci) : seul
+   l'onglet actif affiche son libellé, les 3 autres restent icône seule.
+   CoachNavBar.jsx rend maintenant le libellé pour les 4 onglets à chaque
+   render (fix ci-dessous, sidebar desktop) — c'est cette règle, pas le
+   JSX, qui masque les libellés inactifs sur mobile. display:none plutôt
+   qu'un retour à un rendu conditionnel : l'animation de fade ci-dessus
+   (déclenchée par un montage/démontage du nœud) se redéclenche à
+   l'identique quand display:none passe à visible, donc le rendu et
+   l'animation mobiles restent pixel pour pixel ceux d'avant ce fix. */
+.coach-nav-item:not(.active) .coach-nav-label {
+  display: none;
+}
+
 .coach-nav-badge {
   position: absolute;
   top: 2px;
@@ -274,6 +289,17 @@
 
   .coach-nav-label {
     font-size: 11.5px;
+  }
+
+  /* Bug fixé (mockup Claude Design, sidebar desktop) : les 4 libellés
+     (Board/Clients/Messages/Réglages) restent visibles en permanence, actif
+     ou non — seule la pastille de fond (olive) distingue l'onglet actif,
+     pas la présence du texte. Sur mobile (règle de base ci-dessus, hors
+     media query) seul l'actif affiche son libellé — c'est un choix de
+     maquette assumé et documenté là-bas, pas ce bug-ci : cette règle
+     n'écrase que le mode sidebar ≥900px. */
+  .coach-nav-item:not(.active) .coach-nav-label {
+    display: block;
   }
 
   /* ── Raccourcis + compte coach — sous les 4 onglets, visibles seulement
