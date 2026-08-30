@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" role="img">
+  <title>VOLTA — Coaching Intelligent</title>
+  <defs>
+    <linearGradient id="emblem" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#D4F24A"/>
+      <stop offset="48%" stop-color="#D8C8E8"/>
+      <stop offset="100%" stop-color="#A78BFA"/>
+    </linearGradient>
+    <linearGradient id="tagline" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#A78BFA"/>
+      <stop offset="100%" stop-color="#E9A7D8"/>
+    </linearGradient>
+  </defs>
+
+  <!-- VOLTA emblem -->
+  <g transform="translate(600 55)">
+    <path d="M-190 0 L-80 0 L55 235 L-8 340 Z" fill="url(#emblem)"/>
+    <path d="M110 0 L225 0 L108 168 L174 168 L-8 435 L38 287 L-52 287 L72 112 L30 112 Z"
+          fill="#A78BFA"/>
+  </g>
+
+  <!-- Wordmark -->
+  <text x="600" y="650" text-anchor="middle"
+        fill="#111111"
+        font-family="Space Grotesk, Arial, sans-serif"
+        font-size="168" font-weight="600"
+        letter-spacing="28">VOLTA</text>
+
+  <text x="600" y="755" text-anchor="middle"
+        fill="url(#tagline)"
+        font-family="Unbounded, Arial, sans-serif"
+        font-size="34" font-weight="500"
+        letter-spacing="7">COACHING INTELLIGENT</text>
+</svg>
