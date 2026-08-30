@@ -13,11 +13,34 @@
   display: block;
 }
 
+/* Couleur par défaut passée de blanc à encre (2026-08-30) — le blanc
+   datait d'avant le restyle pastel chaud, quand <Logo> ne s'affichait que
+   sur fond sombre. Les deux seuls call sites de <Logo> dans tout le repo
+   (grep `<Logo` confirmé) rendent désormais sur fond clair/moyen où le
+   blanc est illisible ou peu lisible :
+   - Landing.jsx (colonne gauche, `.landing-split-left`, fond crème
+     `#EFE7D9`) ;
+   - ResetPassword.jsx — pas de -redesign.css importé ici, donc pas encore
+     passé au crème : le fond réel derrière le Logo est le dégradé corail
+     de <body> (global.css, `direction corail`, non scopé par route), pas
+     `var(--surface)` (ça, c'est juste le fond des champs de saisie plus
+     bas dans le même écran, un élément différent). Encre reste le bon
+     choix ici aussi : `--text-primary` (`#1B1710`, quasi identique à
+     `#1C1A17`) est déjà utilisé directement sur ce même dégradé juste à
+     côté (le texte "mot de passe oublié" sous le logo, ligne 70) —
+     convention déjà établie dans l'app pour du texte sur fond corail.
+   Aucun usage sur fond sombre à préserver : la nouvelle colonne droite du
+   split-screen (PR#149/#150) affiche `public/logo-volta.svg` en `<img>`
+   direct, pas ce composant/cette classe — confirmé, pas de conflit. Le
+   splash (SplashIntro.jsx) a son propre span "VOLTA" séparé
+   (`.splash-word`), pas `.brand-wordmark` non plus. Simple changement de
+   couleur par défaut, pas de logique conditionnelle : rien d'autre à
+   gérer tant qu'aucun contexte sombre n'existe réellement. */
 .brand-wordmark {
   font-family: 'Unbounded', 'Space Grotesk', sans-serif;
   font-weight: 800;
   letter-spacing: 0.01em;
-  color: #fff;
+  color: #1C1A17;
   line-height: 1;
   display: inline-block;
 }
