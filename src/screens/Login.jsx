@@ -159,7 +159,11 @@ export default function Login() {
 
   return (
     <div className="app-wrapper auth-redesign">
-      <div style={{ padding: '80px 28px 28px', display: 'flex', flexDirection: 'column', minHeight: '100dvh' }}>
+      {/* .auth-shell — mêmes valeurs que l'ancien style inline (voir
+          auth-redesign.css), converti en classe pour que le split-screen
+          desktop ci-dessous (public.css, @media min-width:900px) puisse le
+          recentrer verticalement sans !important. */}
+      <div className="auth-shell">
 
         <h1 className="auth-title">
           Bienvenue.
@@ -259,6 +263,13 @@ export default function Login() {
           </div>
         )}
 
+      </div>
+
+      {/* Panneau de marque desktop — absent sous 900px (auth-split-right
+          est display:none par défaut, voir public.css), inutile de le
+          rendre conditionnellement en JSX. */}
+      <div className="auth-split-right">
+        <img src="/logo-volta.svg" alt="VOLTA — Coaching Intelligent" className="auth-split-logo" />
       </div>
     </div>
   )
