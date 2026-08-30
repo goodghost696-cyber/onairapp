@@ -99,9 +99,11 @@ export default function CoachDashboard() {
   const chartMax = Math.max(3, Math.ceil(realMaxSessions / 3) * 3)
   const chartTicks = [0, chartMax / 3, (chartMax / 3) * 2, chartMax]
   const CHART_H = 220
-  const avgSessionsPerDay = weeklyActivity.length > 0
-    ? weeklyActivity.reduce((sum, d) => sum + d.sessions, 0) / weeklyActivity.length
-    : 0
+  // Sous-titre de la carte graphique ("X séances au total · moyenne Y/jour")
+  // — même somme que celle utilisée ci-dessous pour la moyenne, calculée une
+  // seule fois.
+  const totalSessions7d = weeklyActivity.reduce((sum, d) => sum + d.sessions, 0)
+  const avgSessionsPerDay = weeklyActivity.length > 0 ? totalSessions7d / weeklyActivity.length : 0
   const avgSessionsPerDayLabel = avgSessionsPerDay.toFixed(1).replace('.', ',')
   const highestDate = realMaxSessions > 0 ? (weeklyActivity.find(d => d.sessions === realMaxSessions)?.date ?? null) : null
   const dayDateLabel = dateStr => new Date(`${dateStr}T00:00:00`).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })
@@ -353,7 +355,20 @@ export default function CoachDashboard() {
 
           <div className="cd-d-row cd-d-row-chart">
             <div className="cd-d-chart-card">
-              <div className="cd-section-label">Activité de la salle — 7 jours</div>
+              <div className="cd-d-chart-header">
+                <div>
+                  <div className="cd-section-label">Activité de la salle — 7 jours</div>
+                  <p className="cd-d-chart-subtitle">
+                    {totalSessions7d} séance{totalSessions7d > 1 ? 's' : ''} au total · moyenne {avgSessionsPerDayLabel}/jour
+                  </p>
+                </div>
+                {/* Légende de la ligne pointillée magenta du graphique
+                    ci-dessous (.cd-d-chart-avgline) — même couleur/style de
+                    trait reproduit ici en miniature. */}
+                <span className="cd-d-chart-legend">
+                  <span className="cd-d-chart-legend-swatch" aria-hidden="true" /> Moyenne
+                </span>
+              </div>
               <div className="cd-d-chart-plot">
                 <div className="cd-d-chart-yaxis" style={{ height: CHART_H }}>
                   {chartTicks.map(t => <span key={t} className="cd-d-chart-ytick">{t}</span>)}
