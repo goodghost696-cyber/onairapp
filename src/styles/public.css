@@ -115,6 +115,7 @@
      existante) en dégradé subtil pour la profondeur — pas une copie
      pixel-perfect de la maquette, juste le même esprit. */
   #root.public-shell .landing-split-right {
+    display: flex;
     flex: 1;
     background: #1C1A17;
     align-items: center;
@@ -189,6 +190,7 @@
   /* Colonne droite — même traitement que Landing.jsx, variante rose/
      lavande pour différencier visuellement les deux écrans du parcours. */
   #root.public-shell .auth-split-right {
+    display: flex;
     flex: 1;
     background: #1C1A17;
     align-items: center;

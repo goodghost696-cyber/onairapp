@@ -82,6 +82,41 @@ Le texte ci-dessous est conservé pour mémoire du point de départ.
 
 **Pourquoi ne pas commencer maintenant** : coder un mécanisme de consentement avant d'avoir tranché opt-in vs opt-out et la formulation exacte reviendrait à jeter le travail, ou pire à afficher au membre une formulation juridiquement fausse. La clarification juridique vient d'abord, le code ensuite.
 
+## 🐛 2026-08-30 (suite) — Fix : colonne droite du split-screen (PR#149) invisible en desktop
+
+**Bug signalé** : sur `Landing.jsx` en desktop (≥900px), la colonne droite
+(fond encre + logo) ne s'affichait pas du tout — écran resté en une seule
+colonne, capture à l'appui.
+
+**Cause exacte** (diagnostiquée avant toute correction, comme demandé) :
+`public.css` pose une règle de base, hors media query, pour cacher les
+deux panneaux de marque sur mobile :
+```css
+.landing-split-right,
+.auth-split-right { display: none; }
+```
+La surcharge desktop (`@media (min-width: 900px)`) de `.landing-split-right`
+fixait bien `flex: 1`, `background: #1C1A17`, `align-items`,
+`justify-content`, `position`, `overflow` — mais **jamais `display`**.
+Cette surcharge a une spécificité plus haute (`#root.public-shell
+.landing-split-right`, (1,2,0) contre (0,1,0) pour la règle de base) et
+gagne bien sur toutes les propriétés qu'elle fixe réellement, mais comme
+elle ne touche pas `display`, la seule règle qui fixe cette propriété
+reste celle de base (`display: none`) — active à toute largeur d'écran, y
+compris ≥900px. Pas une histoire de nom de classe (JSX et sélecteur CSS
+concordaient exactement, vérifié) : une propriété manquante dans le bloc
+desktop. Même bug, structurellement identique, sur `.auth-split-right`
+(Login.jsx) — repéré au diagnostic, pas encore signalé séparément.
+
+**Fix** : `display: flex;` ajouté aux deux surcharges desktop
+(`#root.public-shell .landing-split-right` et `#root.public-shell
+.auth-split-right`), rien d'autre touché — diff de 2 lignes.
+
+**Vérifié** : `npm run build`, grep du bundle CSS compilé —
+`landing-split-right{display:flex` et `auth-split-right{display:flex`
+confirmés tous deux dans le bloc `@media (min-width: 900px)`. `git diff`
+confirme exactement 2 lignes ajoutées, aucune autre modifiée.
+
 ## 🖥️ 2026-08-30 (suite) — Split-screen desktop (≥900px) pour Landing.jsx et Login.jsx
 
 **Contexte** : maquette Claude Design validée en session précédente (accueil
