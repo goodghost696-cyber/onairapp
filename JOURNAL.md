@@ -82,6 +82,49 @@ Le texte ci-dessous est conservé pour mémoire du point de départ.
 
 **Pourquoi ne pas commencer maintenant** : coder un mécanisme de consentement avant d'avoir tranché opt-in vs opt-out et la formulation exacte reviendrait à jeter le travail, ou pire à afficher au membre une formulation juridiquement fausse. La clarification juridique vient d'abord, le code ensuite.
 
+## 🐛 2026-08-30 (suite) — Fix : wordmark "VOLTA" blanc invisible sur fond clair/moyen
+
+**Bug confirmé** (signalé en session PR#149, laissé de côté à dessein
+jusqu'ici) : `brand.css:16`, `.brand-wordmark { color: #fff; }` par
+défaut, jamais surchargé nulle part.
+
+**Vérification des call sites avant correction** — grep `<Logo` sur tout
+`src/` : exactement 2 usages dans tout le repo, tous les deux rendent
+désormais sur un fond où le blanc est illisible :
+- `Landing.jsx:72` — colonne gauche du split-screen (PR#149), fond crème
+  `#EFE7D9`.
+- `ResetPassword.jsx:69` — **précision par rapport à l'hypothèse initiale
+  du signalement** : ce n'est PAS `var(--surface)`/blanc (ça, c'est
+  seulement le fond des champs de saisie plus bas dans le même écran, un
+  élément différent) — `ResetPassword.jsx` n'importe aucun `*-redesign.css`,
+  donc le fond réel derrière le Logo est le dégradé corail de `<body>`
+  (`global.css`, direction corail, non scopé par route). Encre reste le
+  bon choix ici aussi : `--text-primary` (`#1B1710`, quasi identique à
+  `#1C1A17`) est déjà utilisé directement sur ce même dégradé juste à côté
+  (le texte sous le logo, ligne 70) — convention déjà établie dans l'app,
+  pas une couleur inventée pour l'occasion.
+
+**Aucun usage sur fond sombre trouvé** — vérifié avant de choisir un
+simple changement de couleur par défaut plutôt qu'une logique
+conditionnelle (classe/variable CSS selon le fond), comme demandé si un
+tel cas existait :
+- La nouvelle colonne droite du split-screen (PR#149/#150) affiche
+  `public/logo-volta.svg` en `<img>` direct — pas `<Logo>`/`.brand-wordmark`,
+  aucun conflit.
+- Le splash (`SplashIntro.jsx`) a son propre `<span className="splash-word">`
+  séparé, pas `.brand-wordmark` non plus.
+
+**Fix** : `color: #fff` → `color: #1C1A17` (encre), un seul changement de
+valeur dans `brand.css`, pas de logique conditionnelle — rien d'autre à
+gérer tant qu'aucun contexte sombre réel n'existe.
+
+**Vérifié** : `npm run build`, grep du bundle compilé —
+`.brand-wordmark{...color:#1c1a17...}` confirmé dans
+`dist/assets/Logo-*.css` (chunk partagé par `Landing.jsx`/`ResetPassword.jsx`,
+le seul CSS chunk où `.brand-wordmark` apparaît dans tout le build). `git
+diff` confirme une seule ligne de valeur modifiée dans `brand.css`, rien
+d'autre touché.
+
 ## 🐛 2026-08-30 (suite) — Fix : colonne droite du split-screen (PR#149) invisible en desktop
 
 **Bug signalé** : sur `Landing.jsx` en desktop (≥900px), la colonne droite
