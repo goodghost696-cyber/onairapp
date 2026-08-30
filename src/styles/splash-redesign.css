@@ -21,9 +21,15 @@
   background: #EFE7D9;
 }
 
-.splash-redesign .splash-mark svg {
-  stroke: #1C1A17;
-}
+/* Recolorait l'ancien mark stroke-only (gold #F0C14B par défaut, hérité de
+   l'identité sombre) vers l'encre du système pastel chaud. Sans objet
+   depuis le passage au V-éclair (2026-08-30, voir SplashIntro.jsx) : ce
+   nouveau mark est en fill (dégradé citron→lavande + lavande pleine), pas
+   en stroke — cette règle ne visait que la propriété `stroke`, qui
+   n'existe plus sur le SVG, donc n'a plus aucun effet. Le mark garde
+   désormais ses propres couleurs de dégradé, cohérent avec les deux
+   autres endroits qui l'affichent tel quel (favicon, colonne droite du
+   split-screen de Login.jsx) plutôt que recoloré à la volée. */
 
 /* Police NON changée — le mot "VOLTA" ici reprend le wordmark de marque
    (Unbounded, brand.css/Logo.jsx), jamais retouché par aucune des 7

@@ -1,26 +1,31 @@
+import { useId } from 'react'
 import '../styles/brand.css'
 
-// The VOLTA mark — zigzag ascending line + arrowhead terminal, gold on
-// transparent. Single source of truth so every place the logo appears (nav,
-// auth screens, PWA icon generation script, favicon) draws the exact same
-// shape instead of hand-copied SVGs drifting apart over time.
-// viewBox is "-1 -1 26 26", not "0 0 24 24" — the terminal's right edge
-// sits past x=24, past a 24-wide viewBox, so it was getting clipped
-// (reported as "la flèche est coupée"). The 1-unit padding on every side
-// gives every shape in the mark room to breathe without moving a
-// coordinate, so nothing needs re-touching pixel by pixel.
-// The terminal was a filled square floating near the line's end — read as
-// a stray blob, not part of the arrow ("la flèche est dégueulasse",
-// reported directly, twice). Replaced with the standard trending-up
-// arrowhead construction (same one Feather/Lucide's "trending-up" icon
-// uses): a short two-segment chevron whose corner sits exactly on the main
-// line's endpoint (23,6), so it reads as one continuous arrow tip instead
-// of a separate shape stuck on afterward.
+// The VOLTA mark — V-éclair emblem (gradient citron→lavande + aile pleine
+// lavande), remplace au 2026-08-30 l'ancienne flèche zigzag stroke-only.
+// Extrait tel quel du groupe "VOLTA emblem" de public/logo-volta.svg (voir
+// aussi public/volta-mark.svg, la même extraction sauvegardée en fichier
+// autonome) — mêmes coordonnées de path et mêmes couleurs de dégradé,
+// aucune approximation : ce groupe ne contenait que ces 2 <path>, pas le
+// wordmark ni la tagline, donc pas d'ambiguïté à l'extraction.
+// Gradient id dérivé de useId() (pas une chaîne fixe) — Landing.jsx monte
+// à la fois <Logo> (colonne gauche) ET <SplashIntro> (qui a son propre
+// mark inline, même dégradé) simultanément le temps du splash ; deux
+// gradients avec le même id littéral dans le même document seraient un
+// vrai conflit d'id, pas juste une précaution en l'air.
 function Mark() {
+  const gradId = useId()
   return (
-    <svg viewBox="-1 -1 26 26" fill="none" stroke="#F0C14B" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="1 18 8.5 10.5 13.5 15.5 23 6" />
-      <polyline points="17 6 23 6 23 12" />
+    <svg viewBox="-200 -10 435 455">
+      <defs>
+        <linearGradient id={`volta-mark-${gradId}`} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#D4F24A" />
+          <stop offset="48%" stopColor="#D8C8E8" />
+          <stop offset="100%" stopColor="#A78BFA" />
+        </linearGradient>
+      </defs>
+      <path d="M-190 0 L-80 0 L55 235 L-8 340 Z" fill={`url(#volta-mark-${gradId})`} />
+      <path d="M110 0 L225 0 L108 168 L174 168 L-8 435 L38 287 L-52 287 L72 112 L30 112 Z" fill="#A78BFA" />
     </svg>
   )
 }

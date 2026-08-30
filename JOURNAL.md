@@ -82,6 +82,98 @@ Le texte ci-dessous est conservé pour mémoire du point de départ.
 
 **Pourquoi ne pas commencer maintenant** : coder un mécanisme de consentement avant d'avoir tranché opt-in vs opt-out et la formulation exacte reviendrait à jeter le travail, ou pire à afficher au membre une formulation juridiquement fausse. La clarification juridique vient d'abord, le code ensuite.
 
+## 🎨 2026-08-30 (suite) — Ancien pictogramme (flèche) remplacé par le V-éclair partout où il restait
+
+**Contexte** : audit read-only de la session précédente avait recensé tous
+les emplacements du logo/pictogramme VOLTA dans l'app — 2 endroits déjà à
+jour avec le nouveau `public/logo-volta.svg` (favicon SVG, colonne droite
+du split-screen Login.jsx), et une série d'endroits encore sur l'ancien
+tracé stroke-only (flèche zigzag dorée) : `Logo.jsx`, les 2 PNG PWA,
+`SplashIntro.jsx`. Cette session traite tout ce qui restait.
+
+**1. Extraction du mark seul** — pas d'ambiguïté à l'extraction, signalée
+d'emblée par le fichier source lui-même : `public/logo-volta.svg` a un
+groupe `<!-- VOLTA emblem -->` contenant exactement 2 `<path>` (dégradé
+citron→lavande + aile pleine lavande), sans le wordmark ni la tagline —
+extraits tels quels (mêmes coordonnées, même dégradé), sauvegardés en
+fichier autonome `public/volta-mark.svg` (viewBox recadré sur la bounding
+box réelle du tracé, x: -190..225 / y: 0..435, +10 unités de marge).
+
+**2. `Logo.jsx`** — `Mark()` remplacé, interface du composant
+(`variant`/`orientation`/`size`) inchangée, ses 2 call sites
+(`Landing.jsx:72`, `ResetPassword.jsx:69`) intacts. Id de dégradé dérivé
+de `useId()` plutôt qu'une chaîne fixe (`volta-mark-${id}`) : Landing.jsx
+monte `<Logo>` (colonne gauche) ET `<SplashIntro>` (son propre mark
+inline, même dégradé) **simultanément** tant que le splash est affiché —
+un id de gradient identique et fixe dans les deux aurait été un vrai
+conflit d'id dans le même document, pas une précaution superflue. Même
+traitement dans `SplashIntro.jsx`.
+
+**3. Icônes PWA (`icon-192.png`/`icon-512.png`)** — ni ImageMagick
+(`magick`) ni le module npm `sharp` ne sont disponibles dans cet
+environnement (vérifié avant d'écrire quoi que ce soit) ;
+`scripts/generate-pwa-icons.ps1` mis à jour plutôt que remplacé par un
+outil externe, toujours sur `System.Drawing` (.NET/GDI+, comme la version
+précédente) : `FillPolygon` avec un `LinearGradientBrush` (2 couleurs —
+GDI+ ne supporte pas nativement le stop intermédiaire à 48% du SVG,
+`#D8C8E8`, perdu ici mais visuellement proche à l'échelle d'une icône
+192/512px) pour le 1er path, `SolidBrush` pour le 2nd. Angle du dégradé
+calculé depuis la vraie diagonale de la bounding box du 1er path
+(`Atan2`), pas un 45° arbitraire — l'angle d'un dégradé SVG 0%/0%→100%/100%
+dépend du ratio largeur/hauteur de sa propre boîte. Commentaire du script
+qui référençait encore l'ancienne géométrie comme "reprise de
+logo-volta.svg" corrigé (il l'était déjà, mais décrivait l'ancien tracé —
+maintenant exact pour le nouveau). Script exécuté, PNG régénérés et
+vérifiés visuellement (image lue) : le V-éclair dégradé citron/lavande,
+plus la flèche.
+
+`manifest.json`, `apple-touch-icon` (`index.html:19`) et `sw.js`
+référencent ces 2 fichiers par leur nom — **confirmé après régénération,
+aucune modification nécessaire** : `git status` ne les liste pas parmi les
+fichiers touchés, comme prévu.
+
+**4. Splash screen — contrainte diagnostiquée avant tout remplacement,
+comme demandé.** L'ancien mark était 2 `<polyline>` en **stroke seul**,
+animées par `stroke-dasharray`/`stroke-dashoffset` (technique de tracé
+classique — dessine une ligne progressivement). Le nouveau mark est 2
+`<path>` en **fill** (dégradé + lavande pleine), **sans aucun stroke** :
+appliquer du `stroke-dasharray` à une forme remplie sans contour tracé n'a
+strictement aucun effet visuel — pas une histoire de compatibilité
+partielle, une incompatibilité totale de technique. Diagnostiqué avant de
+transplanter quoi que ce soit, comme demandé.
+
+**Adaptation retenue, signalée plutôt que masquée** : révélation par
+`clip-path` (chaque `<path>` part masqué depuis son bord droit,
+`inset(0 100% 0 0)`, puis se découvre vers la gauche, `inset(0 0 0 0)`,
+900ms `cubic-bezier`), le 2nd path démarrant avec 250ms de retard pour
+garder un sens de séquence proche de l'ancien "ligne puis chevron". C'est
+la technique la plus proche du "dessin qui se trace" applicable à des
+formes pleines, mais **la nature de l'animation change** : ce n'est plus
+un contour qui se dessine trait par trait, c'est un dévoilement séquencé
+de deux formes pleines. Aucun changement au planning `setTimeout` de
+`SplashIntro.jsx` (`drawing` toujours déclenché à t=1000ms, `finish()`
+toujours à t=3200ms) — la nouvelle durée d'animation (~1150ms) tient
+largement dans cette fenêtre, laissant même un temps de pause supplémentaire
+avant le fondu de sortie plutôt qu'un chronométrage plus serré.
+
+Effet de bord traité au passage : `splash-redesign.css` recolorait
+l'ancien mark (`stroke: #1C1A17`) pour l'identité pastel chaud — règle
+devenue sans objet (ne visait que `stroke`, qui n'existe plus), retirée et
+remplacée par un commentaire expliquant pourquoi. Le nouveau mark garde
+ses propres couleurs de dégradé, cohérent avec le favicon et la colonne
+droite du split-screen qui l'affichent déjà tel quel.
+
+**Vérifié** : `npm run build`, grep des bundles compilés — les 2 nouveaux
+paths (`M-190 0 L-80 0 L55 235 L-8 340 Z`, couleur `#A78BFA`) confirmés
+dans le chunk `Logo-*.js` ET dans le chunk `Landing-*.js` (qui embarque
+`SplashIntro.jsx`) ; aucune trace des anciens points de polyline
+(`1 18 8.5 10.5 13.5 15.5 23 6`) dans l'un ou l'autre. CSS compilé
+(`Landing-*.css`) confirme `.splash-mark path{opacity:0;clip-path:inset(0 100% 0 0)}`
+et l'absence totale de toute règle `stroke` sur `.splash-mark`. `git
+status` confirme que seuls les 7 fichiers attendus sont modifiés (+1
+nouveau fichier, `public/volta-mark.svg`) — `manifest.json`/`index.html`/
+`sw.js` non touchés, comme prévu.
+
 ## 🐛 2026-08-30 (suite) — Fix : wordmark "VOLTA" blanc invisible sur fond clair/moyen
 
 **Bug confirmé** (signalé en session PR#149, laissé de côté à dessein
