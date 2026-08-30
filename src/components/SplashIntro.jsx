@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import '../styles/splash.css'
 import '../styles/splash-redesign.css'
 
@@ -15,6 +15,11 @@ export default function SplashIntro({ onDone }) {
   const [fading, setFading] = useState(false)
   const timers = useRef([])
   const done = useRef(false)
+  // Mark rendu ici ET dans <Logo> (Landing.jsx monte les deux à la fois
+  // tant que le splash est affiché) — id de dégradé unique par instance,
+  // pas une chaîne fixe, pour ne jamais collisionner avec celui de <Logo>
+  // dans le même document. Voir Logo.jsx pour le même besoin.
+  const gradId = useId()
 
   function finish() {
     if (done.current) return
@@ -50,15 +55,25 @@ export default function SplashIntro({ onDone }) {
 
   return (
     <div className={`splash-overlay splash-redesign${fading ? ' fading' : ''}`} onClick={finish} role="presentation">
+      {/* V-éclair (2026-08-30, remplace l'ancienne flèche zigzag stroke-only
+          — mêmes 2 <path> que Logo.jsx/public/volta-mark.svg, extraits du
+          groupe "VOLTA emblem" de public/logo-volta.svg). Le tracé au
+          stroke-dasharray de l'ancien mark ne s'applique pas à des formes
+          pleines (fill, pas de stroke) : l'effet "dessin qui se trace" est
+          donc adapté en révélation par clip-path plutôt que retenté sur un
+          stroke qui n'existe plus — voir splash.css pour le détail et le
+          changement de comportement (déjà signalé). */}
       <span className={`splash-mark${drawing ? ' drawing' : ''}`}>
-        <svg viewBox="-1 -1 26 26" fill="none" stroke="#F0C14B" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="1 18 8.5 10.5 13.5 15.5 23 6" pathLength="1" />
-          {/* Same fix as Logo.jsx's Mark() — a floating filled square read
-              as a stray blob, not an arrowhead ("la flèche est toujours
-              dégueulasse", reported again after the first pass only fixed
-              the clipping, not the shape itself). Chevron polyline instead,
-              corner on the main line's endpoint. */}
-          <polyline className="arrowhead" points="17 6 23 6 23 12" />
+        <svg viewBox="-200 -10 435 455">
+          <defs>
+            <linearGradient id={`volta-mark-${gradId}`} x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#D4F24A" />
+              <stop offset="48%" stopColor="#D8C8E8" />
+              <stop offset="100%" stopColor="#A78BFA" />
+            </linearGradient>
+          </defs>
+          <path d="M-190 0 L-80 0 L55 235 L-8 340 Z" fill={`url(#volta-mark-${gradId})`} />
+          <path d="M110 0 L225 0 L108 168 L174 168 L-8 435 L38 287 L-52 287 L72 112 L30 112 Z" fill="#A78BFA" />
         </svg>
       </span>
       <span className={`splash-word${wordVisible ? ' visible' : ''}`}>VOLTA</span>

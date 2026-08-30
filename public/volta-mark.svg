@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Pictogramme VOLTA seul (V-éclair), extrait du groupe "VOLTA emblem"
+     de public/logo-volta.svg — les 2 path de ce groupe, tels quels
+     (mêmes coordonnées, même dégradé), sans le wordmark ni la tagline qui
+     vivent ailleurs dans le fichier source. viewBox recadré sur la boîte
+     englobante réelle du tracé (x: -190..225, y: 0..435) plutôt que le
+     canevas 1200x900 du fichier complet, avec une marge de 10 unités de
+     chaque côté. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-200 -10 435 455" role="img">
+  <title>VOLTA</title>
+  <defs>
+    <linearGradient id="volta-mark-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#D4F24A"/>
+      <stop offset="48%" stop-color="#D8C8E8"/>
+      <stop offset="100%" stop-color="#A78BFA"/>
+    </linearGradient>
+  </defs>
+  <path d="M-190 0 L-80 0 L55 235 L-8 340 Z" fill="url(#volta-mark-gradient)"/>
+  <path d="M110 0 L225 0 L108 168 L174 168 L-8 435 L38 287 L-52 287 L72 112 L30 112 Z" fill="#A78BFA"/>
+</svg>
