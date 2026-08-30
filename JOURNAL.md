@@ -82,6 +82,60 @@ Le texte ci-dessous est conservé pour mémoire du point de départ.
 
 **Pourquoi ne pas commencer maintenant** : coder un mécanisme de consentement avant d'avoir tranché opt-in vs opt-out et la formulation exacte reviendrait à jeter le travail, ou pire à afficher au membre une formulation juridiquement fausse. La clarification juridique vient d'abord, le code ensuite.
 
+## 🐛 2026-08-30 (suite) — Deux derniers écarts vs le mockup Claude Design : icônes sidebar + sous-titre du graphique
+
+**1. Icônes des onglets sidebar (`coach-nav-redesign.css`, `@media
+min-width: 900px`)** — signalé comme « seul l'onglet actif affiche son
+icône ». Investigation avant correction, comme demandé explicitement :
+**aucune règle CSS ni JSX ne masquait réellement l'icône**.
+`.coach-nav-item svg { flex-shrink: 0; }` est la seule règle qui la cible,
+et `CoachNavBar.jsx` rend `<Icon .../>` sans aucune condition sur `active`,
+pour les 4 onglets. Donc pas le même bug que le label du tour précédent
+(celui-là était bien un rendu JSX conditionnel).
+
+Le vrai problème : layout, pas visibilité. `.coach-nav-item` posé en
+PR#146 empilait icône au-dessus du libellé, centré
+(`flex-direction: column; justify-content: center`), dans un slot de
+48px de haut. Sur les onglets inactifs (fond uniforme encre, pas de
+pastille pour faire ressortir quoi que ce soit), une icône 17px + un
+libellé 11.5px empilés au centre se lisait visuellement comme « pas
+d'icône » — d'où le signalement, même si le nœud SVG était bien présent et
+rendu. Corrigé en changeant le layout : `flex-direction: row;
+justify-content: flex-start; align-items: center; gap: 10px; padding: 0
+12px;` — icône à gauche du libellé, les deux alignés à gauche, comme le
+mockup. Rien à changer côté visibilité puisqu'il n'y en avait pas à
+corriger — seul le fond (pastille olive) distingue toujours l'actif,
+exactement le principe demandé, déjà vrai en pratique mais masqué par le
+layout centré.
+
+**2. Sous-titre + légende sur la carte "Activité de la salle — 7 jours"
+(`CoachDashboard.jsx`/`CoachDashboard-redesign.css`, desktop)** —
+manquaient. Ajoutés à partir des données déjà chargées, aucune requête
+nouvelle :
+- Sous-titre `"X séances au total · moyenne Y/jour"` — `X` =
+  `weeklyActivity.reduce((sum, d) => sum + d.sessions, 0)` (nouvelle
+  constante `totalSessions7d`, réutilisée pour le calcul de la moyenne au
+  lieu de sommer deux fois), `Y` = `avgSessionsPerDayLabel`, déjà calculé
+  et déjà affiché sur la ligne pointillée du graphique — même chiffre,
+  affiché à deux endroits cohérents.
+- Légende `"···· Moyenne"` alignée à droite du titre (`.cd-d-chart-header`,
+  `justify-content: space-between`) — un petit trait pointillé
+  (`.cd-d-chart-legend-swatch`, `border-top: 2px dashed var(--cd-magenta)`)
+  reproduisant exactement le style de `.cd-d-chart-avgline` déjà dans le
+  graphique, pas une couleur redéfinie séparément.
+
+**Vérifié** : `npm run build`, grep des bundles compilés —
+`flex-direction:row`/`justify-content:flex-start` confirmés dans
+`CoachNavBar-*.css` ; les 4 définitions d'icône (`clipboard`/`users`/
+`message-circle`/`settings`) confirmées dans `CoachNavBar-*.js`, sans
+garde conditionnelle (déjà vrai avant ce fix, revérifié) ; le texte
+« au total », le libellé « moyenne », la classe `cd-d-chart-legend`
+confirmés dans `CoachDashboard-*.js`, les classes `cd-d-chart-subtitle`/
+`cd-d-chart-legend-swatch` confirmées dans `CoachDashboard-*.css`. `git
+diff` sur les 3 fichiers touchés confirme des changements ciblés
+uniquement sur les deux points signalés — pas d'autre règle mobile ou
+desktop touchée.
+
 ## 🐛 2026-08-30 (suite) — Fix : libellés de la sidebar coach masqués sur les onglets inactifs
 
 **Bug** (repéré sur le mockup Claude Design validé pour PR#146) : dans la

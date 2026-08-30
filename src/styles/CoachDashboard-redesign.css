@@ -593,6 +593,41 @@ body.coachdashboard-body-bg {
     padding: 22px 24px;
   }
 
+  /* Titre + sous-titre à gauche, légende de la moyenne à droite — le
+     .cd-section-label existant garde son style, la ligne de contexte et la
+     légende sont nouvelles. */
+  .cd-d-chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .cd-d-chart-subtitle {
+    font-size: 11px;
+    color: var(--cd-text-muted);
+    margin: 2px 0 0;
+  }
+  .cd-d-chart-legend {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10.5px;
+    font-weight: 600;
+    color: var(--cd-text-tertiary);
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-top: 3px;
+  }
+  /* Même trait que .cd-d-chart-avgline plus bas (border-top pointillé
+     magenta), en miniature — reproduit la ligne du graphique plutôt que de
+     redéfinir une couleur/un style séparé. */
+  .cd-d-chart-legend-swatch {
+    display: inline-block;
+    width: 14px;
+    height: 0;
+    border-top: 2px dashed var(--cd-magenta);
+  }
+
   .cd-d-chart-plot {
     display: flex;
     gap: 14px;

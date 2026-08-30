@@ -277,14 +277,25 @@
     transform: translateY(calc(52px * var(--nav-active-index, 0)));
   }
 
+  /* Icône à gauche du libellé, alignés à gauche (mockup Claude Design) —
+     remplace l'empilement icône-au-dessus-du-libellé centré posé par
+     erreur en PR#146 : à height:48px fixe, une icône 17px + un libellé
+     11.5px empilés au centre rendait l'icône visuellement quasi invisible
+     à côté du libellé sur les onglets inactifs (fond sombre uniforme, pas
+     de pastille pour la faire ressortir), ce qui lisait comme « icône
+     absente ». Aucune règle CSS ni JSX ne masquait réellement l'icône
+     (vérifié : `.coach-nav-item svg` n'a qu'un flex-shrink:0, aucun
+     display:none conditionné à .active) — le vrai problème était ce
+     layout, pas une visibilité coupée comme pour le label. */
   .coach-nav-item {
     flex: none;
     height: 48px;
     min-height: 0;
-    flex-direction: column;
-    justify-content: center;
-    gap: 6px;
-    padding: 0 8px;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 10px;
+    padding: 0 12px;
   }
 
   .coach-nav-label {
