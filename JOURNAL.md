@@ -82,6 +82,62 @@ Le texte ci-dessous est conservé pour mémoire du point de départ.
 
 **Pourquoi ne pas commencer maintenant** : coder un mécanisme de consentement avant d'avoir tranché opt-in vs opt-out et la formulation exacte reviendrait à jeter le travail, ou pire à afficher au membre une formulation juridiquement fausse. La clarification juridique vient d'abord, le code ensuite.
 
+## 🐛 2026-08-30 (suite) — Fix : libellés de la sidebar coach masqués sur les onglets inactifs
+
+**Bug** (repéré sur le mockup Claude Design validé pour PR#146) : dans la
+sidebar desktop (`@media (min-width: 900px)`), seul l'onglet actif
+affichait son libellé texte (Board/Clients/Messages/Réglages) à côté de
+l'icône — les 3 autres n'affichaient que l'icône seule. Sur la maquette,
+les 4 libellés doivent rester visibles en permanence, seule la pastille de
+fond olive distinguant l'actif.
+
+**Cause réelle : JSX, pas CSS.** `CoachNavBar.jsx` ne rendait le
+`<span className="coach-nav-label">` que pour l'onglet actif
+(`{active && <span>...}`) — rien à voir avec un `display:none`/`opacity:0`
+conditionné en CSS, le nœud n'existait tout simplement pas dans le DOM pour
+les 3 autres. Ce comportement est en réalité **le choix de maquette
+d'origine documenté dans ce journal** (suite du 17/08 : « pilule active à
+largeur variable contre des icônes seules à largeur fixe pour les onglets
+inactifs ») — voulu sur le mobile (<900px, la maquette statique d'origine
+n'a jamais eu de sidebar), jamais réévalué pour le mode sidebar desktop
+ajouté ensuite (PR#145/#146), où la contrainte qui le justifiait (largeur
+fixe par onglet) ne s'applique plus de la même façon.
+
+**Fix, scope desktop uniquement** :
+- `CoachNavBar.jsx` : le `<span className="coach-nav-label">` est
+  maintenant rendu pour les 4 onglets à chaque render, plus de rendu
+  conditionnel sur `active`.
+- `coach-nav-redesign.css`, règle de base (hors media query, donc mobile
+  par défaut) : nouvelle règle `.coach-nav-item:not(.active)
+  .coach-nav-label { display: none; }` — reproduit exactement le
+  comportement mobile d'avant (le nœud est bien dans le DOM maintenant,
+  mais cette règle le masque pour les onglets inactifs). L'animation de
+  fade existante (`coachNavLabelFade`, déclenchée par un montage/démontage
+  du nœud) se redéclenche à l'identique quand `display:none` bascule à
+  visible — comportement CSS documenté, testé indirectement via le fait que
+  la règle ne change rien d'autre dans le fichier compilé pour <900px.
+- Dans le `@media (min-width: 900px)` existant (sidebar) : override
+  `.coach-nav-item:not(.active) .coach-nav-label { display: block; }` —
+  même sélecteur, spécificité identique, le bloc media (plus loin dans le
+  fichier, donc prioritaire à cascade égale une fois la media query
+  active) l'emporte uniquement à partir de 900px.
+
+**Mobile (<900px) vérifié, pas le même défaut** : comportement inchangé et
+volontaire, documenté ci-dessus et dans le commentaire ajouté directement
+dans `coach-nav-redesign.css` à l'endroit de la nouvelle règle — pas un
+oubli, un choix de maquette distinct entre les deux modes.
+
+**Vérifié** : `npm run build`, grep du bundle JS compilé — les 4 libellés
+(`Board`, `Clients`, `Messages`, `Réglages`) confirmés dans le tableau
+`TABS`, et le `<span className="coach-nav-label">` confirmé rendu sans
+aucune garde conditionnelle dans le `.map()` compilé (seul le badge de
+messages non lus garde son `&&`). Grep du CSS compilé : la règle
+`:not(.active) .coach-nav-label{display:none}` hors media query et son
+override `{display:block}` dans `@media (min-width: 900px)` tous deux
+présents. `git diff` confirme que la seule ligne supprimée dans tout le
+diff est le rendu conditionnel bugué de `CoachNavBar.jsx` — aucune autre
+règle mobile ou desktop touchée.
+
 ## 🖥️ 2026-08-30 (suite) — Maquette desktop (≥1280px) du Tableau de bord coach + fix pastille sidebar
 
 **Contexte** : PR#145 (entrée juste en dessous) avait posé la sidebar

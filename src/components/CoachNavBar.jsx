@@ -64,7 +64,12 @@ export default function CoachNavBar() {
             onClick={() => { navigator.vibrate && navigator.vibrate(6); navigate(tab.path) }}
           >
             <Icon name={tab.icon} size={17} strokeWidth={2} />
-            {active && <span className="coach-nav-label">{tab.label}</span>}
+            {/* Rendu pour les 4 onglets à chaque fois désormais — masqué
+                pour les onglets inactifs en CSS sur mobile (choix de
+                maquette assumé, <900px), visible en permanence sur la
+                sidebar desktop (≥900px, bug fixé : voir coach-nav-redesign.css
+                pour les deux règles concernées). */}
+            <span className="coach-nav-label">{tab.label}</span>
             {showBadge && <span className="coach-nav-badge" />}
           </button>
         )
