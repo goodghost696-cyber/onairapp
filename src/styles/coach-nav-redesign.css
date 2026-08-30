@@ -113,6 +113,103 @@
   border: 1.5px solid #1C1A17;
 }
 
+/* Raccourcis + compte coach — n'existent qu'en mode sidebar (voir mockup
+   Claude Design). display:none par défaut : DOM présent à tout moment
+   (CoachNavBar.jsx les rend inconditionnellement, plus simple que deux
+   variantes du composant) mais aucun rendu ni impact de layout sous
+   900px — activés uniquement dans le @media (min-width: 900px) plus bas. */
+.coach-nav-shortcuts,
+.coach-nav-account {
+  display: none;
+}
+.coach-nav-shortcuts {
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 12px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(247,241,230,0.12);
+}
+.coach-nav-shortcut-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(247,241,230,0.4);
+  padding: 0 8px 4px;
+}
+.coach-nav-shortcut-link {
+  display: flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 8px;
+  border-radius: 10px;
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: rgba(247,241,230,0.75);
+  cursor: pointer;
+  text-align: left;
+  -webkit-tap-highlight-color: transparent;
+}
+.coach-nav-shortcut-link:hover {
+  background: rgba(247,241,230,0.06);
+  color: #F7F1E6;
+}
+
+/* margin-top: auto pousse ce bloc en pied de sidebar (le .coach-nav est en
+   flex-direction: column, justify-content: flex-start — sans ça il suivrait
+   directement les raccourcis au lieu de coller au bas de l'écran). */
+.coach-nav-account {
+  flex-direction: column;
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid rgba(247,241,230,0.12);
+}
+.coach-nav-account-identity {
+  padding: 0 8px;
+  min-width: 0;
+}
+.coach-nav-account-name {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #F7F1E6;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.coach-nav-account-gym {
+  font-size: 10.5px;
+  color: rgba(247,241,230,0.5);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 1px;
+}
+.coach-nav-account-logout {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 8px;
+  border-radius: 10px;
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: rgba(247,241,230,0.55);
+  cursor: pointer;
+  text-align: left;
+  -webkit-tap-highlight-color: transparent;
+}
+.coach-nav-account-logout:hover {
+  background: rgba(247,241,230,0.06);
+  color: #F7F1E6;
+}
+
 /* À partir de 900px (même seuil que les grilles CoachDashboard-redesign.css/
    ClientsList-redesign.css) : sidebar verticale fixe à gauche au lieu de la
    barre bottom-fixed. Mêmes tokens de couleur, même mécanisme de pastille
@@ -134,29 +231,57 @@
     flex-direction: column;
     align-items: stretch;
     justify-content: flex-start;
+    gap: 4px;
     padding: 24px 12px;
     border-radius: 0 28px 28px 0;
     box-shadow: 12px 0 34px -12px rgba(28,26,23,0.4);
   }
 
+  /* Fix (Claude Design, post-PR#145) : le mécanisme mobile — slots égaux
+     qui remplissent toute la largeur de la barre, chacun flex:1 — n'a pas
+     d'équivalent vertical. Une sidebar de 100vh a de la hauteur en trop à
+     distribuer, pas une hauteur fixe à répartir en 4 parts égales : avec
+     flex:1 hérité du mode mobile, chaque onglet occupait un quart de l'écran
+     et la pastille (calculée sur ces slots) devenait un pavé de ~200px.
+     Correction : hauteur de slot fixe (48px, la même valeur pour l'item et
+     la pastille) plutôt qu'une fraction de la hauteur totale.
+     --nav-tab-count devient inutile sur cet axe (plus besoin de diviser une
+     hauteur totale par le nombre d'onglets) — laissé posé par
+     CoachNavBar.jsx pour le mode mobile, simplement pas lu ici. */
   .coach-nav-indicator {
     top: 24px;
-    bottom: 24px;
+    bottom: auto;
     left: 12px;
     right: 12px;
     width: auto;
-    height: calc((100% - 48px) / var(--nav-tab-count, 4));
-    transform: translateY(calc(100% * var(--nav-active-index, 0)));
+    height: 48px;
+    /* 52px = 48px de slot + 4px de gap entre items (voir gap ci-dessus sur
+       .coach-nav) — même logique que le calcul mobile (inset basé sur le
+       padding externe du nav), juste une valeur fixe au lieu d'une fraction
+       puisque la hauteur de slot ne varie plus avec le nombre d'onglets. */
+    transform: translateY(calc(52px * var(--nav-active-index, 0)));
   }
 
   .coach-nav-item {
+    flex: none;
+    height: 48px;
+    min-height: 0;
     flex-direction: column;
     justify-content: center;
     gap: 6px;
-    padding: 14px 8px;
+    padding: 0 8px;
   }
 
   .coach-nav-label {
     font-size: 11.5px;
+  }
+
+  /* ── Raccourcis + compte coach — sous les 4 onglets, visibles seulement
+     en mode sidebar. En dessous de 900px ces deux blocs restent en
+     display:none (posé plus haut, hors media query) : DOM présent mais
+     aucun impact sur le rendu mobile, pixel pour pixel inchangé. */
+  .coach-nav-shortcuts,
+  .coach-nav-account {
+    display: flex;
   }
 }

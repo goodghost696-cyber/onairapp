@@ -82,6 +82,120 @@ Le texte ci-dessous est conservé pour mémoire du point de départ.
 
 **Pourquoi ne pas commencer maintenant** : coder un mécanisme de consentement avant d'avoir tranché opt-in vs opt-out et la formulation exacte reviendrait à jeter le travail, ou pire à afficher au membre une formulation juridiquement fausse. La clarification juridique vient d'abord, le code ensuite.
 
+## 🖥️ 2026-08-30 (suite) — Maquette desktop (≥1280px) du Tableau de bord coach + fix pastille sidebar
+
+**Contexte** : PR#145 (entrée juste en dessous) avait posé la sidebar
+≥900px mais laissé un bug de mécanique — `.coach-nav-item` gardait
+`flex:1` dans une colonne de `100vh`, donc chaque onglet occupait un quart
+de la hauteur d'écran et la pastille (calculée sur ces slots) devenait un
+pavé de ~200px au lieu d'un highlight de la taille d'un onglet. Confirmé
+par Claude Design avant cette session, avec la correction déjà spécifiée :
+le mécanisme mobile (slots égaux qui remplissent toute la barre) n'a pas
+d'équivalent vertical — une sidebar de 100vh a de la hauteur en trop, pas
+une hauteur fixe à répartir en 4 parts égales.
+
+**Fix (`coach-nav-redesign.css`, dans le `@media (min-width: 900px)`
+existant)** : `.coach-nav-item` passe à `height: 48px; flex: none` (au lieu
+de `flex: 1`), `.coach-nav` (conteneur des items) reçoit `gap: 4px`, la
+pastille passe à `height: 48px; transform: translateY(calc(52px *
+var(--nav-active-index)))` (52 = 48 de slot + 4 de gap) au lieu de la
+fraction `calc((100% - 48px) / var(--nav-tab-count))` qui causait le bug.
+`--nav-tab-count` laissé posé par `CoachNavBar.jsx` (compat mobile où il
+sert toujours) mais plus lu dans le calcul desktop. Transition inchangée
+(240ms cubic-bezier(0.4,0,0.2,1)). Aucun problème technique inattendu sur
+ce fix — la correction spécifiée par Claude Design s'est appliquée
+directement.
+
+**Ajouts sidebar desktop, sous les 4 onglets** (`CoachNavBar.jsx` +
+`coach-nav-redesign.css`) : bloc "Raccourcis" → lien "Bibliothèque de
+programmes" (`/coach/programmes`, pas de pastille glissante dessus, ce
+n'est pas un des 4 onglets à état actif) ; pied de sidebar "compte coach"
+(`margin-top: auto` pour coller en bas) avec nom du coach (`user.name`,
+déjà dans `useAuth()`), nom de la salle (`useGymConfig().name`, même hook
+que `CoachSettings.jsx`) et bouton déconnexion (`logout()` attendu avant
+`navigate()`, même course que `CoachDashboard.jsx`/`CoachSettings.jsx`).
+Les deux blocs sont rendus inconditionnellement par le composant mais
+`display: none` par défaut, activés uniquement dans le
+`@media (min-width: 900px)` — DOM présent à toute résolution, aucun impact
+sur le rendu mobile.
+
+**Refonte desktop de `CoachDashboard.jsx`/`CoachDashboard-redesign.css`,
+nouveau seuil `@media (min-width: 1280px)`** (distinct du 900px ci-dessus,
+qui ne gère que la sidebar) : le JSX mobile existant a été enveloppé tel
+quel dans `.cd-mobile-content` (aucune ligne modifiée à l'intérieur — `git
+diff` confirme zéro suppression dans `CoachDashboard.jsx`), et un second
+bloc `.cd-desktop` ajouté à côté avec la disposition de la maquette. Les
+deux sont mutuellement exclusifs uniquement à partir de 1280px
+(`.cd-mobile-content{display:none}` / `.cd-desktop{display:block}` dans ce
+media query) — entre 900 et 1280px la sidebar est active mais le contenu
+garde sa disposition empilée mobile, comportement déjà en place depuis
+PR#145, pas changé ici.
+
+Contenu du bloc desktop, toujours à partir des données déjà chargées par
+`CoachDashboard.jsx` (aucune requête ajoutée) :
+- Barre du haut : titre + date du jour (formatée côté client,
+  `toLocaleDateString('fr-FR', {weekday:'long', ...})`) + nombre de
+  membres, deux boutons (Bibliothèque de programmes / Voir tous mes
+  clients) remplaçant les deux blocs pleine largeur du mobile.
+- 4 tuiles stats en grille 2×2 (~45% de la largeur, `grid-template-columns:
+  45% 1fr` avec le bloc répartition) chacune avec une ligne de contexte :
+  Clients → "+N ce mois" (membres dont `rattache_le` tombe dans le mois
+  civil en cours) ; Séances 7j → "X,X/membre suivi" (moyenne calculée sur
+  `sharingMembers`, pas `activeToday` — diviser par les actifs du jour
+  serait tombé à zéro certains jours calmes, un mensonge de lecture sur une
+  moyenne hebdomadaire) ; Alertes/Actifs → légendes statiques ("À relancer
+  cette semaine"/"Vus aujourd'hui", pas des données, juste une explication
+  du chiffre affiché à côté).
+- Répartition des membres à côté des tuiles (pas en dessous) : même barre
+  3 segments que le mobile, mais les 3 comptes (Sur la bonne voie/À
+  risque/Inactifs) affichés en gros plutôt qu'en légende serrée.
+- Graphique "Activité de la salle — 7 jours" reconstruit : axe Y à paliers
+  ronds — `chartMax = Math.max(3, Math.ceil(realMax/3)*3)`, ticks
+  `[0, chartMax/3, chartMax*2/3, chartMax]` — plutôt que le 0/3/6/9 figé du
+  mockup (n'aurait eu aucun sens sur une salle avec une activité
+  différente, ce n'est qu'un exemple visuel dans la maquette) ; gridlines
+  horizontales à chaque palier ; valeur numérique au-dessus de chaque
+  barre, y compris "0" explicite les jours sans donnée (plus de `d.sessions
+  || ''` qui masquait le zéro côté mobile) ; ligne pointillée magenta
+  (`--cd-magenta`, `border-top: 2px dashed`) à la hauteur de la moyenne
+  réelle des 7 jours ; barre du jour le plus actif en encre (`--cd-ink`)
+  plutôt que lavande, seulement si au moins une séance dans la semaine
+  (sinon aucun jour n'est mis en avant arbitrairement) ; jour + date
+  (`JJ/MM`) sous chaque colonne.
+- "Nécessite attention" à côté du graphique : membres de `alerts` avec
+  badge AT RISK/INACTIVE (réutilise `cd-status-badge`/`STATUS_BADGE_CLASS`
+  déjà en place), lien "Traiter les X alertes →" vers `/coach/clients` en
+  bas (pas de filtre pré-appliqué sur cette liste — `ClientsList.jsx`
+  n'expose pas de filtre par URL, ajouter ce paramètre était hors scope de
+  cette session).
+- "Actifs aujourd'hui" en grille 3 colonnes sous le graphique (même liste
+  `activeToday`/`recentFallback` que le mobile, juste `display:grid;
+  grid-template-columns: repeat(3,1fr)` au lieu d'une colonne).
+- "Données non partagées" en colonne latérale à droite de cette section
+  (`notSharing`, mêmes libellés de contexte que le mobile via
+  `consentLabel()`, traitement neutre inchangé — pas de fond d'alerte).
+  Colonne masquée et la grille "Actifs" repasse en pleine largeur
+  (`.cd-d-row-active--single`) quand `notSharing` est vide, plutôt que de
+  laisser une colonne blanche.
+
+**Vérifié** : `npm run build`, puis grep des bundles CSS compilés —
+`height:48px` (×2, item + pastille), `translateY(calc(52px * var(--nav-
+active-index, 0)))`, `flex:none` confirmés dans `CoachNavBar-*.css` ;
+`@media (min-width: 1280px)`, `.cd-mobile-content{display:none}`,
+`.cd-d-chart-avgline`, `.cd-d-chart-bar.highest`, `.cd-d-row-stats`
+confirmés dans `CoachDashboard-*.css`. `git diff` sur les 4 fichiers
+touchés confirme qu'aucune ligne mobile existante n'a été supprimée ou
+modifiée — seulement des ajouts (les 4 lignes supprimées dans
+`coach-nav-redesign.css` sont les 4 lignes bugguées du fix, toutes à
+l'intérieur du `@media (min-width: 900px)` de PR#145, pas dans les règles
+de base <900px).
+
+**Rien signalé comme techniquement impossible** — toutes les données du
+mockup existaient déjà ou se calculaient depuis les données déjà chargées ;
+seuls deux écarts délibérés au texte exact du mockup, documentés ci-dessus
+("/membre suivi" plutôt que "/membre actif", échelle d'axe dynamique
+plutôt que 0/3/6/9 figé).
+
 ## 🖥️ 2026-08-30 (suite) — Sidebar verticale coach à partir de 900px (nav bottom-fixed inchangée en dessous)
 
 **Demande** : sur les écrans coach utilisant `CoachNavBar.jsx`, remplacer la
