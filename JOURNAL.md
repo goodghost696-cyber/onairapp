@@ -5404,3 +5404,60 @@ suivre (draft → ready → merge squash après poll Vercel vert).
 - Teinte/opacité de la pill de nav (`.bottom-nav`, rgba(28,26,23,0.25)) : décision reportée, à
   trancher une fois qu'un rendu visuel réel en sombre est possible sur au moins un écran membre avec
   nav — affecte potentiellement les ~8 autres écrans membres partageant la même règle sibling
+
+
+---
+
+## Session du 31/08/2026 (suite) — Fix vide sous la pilule de nav membre (iPhone/PWA)
+
+**Contexte** : bug remonté séparément du chantier mode sombre — sur iPhone (PWA standalone), la
+pilule de nav flottante membre (`.bottom-nav`, `nav.css`) laissait un vide transparent visible entre
+elle et le vrai bord d'écran, dans la zone de sécurité (safe-area-inset-bottom). Absent sur desktop
+(pas de safe-area), confirmant que la cause est bien liée à `env(safe-area-inset-bottom)`.
+
+**Cause** : `.bottom-nav { bottom: env(safe-area-inset-bottom); }` positionnait la pilule exactement
+à la limite de la safe-area, sans que rien ne peigne l'espace entre cette limite et le bord réel — le
+fond de la page (variable par écran) transparaissait à travers.
+
+**Fix appliqué (`nav.css`)** :
+- `.bottom-nav` : `bottom: 0` (au lieu de `env(safe-area-inset-bottom)`) — la boîte de la pilule
+  descend jusqu'au bord réel. La safe-area est absorbée en `padding-bottom` interne
+  (`calc(10px + env(safe-area-inset-bottom))`) plutôt qu'en décalage externe : le fond/blur/
+  border-radius existants de la pilule couvrent donc naturellement toute la zone, sans élément ni
+  couleur supplémentaire à dupliquer par écran.
+- `align-items: flex-start` (au lieu de `center`) — sans ça, la rangée d'icônes se serait recentrée
+  dans la boîte agrandie, glissant vers la zone de geste iOS. flex-start la garde exactement à sa
+  position d'origine.
+- `.nav-indicator` (pastille glissante) : hauteur explicite excluant la safe-area
+  (`calc(100% - 12px - env(safe-area-inset-bottom))` au lieu de `top/bottom: 6px`), pour rester
+  alignée sur la rangée d'icônes plutôt que de s'étirer dans le vide désormais rempli.
+- À `SAB=0` (desktop, Safari onglet) : toutes les nouvelles valeurs égalent exactement les anciennes
+  — vérifié algébriquement (pas juste "probablement OK") avant d'écrire le CSS.
+
+**Catch trouvé en auditant les 9 écrans qui surchargent `~ .bottom-nav`** (pas une supposition,
+vérifié fichier par fichier) : `dashboard.css` avait sa propre règle `bottom: env(safe-area-inset-
+bottom)` (héritage du 14/08, JOURNAL.md), qui aurait silencieusement annulé ce fix spécifiquement sur
+Dashboard (spécificité plus élevée que la règle partagée). Retirée — désormais redondante avec le
+nouveau comportement partagé de `nav.css`. Les 8 autres écrans (Nutrition/Workout*/Weekly/Settings/
+Messages/AICoach) ne touchent que `background`/`backdrop-filter`/couleur d'icône, aucun conflit —
+non modifiés.
+
+**CoachNavBar vérifié non concerné** : `coach-nav-redesign.css` utilise déjà `bottom: max(22px,
+env(safe-area-inset-bottom))` — une marge constante (22px minimum, identique avec ou sans safe-area),
+pas le bug rapporté qui varie spécifiquement selon la safe-area. Aucun changement nécessaire là.
+
+**Mode sombre** : non impacté par construction — le fix ne touche que position/padding/alignement,
+jamais une couleur. Les surcharges dark déjà en place (icônes nav Dashboard, PR #155) continuent de
+s'appliquer normalement sur la boîte désormais correctement positionnée.
+
+**Vérification** : `npm run build` OK, `grep` du bundle compilé confirmant les nouvelles règles
+présentes dans le chunk partagé (`index-*.css`) et l'ancienne surcharge Dashboard bien disparue de
+son propre chunk.
+
+**Commit** : `8a51868` (cherry-pické depuis `8b0a0c9`) — branche `fix/bottom-nav-safe-area`, PR à
+suivre (draft → ready → merge squash après poll Vercel vert).
+
+**Reste à faire** :
+- Vérification visuelle réelle sur un iPhone/PWA une fois déployé (pas de rendu réel disponible dans
+  cette session pour confirmer visuellement, uniquement un raisonnement CSS vérifié algébriquement)
+- Chantier mode sombre : toujours ~17 écrans restants (indépendant de ce fix)
