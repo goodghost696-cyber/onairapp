@@ -5461,3 +5461,53 @@ suivre (draft → ready → merge squash après poll Vercel vert).
 - Vérification visuelle réelle sur un iPhone/PWA une fois déployé (pas de rendu réel disponible dans
   cette session pour confirmer visuellement, uniquement un raisonnement CSS vérifié algébriquement)
 - Chantier mode sombre : toujours ~17 écrans restants (indépendant de ce fix)
+
+
+---
+
+## Session du 31/08/2026 (suite) — PR #156 CASSÉE en rendu réel, revert complet
+
+**Contexte** : le fix du "vide sous la pilule de nav membre sur iPhone/PWA" (PR #156, session
+précédente) a été testé en vrai sur iPhone. **Résultat : cassé**, pas juste non vérifié. Capture
+fournie par l'utilisateur : la pilule de nav s'est étirée verticalement de façon disproportionnée, les
+icônes restant collées en haut avec un vide énorme visible à l'**intérieur même de la pilule**, entre
+la rangée d'icônes et le bas du conteneur — avant même d'atteindre le bord de l'écran. La correction
+annoncée comme "vérifiée algébriquement" produisait donc un résultat visiblement faux en pratique.
+
+**Diagnostic (avec les limites honnêtes de cette session — toujours aucun accès à un rendu réel)** :
+l'approche de #156 (`bottom:0` sur `.bottom-nav` + `padding-bottom` absorbant la safe-area en
+interne, `align-items:flex-start` pour garder les icônes en haut) reposait sur l'hypothèse que le fond
+translucide existant de la pilule (frost, `rgba(255,255,255,0.25)` + blur) suffirait à "couvrir"
+proprement la zone agrandie, comme un bandeau plein-largeur l'aurait fait. **Cette hypothèse était
+fausse en pratique** pour une pilule flottante **détachée** (pas un bandeau docké aux bords) : agrandir
+sa boîte crée un vide visible et disproportionné à l'intérieur de sa propre forme plutôt qu'une
+extension seamless jusqu'au bord de l'écran. L'algèbre CSS ("à SAB=0 les valeurs sont identiques")
+était correcte en elle-même mais ne garantissait rien sur le rendu à SAB>0, qui n'a jamais été vérifié
+visuellement avant le merge — l'erreur de méthode de la session précédente.
+
+**Action prise** : revert complet de `nav.css` et `dashboard.css` vers leur état exact d'avant #156
+(`bottom: env(safe-area-inset-bottom)`, `align-items: center`, `padding: 10px 12px`,
+`.nav-indicator` en `top/bottom: 6px`, override `dashboard.css` restauré). Vérifié par `grep` du
+bundle compilé ET par comparaison des hash de build (`Dashboard-By3rEk24.js`, `index-CakxGBK3.js` —
+identiques aux hash d'avant #156, confirmant une restauration byte-exacte des chunks concernés).
+Commentaire ajouté dans les deux fichiers pour qu'une session future ne retente pas cette même
+approche sans vérification visuelle réelle au préalable.
+
+**Conséquence assumée** : le bug ORIGINAL (vide transparent sous la pilule sur iPhone/PWA, absent sur
+desktop) **reste non résolu** après ce revert — c'est un choix délibéré : un vide modeste et déjà
+existant en production est préférable à une pilule visiblement cassée. Reporté, en attente d'un moyen
+de vérification visuelle réelle (screenshot/device réel, pas un raisonnement CSS seul) avant toute
+nouvelle tentative.
+
+**Commit** : `d286d28` (cherry-pické depuis `90b998e`) — branche `revert/bottom-nav-safe-area`, PR à
+suivre (draft → ready → merge squash après poll Vercel vert).
+
+**Reste à faire — nav membre** :
+- Le vide sous la pilule sur iPhone/PWA (bug original) reste ouvert, à retraiter avec un vrai moyen
+  de vérification visuelle avant tout nouveau commit — ne pas réappliquer le raisonnement de #156
+- Piste alternative non essayée : reprendre le pattern déjà utilisé par CoachNavBar (`bottom: max(22px,
+  env(safe-area-inset-bottom))`, une marge constante plutôt qu'un plancher à zéro) — mais ça va à
+  l'encontre d'une demande explicite antérieure documentée dans nav.css ("je la veux vraiment en
+  bottom de page", zéro marge) ; à valider avec l'utilisateur avant d'appliquer, pas à décider seul
+
+**Reste à faire — chantier mode sombre** : toujours ~17 écrans restants, indépendant de ce fix/revert
