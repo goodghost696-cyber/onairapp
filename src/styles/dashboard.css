@@ -77,6 +77,9 @@
 body.dashboard-body-bg {
   background: #EFE7D9;
 }
+:root[data-theme="dark"] body.dashboard-body-bg {
+  background: var(--dark-bg);
+}
 
 /* Nav pill flottante (.bottom-nav, nav.css) — partagée par tout l'app,
    rendue en sibling de l'écran actif dans MemberLayout.jsx (<Outlet/> puis
@@ -661,4 +664,103 @@ body.dashboard-body-bg {
   filter: none;
   background: var(--db-lavender);
   transform: scale(1.06);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Mode sombre — 3e écran migré du chantier (PR #153 CoachDashboard,
+   #154 MemberDetail), mêmes tokens --dark-* de global.css. Bloc clair
+   ci-dessus non touché (hex laissés en dur). Testable via ThemeContext
+   (main.jsx) — toggle Settings.jsx toujours désactivé.
+   ══════════════════════════════════════════════════════════════════════ */
+:root[data-theme="dark"] .dashboard-redesign {
+  --db-bg: var(--dark-bg);
+  --db-card: var(--dark-surface);
+  /* --db-cream sert deux rôles distincts qui divergent en sombre :
+     - db-calorie-restant (panneau enfoncé DANS la carte calories blanche)
+       → rôle "surface enfoncée", même logique que --cd-card-sunken/
+       --md-card-sunken sur les 2 écrans précédents.
+     - .activity-edit-sheet (la bottom sheet, une surface de niveau écran,
+       pas un simple encart) → traitée à part plus bas, pas via ce token :
+       elle doit plutôt rejoindre --dark-bg (assimilée à un second "écran"
+       qui glisse par-dessus), pas à la surface enfoncée. */
+  --db-cream: var(--dark-surface-sunken);
+  --db-track: var(--dark-border);
+  --db-border: var(--dark-border);
+  --db-ink: var(--dark-text-primary);
+  --db-text-secondary: var(--dark-text-secondary);
+  --db-text-muted: var(--dark-text-muted);
+  /* olive / lavande / rose / carb / magenta : inchangés en sombre, aucune
+     surcharge (voir décisions validées : --db-carb non couvert par le
+     mapping initial mais traité comme les autres accents pastel ;
+     --db-magenta sans usage d'alerte réel sur cet écran). */
+}
+
+/* Bottom sheet (édition d'une carte activité) : surface de niveau écran,
+   pas un encart — rejoint --dark-bg plutôt que --db-cream (voir
+   commentaire ci-dessus), cohérent avec .dashboard-screen/.db-calorie-card
+   qui restent le point de référence "fond" de l'écran. */
+:root[data-theme="dark"] .dashboard-redesign .activity-edit-sheet {
+  background: var(--dark-bg);
+}
+
+/* Barres de progression encre-sur-clair → accent olive, cohérent avec le
+   reste de l'écran : streak card, weekly segments, sheet progress bar et
+   habit-check sont déjà tous olive ici en clair. */
+:root[data-theme="dark"] .dashboard-redesign .db-calorie-bar-fill,
+:root[data-theme="dark"] .dashboard-redesign .activity-card-bar-fill {
+  background: var(--db-olive);
+}
+
+/* CTA "Voir mon entraînement du jour" : encre pleine en clair, mais
+   contient déjà un cercle icône olive (.dashboard-cta-icon) accolé à
+   droite. Passer le bouton lui-même en olive aussi l'y fondrait — lavande
+   retenue pour préserver le contraste à deux tons déjà présent en clair. */
+:root[data-theme="dark"] .dashboard-redesign .dashboard-cta-btn {
+  background: var(--db-lavender);
+  color: var(--db-lavender-ink);
+}
+
+/* "ENREGISTRER" (sheet d'édition) : encre pleine, pas de conflit de
+   voisinage comme le CTA ci-dessus → olive, cohérent avec le reste. */
+:root[data-theme="dark"] .dashboard-redesign .sheet-save-btn {
+  background: var(--db-olive);
+  color: var(--db-olive-ink);
+}
+
+/* Texte encre posé sur une carte à fond olive/lavande qui reste inchangé
+   en sombre (voir --db-olive/--db-lavender ci-dessus, non surchargés) :
+   si on les laissait suivre le remap global --db-ink → crème, ces 4
+   deviendraient illisibles (texte clair sur fond déjà clair, olive/
+   lavande ne s'assombrissant pas). Chacun épinglé sur le token -ink de
+   son propre accent, déjà utilisé par ses éléments voisins sur la même
+   carte (ex: .db-streak-sub utilise déjà --db-olive-ink en clair). */
+:root[data-theme="dark"] .dashboard-redesign .db-streak-count {
+  color: var(--db-olive-ink);
+}
+:root[data-theme="dark"] .dashboard-redesign .activity-card-accent .activity-card-value {
+  color: var(--db-lavender-ink);
+}
+:root[data-theme="dark"] .dashboard-redesign .db-avatar-btn {
+  color: var(--db-lavender-ink);
+}
+:root[data-theme="dark"] .dashboard-redesign .db-habit-check.done {
+  color: var(--db-olive-ink);
+}
+
+/* Icônes de la pill de nav flottante (.bottom-nav, nav.css) — sibling de
+   .dashboard-redesign, ses custom properties n'atteignent pas ce sélecteur
+   (même contrainte que documentée plus haut dans ce fichier pour les
+   règles ~ .bottom-nav existantes), couleurs reprises en dur. Repassées en
+   crème : le raisonnement du 16/08 ("plaque devenue claire → icônes en
+   encre pour le contraste") s'inverse en sombre — le fond derrière la pill
+   (.dashboard-screen) devient sombre, donc la plaque frost à 25% va lire
+   sombre, pas claire ; des icônes encre y seraient quasi invisibles.
+   Teinte/opacité de la plaque elle-même (rgba(28,26,23,0.25) ci-dessus)
+   volontairement NON touchée ici — pas de rendu visuel réel pour valider
+   ce changement plus large, à vérifier séparément avant d'y toucher. */
+:root[data-theme="dark"] .dashboard-redesign ~ .bottom-nav .nav-btn svg {
+  color: rgba(247,241,230,0.7);
+}
+:root[data-theme="dark"] .dashboard-redesign ~ .bottom-nav .nav-btn.active svg {
+  color: #F7F1E6;
 }
