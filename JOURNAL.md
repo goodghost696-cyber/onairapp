@@ -5344,3 +5344,63 @@ PR à suivre (draft → ready → merge squash après poll Vercel vert).
   de la barre/dot active n'est pas universelle (olive sur CoachDashboard, lavande sur MemberDetail
   pour cohérence interne) — trancher au cas par cas selon ce qui l'entoure sur le même écran, pas de
   règle automatique à appliquer sans vérifier
+
+
+---
+
+## Session du 31/08/2026 (suite) — Dashboard membre migré (3e écran du chantier mode sombre)
+
+**Contexte** : suite directe des 2 sessions précédentes (tokens `--dark-*` + CoachDashboard pilote
+PR #153, MemberDetail PR #154). Troisième écran, méthode identique.
+
+**Réalisé** :
+- `dashboard.css` migré : bloc clair non touché (diff purement additif), nouvelle surcharge
+  `:root[data-theme="dark"] .dashboard-redesign { ... }` faisant pointer chaque `--db-*` vers son
+  token `--dark-*` global.
+- `body.dashboard-body-bg` : même traitement que les 2 écrans précédents.
+
+**Décisions prises et validées avec l'utilisateur avant application** :
+1. `.db-calorie-bar-fill` et `.activity-card-bar-fill` (encre pleine, 4 cartes activité + carte
+   calories) → **olive**, cohérent avec le reste de l'écran (streak/weekly/sheet-progress/habit-check
+   sont déjà tous olive en clair sur ce même écran).
+2. `.dashboard-cta-btn` ("Voir mon entraînement du jour") → **lavande**, pas olive : contient déjà un
+   cercle icône olive accolé (`.dashboard-cta-icon`) — l'olive uniforme l'y aurait fondu visuellement.
+   `.sheet-save-btn` ("ENREGISTRER"), sans ce conflit de voisinage, reste sur olive.
+3. `--db-carb` (`#D9D95F`, 5e accent — barre "Glucides" des macros, non couvert par le mapping
+   initial ni par les 2 écrans précédents) reste **inchangé** en sombre, même logique que
+   olive/lavande/rose.
+4. Icônes de la pill de nav flottante (`.dashboard-redesign ~ .bottom-nav .nav-btn svg`, sibling,
+   couleurs en dur) **repassées en crème** en sombre : le raisonnement documenté dans le fichier pour
+   le changement du 16/08 ("plaque devenue claire → icônes en encre pour le contraste") s'inverse en
+   sombre — le fond derrière la pill devient sombre, la plaque frost à 25% va donc lire sombre, pas
+   claire. **Teinte/opacité de la plaque elle-même volontairement non touchée** — pas de rendu visuel
+   réel disponible pour valider ce changement plus large ; à vérifier une fois un rendu réel possible.
+   Cette même règle sibling est partagée par ~8 autres écrans membres restylés (mentionné dans le
+   fichier) — se reposera à l'identique sur chacun d'eux au fur et à mesure du chantier.
+5. Magenta (eyebrow "VOLTA", palier streak "🏅", bonus calories "+X activité") reste **inchangé** —
+   aucun des 3 usages n'est une alerte réelle (branding, réussite, information positive).
+
+**Catch trouvé en auditant le fichier, pas une décision de style mais une correction de cohérence
+nécessaire** : 4 éléments utilisent `var(--db-ink)` comme couleur de texte posé sur une carte à fond
+**olive ou lavande qui reste inchangé** en sombre — `.db-streak-count` (carte streak olive),
+`.activity-card-accent .activity-card-value` + `.db-avatar-btn` (fond lavande), `.db-habit-check.done`
+(cercle olive). Suivre le remap global `--db-ink` → crème les aurait rendus illisibles (texte clair
+sur fond déjà clair, olive/lavande ne s'assombrissant pas en sombre). Chacun épinglé sur le token
+`-ink` de son propre accent, déjà utilisé par ses éléments voisins sur la même carte (ex :
+`.db-streak-sub` utilisait déjà `--db-olive-ink` en clair). Pattern à surveiller sur les prochains
+écrans : chercher systématiquement les usages de `--*-ink` (préfixe écran) sur un fond accent fixe
+avant de faire un remap global du token "ink" principal.
+
+**Vérification** : `npm run build` OK, `grep` du bundle compilé confirmant tokens `--dark-*` et
+tokens locaux `--db-olive-ink`/`--db-lavender-ink` réutilisés présents, diff purement additif.
+
+**Commit** : `47a92c5` (cherry-pické depuis `33a1b2f`) — branche `feat/dark-theme-dashboard`, PR à
+suivre (draft → ready → merge squash après poll Vercel vert).
+
+**Reste à faire — chantier mode sombre** :
+- ~17 écrans restants
+- Pattern "texte -ink sur fond accent fixe" à re-vérifier systématiquement sur chaque futur écran
+  avec badges/cartes à fond olive/lavande/rose plein
+- Teinte/opacité de la pill de nav (`.bottom-nav`, rgba(28,26,23,0.25)) : décision reportée, à
+  trancher une fois qu'un rendu visuel réel en sombre est possible sur au moins un écran membre avec
+  nav — affecte potentiellement les ~8 autres écrans membres partageant la même règle sibling
