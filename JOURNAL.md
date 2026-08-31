@@ -5290,3 +5290,57 @@ PR #153 (draft → ready → merge squash prévu après poll Vercel vert).
 - Valider visuellement `--dark-text-tertiary` (interpolé, pas dans le mapping) sur un vrai rendu
 - Toggle mode sombre dans `Settings.jsx` reste désactivé — à activer une fois un nombre suffisant
   d'écrans migrés, pas avant
+
+
+---
+
+## Session du 31/08/2026 (suite) — MemberDetail migré (2e écran du chantier mode sombre)
+
+**Contexte** : suite directe de la session précédente (tokens `--dark-*` posés + CoachDashboard
+pilote, PR #153). Deuxième écran du chantier, même méthode.
+
+**Réalisé** :
+- `MemberDetail-redesign.css` migré : bloc clair non touché (diff purement additif, vérifié), nouvelle
+  surcharge `:root[data-theme="dark"] .memberdetail-redesign { ... }` faisant pointer chaque `--md-*`
+  vers son token `--dark-*` global.
+- `body.memberdetail-body-bg` : même traitement que CoachDashboard (surcharge dark dédiée).
+
+**Décisions prises et validées avec l'utilisateur avant application** :
+1. Trois éléments "encre-sur-clair" (`.md-pill-btn.solid` — CTA Enregistrer/Assigner/Générer analyse
+   IA —, `.md-ai-card`) basculent sur un remplissage **olive** + texte encre en sombre, cohérent avec
+   le seul précédent déjà tranché sur CoachDashboard (barre "jour le plus actif" → olive). Le crédit
+   `.md-ai-credit` (rgba crème 0.55 codé en dur, pas une var) suit la même bascule vers l'encre olive
+   à opacité réduite.
+2. `.md-week-bar.done` (barre "séance faite" du graphique 7 jours), un 4e cas encre-sur-clair, traité
+   différemment : **lavande**, pas olive — pour rester cohérent avec `.md-habit-dot.done` juste en
+   dessous sur le même écran (déjà lavande, inchangé). Décision spécifique à cet écran, à ne pas
+   généraliser aveuglément aux futurs écrans avec un graphique similaire — vérifier au cas par cas.
+3. `--md-magenta` (usages "Modifier" à côté d'Objectifs, "+ Assigner" à côté d'Habitudes) reste
+   **inchangé** en sombre — ce sont des actions d'édition standard, pas des alertes, contrairement aux
+   CTA d'alerte de CoachDashboard. Aucun token `--md-accent-alert` créé sur cet écran (pas nécessaire,
+   contrairement à `--cd-accent-alert` sur CoachDashboard).
+4. Nouveau token global `--dark-text-faint` (`#8F8579`) ajouté dans `global.css` — 5e niveau de texte
+   utilisé par `--md-text-faint` (sur "Archiver"), absent du mapping initial (3 niveaux fournis) et
+   du précédent CoachDashboard (qui n'avait que 4 niveaux, dont `--dark-text-tertiary` déjà interpolé).
+   Extrapolé dans le sens inverse de `--dark-text-tertiary` : plus SOMBRE que `--dark-text-muted`, pas
+   plus clair — en clair "faint" est plus proche du fond (contraste plus faible), en sombre le même
+   rôle s'obtient en se rapprochant du fond sombre, pas en s'en éloignant.
+
+**Points déjà corrects, vérifiés sans besoin de changement** :
+- `.md-status-at-risk` (badge lavande) et `.md-habit-dot.done` étaient déjà en accent-sur-clair
+  (fond + ink token), donc déjà conformes à la règle — aucun override nécessaire, comme les badges de
+  statut de CoachDashboard.
+
+**Vérification** : `npm run build` OK, `grep` du bundle compilé confirmant présence de tous les
+tokens `--dark-*` (dont le nouveau `--dark-text-faint`) et des tokens locaux `--md-olive-ink`/
+`--md-lavender` réutilisés pour les remplissages accent.
+
+**Commit** : `6e3015f` (cherry-pické depuis `7548439`) — branche `feat/dark-theme-memberdetail`,
+PR à suivre (draft → ready → merge squash après poll Vercel vert).
+
+**Reste à faire — chantier mode sombre** :
+- ~18 écrans restants à migrer
+- Pattern à surveiller pour les prochains écrans avec graphique/streak : la couleur "encre-sur-clair"
+  de la barre/dot active n'est pas universelle (olive sur CoachDashboard, lavande sur MemberDetail
+  pour cohérence interne) — trancher au cas par cas selon ce qui l'entoure sur le même écran, pas de
+  règle automatique à appliquer sans vérifier
