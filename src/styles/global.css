@@ -249,6 +249,43 @@ body {
   --nav-glass: rgba(255,255,255,0.28);
   --nav-border: rgba(255,255,255,0.35);
   --nav-inset: rgba(0,0,0,0.03);
+
+  /* ── Système de tokens "mode sombre" (chantier redesign, 2026-08-31) ──
+     Préfixés --dark-* et non pas --bg/--surface/etc. : ces derniers noms
+     sont déjà pris juste au-dessus et pilotent tout le reste de l'app
+     (inputs, .card, .btn-accent, .btn-ghost...) sous le thème corail
+     actuel. Les redéfinir ici referait silencieusement le look de chaque
+     écran pas encore migré dès que le toggle sombre serait activé — donc
+     un préfixe distinct, que chaque écran du chantier (~20 à venir)
+     référence explicitement au fur et à mesure de sa migration, en
+     laissant les écrans non migrés intacts. Mapping validé (mockup Claude
+     Design) : voir JOURNAL.md pour le détail clair→sombre par rôle.
+     --dark-surface (#1F101A dans le mockup) corrigé en #332F29 : la valeur
+     du mockup était nettement plus violette que le reste de la palette
+     neutre (#141310/#2A2723/#2E2B27) et plus foncée que la bordure/surface
+     enfoncée, alors qu'une carte doit être la valeur la plus claire du
+     groupe sombre — signalé et validé avec l'utilisateur avant usage. */
+  --dark-bg: #141310;
+  --dark-surface: #332F29;
+  --dark-surface-sunken: #2A2723;
+  --dark-border: #2E2B27;
+  --dark-text-primary: #F7F1E6;
+  --dark-text-secondary: #CBC1B5;
+  /* Pas dans le mapping fourni (3 niveaux de texte donnés, certains écrans
+     — dont CoachDashboard — en utilisent 4) : interpolée entre
+     --dark-text-secondary et --dark-text-muted. À valider visuellement au
+     premier écran qui s'en sert. */
+  --dark-text-tertiary: #BBB1A6;
+  --dark-text-muted: #ABA196;
+  --dark-accent-olive: #EBEB7D;
+  --dark-accent-lavender: #A3AEFE;
+  --dark-accent-rose: #FFBEF0;
+  /* Magenta de base (#B62472) inchangé — cette variante n'est utilisée QUE
+     dans les rôles où le magenta sert d'accent d'alerte/notification sur
+     fond sombre (badge, pastille, CTA d'alerte). Un usage décoratif du
+     même magenta (ex: marqueur de donnée sur un graphique) n'y bascule pas
+     et reste la couleur d'origine — décidé au cas par cas par écran. */
+  --dark-accent-alert: #FF6FA5;
 }
 
 :root[data-theme="light"] {
