@@ -25,6 +25,13 @@
   --cd-pink: #FFBEF0;
   --cd-pink-ink: #6B3F5F;
   --cd-magenta: #B62472;
+  /* Dérivé de --cd-magenta, vaut le même magenta par défaut (aucun
+     changement visuel en clair). Sert uniquement aux 3 usages "alerte"
+     (label, CTA carte, CTA "traiter les alertes") pour pouvoir les faire
+     basculer sur un accent différent en sombre sans toucher au magenta
+     utilisé comme simple marqueur de donnée (ligne de moyenne du
+     graphique + sa légende), qui reste inchangé en sombre. */
+  --cd-accent-alert: var(--cd-magenta);
   font-family: 'Poppins', system-ui, -apple-system, sans-serif;
   /* Même raison que dashboard.css (membre) : #root reste transparent sur la
      zone de statut/notch et sous un contenu plus court que le viewport,
@@ -46,6 +53,9 @@
 }
 body.coachdashboard-body-bg {
   background: #EFE7D9;
+}
+:root[data-theme="dark"] body.coachdashboard-body-bg {
+  background: var(--dark-bg);
 }
 
 .coachdashboard-screen {
@@ -176,7 +186,7 @@ body.coachdashboard-body-bg {
   padding: 0 6px 12px;
 }
 .cd-section-label.alert {
-  color: var(--cd-magenta);
+  color: var(--cd-accent-alert);
 }
 
 /* ── Graphique activité 7 jours ── */
@@ -294,7 +304,7 @@ body.coachdashboard-body-bg {
 .cd-alert-cta {
   font-size: 10.5px;
   font-weight: 700;
-  color: var(--cd-magenta);
+  color: var(--cd-accent-alert);
 }
 .cd-alert-sub {
   font-size: 11.5px;
@@ -762,7 +772,7 @@ body.coachdashboard-body-bg {
     font-size: 11px;
     font-weight: 700;
     letter-spacing: 0.06em;
-    color: var(--cd-magenta);
+    color: var(--cd-accent-alert);
     background: none;
     border: none;
     border-top: 1px solid var(--cd-card-sunken);
@@ -800,4 +810,53 @@ body.coachdashboard-body-bg {
   .cd-d-unshared-block .cd-unshared-card {
     background: var(--cd-card);
   }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Mode sombre — écran pilote du chantier (2026-08-31). Le bloc clair
+   ci-dessus n'est pas touché : ses hex restent en dur tels quels, c'est la
+   garantie la plus sûre que le mode clair reste pixel pour pixel
+   identique. Ici, on ne fait que surcharger les custom properties
+   --cd-* sous [data-theme="dark"], vers les tokens globaux --dark-*
+   posés dans global.css. Testable via le mécanisme ThemeContext déjà
+   câblé (main.jsx) — le toggle utilisateur dans Settings.jsx reste
+   désactivé, hors scope ici.
+   ══════════════════════════════════════════════════════════════════════ */
+:root[data-theme="dark"] .coachdashboard-redesign {
+  /* --cd-bg et --cd-screen-bg sont deux crèmes quasi identiques en clair
+     (#EFE7D9 / #F7F1E6, la première pour la bande sous l'encoche, la
+     seconde pour le fond réel de l'écran) — le mapping ne fournit qu'une
+     seule valeur "fond principal" côté sombre, donc les deux convergent
+     vers le même token plutôt que d'inventer une deuxième valeur non
+     spécifiée. */
+  --cd-bg: var(--dark-bg);
+  --cd-screen-bg: var(--dark-bg);
+  --cd-card: var(--dark-surface);
+  --cd-card-sunken: var(--dark-surface-sunken);
+  /* --cd-track (barres vides du graphique, gridlines) n'a pas d'équivalent
+     direct dans le mapping fourni — traité comme un séparateur/bordure,
+     son rôle visuel le plus proche (élément discret, jamais du texte). */
+  --cd-track: var(--dark-border);
+  --cd-ink: var(--dark-text-primary);
+  --cd-text-secondary: var(--dark-text-secondary);
+  /* Pas de cible fournie pour ce 4e niveau — voir --dark-text-tertiary
+     dans global.css (valeur interpolée, à valider visuellement). */
+  --cd-text-tertiary: var(--dark-text-tertiary);
+  --cd-text-muted: var(--dark-text-muted);
+  /* olive / lavande / rose / magenta : inchangés en sombre (cf. mapping),
+     aucune surcharge — seul le dérivé "alerte" ci-dessous change. */
+  --cd-accent-alert: var(--dark-accent-alert);
+}
+
+/* Barre "jour le plus actif" (.cd-d-chart-bar.highest) : en clair c'est un
+   remplissage plein encre (background: var(--cd-ink)) qui tranche parmi
+   des barres lavande — exactement le cas "encre-sur-clair" de la règle de
+   migration. La laisser suivre le mapping --cd-ink normal la ferait
+   devenir une barre crème pâle sur fond sombre : juste l'inverse clair/
+   sombre gardé tel quel, ce que la règle interdit explicitement
+   ("jamais crème-sur-sombre"). Bascule donc sur un remplissage accent
+   (olive, pour rester distincte des barres lavande) plutôt que sur le
+   texte crème par défaut. */
+:root[data-theme="dark"] .coachdashboard-redesign .cd-d-chart-bar.highest {
+  background: var(--dark-accent-olive);
 }
