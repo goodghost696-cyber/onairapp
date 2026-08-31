@@ -5224,3 +5224,69 @@ add CLAUDE.md", poussé sur `claude/charming-mendel-dj1GQ`.
   CrewAI GitHub est Enterprise/payante, l'alternative gratuite via wrapper `gh pr create` reste à coder)
 - Recherche d'emploi (CSM + growth marketing, Paris/IDF) démarrée via Indeed MCP, pas automatisée — 
   traité manuellement cette session, hors scope VOLTA
+
+
+---
+
+## Session du 31/08/2026 — Système de tokens mode sombre + CoachDashboard (écran pilote)
+
+**Contexte** : lancement du chantier "mode sombre" (~20 écrans à migrer un par un, sur le modèle du
+restyle clair déjà fait écran par écran cf. `CoachDashboard-redesign.css`, `ClientsList-redesign.css`...).
+Cette session pose les fondations (tokens globaux) et migre le premier écran, CoachDashboard, comme
+pilote. Aucun autre écran touché.
+
+**Réalisé** :
+- Nouveaux tokens `--dark-*` ajoutés dans `global.css`, sous le bloc `:root[data-theme="dark"]`
+  existant — `--dark-bg`, `--dark-surface`, `--dark-surface-sunken`, `--dark-border`,
+  `--dark-text-primary`, `--dark-text-secondary`, `--dark-text-tertiary`, `--dark-text-muted`,
+  `--dark-accent-olive`, `--dark-accent-lavender`, `--dark-accent-rose`, `--dark-accent-alert`.
+- `CoachDashboard-redesign.css` migré : le bloc clair (`.coachdashboard-redesign`) n'est pas touché
+  (hex en dur laissés tels quels — garantie la plus sûre que le clair reste pixel pour pixel
+  identique), une nouvelle surcharge `:root[data-theme="dark"] .coachdashboard-redesign { ... }`
+  fait pointer chaque `--cd-*` vers son token `--dark-*`.
+- Testable via le mécanisme `ThemeContext` déjà câblé (`main.jsx`). Toggle utilisateur dans
+  `Settings.jsx` toujours désactivé, hors scope de cette session.
+
+**Décision d'architecture non demandée par le prompt initial, prise et signalée en session** :
+les nouveaux tokens ne réutilisent PAS les noms `--bg`/`--surface`/`--border`/`--text-primary`/etc.
+déjà présents dans `global.css` — ces noms pilotent déjà tout le reste de l'app (inputs, `.card`,
+`.btn-accent`, `.btn-ghost`, tous les écrans non redesignés) sous le thème corail actuel. Les
+redéfinir directement dans le bloc dark existant aurait reskinné silencieusement tous les écrans pas
+encore migrés le jour où le toggle sombre serait activé. Préfixe `--dark-*` retenu à la place :
+chaque écran du chantier s'y raccroche explicitement au fur et à mesure de sa migration, sans risque
+de collision avec les écrans non touchés.
+
+**Trois déviations du mapping fourni, signalées et validées avec l'utilisateur avant application** :
+1. `--dark-surface` corrigé de `#1F101A` (valeur mockup) à `#332F29` — la valeur mockup était
+   nettement plus violette que le reste de la palette neutre (`#141310`/`#2A2723`/`#2E2B27`) et plus
+   foncée que la bordure/surface enfoncée, alors qu'une carte doit être la valeur la plus claire du
+   groupe sombre.
+2. Magenta traité au cas par cas, pas en remplacement uniforme du token : nouveau token dérivé
+   `--cd-accent-alert` (→ `#FF6FA5` en sombre) créé pour les 3 usages réellement "alerte" (label
+   "Alertes", CTA "Voir →" sur carte d'alerte, CTA "Traiter les N alertes →" côté desktop — ce
+   dernier découvert en lisant le JSX, pas dans le mapping initial, car son texte est explicitement
+   lié aux alertes). La ligne de moyenne du graphique 7 jours + sa légende restent en magenta
+   d'origine (simple marqueur de donnée, pas une alerte).
+3. `.cd-d-chart-bar.highest` (barre "jour le plus actif", remplissage plein encre) bascule sur un
+   accent olive en sombre plutôt que de suivre le mapping `--cd-ink` normal — sinon elle serait
+   devenue une barre crème pâle sur fond sombre, exactement le cas "crème-sur-sombre" que la règle de
+   migration du prompt interdisait explicitement.
+
+**Point non résolu, valeur interpolée sans validation visuelle** : `--dark-text-tertiary` — 4ᵉ niveau
+de texte utilisé par CoachDashboard (`--cd-text-tertiary`), absent du mapping fourni qui ne donnait que
+3 niveaux (primaire/secondaire/muted). Valeur `#BBB1A6` interpolée entre `--dark-text-secondary`
+(`#CBC1B5`) et `--dark-text-muted` (`#ABA196`) — à valider visuellement sur le premier écran testé
+en vrai en mode sombre (les mentions "il y a Xj" du CoachDashboard, sous-titres de cartes).
+
+**Vérification** : `npm run build` OK, `grep` du bundle compilé confirmant présence de tous les
+tokens `--dark-*` et de leurs valeurs, absence de `1F101A` (correction bien appliquée), et absence de
+hex en dur dans la surcharge sombre de `CoachDashboard-redesign.css`.
+
+**Commit** : `9ba9fba` (cherry-pické depuis `b44289c`) — branche `feat/dark-theme-tokens-coachdashboard`,
+PR #153 (draft → ready → merge squash prévu après poll Vercel vert).
+
+**Reste à faire — chantier mode sombre** :
+- ~19 écrans restants à migrer un par un, en réutilisant les tokens `--dark-*` posés ici
+- Valider visuellement `--dark-text-tertiary` (interpolé, pas dans le mapping) sur un vrai rendu
+- Toggle mode sombre dans `Settings.jsx` reste désactivé — à activer une fois un nombre suffisant
+  d'écrans migrés, pas avant
