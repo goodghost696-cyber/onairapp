@@ -8,16 +8,19 @@
    Tabs/routes/icons themselves are untouched — only this container. */
 .bottom-nav {
   position: fixed;
-  /* Pushed to the true minimum on explicit request ("je la veux vraiment
-     en bottom de page"): no extra margin at all, not even a small floor —
-     bottom is exactly env(safe-area-inset-bottom). In a Safari tab (SAB=0)
-     the pill sits flush against the literal screen edge. In standalone
-     (SAB=34) it sits exactly on top of the home-indicator safe area and no
-     further — that 34px is not decorative margin, it's the minimum needed
-     so the icons aren't physically under the home-indicator gesture strip
-     (tapping there risks colliding with the swipe-up-to-switch-apps
-     gesture); it cannot go lower without that tradeoff. */
-  bottom: env(safe-area-inset-bottom);
+  /* Bug remonté (iPhone/PWA, 2026-08-31) : avec bottom:env(safe-area-inset-
+     bottom), la pilule s'arrêtait exactement à la limite de la safe-area,
+     laissant un vide transparent entre elle et le vrai bord de l'écran —
+     visible uniquement là où la safe-area existe (PWA standalone/iPhone à
+     encoche), invisible sur desktop, exactement le rapport initial.
+     Fix : la boîte de la pilule descend maintenant jusqu'au bord réel
+     (bottom:0) et absorbe la safe-area en padding-bottom interne plutôt
+     qu'en décalage externe — son fond/blur/border-radius existants
+     couvrent donc naturellement toute la zone jusqu'au bord, sans élément
+     ni couleur supplémentaire (voir padding et align-items ci-dessous).
+     À SAB=0 (Safari onglet, desktop) bottom:0 égale exactement l'ancien
+     bottom:env(0)=0 — aucun changement de rendu sur ces cas. */
+  bottom: 0;
   left: 50%;
   transform: translateX(-50%);
   z-index: 100;
@@ -25,8 +28,19 @@
   max-width: 448px;
   display: flex;
   justify-content: space-around;
-  align-items: center;
-  padding: 10px 12px;
+  /* Était `center` : avec le padding-bottom élargi ci-dessous (qui
+     absorbe la safe-area), centrer les onglets dans la boîte agrandie les
+     aurait poussés vers le bas, vers la zone de geste — flex-start les
+     garde exactement à leur position d'origine (10px sous le haut,
+     inchangé), la safe-area restant un espace inerte sous eux. À SAB=0,
+     padding haut/bas restent symétriques (10px chacun) comme avant :
+     rendu identique à l'ancien `center`. */
+  align-items: flex-start;
+  /* Le bas absorbe désormais la safe-area (voir bottom:0 ci-dessus) —
+     10px de padding d'origine + la safe-area, qui vaut 0 sur desktop
+     (aucun changement là) et le vide de geste iOS ailleurs (maintenant
+     rempli par le fond de la pilule au lieu de rester transparent). */
+  padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
   border-radius: 999px;
   /* Effet frost demandé le 2026-08-16 : opacité de fond fixée à 25% et
      flou ramené à 15px, sur la nav partagée ET sur les 9 surcharges par
@@ -62,7 +76,15 @@
 .nav-indicator {
   position: absolute;
   top: 6px;
-  bottom: 6px;
+  /* Était `bottom: 6px` (hauteur déduite implicitement de top+bottom) —
+     avec la boîte de .bottom-nav désormais plus haute (padding-bottom qui
+     absorbe la safe-area, voir plus haut), bottom:6px aurait étiré la
+     pastille jusque dans cette nouvelle zone, la désalignant de la
+     rangée d'icônes restée en haut. Hauteur explicite qui exclut la
+     safe-area à la place, gardant le même inset de 6px de chaque côté de
+     la rangée d'icônes qu'avant. À SAB=0 : calc(100% - 12px - 0), rendu
+     identique à l'ancien top/bottom:6px. */
+  height: calc(100% - 12px - env(safe-area-inset-bottom));
   left: 12px;
   width: calc((100% - 24px) / var(--nav-tab-count, 5));
   border-radius: 999px;

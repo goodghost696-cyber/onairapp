@@ -83,25 +83,19 @@ body.dashboard-body-bg {
 
 /* Nav pill flottante (.bottom-nav, nav.css) — partagée par tout l'app,
    rendue en sibling de l'écran actif dans MemberLayout.jsx (<Outlet/> puis
-   <BottomNav/>). Le sélecteur sibling ci-dessous ne matche donc que quand
-   .dashboard-redesign est le screen actuellement monté juste avant elle
-   dans le DOM.
+   <BottomNav/>). Les sélecteurs sibling ci-dessous ne matchent donc que
+   quand .dashboard-redesign est le screen actuellement monté juste avant
+   elle dans le DOM.
 
-   Historique (2026-08-14) : un premier essai ajoutait
-   `bottom: calc(env(safe-area-inset-bottom) + 10px)`, corrigé ensuite en
-   supprimant carrément l'override sur l'hypothèse que le défaut global de
-   nav.css (`bottom: env(safe-area-inset-bottom)`, documenté comme "le
-   vrai minimum") suffisait déjà — rapporté sur test réel qu'un espace
-   visible persistait malgré ça. Règle explicite remise en place plutôt
-   que de recompter sur le défaut hérité : matérialise noir sur blanc,
-   scopé au Dashboard, la même valeur que le plancher de sécurité iOS,
-   sans aucun padding/marge additionnelle au-dessus — vérifié par
-   getComputedStyle sur un rendu réel des feuilles de style compilées
-   (voir JOURNAL.md) que c'est bien cette valeur, et aucune autre, qui
-   s'applique. */
-.dashboard-redesign ~ .bottom-nav {
-  bottom: env(safe-area-inset-bottom);
-}
+   L'override `bottom: env(safe-area-inset-bottom)` posé ici le 2026-08-14
+   (historique complet dans JOURNAL.md) a été retiré le 2026-08-31 : le
+   fix du vide sous la pilule sur iPhone/PWA (nav.css) change la valeur
+   partagée en `bottom: 0` + padding-bottom absorbant la safe-area en
+   interne — regarder cet override ici l'aurait ramenée à son ancienne
+   position (`bottom: env(safe-area-inset-bottom)`), ré-ouvrant exactement
+   le vide qui vient d'être corrigé, spécifiquement sur cet écran. Devenu
+   redondant : nav.css garantit déjà seul le même plancher "vrai minimum,
+   aucune marge" qui avait motivé cette règle à l'origine. */
 
 /* Fond frost sombre (.bottom-nav). Historique de cette règle, parce qu'elle
    a déjà changé de sens une fois :
