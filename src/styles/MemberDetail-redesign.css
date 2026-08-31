@@ -44,6 +44,9 @@
 body.memberdetail-body-bg {
   background: #EFE7D9;
 }
+:root[data-theme="dark"] body.memberdetail-body-bg {
+  background: var(--dark-bg);
+}
 
 .memberdetail-screen {
   position: relative;
@@ -458,4 +461,72 @@ body.memberdetail-body-bg {
     padding-left: 0;
     padding-right: 0;
   }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Mode sombre — 2e écran migré du chantier (PR #153 = CoachDashboard, ce
+   PR = MemberDetail), mêmes tokens --dark-* posés dans global.css. Le
+   bloc clair ci-dessus n'est pas touché (hex laissés en dur) : garantie
+   la plus sûre que le clair reste pixel pour pixel identique. Testable
+   via ThemeContext (main.jsx) — toggle Settings.jsx toujours désactivé.
+   ══════════════════════════════════════════════════════════════════════ */
+:root[data-theme="dark"] .memberdetail-redesign {
+  /* --md-bg et --md-screen-bg sont deux crèmes quasi identiques en clair,
+     même raisonnement que CoachDashboard : une seule valeur sombre
+     fournie pour "fond principal", les deux convergent vers elle. */
+  --md-bg: var(--dark-bg);
+  --md-screen-bg: var(--dark-bg);
+  --md-card: var(--dark-surface);
+  --md-card-sunken: var(--dark-surface-sunken);
+  /* --md-track (barres/dots vides) et --md-divider (traits séparateurs
+     entre lignes de liste) jouent tous deux un rôle de séparateur discret
+     — même traitement que --cd-track sur CoachDashboard. */
+  --md-track: var(--dark-border);
+  --md-divider: var(--dark-border);
+  --md-ink: var(--dark-text-primary);
+  --md-cream: var(--dark-text-primary);
+  --md-text-secondary: var(--dark-text-secondary);
+  --md-text-tertiary: var(--dark-text-tertiary);
+  --md-text-muted: var(--dark-text-muted);
+  --md-text-faint: var(--dark-text-faint);
+  /* olive / lavande / rose / magenta : inchangés en sombre, aucune
+     surcharge — --md-magenta reste le magenta d'origine (voir plus bas,
+     ses 2 seuls usages ici ne sont pas des alertes). */
+}
+
+/* Trois éléments "encre-sur-clair" (fond plein var(--md-ink), texte
+   var(--md-cream)) : la règle de migration interdit de les laisser
+   suivre le mapping --md-ink/--md-cream normal, qui les rendrait
+   crème-sur-sombre (juste l'inverse clair/sombre). Bascule sur un
+   remplissage accent + texte encre, comme les badges de statut déjà
+   accent-sur-clair. Olive retenu uniformément pour les 3 (CTA + carte
+   IA), cohérent avec le seul précédent déjà tranché (barre "jour le plus
+   actif" de CoachDashboard). */
+:root[data-theme="dark"] .memberdetail-redesign .md-pill-btn.solid {
+  background: var(--md-olive);
+  color: var(--md-olive-ink);
+}
+:root[data-theme="dark"] .memberdetail-redesign .md-ai-card {
+  background: var(--md-olive);
+}
+:root[data-theme="dark"] .memberdetail-redesign .md-ai-text {
+  color: var(--md-olive-ink);
+}
+/* Crédit "Généré par AI Coach VOLTA" — en clair c'est un rgba(cream,0.55)
+   codé en dur (pas une var), qui doit aussi changer avec la carte : du
+   crème à 55% sur un fond olive serait illisible (contraste écrasé,
+   presque la couleur du fond). Repris en encre olive à opacité réduite,
+   même mécanique que --md-olive-ink plein mais atténué. */
+:root[data-theme="dark"] .memberdetail-redesign .md-ai-credit {
+  color: var(--md-olive-ink);
+  opacity: 0.65;
+}
+
+/* Barre "séance faite" du graphique 7 jours — même cas "encre-sur-clair"
+   que ci-dessus, mais traitée en lavande plutôt qu'olive : cohérence
+   interne à cet écran avec .md-habit-dot.done juste en dessous (déjà
+   lavande, inchangé), les deux indicateurs d'activité de la fiche membre
+   matchent visuellement. */
+:root[data-theme="dark"] .memberdetail-redesign .md-week-bar.done {
+  background: var(--md-lavender);
 }

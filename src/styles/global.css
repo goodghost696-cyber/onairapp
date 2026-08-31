@@ -277,6 +277,14 @@ body {
      premier écran qui s'en sert. */
   --dark-text-tertiary: #BBB1A6;
   --dark-text-muted: #ABA196;
+  /* 5e niveau de texte, apparu au 2e écran migré (MemberDetail) — pas dans
+     le mapping fourni, ni couvert par --dark-text-tertiary. Extrapolé
+     au-delà de --dark-text-muted : en clair, "faint" est plus clair que
+     "muted" (encore moins de contraste contre un fond clair) ; en sombre
+     la même relation de contraste s'obtient en allant plus SOMBRE que
+     --dark-text-muted, pas plus clair (se rapprocher du fond, pas du
+     texte plein). Validé avec l'utilisateur avant usage. */
+  --dark-text-faint: #8F8579;
   --dark-accent-olive: #EBEB7D;
   --dark-accent-lavender: #A3AEFE;
   --dark-accent-rose: #FFBEF0;
