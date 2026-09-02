@@ -100,6 +100,22 @@ function calBarColor(cal, goal) {
   if (pct >= 0.8) return 'var(--wk-olive-ink)'
   return 'var(--wk-magenta)'
 }
+// État nommé en parallèle de calBarColor ci-dessus, posé en data-attribute
+// plutôt qu'en couleur inline directe : calBarColor() garde exactement le
+// même calcul/couleur en clair (aucun changement), une règle sombre
+// dédiée (weekly-redesign.css) lit [data-cal-state] pour appliquer un
+// traitement différent par état — "atteint" passe en accent olive plein
+// (encre pleine crème-sur-sombre sinon), "en dessous" passe en accent
+// alerte (vraie fonction d'alerte : manque calorique important ce
+// jour-là, pas une simple décoration de graphique comme le cycle de
+// couleur des courbes LiftCurve).
+function calBarState(cal, goal) {
+  if (cal === 0) return 'empty'
+  const pct = cal / goal
+  if (pct >= 1) return 'reached'
+  if (pct >= 0.8) return 'close'
+  return 'under'
+}
 
 // Étiquette décorative "Semaine du X au Y" du header (maquette) — calculée
 // depuis la date du jour (lundi→dimanche de la semaine en cours), aucune
@@ -325,7 +341,7 @@ export default function Weekly() {
                 return (
                   <div key={i} className="wk-calorie-bar-col">
                     <span className="wk-calorie-bar-val">{d.calories > 0 ? d.calories.toLocaleString('fr-FR') : '—'}</span>
-                    <div className="wk-calorie-bar-fill" style={{ height: `${barH}px`, background: calBarColor(d.calories, appData.calorieGoal) }} />
+                    <div className="wk-calorie-bar-fill" data-cal-state={calBarState(d.calories, appData.calorieGoal)} style={{ height: `${barH}px`, background: calBarColor(d.calories, appData.calorieGoal) }} />
                     <span className="wk-calorie-bar-day">{d.day}</span>
                   </div>
                 )
