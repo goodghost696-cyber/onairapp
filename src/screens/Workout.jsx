@@ -145,6 +145,18 @@ Donne exactement 4-5 exercices adaptés à l'objectif.`
     salle: 'var(--wh-lavender)',
     dehors: 'var(--wh-pink)',
   }
+  // Encre appairée à chaque cercle ci-dessus, posée en custom property sur
+  // le cercle (--wh-icon-ink) plutôt qu'en stroke inline direct sur le
+  // svg : les 3 icônes gardent stroke="var(--wh-ink)" en JSX (mode clair
+  // inchangé), une règle sombre dédiée (workout-redesign.css) lit
+  // --wh-icon-ink à la place — sans ça, le remap sombre global de
+  // --wh-ink (encre -> crème) rendrait les 3 icônes illisibles sur leurs
+  // cercles olive/lavande/rose, restés clairs en sombre.
+  const sectionIconInk = {
+    maison: 'var(--wh-olive-ink)',
+    salle: 'var(--wh-lavender-ink)',
+    dehors: 'var(--wh-pink-ink)',
+  }
   // Cycle d'accent pour le 1er badge de chaque carte "Dernières séances"
   // (voir workout-redesign.css, .history-ex-badge:first-child) — même
   // esprit que le cycle de couleur des badges-lettre de Nutrition.jsx.
@@ -256,7 +268,10 @@ Donne exactement 4-5 exercices adaptés à l'objectif.`
         {sections.map((s, i) => (
           <div key={s.key} className="card card-animated" style={{ '--delay': `${i*80}ms`, cursor: 'pointer', marginBottom: 10 }} {...activable(() => navigate(`/workout/${s.key}`), { label: s.name })}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <div style={{ width: 46, height: 46, background: sectionIconBg[s.key], borderRadius: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <div
+                className="wh-section-icon-circle"
+                style={{ width: 46, height: 46, background: sectionIconBg[s.key], '--wh-icon-ink': sectionIconInk[s.key], borderRadius: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+              >
                 {sectionIcons[s.key]}
               </div>
               <div style={{ flex: 1 }}>

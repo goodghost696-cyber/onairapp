@@ -67,6 +67,9 @@
 body.workout-body-bg {
   background: #EFE7D9;
 }
+:root[data-theme="dark"] body.workout-body-bg {
+  background: var(--dark-bg);
+}
 
 /* Fond opaque sombre (.bottom-nav) — généralisation (2026-08-14) du fix
    posé initialement sur Dashboard.jsx uniquement (dashboard.css, commit
@@ -83,6 +86,17 @@ body.workout-body-bg {
 .workout-redesign ~ .bottom-nav .nav-btn.active svg {
   /* Lavande plutôt que crème — voir dashboard.css pour l'explication. */
   color: #1C1A17;
+}
+/* Repassées en crème en sombre — même raisonnement que dashboard.css
+   (PR #155) : le fond derrière la pill devient sombre, la plaque frost à
+   25% va donc lire sombre plutôt que claire, des icônes encre y seraient
+   quasi invisibles. Absent de nutrition-redesign.css (PR #159, oubli
+   signalé — à corriger séparément, hors scope ici). */
+:root[data-theme="dark"] .workout-redesign ~ .bottom-nav .nav-btn svg {
+  color: rgba(247,241,230,0.7);
+}
+:root[data-theme="dark"] .workout-redesign ~ .bottom-nav .nav-btn.active svg {
+  color: #F7F1E6;
 }
 
 .workout-screen {
@@ -351,4 +365,91 @@ body.workout-body-bg {
 .workout-redesign .history-ex-badge:first-child {
   background: var(--wh-history-accent, var(--wh-neutral-badge));
   color: var(--wh-history-accent-ink, var(--wh-neutral-badge-ink));
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Mode sombre — 5e écran migré du chantier (PR #153 CoachDashboard, #154
+   MemberDetail, #155 Dashboard membre, #159 Nutrition), mêmes tokens
+   --dark-* de global.css. Bloc clair ci-dessus non touché (hex laissés en
+   dur). Testable via ThemeContext (main.jsx) — toggle Settings.jsx
+   toujours désactivé.
+   ══════════════════════════════════════════════════════════════════════ */
+:root[data-theme="dark"] .workout-redesign {
+  --wh-bg: var(--dark-bg);
+  --wh-screen-bg: var(--dark-bg);
+  --wh-card: var(--dark-surface);
+  /* --wh-neutral-badge-ink (#4A443C) est la même valeur, au pixel près,
+     que --wh-text-secondary — mappé sur le même token sombre en
+     conséquence. */
+  --wh-neutral-badge: var(--dark-surface-sunken);
+  --wh-neutral-badge-ink: var(--dark-text-secondary);
+  --wh-border: var(--dark-border);
+  --wh-ink: var(--dark-text-primary);
+  --wh-text-secondary: var(--dark-text-secondary);
+  --wh-text-tertiary: var(--dark-text-tertiary);
+  --wh-text-muted: var(--dark-text-muted);
+  /* olive / lavande / rose / magenta : inchangés en sombre, aucune
+     surcharge — aucun usage d'alerte réel trouvé sur cet écran (eyebrow
+     = branding, bandeau "séance en cours" = statut neutre, pas une
+     alerte). --wh-history-accent/-ink (posés en inline par Workout.jsx)
+     déjà pairés correctement, aucun fix nécessaire. */
+}
+
+/* Barre de progression "Séances cette semaine" : encre pleine en clair,
+   mais à l'intérieur d'une carte déjà OLIVE (.card.card-hero) qui reste
+   inchangée en sombre — un remplissage olive s'y fondrait. Lavande
+   retenue : contraste net contre l'olive, cohérent avec
+   .generate-program-btn juste en dessous (déjà lavande sur cet écran). */
+:root[data-theme="dark"] .workout-redesign .progress-fill {
+  background: var(--wh-lavender);
+}
+
+/* Grand nombre de .card.card-hero (ex: "4/5") : aucune classe/couleur
+   propre, hérite de var(--wh-ink) posé sur .workout-screen — sur la carte
+   olive fixe, suivre le remap global (-> crème) le rendrait illisible.
+   Fallback de couleur au niveau de la carte plutôt qu'un sélecteur dédié
+   au span (sans classe) : cascade naturellement sur ce texte sans toucher
+   .text-sm.text-muted (déjà épinglé sur olive-ink) ni le span "/objectif"
+   (déjà en inline olive-ink). */
+:root[data-theme="dark"] .workout-redesign .card.card-hero {
+  color: var(--wh-olive-ink);
+}
+
+/* CTA "Ma séance du jour" : encre pleine, pas de cercle icône imbriqué
+   (contrairement au CTA équivalent de Dashboard) → olive, complète la
+   paire avec .generate-program-btn (lavande) juste à côté. */
+:root[data-theme="dark"] .workout-redesign .today-session-btn {
+  background: var(--wh-olive);
+  color: var(--wh-olive-ink);
+}
+
+/* "Programme IA" (.generate-program-btn) et son spinner de chargement :
+   déjà accent-sur-clair (fond lavande inchangé en sombre), mais le texte/
+   la coche de rotation utilisent var(--wh-ink) — épinglés sur
+   lavender-ink, même piège que Dashboard/Nutrition. */
+:root[data-theme="dark"] .workout-redesign .generate-program-btn {
+  color: var(--wh-lavender-ink);
+}
+:root[data-theme="dark"] .workout-redesign .btn-spinner {
+  border-top-color: var(--wh-lavender-ink);
+}
+
+/* .ai-program-card délibérément NON touchée : déjà volontairement sombre
+   en mode clair (fond encre, texte olive + crème·à·0.7 — look "premium"
+   assumé, pas un oubli), donc déjà cohérente avec un fond d'écran sombre
+   sans aucune surcharge. La convertir en accent plein (comme .md-ai-card
+   sur MemberDetail) casserait son propre contraste interne (le texte
+   olive de .ai-program-type deviendrait illisible sur un fond qui
+   deviendrait olive) — décidé avec l'utilisateur avant d'appliquer. */
+
+/* Icônes de la bibliothèque (Maison/Salle/Dehors) — stroke figé en JS
+   (var(--wh-ink)) sur les 3 svg, quel que soit le cercle olive/lavande/
+   rose dans lequel chacune s'affiche. Voir sectionIconInk dans
+   Workout.jsx : --wh-icon-ink est posée en custom property sur le cercle
+   (.wh-section-icon-circle), lue uniquement ici — le stroke JSX reste
+   var(--wh-ink) en clair, inchangé. Sélecteur scopé à la classe du
+   cercle, pas .card svg en général, pour ne pas toucher les chevrons "›"
+   de fin de ligne (déjà corrects, sur --wh-text-muted, sans fond fixe). */
+:root[data-theme="dark"] .workout-redesign .wh-section-icon-circle svg {
+  stroke: var(--wh-icon-ink);
 }

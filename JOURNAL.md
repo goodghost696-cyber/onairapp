@@ -5615,3 +5615,63 @@ suivre (draft → ready → merge squash après poll Vercel vert).
 - Pattern à surveiller : les écrans avec des couleurs pilotées en JS (badges dynamiques, chips actifs
   sans classe dédiée) demandent une lecture JSX plus poussée, pas seulement CSS — vérifier au cas par
   cas si le fichier `-redesign.css` correspondant suffit ou si l'écran JSX doit aussi être touché
+
+
+---
+
+## Session du 02/09/2026 (suite) — Workout (hub) migré (5e écran du chantier mode sombre)
+
+**Contexte** : suite des sessions PR #153/#154/#155/#159 (tokens `--dark-*` + CoachDashboard,
+MemberDetail, Dashboard membre, Nutrition). Cinquième écran, méthode CSS identique + un point JSX.
+
+**Réalisé** :
+- `workout-redesign.css` migré : bloc clair non touché (diff purement additif), nouvelle surcharge
+  `:root[data-theme="dark"] .workout-redesign { ... }` faisant pointer chaque `--wh-*` vers son token
+  `--dark-*` global. `--wh-neutral-badge-ink` (`#4A443C`) mappé sur `--dark-text-secondary` — même
+  valeur au pixel près que `--wh-text-secondary`.
+- `body.workout-body-bg` : même traitement que les écrans précédents.
+
+**Décisions prises selon la cohérence interne de CET écran, pas copiées mécaniquement des écrans
+précédents (comme demandé), validées avec l'utilisateur avant application** :
+- `.progress-fill` (barre "Séances cette semaine", encre pleine) est à l'intérieur d'une carte déjà
+  **olive** (`.card.card-hero`, inchangée en sombre) — un remplissage olive s'y serait fondu.
+  **Lavande** retenue, cohérent avec `.generate-program-btn` juste en dessous (déjà lavande).
+- `.today-session-btn` (encre pleine, sans icône imbriquée contrairement au CTA équivalent de
+  Dashboard) → **olive**, complète la paire avec `.generate-program-btn` (lavande).
+- `.ai-program-card` **volontairement non touchée** : déjà sombre par conception même en mode clair
+  (fond encre, texte olive + crème·0,7 — look "premium" assumé, pas un oubli). La convertir en accent
+  plein (comme `.md-ai-card` sur MemberDetail) aurait cassé son propre contraste interne (texte olive
+  illisible sur un fond devenu olive) — décision documentée, différente du traitement MemberDetail.
+
+**Catch trouvé indépendamment (même piège que Dashboard/Nutrition, retrouvé sans le copier)** : le
+grand nombre de `.card.card-hero` ("4/5") hérite de `var(--wh-ink)` sans avoir sa propre classe —
+épinglé via un fallback de couleur au niveau de la carte (`color: var(--wh-olive-ink)` sur
+`.card.card-hero`), qui cascade naturellement sur ce texte sans toucher `.text-sm.text-muted` (déjà
+épinglé) ni le span "/objectif" (déjà en inline olive-ink). `.generate-program-btn` (déjà accent
+lavande) et son spinner de chargement avaient le même souci — corrigés de la même façon
+(`color`/`border-top-color` → `lavender-ink`).
+
+**Couleurs pilotées en JS, `Workout.jsx` touché après validation (même situation que Nutrition la
+dernière fois)** : les 3 icônes de bibliothèque (Maison/Salle/Dehors) avaient un stroke figé en
+`var(--wh-ink)` quel que soit leur cercle olive/lavande/rose. Nouveau `sectionIconInk` posé en custom
+property `--wh-icon-ink` sur chaque cercle (classe `wh-section-icon-circle` ajoutée pour le ciblage
+CSS), lue uniquement par une règle sombre dédiée — le stroke JSX reste `var(--wh-ink)` en clair,
+strictement inchangé.
+
+**Gap trouvé en vérifiant les règles `~ .bottom-nav` (comme demandé dans le rappel méthodologique)** :
+`nutrition-redesign.css` (PR #159) n'avait **pas** ajouté la surcharge sombre des icônes de nav
+(contrairement à `dashboard.css`, PR #155) — ajoutée ici pour `workout-redesign.css`. Signalé comme
+trou à corriger séparément sur Nutrition, pas patché silencieusement (hors scope de cette PR).
+
+**Vérification** : `npm run build` OK, `grep` du bundle compilé (CSS **et** JS) confirmant tokens,
+classe `wh-section-icon-circle` et custom property `--wh-icon-ink` présents. Diff JSX relu ligne par
+ligne : uniquement des ajouts, aucune valeur de style existante changée.
+
+**Commit** : `9b5ab35` (cherry-pické depuis `ec5e3d4`) — branche `feat/dark-theme-workout`, PR à
+suivre (draft → ready → merge squash après poll Vercel vert).
+
+**Reste à faire — chantier mode sombre** :
+- ~15 écrans restants
+- **Gap à corriger** : `nutrition-redesign.css` n'a pas la surcharge sombre des icônes de
+  `.bottom-nav` — petit fix isolé à faire dans une prochaine session (2 règles CSS, même mécanique que
+  Dashboard/Workout)
