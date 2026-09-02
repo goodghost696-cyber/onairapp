@@ -5702,3 +5702,50 @@ suivre (draft → ready → merge squash après poll Vercel vert).
 
 **Reste à faire — chantier mode sombre** : ~15 écrans restants, ce fix n'en fait pas partie (dette
 technique isolée maintenant soldée).
+
+
+---
+
+## Session du 02/09/2026 (suite) — AICoach migré (6e écran du chantier mode sombre)
+
+**Contexte** : suite des sessions PR #153/#154/#155/#159/#160/#161. Sixième écran, écran de
+conversation avec le coach IA — plus simple que les précédents, aucune couleur pilotée en JS, aucun
+JSX touché cette fois.
+
+**Réalisé** :
+- `aicoach-redesign.css` migré : bloc clair non touché (diff purement additif, un seul fichier),
+  nouvelle surcharge `:root[data-theme="dark"] .aicoach-redesign { ... }` faisant pointer chaque
+  `--aic-*` vers son token `--dark-*` global.
+- `body.aicoach-body-bg` et surcharge sombre des icônes de nav : ajoutées dès cette migration (pas de
+  trou laissé, contrairement à Nutrition — voir PR #161).
+
+**Constat de départ propre à cet écran** : `--aic-olive` et `--aic-lavender` étaient déjà déclarés
+dans le fichier mais **jamais utilisés** nulle part (ni CSS ni JSX) — contrairement aux 5 écrans
+précédents, aucun accent n'était déjà établi ici pour orienter le choix.
+
+**Décision validée avec l'utilisateur avant application** : `.aic-bubble-user` (bulle utilisateur) et
+`.aic-send-btn` (bouton d'envoi), tous deux encre pleine, basculent sur **lavande** — ton calme,
+cohérent avec un écran de conversation plutôt qu'un accent "action/CTA" comme l'olive. Nouveau token
+`--aic-lavender-ink` ajouté (absent jusqu'ici), même valeur (`#3F4780`) que les tokens `-ink` des 5
+écrans précédents, pour rester cohérent.
+
+**`.aic-bubble-error`** (bordure magenta sur "Connexion perdue. Réessaie.") : contrairement aux 5
+usages de magenta des écrans précédents (tous décoratifs), c'est ici une **vraie fonction d'alerte** —
+un échec réel d'appel API — donc bascule vers l'accent alerte (`--dark-accent-alert`, `#FF6FA5`)
+plutôt que de rester inchangée, conformément à la règle établie.
+
+**Détail documenté plutôt que supposé silencieusement correct** : l'icône du bouton d'envoi utilise
+`fill="var(--aic-screen-bg)"` en JSX (pas `currentColor`) — laissée telle quelle : `--aic-screen-bg`
+vaut `--dark-bg` (encre quasi noir) en sombre, qui contraste déjà bien sur le nouveau fond lavande du
+bouton sans avoir besoin de toucher au JSX. Coïncidence favorable, pas une conception systématique —
+signalé comme tel.
+
+**Vérification** : `npm run build` OK, `grep` du bundle compilé confirmant tous les tokens `--dark-*`,
+`--dark-accent-alert` et `aic-lavender-ink` présents.
+
+**Commit** : `fb1a5af` (cherry-pické depuis `725f198`) — branche `feat/dark-theme-aicoach`, PR à
+suivre (draft → ready → merge squash après poll Vercel vert).
+
+**Reste à faire — chantier mode sombre** : ~14 écrans restants. `VoiceMode.jsx` (overlay micro,
+explicitement hors scope du restyle "pastel chaud" d'origine, voir commentaire en tête de
+`aicoach-redesign.css`) reste également hors scope du mode sombre pour l'instant.
