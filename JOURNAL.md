@@ -5749,3 +5749,55 @@ suivre (draft → ready → merge squash après poll Vercel vert).
 **Reste à faire — chantier mode sombre** : ~14 écrans restants. `VoiceMode.jsx` (overlay micro,
 explicitement hors scope du restyle "pastel chaud" d'origine, voir commentaire en tête de
 `aicoach-redesign.css`) reste également hors scope du mode sombre pour l'instant.
+
+
+---
+
+## Session du 02/09/2026 (suite) — Weekly/Bilan migré (7e écran du chantier mode sombre)
+
+**Contexte** : suite des sessions PR #153/#154/#155/#159/#160/#161/#162. Septième écran.
+
+**Sections classement/photos vérifiées hors scope** : déjà commentées dans `Weekly.jsx` (masquées
+côté produit depuis le 13/08, code gardé pour reprise ultérieure) — aucun style ajouté pour elles,
+comme déjà documenté dans le fichier lui-même.
+
+**Réalisé** :
+- `weekly-redesign.css` migré : bloc clair non touché, nouvelle surcharge
+  `:root[data-theme="dark"] .weekly-redesign { ... }` faisant pointer chaque `--wk-*` vers son token
+  `--dark-*` global. `--wk-cream` (utilisé une seule fois, fond des points non-actuels de la courbe
+  `LiftCurve`) mappé sur `--dark-surface` — même relation "se fond dans la carte" préservée en sombre.
+- `body.weekly-body-bg` et surcharge sombre des icônes de nav : ajoutées dès cette migration (pas de
+  trou laissé).
+
+**Catch trouvé indépendamment (même piège que les écrans précédents)** :
+- `.wk-summary-label` avait une couleur codée en dur (`#4A443C`, pas une var) — épinglée sur
+  `--dark-text-secondary` en sombre uniquement, hex clair conservé tel quel.
+- Chips d'objectif actifs (olive/lavande alternés) : texte encre épinglé sur le `-ink` de leur accent
+  respectif.
+- `LiftCurve` (ligne/points/axes du graphique de charges) : déjà sur la carte neutre (pas un accent
+  fixe) — remap standard suffit, aucun piège ici, contrairement à ce qu'un premier examen superficiel
+  aurait pu laisser croire (les points de données ne sont pas sur un fond accent).
+
+**Décisions validées avec l'utilisateur avant application** (système à 3 états de `calBarColor`,
+propre à cet écran, pas de précédent direct à copier) :
+- Barre "objectif atteint" (encre pleine) → accent **olive plein** — crée une progression cohérente à
+  une teinte avec l'état "proche" (`olive-ink`, juste en dessous, déjà en place).
+- Barre "nettement en dessous" (magenta) : contrairement aux 6 usages **décoratifs** de magenta des
+  écrans précédents, c'est ici une **vraie fonction d'alerte** (manque calorique important ce jour-là)
+  → bascule vers `--dark-accent-alert`. Premier cas de magenta-alerte trouvé hors CoachDashboard/
+  AICoach.
+
+**Couleurs pilotées en JS, `Weekly.jsx` touché après validation explicite (2 confirmations
+distinctes, comme demandé)** : nouvelle fonction `calBarState()` posée en parallèle de `calBarColor()`
+(strictement inchangée), `data-attribute` `data-cal-state` ajouté sur `.wk-calorie-bar-fill`, lu
+uniquement par 2 règles sombres dédiées (`!important` nécessaire pour battre le style inline
+existant). `calBarColor()` et son calcul restent strictement inchangés en clair.
+
+**Vérification** : `npm run build` OK, `grep` du bundle compilé (CSS et JS) confirmant tokens,
+`data-cal-state` et les 4 états (`reached`/`close`/`under`/`empty`) présents. Diff JSX relu ligne par
+ligne : uniquement des ajouts.
+
+**Commit** : `68ae966` (cherry-pické depuis `0d5cc6e`) — branche `feat/dark-theme-weekly`, PR à suivre
+(draft → ready → merge squash après poll Vercel vert).
+
+**Reste à faire — chantier mode sombre** : ~13 écrans restants.
