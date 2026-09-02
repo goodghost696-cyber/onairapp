@@ -34,6 +34,11 @@
   --aic-text-muted: #736C60;
   --aic-olive: #EBEB7D;
   --aic-lavender: #A3AEFE;
+  /* Absent jusqu'ici (--aic-lavender n'était utilisé nulle part sur cet
+     écran) — ajouté pour le mode sombre (bulle utilisateur, bouton
+     d'envoi), même valeur que --wh-lavender-ink/--nu-lavender-ink/
+     --db-lavender-ink/--md-lavender-ink sur les 5 écrans précédents. */
+  --aic-lavender-ink: #3F4780;
   --aic-magenta: #B62472;
   font-family: 'Poppins', system-ui, -apple-system, sans-serif;
   min-height: calc(var(--app-height, 100dvh) - env(safe-area-inset-top));
@@ -63,6 +68,9 @@
 body.aicoach-body-bg {
   background: #EFE7D9;
 }
+:root[data-theme="dark"] body.aicoach-body-bg {
+  background: var(--dark-bg);
+}
 
 /* Fond opaque sombre (.bottom-nav) — généralisation (2026-08-14) du fix
    posé initialement sur Dashboard.jsx (dashboard.css, commit 75ce568),
@@ -82,6 +90,18 @@ body.aicoach-body-bg {
 .aicoach-redesign ~ .bottom-nav .nav-btn.active svg {
   /* Lavande plutôt que crème — voir dashboard.css pour l'explication. */
   color: #1C1A17;
+}
+/* Repassées en crème en sombre — même raisonnement que dashboard.css/
+   workout-redesign.css : le fond derrière la pill devient sombre, la
+   plaque frost à 25% va donc lire sombre plutôt que claire, des icônes
+   encre y seraient quasi invisibles. Ajoutée dès cette migration (trou
+   trouvé et comblé séparément sur Nutrition, PR #161 — pas reproduit
+   ici). */
+:root[data-theme="dark"] .aicoach-redesign ~ .bottom-nav .nav-btn svg {
+  color: rgba(247,241,230,0.7);
+}
+:root[data-theme="dark"] .aicoach-redesign ~ .bottom-nav .nav-btn.active svg {
+  color: #F7F1E6;
 }
 
 /* ── En-tête ── */
@@ -163,4 +183,51 @@ body.aicoach-body-bg {
 .aic-send-btn {
   background: var(--aic-ink);
   color: var(--aic-screen-bg);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Mode sombre — 6e écran migré du chantier (PR #153 CoachDashboard, #154
+   MemberDetail, #155 Dashboard membre, #159 Nutrition, #160 Workout),
+   mêmes tokens --dark-* de global.css. Bloc clair ci-dessus non touché
+   (hex laissés en dur). Testable via ThemeContext (main.jsx) — toggle
+   Settings.jsx toujours désactivé.
+   ══════════════════════════════════════════════════════════════════════ */
+:root[data-theme="dark"] .aicoach-redesign {
+  --aic-bg: var(--dark-bg);
+  --aic-screen-bg: var(--dark-bg);
+  --aic-card: var(--dark-surface);
+  --aic-border: var(--dark-border);
+  --aic-ink: var(--dark-text-primary);
+  --aic-text-secondary: var(--dark-text-secondary);
+  --aic-text-muted: var(--dark-text-muted);
+  /* olive / lavande / magenta : inchangés en sombre, aucune surcharge —
+     olive et lavande ne sont utilisés nulle part sur cet écran (déclarés,
+     jamais consommés), magenta reste inchangé pour son seul usage non-
+     alerte (.aic-subtitle, branding). */
+}
+
+/* Bulle utilisateur + bouton d'envoi : encre pleine en clair, aucun
+   accent déjà en usage ailleurs sur cet écran pour s'appuyer dessus
+   (contrairement aux écrans précédents) — lavande retenue, validée avec
+   l'utilisateur : ton calme, cohérent avec un écran de conversation.
+   .aic-send-btn : `color` ci-dessous n'affecte pas l'icône (son fill SVG
+   référence directement var(--aic-screen-bg) en JSX, pas currentColor) —
+   --aic-screen-bg vaut --dark-bg en sombre (voir bloc au-dessus), un
+   encre quasi noir qui contraste déjà bien sur la lavande, sans besoin
+   de toucher au JSX. */
+:root[data-theme="dark"] .aicoach-redesign .aic-bubble-user {
+  background: var(--aic-lavender);
+  color: var(--aic-lavender-ink);
+}
+:root[data-theme="dark"] .aicoach-redesign .aic-send-btn {
+  background: var(--aic-lavender);
+  color: var(--aic-lavender-ink);
+}
+
+/* Bulle d'erreur ("Connexion perdue. Réessaie.") : contrairement aux
+   usages de magenta sur les 5 écrans précédents (tous décoratifs), c'est
+   ici une vraie fonction d'alerte — un échec réel d'appel API — donc
+   bascule vers l'accent alerte plutôt que de rester inchangée. */
+:root[data-theme="dark"] .aicoach-redesign .aic-bubble-assistant.aic-bubble-error {
+  border-color: var(--dark-accent-alert);
 }
