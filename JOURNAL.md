@@ -5801,3 +5801,52 @@ ligne : uniquement des ajouts.
 (draft → ready → merge squash après poll Vercel vert).
 
 **Reste à faire — chantier mode sombre** : ~13 écrans restants.
+
+
+---
+
+## Session du 02/09/2026 (suite) — WorkoutSession migré (8e écran du chantier mode sombre)
+
+**Contexte** : suite des sessions PR #153/#154/#155/#159/#160/#161/#162/#163. Huitième écran, le plus
+dense en hex codés en dur du chantier (37 var, 23 hex à l'audit initial) — décomposé en détail avant
+toute migration, comme demandé.
+
+**Réalisé** :
+- `workoutsession-redesign.css` migré : bloc clair non touché, nouvelle surcharge
+  `:root[data-theme="dark"] .workoutsession-redesign { ... }` faisant pointer chaque `--ws-*` vers son
+  token `--dark-*` global.
+- `body.workoutsession-body-bg` et surcharge sombre des icônes de nav : ajoutées dès cette migration.
+- Aucune couleur pilotée en JS sur cet écran — `WorkoutSession.jsx` non touché. `RestTimer.jsx`
+  confirmé hors scope (déjà documenté comme tel dans le fichier CSS lui-même).
+
+**Point 1 — chaîne de textes mutés inédite, validée avec l'utilisateur** : 6 paliers actifs sous
+`--ws-ink` (`secondary`/`tertiary`/`muted`/`weak`/`placeholder`/`glyph-inactive`, ce dernier pour
+l'icône du checkbox non coché), plus que les 4 niveaux déjà couverts par `global.css`. `--ws-text-weak`
+réutilise `--dark-text-faint` existant (même palier conceptuel — "juste après muted" — évite un
+doublon). **2 nouveaux tokens globaux ajoutés** dans `global.css`, interpolés selon la même méthode que
+`--dark-text-faint` (delta par canal de la chaîne claire, inversé en clarté) :
+`--dark-text-placeholder` (`#70675B`) et `--dark-text-glyph-inactive` (`#554C42`, le plus sombre —
+icône volontairement peu visible en clair comme en sombre).
+
+**Point 2 — `.finish-session-btn` ("TERMINER LA SÉANCE") et `.empty-session-btn`, validé avec
+l'utilisateur** : déjà encre pleine + texte olive en clair, déjà "sombre par conception" (même esprit
+que `.ai-program-card` sur Workout) — mais **contrairement** à ce cas déjà rencontré, leur fond
+référence `var(--ws-ink)` et suivrait donc le remap global vers **crème** sans intervention (fond clair
++ texte olive = deux tons clairs, contraste écrasé, exactement le crème-sur-sombre interdit). Ré-épinglé
+explicitement sur `--dark-bg` (pas `--dark-surface`) pour rester fidèle au ton quasi noir d'origine
+(`#1C1A17`). Texte olive non touché (déjà correct, inchangé).
+
+**Catch trouvé indépendamment (même piège que les 7 écrans précédents)** : `.set-check-btn.checked`
+(coche de série validée, fond olive fixe) — texte encre épinglé sur `olive-ink`.
+
+**Magenta** (`.ws-eyebrow`, "SÉANCE EN COURS · [heure]") : même détermination que le bandeau équivalent
+sur Workout — statut neutre, pas une alerte, reste inchangé.
+
+**Vérification** : `npm run build` OK, `grep` du bundle compilé confirmant tous les tokens `--dark-*`
+(dont les 2 nouveaux) présents dans le chunk `WorkoutSession` et dans le chunk global.
+
+**Commit** : `553efe0` (cherry-pické depuis `0b8c05d`) — branche `feat/dark-theme-workoutsession`, PR
+à suivre (draft → ready → merge squash après poll Vercel vert).
+
+**Reste à faire — chantier mode sombre** : ~12 écrans restants. `RestTimer.jsx` toujours hors scope
+(comme dans le restyle clair d'origine).

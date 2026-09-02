@@ -285,6 +285,16 @@ body {
      --dark-text-muted, pas plus clair (se rapprocher du fond, pas du
      texte plein). Validé avec l'utilisateur avant usage. */
   --dark-text-faint: #8F8579;
+  /* 2 niveaux supplémentaires, apparus à WorkoutSession — 6 paliers de
+     texte muté actifs sur cet écran (secondary/tertiary/muted/weak/
+     placeholder/glyph-inactive), plus que les 4 niveaux déjà couverts.
+     --ws-text-weak réutilise --dark-text-faint ci-dessus (même palier
+     conceptuel, "juste après muted") ; ces deux-ci couvrent les 2
+     paliers encore plus atténués, interpolés selon la même méthode (delta
+     par canal de la chaîne claire, inversé en clarté). Validé avec
+     l'utilisateur avant usage. */
+  --dark-text-placeholder: #70675B;
+  --dark-text-glyph-inactive: #554C42;
   --dark-accent-olive: #EBEB7D;
   --dark-accent-lavender: #A3AEFE;
   --dark-accent-rose: #FFBEF0;

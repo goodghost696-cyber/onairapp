@@ -67,6 +67,9 @@
 body.workoutsession-body-bg {
   background: #EFE7D9;
 }
+:root[data-theme="dark"] body.workoutsession-body-bg {
+  background: var(--dark-bg);
+}
 
 /* Fond opaque sombre (.bottom-nav) — généralisation (2026-08-14) du fix
    posé initialement sur Dashboard.jsx uniquement (dashboard.css, commit
@@ -86,6 +89,16 @@ body.workoutsession-body-bg {
 .workoutsession-redesign ~ .bottom-nav .nav-btn.active svg {
   /* Lavande plutôt que crème — voir dashboard.css pour l'explication. */
   color: #1C1A17;
+}
+/* Repassées en crème en sombre — même raisonnement que dashboard.css/
+   workout-redesign.css/aicoach-redesign.css/weekly-redesign.css : le fond
+   derrière la pill devient sombre, la plaque frost à 25% va donc lire
+   sombre plutôt que claire, des icônes encre y seraient quasi invisibles. */
+:root[data-theme="dark"] .workoutsession-redesign ~ .bottom-nav .nav-btn svg {
+  color: rgba(247,241,230,0.7);
+}
+:root[data-theme="dark"] .workoutsession-redesign ~ .bottom-nav .nav-btn.active svg {
+  color: #F7F1E6;
 }
 
 .workoutsession-screen {
@@ -363,4 +376,58 @@ body.workoutsession-body-bg {
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Mode sombre — 8e écran migré du chantier (PR #153 CoachDashboard, #154
+   MemberDetail, #155 Dashboard membre, #159 Nutrition, #160 Workout,
+   #162 AICoach, #163 Weekly), mêmes tokens --dark-* de global.css. Bloc
+   clair ci-dessus non touché (hex laissés en dur). RestTimer.jsx toujours
+   hors scope (voir en-tête de fichier). Testable via ThemeContext
+   (main.jsx) — toggle Settings.jsx toujours désactivé.
+   ══════════════════════════════════════════════════════════════════════ */
+:root[data-theme="dark"] .workoutsession-redesign {
+  --ws-bg: var(--dark-bg);
+  --ws-screen-bg: var(--dark-bg);
+  --ws-card: var(--dark-surface);
+  --ws-field-done: var(--dark-surface-sunken);
+  --ws-border: var(--dark-border);
+  --ws-ink: var(--dark-text-primary);
+  --ws-text-secondary: var(--dark-text-secondary);
+  --ws-text-tertiary: var(--dark-text-tertiary);
+  --ws-text-muted: var(--dark-text-muted);
+  /* Chaîne de textes mutés la plus longue rencontrée dans ce chantier (6
+     paliers actifs) — voir global.css pour le détail des 2 nouveaux
+     tokens introduits ici. --ws-text-weak réutilise --dark-text-faint
+     (même palier conceptuel qu'ailleurs, pas de doublon). */
+  --ws-text-weak: var(--dark-text-faint);
+  --ws-placeholder: var(--dark-text-placeholder);
+  --ws-glyph-inactive: var(--dark-text-glyph-inactive);
+  /* olive / lavande / rose / magenta : inchangés en sombre, aucune
+     surcharge — lavande et rose ne sont utilisés nulle part sur cet
+     écran (déclarés, jamais consommés, comme sur AICoach). Magenta reste
+     inchangé pour son seul usage (.ws-eyebrow, "SÉANCE EN COURS ·
+     [heure]") : statut neutre, pas une alerte, même détermination que le
+     bandeau équivalent sur Workout. */
+}
+
+/* Coche validée (.set-check-btn.checked) : déjà accent-sur-clair (fond
+   olive inchangé en sombre), texte var(--ws-ink) épinglé sur olive-ink —
+   même piège que sur les 7 écrans précédents. */
+:root[data-theme="dark"] .workoutsession-redesign .set-check-btn.checked {
+  color: var(--ws-olive-ink);
+}
+
+/* .finish-session-btn ("TERMINER LA SÉANCE") et .empty-session-btn : déjà
+   encre pleine + texte olive en clair — déjà "sombre par conception",
+   même esprit que .ai-program-card sur Workout (non touchée là-bas). Ici
+   le fond référence var(--ws-ink), qui suivrait sinon le remap global
+   vers crème (crème-sur-sombre : fond clair + texte olive, deux tons
+   clairs, contraste écrasé) — ré-épinglé explicitement sur --dark-bg
+   plutôt que --ws-card/--dark-surface, pour rester fidèle au ton quasi
+   noir d'origine (#1C1A17) plutôt que la surface plus claire des cartes.
+   Texte olive non touché (déjà correct, inchangé). */
+:root[data-theme="dark"] .workoutsession-redesign .finish-session-btn,
+:root[data-theme="dark"] .workoutsession-redesign .empty-session-btn {
+  background: var(--dark-bg);
 }
