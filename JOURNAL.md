@@ -5511,3 +5511,47 @@ suivre (draft → ready → merge squash après poll Vercel vert).
   bottom de page", zéro marge) ; à valider avec l'utilisateur avant d'appliquer, pas à décider seul
 
 **Reste à faire — chantier mode sombre** : toujours ~17 écrans restants, indépendant de ce fix/revert
+
+
+---
+
+## Session du 02/09/2026 — Marges de la pilule de nav membre resserrées (Option A, mockup validé)
+
+**Contexte** : suite de la session PR #156/#157 (fix cassé en rendu réel puis reverté intégralement).
+Cette fois, un changement plus restreint et déjà validé visuellement sur mockup Claude Design côté
+utilisateur avant même ce prompt — pas une nouvelle tentative de fix du vide sous la pilule.
+
+**Vérifié avant modification** : les commentaires garde-fou laissés dans `nav.css`/`dashboard.css` par
+la session précédente (documentant l'échec de PR #156) ont été relus en premier, comme demandé.
+
+**Constat fait avant d'éditer** : `bottom: env(safe-area-inset-bottom)` (zéro confort ajouté) était
+déjà exactement la valeur restaurée par PR #157 — c'est aussi la valeur validée par le mockup pour la
+marge basse, donc **rien à changer de ce côté**. Seule la marge latérale a bougé.
+
+**Réalisé** : `.bottom-nav` (`nav.css`) — marge latérale resserrée de 16px à 12px de chaque côté
+(`width: calc(100% - 32px)` → `calc(100% - 24px)`). `bottom`, `height` (jamais explicite) et
+`align-items` **volontairement non touchés**, exactement comme demandé — seule cette propriété change,
+pour ne pas reproduire l'étirement cassé de PR #156.
+
+**Écart signalé avec l'énoncé du prompt** : la marge latérale AVANT ce changement était 16px, pas
+20px comme indiqué dans la demande — 20px correspond à `CoachNavBar` (`left/right: 20px`), pas à cette
+pilule membre. La cible (12px) a été appliquée sans ambiguïté malgré cet écart de point de départ,
+signalé plutôt que passé sous silence.
+
+**Mode clair/sombre** : changement purement géométrique (aucune couleur touchée) — s'applique de façon
+identique dans les deux thèmes, aucun impact sur les surcharges dark déjà en place (icônes nav
+Dashboard, PR #155).
+
+**Vérification** : `npm run build` OK, `grep` du bundle compilé confirmant la nouvelle valeur
+(`calc(100% - 24px)`), l'absence de l'ancienne, et `bottom`/`align-items`/`padding`/`border-radius`
+inchangés dans la règle compilée — forme et hauteur de la pilule identiques à avant, seule la marge
+change.
+
+**Commit** : `7f69e5e` (cherry-pické depuis `5f993c4`) — branche `fix/bottom-nav-margins`, PR à suivre
+(draft → ready → merge squash après poll Vercel vert).
+
+**Reste à faire — nav membre** : le bug original du vide sous la pilule sur iPhone/PWA (safe-area)
+reste non résolu (voir sessions précédentes) — ce changement de marges latérales est indépendant de
+ce bug, ne le règle pas.
+
+**Reste à faire — chantier mode sombre** : toujours ~17 écrans restants

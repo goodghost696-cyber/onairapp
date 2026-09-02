@@ -35,7 +35,15 @@
   left: 50%;
   transform: translateX(-50%);
   z-index: 100;
-  width: calc(100% - 32px);
+  /* Marges latérales resserrées 16px → 12px de chaque côté (2026-09-02,
+     Option A validée sur mockup Claude Design) — seule cette valeur
+     change ici. bottom/height/align-items volontairement NON touchés,
+     voir le commentaire juste au-dessus (PR #156 cassée en rendu réel en
+     y touchant) : la marge basse (env(safe-area-inset-bottom), zéro
+     confort ajouté, ~34px sur un iPhone à encoche) était déjà la valeur
+     validée par le mockup avant même ce changement, donc rien à faire
+     de ce côté-là. */
+  width: calc(100% - 24px);
   max-width: 448px;
   display: flex;
   justify-content: space-around;
