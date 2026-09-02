@@ -59,6 +59,9 @@
 body.nutrition-body-bg {
   background: #EFE7D9;
 }
+:root[data-theme="dark"] body.nutrition-body-bg {
+  background: var(--dark-bg);
+}
 
 /* Fond frost sombre (.bottom-nav) — règle partagée par les 9 écrans
    restylés, explication de référence ici (les autres fichiers y renvoient).
@@ -380,4 +383,106 @@ body.nutrition-body-bg {
   cursor: pointer;
   padding: 4px 0 0;
   font-family: inherit;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Mode sombre — 4e écran migré du chantier (PR #153 CoachDashboard, #154
+   MemberDetail, #155 Dashboard membre), mêmes tokens --dark-* de
+   global.css. Bloc clair ci-dessus non touché (hex laissés en dur).
+   Testable via ThemeContext (main.jsx) — toggle Settings.jsx toujours
+   désactivé.
+   ══════════════════════════════════════════════════════════════════════ */
+:root[data-theme="dark"] .nutrition-redesign {
+  --nu-bg: var(--dark-bg);
+  --nu-card: var(--dark-surface);
+  /* --nu-cream sert deux rôles distincts qui divergent en sombre, même
+     tension que --db-cream sur dashboard.css : .nu-macro-card et les
+     encarts internes des sheets (JSX) sont des panneaux enfoncés
+     (surface enfoncée), .nu-sheet est la sheet elle-même, une surface de
+     niveau écran — traitée à part juste en dessous, pas via ce token. */
+  --nu-cream: var(--dark-surface-sunken);
+  --nu-track: var(--dark-border);
+  --nu-border: var(--dark-border);
+  --nu-ink: var(--dark-text-primary);
+  --nu-text-secondary: var(--dark-text-secondary);
+  --nu-text-muted: var(--dark-text-muted);
+  /* olive / lavande / rose / carb / magenta : inchangés en sombre, aucune
+     surcharge (aucun usage d'alerte réel trouvé sur cet écran — les 6
+     usages de magenta sont tous des liens d'action/navigation). */
+}
+
+/* Bottom sheets (ajout aliment / décrire / recette / édition) : surfaces
+   de niveau écran, pas un encart — rejoignent --dark-bg plutôt que
+   --nu-cream (voir commentaire ci-dessus), même traitement que
+   .activity-edit-sheet sur dashboard.css. !important nécessaire pour
+   suivre la règle claire déjà !important ci-dessus. */
+:root[data-theme="dark"] .nutrition-redesign .nu-sheet {
+  background: var(--dark-bg) !important;
+}
+
+/* Barre de calories + FAB "+" + bouton plein encre partagé des sheets
+   (.btn-accent) : encre pleine en clair → accent olive en sombre, cohérent
+   avec la convention déjà dominante sur cet écran (nu-filter-chip.active,
+   nu-calorie-restant, 1er badge repas sont déjà olive en clair). */
+:root[data-theme="dark"] .nutrition-redesign .nu-calorie-bar-fill {
+  background: var(--nu-olive);
+}
+:root[data-theme="dark"] .nutrition-redesign .nu-fab {
+  background: var(--nu-olive) !important;
+}
+:root[data-theme="dark"] .nutrition-redesign .nu-fab svg {
+  stroke: var(--nu-olive-ink);
+}
+:root[data-theme="dark"] .nutrition-redesign .nu-sheet .btn-accent {
+  background: var(--nu-olive) !important;
+  color: var(--nu-olive-ink) !important;
+}
+
+/* Texte encre posé sur un fond olive/lavande qui reste inchangé en
+   sombre — même piège que sur Dashboard (streak-count, avatar, water
+   card, habit-check) : suivre le remap global --nu-ink → crème les
+   rendrait illisibles. Chacun épinglé sur le token -ink de son propre
+   accent. */
+:root[data-theme="dark"] .nutrition-redesign .nu-calorie-restant-value {
+  color: var(--nu-olive-ink);
+}
+:root[data-theme="dark"] .nutrition-redesign .nu-action-card.nu-action-accent .nu-action-title {
+  color: var(--nu-lavender-ink);
+}
+:root[data-theme="dark"] .nutrition-redesign .nu-filter-chip.active {
+  color: var(--nu-olive-ink);
+}
+/* Même piège, posé en JSX (Nutrition.jsx) plutôt qu'en classe CSS pure —
+   voir le commentaire sur BADGE_INK_COLORS dans le fichier : .nu-chip-
+   picked est ajoutée uniquement à l'état actif des 3 sélecteurs de type
+   de repas, --badge-ink est une custom property posée par instance sur
+   chaque badge-lettre. Aucun effet en mode clair (aucune règle claire ne
+   les lit). */
+:root[data-theme="dark"] .nutrition-redesign .nu-chip-picked {
+  color: var(--nu-olive-ink);
+}
+:root[data-theme="dark"] .nutrition-redesign .nu-meal-badge {
+  color: var(--badge-ink, var(--dark-text-primary));
+}
+
+/* Icônes des options de la sheet "Scanner un repas" — même piège, cercles
+   déjà accent (olive/lavande, inchangés en sombre) avec une icône en
+   encre plate en CSS de base. */
+:root[data-theme="dark"] .nutrition-redesign .nu-scan-option-icon.camera {
+  color: var(--nu-olive-ink);
+}
+:root[data-theme="dark"] .nutrition-redesign .nu-scan-option-icon.gallery {
+  color: var(--nu-lavender-ink);
+}
+
+/* Badge icône de la carte accent "Idée recette" (💡) — teinte crème posée
+   en style inline (Nutrition.jsx, var(--nu-cream)), sur un fond lavande
+   qui reste inchangé en sombre. Sans cette règle, elle suivrait le remap
+   sombre de --nu-cream (-> surface enfoncée, sombre) et perdrait son rôle
+   de pastille neutre claire sur la carte colorée — repassée en dur sur sa
+   valeur crème d'origine (même logique que le badge de la carte Eau sur
+   dashboard.css, qui reste un hex en dur, non lié au token). !important
+   nécessaire pour battre le style inline. */
+:root[data-theme="dark"] .nutrition-redesign .nu-action-card.nu-action-accent .nu-action-icon {
+  background: #F7F1E6 !important;
 }
