@@ -90,8 +90,8 @@ body.workout-body-bg {
 /* Repassées en crème en sombre — même raisonnement que dashboard.css
    (PR #155) : le fond derrière la pill devient sombre, la plaque frost à
    25% va donc lire sombre plutôt que claire, des icônes encre y seraient
-   quasi invisibles. Absent de nutrition-redesign.css (PR #159, oubli
-   signalé — à corriger séparément, hors scope ici). */
+   quasi invisibles. Manquait sur nutrition-redesign.css (PR #159, oubli
+   signalé ici) — comblé en PR #161, même règle reprise telle quelle. */
 :root[data-theme="dark"] .workout-redesign ~ .bottom-nav .nav-btn svg {
   color: rgba(247,241,230,0.7);
 }

@@ -92,6 +92,17 @@ body.nutrition-body-bg {
      pour les contrastes mesurés. */
   color: #1C1A17;
 }
+/* Repassées en crème en sombre — même raisonnement que dashboard.css
+   (PR #155) : le fond derrière la pill devient sombre, la plaque frost à
+   25% va donc lire sombre plutôt que claire, des icônes encre y seraient
+   quasi invisibles. Manquait ici (PR #159), signalé et ajouté en PR #160
+   sur workout-redesign.css — même règle reprise telle quelle. */
+:root[data-theme="dark"] .nutrition-redesign ~ .bottom-nav .nav-btn svg {
+  color: rgba(247,241,230,0.7);
+}
+:root[data-theme="dark"] .nutrition-redesign ~ .bottom-nav .nav-btn.active svg {
+  color: #F7F1E6;
+}
 
 .nutrition-screen {
   position: relative;
