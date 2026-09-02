@@ -4275,6 +4275,23 @@ Build validé après chaque lot. Comme toujours, aucune vérification visuelle p
 
 ---
 
+## 2026-08-05 — Session 17 : CRON_SECRET confirmé, deux points ouverts notés
+
+### ✅ `CRON_SECRET` ajouté sur Vercel — confirmé par capture d'écran
+L'utilisateur a envoyé une capture des Environment Variables du projet Vercel : `CRON_SECRET` est bien présent en **Production**, aux côtés de `VAPID_SUBJECT`/`VAPID_PRIVATE_KEY`/`VITE_VAPID_PUBLIC_KEY`/`VAPID_PUBLIC_KEY` déjà configurées. Les 5 variables nécessaires aux push notifications et au cron de relance inactivité (`api/cron/inactivity-nudge.js`, voir Session 16 suite 6) sont donc toutes en place — plus rien de bloquant côté configuration Vercel pour cette fonctionnalité. Reste à valider en conditions réelles (déclenchement du cron, réception effective des push) — toujours pas vérifiable depuis ce sandbox.
+
+### 🐛 Bug signalé : scroll sur l'écran Nutrition
+Précisions données par l'utilisateur : **systématique**, se produit **juste après le tap sur l'onglet Nutrition** (pas intermittent). Pistes à vérifier en premier à la prochaine session, avant d'investiguer plus large :
+- Le listener de scroll dans `BottomNav.jsx`.
+- L'animation d'en-tête de l'écran Nutrition.
+
+Pas encore investigué ni corrigé — juste noté pour ne pas reperdre le contexte.
+
+### ❓ Question ouverte, à trancher avant de coder : bibliothèque d'exercices 100% générée par IA
+Idée évoquée par l'utilisateur : remplacer/compléter la bibliothèque d'exercices existante par du contenu généré par IA plutôt qu'une liste figée. Pas tranché — à discuter avec l'utilisateur avant d'écrire du code, en particulier l'impact que ça aurait sur ce qui vient d'être construit récemment côté Workout (bibliothèque, historique, "Mes charges"). À rattacher aux autres décisions produit en attente listées plus bas dans ce journal.
+
+---
+
 ## 2026-08-04 — Session 16 (suite 6) : push notifications, côté membre uniquement
 
 ### ✅ Variables VAPID ajoutées par l'utilisateur dans Vercel
