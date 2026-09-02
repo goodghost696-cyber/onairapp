@@ -55,6 +55,9 @@
 body.weekly-body-bg {
   background: #EFE7D9;
 }
+:root[data-theme="dark"] body.weekly-body-bg {
+  background: var(--dark-bg);
+}
 
 /* Fond opaque sombre (.bottom-nav) — généralisation (2026-08-14) du fix
    posé initialement sur Dashboard.jsx uniquement (dashboard.css, commit
@@ -71,6 +74,16 @@ body.weekly-body-bg {
 .weekly-redesign ~ .bottom-nav .nav-btn.active svg {
   /* Lavande plutôt que crème — voir dashboard.css pour l'explication. */
   color: #1C1A17;
+}
+/* Repassées en crème en sombre — même raisonnement que dashboard.css/
+   workout-redesign.css/aicoach-redesign.css : le fond derrière la pill
+   devient sombre, la plaque frost à 25% va donc lire sombre plutôt que
+   claire, des icônes encre y seraient quasi invisibles. */
+:root[data-theme="dark"] .weekly-redesign ~ .bottom-nav .nav-btn svg {
+  color: rgba(247,241,230,0.7);
+}
+:root[data-theme="dark"] .weekly-redesign ~ .bottom-nav .nav-btn.active svg {
+  color: #F7F1E6;
 }
 
 .weekly-screen {
@@ -310,4 +323,70 @@ body.weekly-body-bg {
   font-size: 12.5px;
   line-height: 1.5;
   color: var(--wk-text-secondary);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Mode sombre — 7e écran migré du chantier (PR #153 CoachDashboard, #154
+   MemberDetail, #155 Dashboard membre, #159 Nutrition, #160 Workout,
+   #162 AICoach), mêmes tokens --dark-* de global.css. Bloc clair
+   ci-dessus non touché (hex laissés en dur). Testable via ThemeContext
+   (main.jsx) — toggle Settings.jsx toujours désactivé.
+   ══════════════════════════════════════════════════════════════════════ */
+:root[data-theme="dark"] .weekly-redesign {
+  --wk-bg: var(--dark-bg);
+  --wk-card: var(--dark-surface);
+  /* --wk-cream n'est utilisé qu'une fois (LiftCurve, Weekly.jsx — fond
+     des points non-actuels de la courbe, très proche du blanc/crème du
+     card en clair, pour un look "creux" via son contour encre). Mappé sur
+     --dark-surface comme --wk-card : même relation "se fond dans la
+     carte" préservée en sombre. */
+  --wk-cream: var(--dark-surface);
+  --wk-track: var(--dark-border);
+  --wk-border: var(--dark-border);
+  --wk-ink: var(--dark-text-primary);
+  --wk-text-secondary: var(--dark-text-secondary);
+  --wk-text-muted: var(--dark-text-muted);
+  /* olive / olive-ink / lavande / lavande-ink / rose / carb / magenta :
+     inchangés en sombre, aucune surcharge — le graphique LiftCurve (ligne,
+     points, axes) est déjà sur la carte neutre, pas un accent fixe,
+     aucun piège encre-sur-accent à corriger là. */
+}
+
+/* .wk-summary-label : couleur codée en dur (#4A443C, pas une var) —
+   épinglée sur --dark-text-secondary en sombre, même valeur que
+   --wk-text-secondary ci-dessus. Mode clair non touché (hex conservé
+   tel quel). */
+:root[data-theme="dark"] .weekly-redesign .wk-summary-label {
+  color: var(--dark-text-secondary);
+}
+
+/* Chips d'objectif actifs (olive/lavande alternés) : déjà accent-sur-
+   clair, mais le texte var(--wk-ink) suit le remap global (-> crème) et
+   deviendrait illisible sur ces fonds qui restent inchangés en sombre —
+   même piège que sur les écrans précédents. */
+:root[data-theme="dark"] .weekly-redesign .goal-chip.active:nth-of-type(odd) {
+  color: var(--wk-olive-ink);
+}
+:root[data-theme="dark"] .weekly-redesign .goal-chip.active:nth-of-type(even) {
+  color: var(--wk-lavender-ink);
+}
+
+/* Barres de calories (calBarColor/calBarState, Weekly.jsx) : la couleur
+   elle-même reste pilotée en JS (calBarColor, inchangée en clair) — un
+   data-attribute (--cal-state) posé en parallèle permet de surcharger
+   spécifiquement 2 des 4 états en sombre, sans toucher au calcul clair.
+   "reached" (encre pleine en clair) bascule sur accent olive plein plutôt
+   que de suivre le remap --wk-ink -> crème (crème-sur-sombre interdit) —
+   crée une progression cohérente à une teinte avec "close" (olive-ink,
+   inchangé) juste en dessous. "under" (magenta) est ici une vraie
+   fonction d'alerte — signale un manque calorique important ce jour-là,
+   pas une simple décoration de graphique comme le cycle de couleur de
+   LiftCurve — donc bascule sur l'accent alerte plutôt que de rester
+   inchangé. "empty"/"close" ne sont pas surchargés (déjà corrects : track
+   -> déjà remappé au niveau du token, olive-ink -> inchangé). */
+:root[data-theme="dark"] .weekly-redesign .wk-calorie-bar-fill[data-cal-state="reached"] {
+  background: var(--wk-olive) !important;
+}
+:root[data-theme="dark"] .weekly-redesign .wk-calorie-bar-fill[data-cal-state="under"] {
+  background: var(--dark-accent-alert) !important;
 }
