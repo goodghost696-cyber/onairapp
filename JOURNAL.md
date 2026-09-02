@@ -5555,3 +5555,63 @@ reste non résolu (voir sessions précédentes) — ce changement de marges lat�
 ce bug, ne le règle pas.
 
 **Reste à faire — chantier mode sombre** : toujours ~17 écrans restants
+
+
+---
+
+## Session du 02/09/2026 (suite) — Nutrition migrée (4e écran du chantier mode sombre)
+
+**Contexte** : suite des sessions PR #153/#154/#155 (tokens `--dark-*` + CoachDashboard, MemberDetail,
+Dashboard membre). Quatrième écran, méthode CSS identique mais avec une différence notable détaillée
+ci-dessous.
+
+**Réalisé** :
+- `nutrition-redesign.css` migré : bloc clair non touché (diff purement additif), nouvelle surcharge
+  `:root[data-theme="dark"] .nutrition-redesign { ... }` faisant pointer chaque `--nu-*` vers son
+  token `--dark-*` global.
+- `body.nutrition-body-bg` : même traitement que les écrans précédents.
+
+**Différence par rapport aux 3 écrans précédents, validée avec l'utilisateur avant application** :
+plusieurs éléments de cet écran pilotent leur couleur en **style inline JS** (pas de classe CSS à
+surcharger) — impossible à corriger en CSS pur. `Nutrition.jsx` a donc été touché, en plus du CSS :
+- **Badges-lettre des repas** (`BADGE_COLORS`, cycle olive/carb/rose) : nouvel array `BADGE_INK_COLORS`
+  posé en custom property `--badge-ink` par instance sur chaque badge, lue uniquement par une règle
+  sombre dédiée (`.nu-meal-badge` garde `color: var(--nu-ink)` en CSS clair, strictement inchangé).
+  `--nu-carb` n'a pas de token `-ink` dédié dans ce fichier : `olive-ink` réutilisé (carb, `#D9D95F`,
+  déjà très proche d'olive, `#EBEB7D`).
+- **3 sélecteurs de type de repas** (sheets ajout/édition/décrire un repas) : classe conditionnelle
+  `nu-chip-picked` ajoutée uniquement à l'état actif (fond olive), lue par une règle sombre dédiée —
+  aucun effet en clair (aucune règle claire ne l'utilise).
+
+**Décisions prises en fonction de la cohérence interne de CET écran, pas reprises mécaniquement de
+Dashboard (comme demandé)** :
+- `.nu-calorie-bar-fill` / `.nu-fab` / `.nu-sheet .btn-accent` (encre pleine) → **olive**, cohérent
+  avec la convention déjà dominante ici (`nu-filter-chip.active`, `nu-calorie-restant`, 1er badge repas
+  sont déjà olive en clair — arrivé indépendamment à la même conclusion que Dashboard, pas copié).
+- `.nu-calorie-restant-value`, `.nu-action-accent .nu-action-title`, `.nu-filter-chip.active`,
+  `.nu-scan-option-icon.camera`/`.gallery` : texte encre sur fond olive/lavande fixe, épinglés sur le
+  token `-ink` de leur propre accent — même piège que Dashboard (streak-count, avatar...), retrouvé et
+  corrigé indépendamment sur cet écran, comme demandé dans le rappel méthodologique.
+- `.nu-sheet` : traité comme une surface de niveau écran (comme `.activity-edit-sheet` sur
+  `dashboard.css`) → `--dark-bg`, plutôt que `--nu-cream` (qui reste le défaut "surface enfoncée" pour
+  les encarts plus petits, ex. `.nu-macro-card`).
+- Badge icône crème (💡) de la carte accent "Idée recette" : repassé en hex dur (`#F7F1E6`,
+  `!important`) plutôt que de suivre le remap sombre de `--nu-cream` — même logique que le badge de la
+  carte Eau sur `dashboard.css` (pastille neutre claire intentionnellement inchangée sur un fond accent
+  qui ne change pas).
+- Magenta (6 usages, CSS + JSX) : aucune fonction d'alerte réelle sur cet écran — reste inchangé
+  partout, comme sur MemberDetail et Dashboard.
+
+**Vérification** : `npm run build` OK, `grep` du bundle compilé (CSS **et** JS, cette fois — nécessaire
+pour confirmer `BADGE_INK_COLORS`/`nu-chip-picked` bien présents dans le chunk JS) confirmant tokens,
+classes et custom properties. Diff JSX relu ligne par ligne pour confirmer qu'aucune valeur de style
+existante n'a changé (uniquement des ajouts d'attributs).
+
+**Commit** : `fbcc803` (cherry-pické depuis `5da079a`) — branche `feat/dark-theme-nutrition`, PR à
+suivre (draft → ready → merge squash après poll Vercel vert).
+
+**Reste à faire — chantier mode sombre** :
+- ~16 écrans restants
+- Pattern à surveiller : les écrans avec des couleurs pilotées en JS (badges dynamiques, chips actifs
+  sans classe dédiée) demandent une lecture JSX plus poussée, pas seulement CSS — vérifier au cas par
+  cas si le fichier `-redesign.css` correspondant suffit ou si l'écran JSX doit aussi être touché

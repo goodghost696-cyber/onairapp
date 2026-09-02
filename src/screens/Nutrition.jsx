@@ -1071,6 +1071,16 @@ Réponds en français.`
           // Cycle de couleurs des badges-lettre, même logique que la
           // maquette (A olive / B jaune-gluc. / C rose, en boucle).
           const BADGE_COLORS = ['var(--nu-olive)', 'var(--nu-carb)', 'var(--nu-pink)']
+          // Encre appairée à chaque fond ci-dessus, posée en custom property
+          // plutôt qu'en `color` inline direct : .nu-meal-badge garde
+          // `color: var(--nu-ink)` en CSS (mode clair inchangé), une règle
+          // sombre dédiée (nutrition-redesign.css) lit --badge-ink à la
+          // place — sans ça, le remap sombre global de --nu-ink (encre ->
+          // crème) rendrait la lettre illisible sur ces 3 fonds restés
+          // clairs (olive/carb/rose, inchangés en sombre). --nu-carb n'a pas
+          // de token -ink dédié (absent du fichier) : olive-ink réutilisé,
+          // carb (#D9D95F) étant déjà très proche d'olive (#EBEB7D).
+          const BADGE_INK_COLORS = ['var(--nu-olive-ink)', 'var(--nu-olive-ink)', 'var(--nu-pink-ink)']
 
           return (
             <>
@@ -1090,7 +1100,7 @@ Réponds en français.`
                         ]}
                       >
                         <div className="nu-meal-row card-animated" style={{ '--delay': `${160 + Math.min(i, 6) * 40}ms` }}>
-                          <span className="nu-meal-badge" style={{ background: BADGE_COLORS[i % BADGE_COLORS.length] }}>
+                          <span className="nu-meal-badge" style={{ background: BADGE_COLORS[i % BADGE_COLORS.length], '--badge-ink': BADGE_INK_COLORS[i % BADGE_INK_COLORS.length] }}>
                             {String.fromCharCode(65 + (i % 26))}
                           </span>
                           <div style={{ flex: 1, minWidth: 0 }}>
@@ -1154,6 +1164,13 @@ Réponds en français.`
                   key={mt}
                   type="button"
                   onClick={() => setEditingMeal(prev => ({ ...prev, mealType: mt }))}
+                  /* Classe ajoutée uniquement pour permettre à une règle CSS
+                     sombre de cibler l'état actif (fond olive, inchangé en
+                     sombre) — sans elle, le texte var(--nu-ink) ci-dessous
+                     suit le remap sombre global (encre -> crème) et devient
+                     illisible sur le fond olive resté clair. Aucune règle
+                     claire ne l'utilise, donc pas d'effet en mode clair. */
+                  className={editingMeal.mealType === mt ? 'nu-chip-picked' : undefined}
                   style={{
                     background: editingMeal.mealType === mt ? 'var(--nu-olive)' : 'var(--nu-card)',
                     border: 'none',
@@ -1340,13 +1357,18 @@ Réponds en français.`
             )}
             <div style={{ display: 'flex', gap: 8, marginBottom: 16, overflowX: 'auto' }}>
               {MEAL_TYPES.map(mt => (
-                <button key={mt} onClick={() => setMealType(mt)} style={{
-                  background: mealType === mt ? 'var(--nu-olive)' : 'var(--nu-card)',
-                  border: 'none',
-                  color: 'var(--nu-ink)',
-                  fontSize: 11, fontWeight: 700, padding: '8px 14px', borderRadius: 50,
-                  whiteSpace: 'nowrap', flexShrink: 0, cursor: 'pointer',
-                }}>{mt}</button>
+                <button
+                  key={mt}
+                  onClick={() => setMealType(mt)}
+                  className={mealType === mt ? 'nu-chip-picked' : undefined}
+                  style={{
+                    background: mealType === mt ? 'var(--nu-olive)' : 'var(--nu-card)',
+                    border: 'none',
+                    color: 'var(--nu-ink)',
+                    fontSize: 11, fontWeight: 700, padding: '8px 14px', borderRadius: 50,
+                    whiteSpace: 'nowrap', flexShrink: 0, cursor: 'pointer',
+                  }}
+                >{mt}</button>
               ))}
             </div>
             <button className="btn-accent" onClick={addFood} disabled={isAddingMeal}>{isAddingMeal ? 'Ajout...' : t('add')}</button>
@@ -1583,13 +1605,18 @@ Réponds en français.`
                   </div>
                   <div style={{ display: 'flex', gap: 8, marginBottom: 16, overflowX: 'auto' }}>
                     {MEAL_TYPES.map(mt => (
-                      <button key={mt} onClick={() => setDescribeMealType(mt)} style={{
-                        background: describeMealType === mt ? 'var(--nu-olive)' : 'var(--nu-card)',
-                        border: 'none',
-                        color: 'var(--nu-ink)',
-                        fontSize: 11, fontWeight: 700, padding: '8px 14px', borderRadius: 50,
-                        whiteSpace: 'nowrap', flexShrink: 0, cursor: 'pointer',
-                      }}>{mt}</button>
+                      <button
+                        key={mt}
+                        onClick={() => setDescribeMealType(mt)}
+                        className={describeMealType === mt ? 'nu-chip-picked' : undefined}
+                        style={{
+                          background: describeMealType === mt ? 'var(--nu-olive)' : 'var(--nu-card)',
+                          border: 'none',
+                          color: 'var(--nu-ink)',
+                          fontSize: 11, fontWeight: 700, padding: '8px 14px', borderRadius: 50,
+                          whiteSpace: 'nowrap', flexShrink: 0, cursor: 'pointer',
+                        }}
+                      >{mt}</button>
                     ))}
                   </div>
                   <button className="btn-accent" onClick={addDescribedMeal} disabled={describeResult.items.length === 0 || isAddingMeal}>{isAddingMeal ? 'Ajout...' : t('add')}</button>
