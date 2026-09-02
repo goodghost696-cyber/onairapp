@@ -5675,3 +5675,30 @@ suivre (draft → ready → merge squash après poll Vercel vert).
 - **Gap à corriger** : `nutrition-redesign.css` n'a pas la surcharge sombre des icônes de
   `.bottom-nav` — petit fix isolé à faire dans une prochaine session (2 règles CSS, même mécanique que
   Dashboard/Workout)
+
+
+---
+
+## Session du 02/09/2026 (suite) — Fix : trou de la migration Nutrition comblé (icônes de nav en sombre)
+
+**Contexte** : fix ciblé, isolé du chantier mode sombre écran par écran. Lors de la migration Workout
+(PR #160), un trou avait été repéré en vérifiant systématiquement les règles `~ .bottom-nav` : la
+surcharge sombre des icônes de la pill de nav (repassées en crème quand le fond derrière devient sombre)
+était présente sur `dashboard.css` (PR #155) et venait d'être ajoutée sur `workout-redesign.css`
+(PR #160), mais **manquait sur `nutrition-redesign.css`** (PR #159, oubli à l'époque).
+
+**Réalisé** : même pattern repris à l'identique (aucune valeur différente) —
+`:root[data-theme="dark"] .nutrition-redesign ~ .bottom-nav .nav-btn svg` → `rgba(247,241,230,0.7)`,
+`.nav-btn.active svg` → `#F7F1E6`. Commentaire obsolète mis à jour sur `workout-redesign.css` (qui
+signalait ce trou comme "à corriger séparément, hors scope ici" — désormais comblé, référence croisée
+ajoutée).
+
+**Vérification** : `npm run build` OK, `grep` du bundle compilé confirmant la règle présente — le
+minifieur l'a compressée en notation hex+alpha (`#f7f1e6b3` = `rgba(247,241,230,0.7)`, `#f7f1e6` =
+`#F7F1E6`), vérifié en décodant plutôt que de chercher le texte littéral `rgba(...)`.
+
+**Commit** : `c563a39` (cherry-pické depuis `df45170`) — branche `fix/nutrition-nav-dark-icons`, PR à
+suivre (draft → ready → merge squash après poll Vercel vert).
+
+**Reste à faire — chantier mode sombre** : ~15 écrans restants, ce fix n'en fait pas partie (dette
+technique isolée maintenant soldée).
