@@ -16,9 +16,20 @@
    "the splash is the coral identity starting a beat early") — ici
    recoloré en crème pour rester cohérent avec l'identité "pastel chaud"
    qui a maintenant gagné tout le reste de l'app connectée ; Landing.jsx
-   (restylé séparément, commit distinct) suit la même bascule. */
+   (restylé séparément, commit distinct) suit la même bascule.
+
+   2026-09-04 — suit désormais le vrai data-theme (ThemeContext), comme
+   Landing.jsx dont ce composant est l'unique point de montage (voir
+   JOURNAL.md — l'ancien forçage data-theme="dark" permanent de Landing.jsx
+   est retiré, sans rapport avec le chantier mode sombre). Le mark SVG
+   (dégradé + fill, SplashIntro.jsx) garde ses propres couleurs fixes,
+   volontairement indépendantes du thème — identité de marque, non
+   concerné par ce changement, seul le fond/texte autour suit le
+   mapping. */
 .splash-overlay.splash-redesign {
-  background: #EFE7D9;
+  --sp-bg: #EFE7D9;
+  --sp-ink: #1C1A17;
+  background: var(--sp-bg);
 }
 
 /* Recolorait l'ancien mark stroke-only (gold #F0C14B par défaut, hérité de
@@ -36,5 +47,15 @@
    passes précédentes ; seule la couleur bascule vers l'encre du système
    pastel chaud, pas la typo. */
 .splash-redesign .splash-word {
-  color: #1C1A17;
+  color: var(--sp-ink);
+}
+
+/* Mode sombre — mêmes tokens --dark-* de global.css. Mark SVG
+   (SplashIntro.jsx, dégradé citron→lavande + lavande pleine) non
+   concerné — couleurs codées en dur dans le composant, volontairement
+   indépendantes du thème (identité de marque, cohérente avec le favicon
+   et la colonne du split-screen). */
+:root[data-theme="dark"] .splash-overlay.splash-redesign {
+  --sp-bg: var(--dark-bg);
+  --sp-ink: var(--dark-text-primary);
 }
