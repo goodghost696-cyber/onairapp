@@ -40,6 +40,9 @@
 body.coachsettings-body-bg {
   background: #EFE7D9;
 }
+:root[data-theme="dark"] body.coachsettings-body-bg {
+  background: var(--dark-bg);
+}
 
 .coachsettings-screen {
   position: relative;
@@ -276,3 +279,66 @@ body.coachsettings-body-bg {
     padding-right: 48px;
   }
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   Mode sombre — 12e écran migré du chantier (PR #153 CoachDashboard, #154
+   MemberDetail, #155 Dashboard membre, #159 Nutrition, #160 Workout,
+   #162 AICoach, #163 Weekly, #164 WorkoutSession, #165 WorkoutLibrary,
+   #166 ClientsList, #168 CoachMessages), mêmes tokens --dark-* de
+   global.css. Bloc clair ci-dessus non touché (hex laissés en dur).
+   CoachNavBar (sidebar) NON touchée : gère déjà sa propre couleur sombre
+   depuis le chantier desktop (PR #145-#152). DeleteAccountButton.jsx
+   (composant partagé membre/coach) vérifié et confirmé NON touché : il
+   utilise les tokens globaux partagés (--danger/--surface-solid/etc.),
+   le même système non migré que Conversation.jsx — y toucher affecterait
+   d'autres écrans hors scope. Testable via ThemeContext (main.jsx) —
+   toggle Settings.jsx toujours désactivé.
+   ══════════════════════════════════════════════════════════════════════ */
+:root[data-theme="dark"] .coachsettings-redesign {
+  --cs-bg: var(--dark-bg);
+  --cs-screen-bg: var(--dark-bg);
+  --cs-card: var(--dark-surface);
+  --cs-card-sunken: var(--dark-surface-sunken);
+  --cs-divider: var(--dark-border);
+  --cs-track: var(--dark-border);
+  --cs-ink: var(--dark-text-primary);
+  --cs-text-secondary: var(--dark-text-secondary);
+  --cs-text-tertiary: var(--dark-text-tertiary);
+  --cs-text-muted: var(--dark-text-muted);
+  /* --cs-danger et --cs-magenta partagent la même valeur en clair
+     (#B62472) mais jouent des rôles différents ici : --cs-danger n'est
+     utilisé QUE pour de vraies alertes (statut facturation en échec,
+     erreur de paiement, jauge IA en dépassement, notifications
+     bloquées) ; --cs-magenta reste purement décoratif (code d'accès mis
+     en avant, bouton "Se déconnecter"). Les deux tokens divergent donc
+     en sombre : --cs-danger bascule sur l'accent alerte, --cs-magenta
+     reste inchangé — couvre les 4 usages de --cs-danger d'un coup, sans
+     surcharge par sélecteur. */
+  --cs-danger: var(--dark-accent-alert);
+  /* olive / olive-ink / lavande / magenta : inchangés en sombre, aucune
+     surcharge de base — voir cependant les 2 cas ci-dessous. */
+}
+
+/* .cs-btn-accent : déjà accent-sur-clair (fond olive inchangé en sombre),
+   texte var(--cs-ink) épinglé sur olive-ink — piège habituel, comme sur
+   les 11 écrans précédents. */
+:root[data-theme="dark"] .coachsettings-redesign .cs-btn-accent {
+  color: var(--cs-olive-ink);
+}
+
+/* .cs-row-value.success (statut facturation "Actif"/"Essai — X j
+   restants") : PAS le piège habituel — la teinte -ink (olive-ink) sert
+   ici de texte autoportant sur .cs-card, qui fonce en sombre (pas un
+   accent plein derrière ce texte précis). Même motif que .cl-avatar.
+   status-*/.cd-avatar.status-* (PR #166/#167) : bascule sur l'accent
+   plein (olive) plutôt que sur la variante -ink, pour rester lisible sur
+   la carte désormais sombre. */
+:root[data-theme="dark"] .coachsettings-redesign .cs-row-value.success {
+  color: var(--cs-olive);
+}
+
+/* Toggle "on" (chevalier blanc sur piste olive) et .cs-btn-danger (fond
+   magenta + texte blanc, "Se déconnecter") : vérifiés, aucune surcharge
+   nécessaire — olive et magenta restent inchangés en sombre, blanc codé
+   en dur des deux côtés, donc ces deux éléments ne dépendent jamais du
+   thème global, dans un sens comme dans l'autre. */
