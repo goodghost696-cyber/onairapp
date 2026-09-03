@@ -6332,3 +6332,49 @@ la zone de geste iOS.
 
 **Reste à faire — chantier mode sombre** : inchangé, voir entrée précédente (4 écrans restants +
 `coach-nav-redesign.css` + `Conversation.jsx` hors périmètre).
+
+## Session du 03/09/2026 (suite) — Fix nav : lueur débordante + halo de focus résiduel (PR #174)
+
+**Contexte** : deux bugs visuels remontés sur capture iPhone réelle après le merge de PR #174
+(bandeau ancré). Consigne explicite : garder le bandeau plein-largeur (pattern Instagram/Spotify
+demandé), corriger uniquement les 2 régressions visuelles, pas de revert.
+
+**Bug 1 — lueur lavande débordant par-dessus le bandeau** (depuis la carte CTA "Voir mon
+entraînement" de Dashboard, juste au-dessus de la nav) :
+- Cause : `.bottom-nav` gardait son `box-shadow: 0 8px 32px rgba(120,40,10,0.22), 0 2px 10px
+  rgba(0,0,0,0.08)`, hérité de l'époque pilule flottante détachée (le shadow servait à la faire
+  "flotter" visuellement au-dessus du fond). Un box-shadow se peint **en dehors** de la boîte de
+  l'élément — ni `overflow: hidden` (qui ne clippe que le contenu interne) ni le `z-index` (qui
+  ordonne l'empilement, ne borne rien) ne le contiennent. Sur la pilule flottante, ce halo (~24px de
+  portée vers le haut, `blur 32px - offset 8px`) se diffusait dans la marge vide tout autour. Sur le
+  bandeau flush (PR #174), sans cette marge de dissipation, il se peint directement sur le contenu de
+  page juste au-dessus.
+- Fix : box-shadow retiré de la base commune (`nav.css`) — un bandeau ancré aux 3 bords n'a pas
+  besoin de ce "lift" visuel, le `border-top` déjà posé en PR #174 suffit à le séparer du contenu.
+  Restauré explicitement dans `member.css` pour la pilule desktop (≥900px), qui reste flottante avec
+  une vraie marge de dissipation autour d'elle et n'est donc pas sujette au même bug — sans cette
+  restauration ciblée, elle aurait perdu son lift silencieusement.
+
+**Bug 2 — halo blanc/jaune autour de la dernière icône (Workout)** :
+- Cause : `.nav-btn` n'a jamais eu de `outline: none` — seul `-webkit-tap-highlight-color:
+  transparent` était posé, qui neutralise le flash tactile mais pas l'anneau de focus natif. En SPA,
+  un tap qui déclenche une navigation ne recharge jamais la page donc ne `blur()` jamais le bouton :
+  il garde le focus natif après le changement d'écran, et l'anneau par défaut de WebKit (rendu blanc/
+  jaune sur ce fond flouté sombre) restait visible dessus — précisément sur l'onglet actif/dernier
+  tapé.
+- Fix : `outline: none` ajouté sur `.nav-btn`, avec une règle `.nav-btn:focus-visible` dédiée
+  (anneau restauré, `--nav-border`) pour ne pas casser l'accessibilité clavier — seul le résidu
+  laissé par un tap tactile disparaît, la navigation clavier garde son indicateur de focus.
+
+**Vérification** : `npm run build` OK. Grep du bundle compilé confirmant `.bottom-nav` sans
+`box-shadow` en base, `.nav-btn{...outline:none}` et `.nav-btn:focus-visible{outline:2px solid
+var(--nav-border);...}` présents, et la surcharge desktop (`#root.member-shell .bottom-nav`)
+conservant bien son `box-shadow`.
+
+**Commit** : cherry-pické sur branche `feat/nav-fix-glow-focus` — PR à suivre (draft → ready → merge
+squash après poll Vercel vert).
+
+**⚠️ IMPORTANT — non résolu tant que non vérifié en rendu réel** : comme pour PR #174, ce fix ne doit
+pas être considéré comme terminé après le merge. Les deux bugs corrigés ici n'étaient visibles qu'en
+rendu réel sur iPhone (aucun des deux n'était détectable par build/grep) — seule une nouvelle capture
+réelle confirmera que la lueur et le halo ont bien disparu, sans nouvelle régression introduite.
