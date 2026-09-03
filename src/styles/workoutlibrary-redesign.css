@@ -59,10 +59,19 @@ body.workoutlibrary-body-bg {
   background: var(--dark-bg);
 }
 
-/* Fond de .bottom-nav — voir nutrition-redesign.css pour l'explication
-   complète (historique frost → opaque). Depuis le 2026-09-04, plus de
-   surcharge par écran : .bottom-nav pointe directement sur #FFFFFF/
-   var(--dark-surface) dans nav.css. */
+/* Fond opaque sombre (.bottom-nav) — généralisation (2026-08-14) du fix
+   posé initialement sur Dashboard.jsx uniquement (dashboard.css, commit
+   75ce568), voir nutrition-redesign.css pour l'explication complète.
+   Mêmes valeurs, même technique. La maquette de cet écran ne montre pas
+   de nav flottante (cadre isolé sans pill), mais MemberLayout.jsx monte
+   .bottom-nav sur cette route dans la vraie app quand même (non modifié
+   ici, hors scope) — cohérence de rendu avec les autres écrans restylés
+   une fois qu'elle est effectivement visible. */
+.workoutlibrary-redesign ~ .bottom-nav {
+  background: rgba(28,26,23,0.25);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+}
 .workoutlibrary-redesign ~ .bottom-nav .nav-btn svg {
   color: rgba(28,26,23,0.7);
 }

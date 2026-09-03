@@ -71,13 +71,18 @@ body.workoutsession-body-bg {
   background: var(--dark-bg);
 }
 
-/* Fond de .bottom-nav — voir nutrition-redesign.css pour l'explication
-   complète (historique frost → opaque). Depuis le 2026-09-04, plus de
-   surcharge par écran : .bottom-nav pointe directement sur #FFFFFF/
-   var(--dark-surface) dans nav.css. Sans rapport avec .finish-session-btn
+/* Fond opaque sombre (.bottom-nav) — généralisation (2026-08-14) du fix
+   posé initialement sur Dashboard.jsx uniquement (dashboard.css, commit
+   75ce568), voir nutrition-redesign.css pour l'explication complète.
+   Mêmes valeurs, même technique. Sans rapport avec .finish-session-btn
    plus bas (élément fixe séparé, propre à cet écran) — les deux
    coexistent sans conflit, z-index 90 pour le bouton contre 100 pour la
-   nav (nav.css), non modifié. */
+   pill (nav.css), non modifié. */
+.workoutsession-redesign ~ .bottom-nav {
+  background: rgba(28,26,23,0.25);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+}
 .workoutsession-redesign ~ .bottom-nav .nav-btn svg {
   color: rgba(28,26,23,0.7);
 }
