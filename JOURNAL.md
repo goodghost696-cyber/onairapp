@@ -6512,3 +6512,70 @@ qui échappe par nature au build/grep (aucune valeur CSS statique à vérifier, 
 exact où le WebView mesure le viewport au lancement) — seule une vérification visuelle réelle sur
 iPhone (clair ET sombre, PWA standalone ET Safari tab si possible, puisque le bug de timing d'origine
 est documenté comme touchant les deux contextes) confirmera que le vide a bien disparu.
+
+## Session du 03/09/2026 (suite) — Revert complet du bandeau nav, retour à la pilule flottante — DÉCISION DÉFINITIVE
+
+**⚠️ Cette section documente une décision produit assumée à respecter dans toute session future : ne
+pas retenter le bandeau plein-largeur sans nouvelle demande explicite de l'utilisateur.**
+
+**Contexte** : après comparaison réelle des deux formes sur iPhone (pilule flottante vs bandeau
+plein-largeur ancré, PR #174-178), **la pilule flottante est retenue par préférence esthétique
+assumée**. Le bandeau a été testé en profondeur — pas abandonné faute d'avoir essayé :
+
+- **PR #174** — remplacement de la pilule par un bandeau plein-largeur ancré aux 3 bords (Option B,
+  mockup Claude Design), pour résoudre le vide sous la pilule documenté depuis PR #156/#157/#158.
+- **PR #175** — 2 bugs visuels corrigés sur le bandeau (lueur débordante depuis le CTA Dashboard,
+  halo de focus résiduel sur l'icône Workout).
+- **PR #176** — finition opaque + coins carrés (référence Apple Music).
+- **PR #177** (jamais mergée, fermée) — bordure de debug pour diagnostiquer un vide résiduel qui
+  persistait malgré le bandeau.
+- **PR #178** — cause racine du vide diagnostiquée et corrigée (`--app-height` mesuré une seule fois
+  au lancement pouvait sous-évaluer la hauteur réelle sur iOS, clippant la nav avant le bord ;
+  corrigé par `Math.max` entre la mesure JS et `100dvh`).
+
+**Malgré tout ce travail technique correctement mené (chaque bug réel identifié et corrigé), le
+bandeau a été comparé à la pilule sur rendu réel et la pilule a été préférée.** Ce n'est donc pas un
+retour en arrière faute d'un bug non résolu — le dernier bug connu (PR #178) était traité — mais un
+choix esthétique final après avoir vu les deux en vrai.
+
+**Réalisé — restauration byte-exacte à l'état `e89b6ef`** (commit de PR #158, dernier état pilule
+confirmé bon par capture réelle) sur :
+- `src/styles/nav.css`, `src/styles/member.css`, `src/styles/dashboard.css`
+- `src/main.jsx` (`--app-height` : retour à la mesure simple à source unique — le fix `Math.max`/
+  sonde dvh de PR #178 n'a plus lieu d'être sans le bandeau flush qui l'avait rendu nécessaire ; la
+  pilule flottante, avec sa marge de sécurité, n'est pas sensible à ce bug de timing).
+
+Ces 4 fichiers n'avaient reçu aucune modification entre `e89b6ef` et PR #174 (vérifié par
+`git log e89b6ef..PR174^ -- <fichiers>`, vide) — le revert byte-exact ne perd donc aucun travail
+intermédiaire.
+
+**Vérification de cohérence interne AVANT d'exécuter le revert mécanique** (la demande ne nommait que
+4 fichiers, mais "revert complet PR #174-178" implique par nature tous les fichiers réellement
+touchés par ces PR) : PR #176 avait aussi retiré la surcharge de fond frost par écran
+(`rgba(28,26,23,0.25)` + `blur(15px)`) sur 8 autres fichiers (`aicoach-redesign.css`,
+`messages-redesign.css`, `nutrition-redesign.css`, `settings-redesign.css`, `weekly-redesign.css`,
+`workout-redesign.css`, `workoutlibrary-redesign.css`, `workoutsession-redesign.css`). Un
+`git checkout e89b6ef` naïf sur ces 8 fichiers aurait **effacé tout le travail du chantier mode
+sombre** fait dessus entre `e89b6ef` et PR #174 (PR #159 à #173, migration dark-theme de ces mêmes
+écrans, sans rapport avec la nav) — piège identique dans l'esprit à ceux déjà rencontrés sur ce
+chantier (`DeleteAccountButton.jsx`, tokens partagés non migrés). Restaurés à la place à l'état du
+commit `0f992cb` (juste avant PR #176, donc APRÈS tout le chantier mode sombre) : seule la surcharge
+de fond frost par écran est restaurée, tous les tokens `--dark-*` et le reste du chantier restent
+intacts. Diff vérifié vide contre `0f992cb` sur ces 8 fichiers après restauration.
+
+**Conséquence assumée** : le vide résiduel de 34px sous la pilule (documenté depuis PR #156/#157/#158,
+jamais résolu techniquement) **redevient présent**. Ce n'est pas une régression — c'est le compromis
+accepté en échange de la forme pilule préférée.
+
+**Vérification** : `npm run build` OK. Grep du bundle compilé confirmant `.bottom-nav` en pilule
+(`bottom:env(safe-area-inset-bottom)`, `border-radius:999px`, fond translucide `#ffffff40` +
+`blur(15px)`, `box-shadow` lift restauré) et `--app-height` sans `Math.max` ni sonde dvh dans le JS
+compilé (retour à la mesure simple d'origine).
+
+**Commit** : cherry-pické sur branche `revert/nav-back-to-pill` — PR à suivre (draft → ready → merge
+squash après poll Vercel vert).
+
+**📌 Pour toute session future sur ce sujet** : ne pas retenter le bandeau plein-largeur ancré sans
+demande explicite et nouvelle de l'utilisateur. La pilule flottante est le choix retenu
+définitivement — le vide résiduel de 34px sous la pilule est connu, documenté depuis PR #156, et
+accepté comme compromis esthétique, pas un bug à corriger de sa propre initiative.
