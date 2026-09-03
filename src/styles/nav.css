@@ -8,100 +8,63 @@
    Tabs/routes/icons themselves are untouched — only this container. */
 .bottom-nav {
   position: fixed;
-  /* Historique complet : pilule flottante avec marge (avant 2026-08-31)
-     → tentative de fond étendu jusqu'au bord réel, cassée en rendu réel
-     (PR #156, revertée) → marges resserrées mais pilule flottante
-     conservée (PR #158) → bug du vide sous la pilule confirmé persistant
-     et de plus en plus visible à mesure que le mode sombre progresse
-     (voir JOURNAL.md, 2026-09-03). Remplacé ici par l'Option B validée
-     sur mockup Claude Design : un bandeau plein-largeur ANCRÉ aux 3
-     bords (gauche/droite/bas), pas une pilule flottante — la raison
-     structurelle pour laquelle PR #156 avait cassé (agrandir une forme
-     PLEINEMENT arrondie et détachée créait un renflement disproportionné)
-     ne s'applique plus à un bandeau déjà flush sur 3 côtés : l'étendre
-     jusqu'au bord réel ne fait qu'ajouter une bande plate en bas, sans
-     déformer sa silhouette. bottom:0 (au lieu de env(safe-area-inset-
-     bottom)) : le bandeau touche désormais le vrai bord de l'écran, sa
-     safe-area est absorbée en padding interne ci-dessous plutôt qu'en
-     décalage externe. */
-  bottom: 0;
-  left: 0;
-  right: 0;
+  /* Pushed to the true minimum on explicit request ("je la veux vraiment
+     en bottom de page"): no extra margin at all, not even a small floor —
+     bottom is exactly env(safe-area-inset-bottom). In a Safari tab (SAB=0)
+     the pill sits flush against the literal screen edge. In standalone
+     (SAB=34) it sits exactly on top of the home-indicator safe area and no
+     further — that 34px is not decorative margin, it's the minimum needed
+     so the icons aren't physically under the home-indicator gesture strip
+     (tapping there risks colliding with the swipe-up-to-switch-apps
+     gesture); it cannot go lower without that tradeoff. */
+  bottom: env(safe-area-inset-bottom);
+  /* Tentative de fix le 2026-08-31 (PR #156, revert le même jour) : le
+     vide transparent entre la pilule et le vrai bord d'écran sur iPhone/
+     PWA (safe-area) est un bug réel, non résolu — mais l'approche essayée
+     (bottom:0 + padding-bottom absorbant la safe-area en interne,
+     align-items:flex-start) a produit en rendu réel une pilule étirée
+     verticalement de façon disproportionnée, un vide énorme visible à
+     l'INTÉRIEUR de la pilule elle-même plutôt qu'un remplissage seamless
+     — l'hypothèse "le fond translucide existant suffit à couvrir la zone
+     agrandie proprement" était fausse en pratique pour cette pilule
+     flottante, détachée et frost (pas un bandeau plein-largeur). Revert
+     complet vers cet état d'origine. Prochaine tentative : NE PAS
+     réappliquer ce même raisonnement sans un rendu réel (screenshot/
+     device) pour vérifier avant de committer — voir JOURNAL.md pour le
+     détail complet des deux sessions. */
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 100;
-  width: 100%;
+  /* Marges latérales resserrées 16px → 12px de chaque côté (2026-09-02,
+     Option A validée sur mockup Claude Design) — seule cette valeur
+     change ici. bottom/height/align-items volontairement NON touchés,
+     voir le commentaire juste au-dessus (PR #156 cassée en rendu réel en
+     y touchant) : la marge basse (env(safe-area-inset-bottom), zéro
+     confort ajouté, ~34px sur un iPhone à encoche) était déjà la valeur
+     validée par le mockup avant même ce changement, donc rien à faire
+     de ce côté-là. */
+  width: calc(100% - 24px);
+  max-width: 448px;
   display: flex;
   justify-content: space-around;
-  /* Était `center` : avec le padding bas élargi ci-dessous (qui absorbe
-     la safe-area), centrer les onglets dans la boîte agrandie les
-     pousserait vers la zone de geste — flex-start les garde exactement à
-     leur position d'origine (10px sous le haut). À SAB=0 (desktop,
-     Safari onglet), padding haut/bas restent symétriques (10px chacun,
-     calc(10px+0)=10px) : rendu identique à l'ancien `center`, vérifié par
-     calcul. */
-  align-items: flex-start;
-  /* Le bas absorbe désormais la safe-area (voir bottom:0 ci-dessus) —
-     10px de padding d'origine + la safe-area, qui vaut 0 sur desktop
-     (aucun changement là) et le vide de geste iOS ailleurs (maintenant
-     rempli par le fond du bandeau au lieu de rester transparent). Fond/
-     blur/border-radius déjà existants couvrent naturellement cette zone
-     agrandie, sans élément ni couleur supplémentaire à dupliquer par
-     écran — même mécanisme que les boutons "déjà sombres par conception"
-     du chantier mode sombre (.finish-session-btn etc.), appliqué ici à
-     la géométrie plutôt qu'à la couleur. */
-  padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
-  /* 2026-09-04 — coins carrés, aucun arrondi (référence Apple Music,
-     capture fournie) : remplace les coins hauts à 24px posés en PR #174.
-     Un bandeau système ancré aux 3 bords, dans ce pattern-là, ne se
-     distingue PAS du bord de l'écran par une transition arrondie — c'est
-     au contraire une plaque rectangulaire, sans séparation visuelle de
-     forme avec l'écran lui-même. */
-  border-radius: 0;
-  /* 2026-09-04 — fond opaque plein (référence Apple Music), remplace le
-     frost translucide (rgba + blur, demandé le 2026-08-16 sur la nav
-     partagée ET sur les 9 surcharges par écran, voir plus bas) : un
-     rgba avec alpha < 1 (même à 25%) et un backdrop-filter supposent un
-     contenu de page qui continue de se deviner à travers la nav — exactement
-     l'inverse du pattern demandé ici, une plaque opaque qui ne laisse
-     rien transparaître derrière elle. Blanc plein en clair : même valeur
-     que `--surface`/`--xx-card` de tous les écrans (déjà #FFFFFF partout,
-     vérifié par grep) — pas une couleur inventée, la même que celle de
-     n'importe quelle carte de l'app. Voir plus bas pour la variante
-     sombre. */
-  background: #FFFFFF;
-  /* Un bandeau flush sur 3 bords n'a de bordure visuellement signifiante
-     que sur le bord du haut (les 3 autres coïncident avec le bord réel
-     de l'écran, rien à délimiter là) — remplace l'ancien `border: 1px
-     solid` (4 côtés, pertinent pour une pilule détachée). */
-  border-top: 1px solid var(--nav-border);
-  /* 2026-09-03 — l'ancien box-shadow "lift" (0 8px 32px, pensé pour une
-     pilule détachée flottant au-dessus du fond) est retiré : un
-     box-shadow se peint en dehors de la boîte de l'élément, donc n'est
-     PAS contenu par `overflow: hidden` (qui ne clippe que le contenu
-     interne) ni par le z-index (qui ne fait que l'ordonner, pas le
-     borner). Sur la pilule flottante, ce halo se diffusait dans la marge
-     vide tout autour ; sur ce bandeau plein-largeur flush, sans cette
-     marge de dissipation, il se peignait directement sur le contenu de
-     page juste au-dessus (rapporté en test réel : lueur débordant sur la
-     carte CTA lavande de Dashboard). Un bandeau ancré aux 3 bords n'a de
-     toute façon pas besoin de "flotter" visuellement — le border-top
-     ci-dessus suffit à le séparer du contenu. */
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 999px;
+  /* Effet frost demandé le 2026-08-16 : opacité de fond fixée à 25% et
+     flou ramené à 15px, sur la nav partagée ET sur les 9 surcharges par
+     écran (voir plus bas). Valeur littérale plutôt que var(--nav-glass)
+     (qui vaut 0.28) : le token vit dans global.css, hors périmètre de ce
+     changement. Le `saturate(1.5)` d'origine est retiré, la demande
+     spécifiant `blur(15px)` seul. */
+  background: rgba(255,255,255,0.25);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid var(--nav-border);
+  box-shadow: 0 8px 32px rgba(120,40,10,0.22), 0 2px 10px rgba(0,0,0,0.08);
+  /* Keeps the blur+background contained to the pill's own rounded shape —
+     without this, backdrop-filter can bleed square corners past the
+     border-radius on some renderers. */
   overflow: hidden;
-}
-
-/* 2026-09-04 — variante sombre du fond opaque ci-dessus. Même token que
-   toutes les cartes de l'app en mode sombre (`--dark-surface`, déjà
-   utilisé par .dashboard-cta-btn, .aic-card, .wh-card etc. — vérifié par
-   grep, pas une teinte inventée pour la nav). Sert de repli pour les
-   écrans qui n'ont pas leur propre surcharge sibling (Scan, Hydration,
-   WorkoutHistory, Conversation.jsx — non migrés au système de tokens
-   sombre) ; les 9 écrans avec surcharge (voir plus bas) pointent
-   maintenant eux aussi directement sur ce même token plutôt que de
-   dupliquer une valeur en dur par écran — une seule couleur sombre
-   cohérente dans toute l'app, plus dans l'esprit "chrome système
-   uniforme" du pattern Apple Music que 9 teintes proches mais
-   distinctes. */
-:root[data-theme="dark"] .bottom-nav {
-  background: var(--dark-surface);
 }
 
 /* Pastille de sélection (nav membre uniquement — BottomNav.jsx, pas
@@ -112,25 +75,16 @@
    eux — pas besoin de mesurer le DOM en JS. `left: 12px` reprend le padding
    horizontal de .bottom-nav ci-dessus ; translateX(n * 100%) déplace donc
    la pastille d'exactement un slot par index, 100% se référant à SA propre
-   largeur (= un slot). Teinte encre à faible opacité, non retouchée par
-   le passage au fond opaque du 2026-09-04 : elle reste lisible en clair
-   (fond blanc plein désormais, pas juste "clair" par transparence comme
-   avant) sans changement de valeur. */
+   largeur (= un slot). Teinte encre à faible opacité : les 5 écrans qui
+   affichent réellement cette nav (Dashboard/Nutrition/AICoach/Weekly/
+   Workout, voir les *-redesign.css correspondants) surchargent tous
+   l'icône active en #1C1A17 sur un fond frost rgba(28,26,23,0.25) — une
+   seule teinte suffit donc à rester cohérente partout, pas de surcharge
+   par écran nécessaire ici. */
 .nav-indicator {
   position: absolute;
   top: 6px;
-  /* Était `bottom: 6px` — correct quand le padding bas de .bottom-nav
-     était symétrique (10px). Maintenant que ce padding bas absorbe la
-     safe-area (voir nav.css .bottom-nav ci-dessus), un simple `bottom:6px`
-     positionnerait la pastille 6px au-dessus du bord de CETTE zone
-     agrandie, la décalant vers le bas hors de l'alignement avec les
-     icônes (restées, elles, juste sous le haut du bandeau). `height`
-     calculée explicitement à la place : hauteur totale moins les 6px du
-     haut, les 6px de marge symétrique voulue en bas, et la safe-area qui
-     ne doit pas être comptée dans la zone visible de la pastille. À
-     SAB=0 (desktop, Safari onglet), équivalent exact de l'ancien
-     `bottom:6px` — vérifié par calcul. */
-  height: calc(100% - 12px - env(safe-area-inset-bottom));
+  bottom: 6px;
   left: 12px;
   width: calc((100% - 24px) / var(--nav-tab-count, 5));
   border-radius: 999px;
@@ -155,22 +109,6 @@
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition: transform 150ms cubic-bezier(0.34, 1.56, 0.64, 1);
-  /* 2026-09-03 — `-webkit-tap-highlight-color: transparent` ci-dessus ne
-     neutralise que le flash tactile, pas l'anneau de focus natif. En SPA,
-     un tap qui déclenche une navigation ne recharge jamais la page donc
-     ne blur() jamais le bouton : il garde le focus natif après le
-     changement d'écran, et l'anneau par défaut de WebKit (rendu blanc/
-     jaune sur ce fond flouté sombre) restait visible dessus — rapporté en
-     test réel sur l'onglet actif/dernier tapé (Workout). `outline: none`
-     seul retirerait aussi l'anneau au clavier (accessibilité) — la règle
-     :focus-visible juste en dessous le restaure pour la navigation
-     clavier uniquement, sans réintroduire l'anneau résiduel au tap. */
-  outline: none;
-}
-
-.nav-btn:focus-visible {
-  outline: 2px solid var(--nav-border);
-  outline-offset: 2px;
 }
 
 /* Phosphor icons fill with currentColor by default. Inactive tabs stay

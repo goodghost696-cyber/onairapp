@@ -45,46 +45,5 @@
      it track the same width as the content above it. */
   #root.member-shell .bottom-nav {
     max-width: min(90vw, 720px);
-    /* 2026-09-03 — nav.css est passé d'une pilule flottante à un bandeau
-       plein-largeur ancré aux 3 bords (Option B, mobile uniquement : le
-       bug du vide sous la pilule ne concerne que le rendu mobile réel,
-       safe-area iOS). Sur desktop, rien de tout cela n'a de sens (pas de
-       safe-area, pas de geste de bord) — on restaure explicitement ici la
-       géométrie flottante d'origine (centrée, détachée du bord, coins
-       pleinement arrondis, bordure sur les 4 côtés) plutôt que de laisser
-       le bandeau plein-largeur mobile s'appliquer aussi ≥900px. */
-    left: 50%;
-    right: auto;
-    transform: translateX(-50%);
-    bottom: env(safe-area-inset-bottom);
-    width: calc(100% - 24px);
-    align-items: center;
-    padding: 10px 12px;
-    border-radius: 999px;
-    border: 1px solid var(--nav-border);
-    /* Le box-shadow "lift" (retiré de la base commune dans nav.css le
-       2026-09-03 — bug de lueur bleedant sur le bandeau mobile flush, voir
-       nav.css) reste légitime ici : la pilule desktop est toujours
-       détachée, avec une vraie marge de dissipation tout autour (jamais
-       flush à un bord), donc pas sujette au même bug. Restaurée
-       explicitement plutôt que perdue silencieusement par la suppression
-       de la base commune. */
-    box-shadow: 0 8px 32px rgba(120,40,10,0.22), 0 2px 10px rgba(0,0,0,0.08);
-    /* 2026-09-04 — le fond opaque plein posé sur .bottom-nav mobile
-       (nav.css, référence Apple Music) et les 9 surcharges par écran
-       (rgba dark 0.25 + blur, désormais retirées et simplifiées sur
-       .bottom-nav) ne s'appliquent qu'au pattern "bandeau système
-       flush 3 bords" — sans objet pour une pilule desktop toujours
-       détachée avec marge, où le frost translucide d'origine ("effet
-       frost léger léger" demandé le 2026-08-16) reste le look voulu et
-       n'a jamais posé le problème de lueur/débordement qui a motivé le
-       passage à l'opaque côté mobile. Valeur reprise telle quelle
-       (identique à ce que la pilule desktop affichait déjà avant ce
-       changement, via les surcharges par écran désormais supprimées) —
-       posée ici explicitement pour ne pas dépendre de fichiers qui ne
-       la fournissent plus. */
-    background: rgba(28,26,23,0.25);
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
   }
 }
