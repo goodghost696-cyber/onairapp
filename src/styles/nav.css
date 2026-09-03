@@ -73,22 +73,6 @@
      de l'écran, rien à délimiter là) — remplace l'ancien `border: 1px
      solid` (4 côtés, pertinent pour une pilule détachée). */
   border-top: 1px solid var(--nav-border);
-  /* ══════════════════════════════════════════════════════════════════
-     🔴 DEBUG TEMPORAIRE — 2026-09-04 — À RETIRER avant tout merge.
-     Test empirique demandé pour trancher si l'espace noir signalé sous
-     le bandeau est À L'INTÉRIEUR de la boîte .bottom-nav (donc déjà
-     couvert par son padding-bottom actuel, cadre rouge autour du vide)
-     ou EN DEHORS (vrai vide entre .bottom-nav et le bord réel de
-     l'écran, noir visible hors du cadre rouge). `border` (shorthand,
-     4 côtés) écrase volontairement le `border-top` posé juste au-dessus
-     pour ce test — restaurer `border-top: 1px solid var(--nav-border);`
-     seul en retirant cette ligne une fois le test conclu. Identique en
-     clair et en sombre (rouge pur, aucune dépendance à un token de
-     thème) — pas de règle séparée nécessaire sous :root[data-theme=
-     "dark"] pour ce test. Ne PAS committer ce changement dans une PR
-     mergée — branche de debug dédiée uniquement. */
-  border: 3px solid red;
-  /* ══════════════════════════════════════════════════════════════════ */
   /* 2026-09-03 — l'ancien box-shadow "lift" (0 8px 32px, pensé pour une
      pilule détachée flottant au-dessus du fond) est retiré : un
      box-shadow se peint en dehors de la boîte de l'élément, donc n'est
