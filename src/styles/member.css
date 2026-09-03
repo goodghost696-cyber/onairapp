@@ -62,5 +62,13 @@
     padding: 10px 12px;
     border-radius: 999px;
     border: 1px solid var(--nav-border);
+    /* Le box-shadow "lift" (retiré de la base commune dans nav.css le
+       2026-09-03 — bug de lueur bleedant sur le bandeau mobile flush, voir
+       nav.css) reste légitime ici : la pilule desktop est toujours
+       détachée, avec une vraie marge de dissipation tout autour (jamais
+       flush à un bord), donc pas sujette au même bug. Restaurée
+       explicitement plutôt que perdue silencieusement par la suppression
+       de la base commune. */
+    box-shadow: 0 8px 32px rgba(120,40,10,0.22), 0 2px 10px rgba(0,0,0,0.08);
   }
 }

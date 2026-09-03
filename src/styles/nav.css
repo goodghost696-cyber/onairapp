@@ -70,7 +70,18 @@
      de l'écran, rien à délimiter là) — remplace l'ancien `border: 1px
      solid` (4 côtés, pertinent pour une pilule détachée). */
   border-top: 1px solid var(--nav-border);
-  box-shadow: 0 8px 32px rgba(120,40,10,0.22), 0 2px 10px rgba(0,0,0,0.08);
+  /* 2026-09-03 — l'ancien box-shadow "lift" (0 8px 32px, pensé pour une
+     pilule détachée flottant au-dessus du fond) est retiré : un
+     box-shadow se peint en dehors de la boîte de l'élément, donc n'est
+     PAS contenu par `overflow: hidden` (qui ne clippe que le contenu
+     interne) ni par le z-index (qui ne fait que l'ordonner, pas le
+     borner). Sur la pilule flottante, ce halo se diffusait dans la marge
+     vide tout autour ; sur ce bandeau plein-largeur flush, sans cette
+     marge de dissipation, il se peignait directement sur le contenu de
+     page juste au-dessus (rapporté en test réel : lueur débordant sur la
+     carte CTA lavande de Dashboard). Un bandeau ancré aux 3 bords n'a de
+     toute façon pas besoin de "flotter" visuellement — le border-top
+     ci-dessus suffit à le séparer du contenu. */
   /* Keeps the blur+background contained to the pill's own rounded shape —
      without this, backdrop-filter can bleed square corners past the
      border-radius on some renderers. */
@@ -130,6 +141,22 @@
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition: transform 150ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* 2026-09-03 — `-webkit-tap-highlight-color: transparent` ci-dessus ne
+     neutralise que le flash tactile, pas l'anneau de focus natif. En SPA,
+     un tap qui déclenche une navigation ne recharge jamais la page donc
+     ne blur() jamais le bouton : il garde le focus natif après le
+     changement d'écran, et l'anneau par défaut de WebKit (rendu blanc/
+     jaune sur ce fond flouté sombre) restait visible dessus — rapporté en
+     test réel sur l'onglet actif/dernier tapé (Workout). `outline: none`
+     seul retirerait aussi l'anneau au clavier (accessibilité) — la règle
+     :focus-visible juste en dessous le restaure pour la navigation
+     clavier uniquement, sans réintroduire l'anneau résiduel au tap. */
+  outline: none;
+}
+
+.nav-btn:focus-visible {
+  outline: 2px solid var(--nav-border);
+  outline-offset: 2px;
 }
 
 /* Phosphor icons fill with currentColor by default. Inactive tabs stay
