@@ -17,6 +17,22 @@ const GOAL_COLORS = {
   'Performance': 'var(--cl-lavender-ink)',
   'Nutrition': 'var(--cl-olive-ink)',
 }
+// Variante sombre de GOAL_COLORS ci-dessus, posée en custom property
+// plutôt qu'en `color` inline direct : GOAL_COLORS garde exactement les
+// mêmes valeurs en clair (aucun changement), une règle sombre dédiée
+// (ClientsList-redesign.css) lit --cl-goal-dark à la place. Les teintes
+// -ink (olive-ink/lavender-ink) sont conçues pour contraster sur LEUR
+// PROPRE accent clair, pas en texte autoportant sur la carte qui, elle,
+// fonce en sombre — sans ça, "Prise de masse"/"Nutrition"/"Performance"
+// deviendraient peu lisibles. Basculées sur l'accent plein correspondant.
+// "Perte de poids" (magenta) reste inchangé : assez lumineux pour rester
+// lisible sur la carte sombre, contrairement aux teintes -ink.
+const GOAL_COLORS_DARK = {
+  'Prise de masse': 'var(--cl-olive)',
+  'Perte de poids': 'var(--cl-magenta)',
+  'Performance': 'var(--cl-lavender)',
+  'Nutrition': 'var(--cl-olive)',
+}
 const FILTERS = ['TOUS', 'ON TRACK', 'AT RISK', 'INACTIVE']
 
 export default function ClientsList() {
@@ -149,7 +165,7 @@ export default function ClientsList() {
                 <div className="cl-row-top">
                   <span className="cl-name">{m.prenom}</span>
                   {m.sharesData && (
-                    <span className="cl-goal-tag" style={{ color: GOAL_COLORS[m.objectif] || 'var(--cl-text-muted)' }}>{m.objectif || '-'}</span>
+                    <span className="cl-goal-tag" style={{ color: GOAL_COLORS[m.objectif] || 'var(--cl-text-muted)', '--cl-goal-dark': GOAL_COLORS_DARK[m.objectif] || 'var(--cl-text-muted)' }}>{m.objectif || '-'}</span>
                   )}
                 </div>
                 {/* Deux rendus distincts, pas un même bloc avec des valeurs
