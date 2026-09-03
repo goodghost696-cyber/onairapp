@@ -6579,3 +6579,70 @@ squash après poll Vercel vert).
 demande explicite et nouvelle de l'utilisateur. La pilule flottante est le choix retenu
 définitivement — le vide résiduel de 34px sous la pilule est connu, documenté depuis PR #156, et
 accepté comme compromis esthétique, pas un bug à corriger de sa propre initiative.
+
+## Session du 03/09/2026 (suite) — Scan migré (16e écran du chantier mode sombre)
+
+**Contexte** : suite des sessions PR #153-#179 (chantier mode sombre + parenthèse nav). Seizième
+écran. Consigne explicite avant migration : vérifier qu'une divergence visuelle documentée dans
+JOURNAL.md avant la session du 2026-08-29 ("Scan.jsx reste sur l'ancien habillage `.scan-*`/
+`.meal-chip` de `global.css`, jamais migré, malgré le reste de l'app pastel chaud terminé") n'est
+pas toujours présente avant de migrer un écran potentiellement cassé.
+
+**Vérification faite** : confirmé résolue. `Scan.jsx` n'importe que `Scan-redesign.css` et n'utilise
+que ses propres classes `sc-*`, entièrement distinctes des anciennes classes globales. Grep sur toute
+l'app : aucun JSX n'utilise plus `.scan-btn`/`.scan-loading-ring`/`.scan-macro*`/`.meal-chip`
+(dead code dans `global.css`, laissé tel quel, hors scope). Seule exception : `.scan-retry-btn`
+(legacy, toujours dans `global.css`) reste utilisée — mais exclusivement par le flux recette de
+`Nutrition.jsx` (`.nu-sheet .scan-retry-btn`, surchargé dans `nutrition-redesign.css`), sans rapport
+avec `Scan.jsx` qui a sa propre classe `sc-retry-btn` distincte. **Aucun bug d'affichage préexistant
+trouvé** — la session du 2026-08-29 avait bien fait le travail complet (build+grep vérifiés à
+l'époque). Migration effectuée sur un écran propre.
+
+**Réalisé** :
+- `Scan-redesign.css` migré : bloc clair non touché, nouvelle surcharge
+  `:root[data-theme="dark"] .scan-redesign { ... }` faisant pointer chaque `--sc-*` vers son token
+  `--dark-*` global.
+- `body.scan-body-bg` et surcharge sombre des icônes de nav ajoutées — 16e écran membre à recevoir
+  cette surcharge (nav visible via `MemberLayout`, jamais eue avant puisque jamais migré, contrairement
+  aux 9 écrans qui l'avaient déjà avant le chantier mode sombre).
+- Aucune couleur pilotée en JS — `Scan.jsx` non touché. Aucun token global partagé non migré utilisé
+  ici (vérifié).
+
+**Trois pièges -ink-sur-accent-fixe retrouvés et corrigés** :
+- `.sc-chip.active` (toggle Repas/Code-barres actif, fond olive fixe)
+- `.sc-option-icon.camera` (cercle olive fixe)
+- `.sc-option-icon.gallery` (cercle lavande fixe)
+
+**Vérifié et écarté à l'inverse** : `.sc-add-btn` n'a **pas** besoin de re-épinglage — `background`
+ET `color` y référencent le même couple `--sc-ink`/`--sc-bg` (pas d'accent fixe intercalé entre les
+deux), donc l'inversion clair→sombre reste auto-cohérente (crème-sur-quasi-noir devient quasi-noir-
+sur-crème, toujours bien contrasté). Comparé au piège inverse habituel (`.finish-session-btn` sur
+WorkoutSession, où un accent FIXE — olive — collisionnait avec le fond qui suivait le remap) pour
+confirmer la distinction avant de trancher.
+
+**Nouveau token local `--sc-olive-ink` ajouté** (absent). Valeur `#55522E` retenue — cohérente avec
+le choix le plus récent du chantier (Settings/Workout/Messages) plutôt que l'ancienne `#6E6A3F`
+(incohérence app-wide déjà notée, pas retraitée ici). `--sc-lavender-ink` `#3F4780`, cohérent partout,
+repris à l'identique.
+
+**`.sc-error`/`.sc-error-text`** : vraie fonction d'alerte (message d'erreur API scan), sans
+ambiguïté — bascule sur `--dark-accent-alert`.
+
+**Cas ambigu signalé et tranché avec l'utilisateur avant modification** : `.sc-retry-btn` (magenta en
+clair) sert à la fois après une erreur ET comme "Reprendre" générique après un scan réussi — pas
+exclusivement une fonction d'alerte. Contraste mesuré : `#B62472` sur `--dark-surface` (#332F29)
+≈ **3,08:1**, sous le seuil AA 4,5:1 pour du texte de cette taille. Trois options présentées
+(`--dark-accent-alert` / magenta inchangé / neutre) — **`--dark-accent-alert`** retenu (≈5,1:1,
+cohérent visuellement avec `.sc-error-text` juste au-dessus dans le même écran).
+
+**Vérification** : `npm run build` OK, grep du bundle compilé confirmant tous les tokens `--dark-*`,
+les 3 pièges corrigés, l'alerte réelle et `.sc-retry-btn` sur `--dark-accent-alert`, la surcharge nav
+complète (fond frost + icônes).
+
+**Commit** : cherry-pické sur branche `feat/dark-theme-scan` — PR à suivre (draft → ready → merge
+squash après poll Vercel vert).
+
+**Reste à faire — chantier mode sombre** : 3 écrans redesignés restants (`landing-redesign.css`,
+`auth-redesign.css`, `splash-redesign.css`), plus le point d'infrastructure non résolu sur
+`coach-nav-redesign.css`. `Conversation.jsx` toujours hors périmètre en attendant une décision de
+refonte.

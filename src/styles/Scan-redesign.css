@@ -23,6 +23,15 @@
   --sc-olive: #EBEB7D;
   --sc-lavender: #A3AEFE;
   --sc-magenta: #B62472;
+  /* Absents jusqu'ici — ajoutés pour le mode sombre (.sc-chip.active,
+     .sc-option-icon). Valeurs reprises telles quelles des écrans les plus
+     récemment migrés (Settings/Workout/Messages : #55522E) plutôt que
+     l'ancienne #6E6A3F (Nutrition/Dashboard/Weekly/WorkoutLibrary) —
+     incohérence app-wide déjà notée dans JOURNAL.md, pas une nouvelle
+     teinte inventée. --sc-lavender-ink en revanche est cohérent partout
+     (#3F4780), repris à l'identique. */
+  --sc-olive-ink: #55522E;
+  --sc-lavender-ink: #3F4780;
   font-family: 'Poppins', system-ui, -apple-system, sans-serif;
   background: var(--sc-bg);
   color: var(--sc-ink);
@@ -48,6 +57,36 @@
    rubber-band iOS, même raison que les autres redesigns. */
 body.scan-body-bg {
   background: #EFE7D9;
+}
+:root[data-theme="dark"] body.scan-body-bg {
+  background: var(--dark-bg);
+}
+
+/* Fond de .bottom-nav — même règle que les 9 autres écrans membre avec
+   nav visible (voir nutrition-redesign.css pour l'explication complète,
+   historique frost/opaque). 16e écran à recevoir cette surcharge — Scan
+   n'en avait aucune jusqu'ici (jamais migré), contrairement aux 9 autres
+   qui l'avaient déjà avant même le chantier mode sombre. */
+.scan-redesign ~ .bottom-nav {
+  background: rgba(28,26,23,0.25);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+}
+.scan-redesign ~ .bottom-nav .nav-btn svg {
+  color: rgba(28,26,23,0.7);
+}
+.scan-redesign ~ .bottom-nav .nav-btn.active svg {
+  color: #1C1A17;
+}
+/* Repassées en crème en sombre — même raisonnement que les écrans
+   précédents (dashboard.css et suivants) : le fond derrière la pill
+   devient sombre, la plaque frost à 25% va donc lire sombre plutôt que
+   claire, des icônes encre y seraient quasi invisibles. */
+:root[data-theme="dark"] .scan-redesign ~ .bottom-nav .nav-btn svg {
+  color: rgba(247,241,230,0.7);
+}
+:root[data-theme="dark"] .scan-redesign ~ .bottom-nav .nav-btn.active svg {
+  color: #F7F1E6;
 }
 
 /* ── Header ── */
@@ -345,4 +384,64 @@ body.scan-body-bg {
   cursor: pointer;
   margin-top: 4px;
   font-family: inherit;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Mode sombre — 16e écran migré du chantier (voir JOURNAL.md pour la
+   liste complète), mêmes tokens --dark-* de global.css. Bloc clair
+   ci-dessus non touché (hex laissés en dur). Aucune couleur pilotée en
+   JS — Scan.jsx non touché. Aucun token global partagé non migré utilisé
+   ici (vérifié). Testable via ThemeContext (main.jsx) — toggle
+   Settings.jsx toujours désactivé.
+   ══════════════════════════════════════════════════════════════════════ */
+:root[data-theme="dark"] .scan-redesign {
+  --sc-bg: var(--dark-bg);
+  --sc-card: var(--dark-surface);
+  --sc-ink: var(--dark-text-primary);
+  --sc-text-secondary: var(--dark-text-secondary);
+  --sc-text-muted: var(--dark-text-muted);
+  --sc-border: var(--dark-border);
+  /* olive / lavender / magenta : inchangés en sombre, aucune surcharge de
+     base — voir cependant les 3 pièges ré-épinglés ci-dessous. */
+}
+
+/* .sc-chip.active / .sc-option-icon(.camera|.gallery) : déjà accent-sur-
+   clair (fond olive/lavande inchangé en sombre), texte/icône var(--sc-ink)
+   épinglé sur olive-ink/lavender-ink — piège habituel, comme sur les 15
+   écrans précédents. .sc-add-btn n'a PAS besoin du même traitement :
+   background ET color y référencent tous les deux le même couple
+   --sc-ink/--sc-bg (pas un accent fixe intercalé), donc l'inversion
+   clair→sombre reste auto-cohérente (crème sur quasi-noir devient
+   quasi-noir sur crème, toujours bien contrasté) — vérifié avant de
+   décider de ne pas y toucher. */
+:root[data-theme="dark"] .scan-redesign .sc-chip.active {
+  color: var(--sc-olive-ink);
+}
+:root[data-theme="dark"] .scan-redesign .sc-option-icon.camera {
+  color: var(--sc-olive-ink);
+}
+:root[data-theme="dark"] .scan-redesign .sc-option-icon.gallery {
+  color: var(--sc-lavender-ink);
+}
+
+/* .sc-error / .sc-error-text : vraie fonction d'alerte (message d'erreur
+   API), sans ambiguïté — bascule sur l'accent alerte comme les autres
+   écrans du chantier. */
+:root[data-theme="dark"] .scan-redesign .sc-error {
+  border-color: var(--dark-accent-alert);
+}
+:root[data-theme="dark"] .scan-redesign .sc-error-text {
+  color: var(--dark-accent-alert);
+}
+
+/* .sc-retry-btn : cas ambigu signalé et tranché avec l'utilisateur avant
+   modification — ce bouton n'est pas exclusivement un état d'alerte (sert
+   aussi de "Reprendre" générique après un scan réussi, pas seulement
+   après une erreur). Magenta mesuré à ~3.08:1 contre --dark-surface,
+   sous le seuil AA 4.5:1 pour du texte de cette taille — bascule sur le
+   même accent alerte que .sc-error-text ci-dessus (#FF6FA5, ~5.1:1),
+   décision retenue plutôt que de laisser le contraste insuffisant ou de
+   diverger vers une teinte neutre. */
+:root[data-theme="dark"] .scan-redesign .sc-retry-btn {
+  color: var(--dark-accent-alert);
 }
