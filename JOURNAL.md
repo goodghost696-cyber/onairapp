@@ -6060,3 +6060,53 @@ avec la direction "pastel chaud" déjà adoptée partout ailleurs).
 **Reste à faire — chantier mode sombre** : ~9 écrans redesignés restants (candidats "classiques",
 même pattern que les 11 précédents). `Conversation.jsx` retiré de cette liste tant que la décision de
 refonte n'est pas prise — à ne pas retenter en l'état sans repasser par cette même discussion.
+
+
+---
+
+## Session du 03/09/2026 (suite) — CoachSettings migré (12e écran du chantier mode sombre)
+
+**Contexte** : suite des sessions PR #153-#169. Douzième écran, troisième écran coach (dernier de la
+série "handoff Redesign interface VOLTA (8)", écran 6/6).
+
+**Réalisé** :
+- `CoachSettings-redesign.css` migré : bloc clair non touché, nouvelle surcharge
+  `:root[data-theme="dark"] .coachsettings-redesign { ... }` faisant pointer chaque `--cs-*` vers son
+  token `--dark-*` global. **CoachNavBar non touchée**, comme sur ClientsList/CoachMessages.
+- Aucune couleur pilotée en JS — `CoachSettings.jsx` non touché.
+
+**Vérification explicite du piège "tokens partagés"** (comme demandé après la découverte sur
+`Conversation.jsx`, PR #169) : `DeleteAccountButton.jsx` (composant partagé membre/coach) utilise les
+tokens globaux partagés (`--danger`/`--surface-solid`/`--surface-2`/`--text-muted`), le même système
+non migré que `Conversation.jsx`. **Confirmé non touché** — déjà correctement laissé de côté par le
+fichier CSS lui-même avant cette session ("non touché ici" dans son propre commentaire).
+
+**Catch trouvé indépendamment, même piège inverse que ClientsList/CoachDashboard (PR #166/#167)** :
+`.cs-row-value.success` (statut facturation "Actif"/"Essai — X j restants") utilise `olive-ink` comme
+texte autoportant sur `.cs-card`, qui fonce en sombre — bascule sur olive plein.
+
+**Décision structurante, appliquée au niveau du token plutôt que par sélecteur** : `--cs-danger` et
+`--cs-magenta` partagent la même valeur en clair (`#B62472`) mais jouent des rôles différents dans ce
+fichier — `--cs-danger` n'est utilisé **que** pour de vraies alertes (statut facturation en échec,
+erreur de paiement, jauge IA en dépassement, notifications bloquées), `--cs-magenta` reste purement
+décoratif (code d'accès mis en avant, bouton "Se déconnecter"). Les deux tokens divergent donc en
+sombre : `--cs-danger` → accent alerte, `--cs-magenta` inchangé — couvre 4 usages d'un coup, sans
+surcharge par sélecteur individuel. Premier écran où cette technique de divergence de token (plutôt que
+de sélecteur) a été utilisée.
+
+`.cs-btn-accent` (piège habituel, texte encre sur olive fixe) épinglé sur `olive-ink`.
+
+**Éléments auto-suffisants vérifiés, aucune surcharge nécessaire** : le toggle "on" (chevalier blanc
+codé en dur sur piste olive inchangée) et `.cs-btn-danger` (fond magenta inchangé + texte blanc codé en
+dur) — ni l'un ni l'autre ne dépend du thème global dans un sens comme dans l'autre.
+
+**Vérification** : `npm run build` OK, `grep` du bundle compilé confirmant tous les tokens `--dark-*`
+et la surcharge `.cs-row-value.success` (olive plein, pas olive-ink) présente.
+
+**Commit** : `c5eccd7` (cherry-pické depuis `bf22d56`) — branche `feat/dark-theme-coachsettings`, PR à
+suivre (draft → ready → merge squash après poll Vercel vert).
+
+**Reste à faire — chantier mode sombre** : ~8 écrans redesignés restants. Les 6 écrans coach de la
+série "handoff (8)" sont maintenant tous migrés (CoachDashboard, MemberDetail, ClientsList,
+CoachMessages, CoachSettings — CoachPrograms reste à confirmer/vérifier). `Conversation.jsx` toujours
+hors périmètre en attendant une décision de refonte.
