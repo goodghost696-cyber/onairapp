@@ -70,5 +70,21 @@
        explicitement plutôt que perdue silencieusement par la suppression
        de la base commune. */
     box-shadow: 0 8px 32px rgba(120,40,10,0.22), 0 2px 10px rgba(0,0,0,0.08);
+    /* 2026-09-04 — le fond opaque plein posé sur .bottom-nav mobile
+       (nav.css, référence Apple Music) et les 9 surcharges par écran
+       (rgba dark 0.25 + blur, désormais retirées et simplifiées sur
+       .bottom-nav) ne s'appliquent qu'au pattern "bandeau système
+       flush 3 bords" — sans objet pour une pilule desktop toujours
+       détachée avec marge, où le frost translucide d'origine ("effet
+       frost léger léger" demandé le 2026-08-16) reste le look voulu et
+       n'a jamais posé le problème de lueur/débordement qui a motivé le
+       passage à l'opaque côté mobile. Valeur reprise telle quelle
+       (identique à ce que la pilule desktop affichait déjà avant ce
+       changement, via les surcharges par écran désormais supprimées) —
+       posée ici explicitement pour ne pas dépendre de fichiers qui ne
+       la fournissent plus. */
+    background: rgba(28,26,23,0.25);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
   }
 }

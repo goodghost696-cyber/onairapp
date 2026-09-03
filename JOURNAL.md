@@ -6378,3 +6378,56 @@ squash après poll Vercel vert).
 pas être considéré comme terminé après le merge. Les deux bugs corrigés ici n'étaient visibles qu'en
 rendu réel sur iPhone (aucun des deux n'était détectable par build/grep) — seule une nouvelle capture
 réelle confirmera que la lueur et le halo ont bien disparu, sans nouvelle régression introduite.
+
+## Session du 03/09/2026 (suite) — Bandeau nav opaque et coins carrés (référence Apple Music)
+
+**Contexte** : demande explicite de finition, capture Apple Music fournie en référence. Le bandeau
+plein-largeur ancré (PR #174) est conservé tel quel dans sa géométrie (pas de revert) — seule sa
+finition visuelle change : coins carrés au lieu d'arrondis, fond opaque plein au lieu de translucide/
+flouté.
+
+**Réalisé** :
+- `nav.css` — `.bottom-nav` : `border-radius: 24px 24px 0 0` → `0` (aucun arrondi, aucune transition
+  visuelle de forme entre le bandeau et l'écran — cohérent avec un bandeau flush sur 3 bords, qui n'a
+  justement pas de "bord" à arrondir). `background: rgba(255,255,255,0.25)` +
+  `backdrop-filter: blur(15px)` → `background: #FFFFFF` opaque, plus de blur. Nouvelle règle
+  `:root[data-theme="dark"] .bottom-nav { background: var(--dark-surface); }` pour la variante sombre.
+  Les deux valeurs réutilisent des tokens déjà établis dans toute l'app (`#FFFFFF` = valeur littérale
+  de `--surface`/tous les `--xx-card` des écrans restylés, vérifié par grep ; `--dark-surface` = même
+  token que toutes les cartes en mode sombre) — pas de couleur inventée pour la nav.
+- **Simplification architecturale au passage** : les 9 surcharges par écran
+  (`.xxx-redesign ~ .bottom-nav { background: rgba(28,26,23,0.25); backdrop-filter: blur(15px); ... }`,
+  héritées de l'époque frost) sont retirées entièrement (dashboard/aicoach/messages/nutrition/
+  settings/workout/weekly/workoutlibrary/workoutsession). Elles n'ont plus de raison d'être : leur but
+  était d'accorder la teinte du frost translucide au contenu qui transparaissait derrière — avec un
+  fond opaque, rien ne transparaît plus, donc plus besoin de 9 réglages quasi identiques par écran.
+  `.bottom-nav` pointe désormais directement et uniformément sur les 2 valeurs ci-dessus, dans l'esprit
+  "chrome système uniforme" du pattern Apple Music plutôt que 9 teintes proches mais distinctes.
+  `nutrition-redesign.css` garde l'historique complet en commentaire (3 arbitrages successifs : opaque
+  2026-08-14 → frost 2026-08-16 → opaque 2026-09-04, cette fois centralisé) ; les 8 autres y renvoient.
+- **Vérifié avant de trancher** : les surcharges de couleur d'icône par écran (`.nav-btn svg { color:
+  ... }`, distinctes des surcharges de fond retirées ci-dessus) restent valables sans modification —
+  elles étaient déjà tunées pour un fond effectivement clair en mode clair et effectivement sombre en
+  mode sombre (le frost à 25% produisait déjà cet effet par transparence) ; le nouveau fond opaque ne
+  fait que renforcer ce même contraste, pas l'inverser. Pas de retouche nécessaire.
+- `member.css` — la pilule desktop (≥900px) reste une pilule flottante détachée, explicitement hors
+  scope de cette demande (le pattern Apple Music vise le bandeau mobile flush, pas la pilule desktop).
+  Son fond translucide + blur d'origine ("effet frost léger léger", demandé le 2026-08-16) est
+  restauré explicitement dans `member.css` plutôt que perdu silencieusement : elle dépendait jusque-là
+  des 9 surcharges par écran retirées ci-dessus pour son fond, désormais découplée du mobile.
+
+**Vérification** : `npm run build` OK. Grep du bundle compilé confirmant `.bottom-nav` mobile avec
+`border-radius:0`, `background:#fff` (clair) et une règle séparée `background:var(--dark-surface)`
+sous `:root[data-theme=dark] .bottom-nav` (sombre), sans `backdrop-filter` ; pilule desktop intacte
+avec son `rgba(28,26,23,0.25)` (compilé `#1c1a1740`) + `blur(15px)` d'origine, non affectée par ce
+changement.
+
+**Commit** : cherry-pické sur branche `feat/nav-opaque-apple-music` — PR à suivre (draft → ready →
+merge squash après poll Vercel vert).
+
+**⚠️ IMPORTANT — non résolu tant que non vérifié en rendu réel** : comme pour PR #174/#175, ce fix ne
+doit pas être considéré comme terminé après le merge. Le rendu opaque/coins carrés n'a été vérifié que
+par build/grep (valeurs CSS présentes dans le bundle compilé), pas par un rendu réel sur iPhone en
+clair ET en sombre — seule une nouvelle capture confirmera que le résultat correspond bien au pattern
+Apple Music visé, sans effet de bord inattendu (notamment sur la pilule desktop, dont le fond a été
+découplé des fichiers per-écran modifiés ici).
