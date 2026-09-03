@@ -17,6 +17,15 @@
   --msg-text-secondary: #4A443C;
   --msg-text-muted: #736C60;
   --msg-olive: #EBEB7D;
+  /* Absent jusqu'ici (comme sur Settings/WorkoutLibrary récemment) —
+     ajouté pour le mode sombre (.msg-avatar). Incohérence préexistante
+     dans l'app entre #55522E (CoachDashboard/MemberDetail/ClientsList/
+     CoachMessages/CoachSettings/CoachPrograms/Workout) et #6E6A3F
+     (Dashboard/Nutrition/Weekly/WorkoutLibrary) — pas une séparation
+     propre par famille de handoff comme supposé lors de WorkoutLibrary.
+     #55522E retenu ici, cohérent avec le choix le plus récent (Settings) ;
+     différence à peine perceptible en sombre entre les deux valeurs. */
+  --msg-olive-ink: #55522E;
   --msg-magenta: #B62472;
   font-family: 'Poppins', system-ui, -apple-system, sans-serif;
   min-height: calc(var(--app-height, 100dvh) - env(safe-area-inset-top));
@@ -38,6 +47,9 @@
 body.messages-body-bg {
   background: #EFE7D9;
 }
+:root[data-theme="dark"] body.messages-body-bg {
+  background: var(--dark-bg);
+}
 
 /* Fond opaque sombre (.bottom-nav) — généralisation (2026-08-14) du fix
    posé initialement sur Dashboard.jsx (dashboard.css, commit 75ce568),
@@ -57,6 +69,16 @@ body.messages-body-bg {
 .messages-redesign ~ .bottom-nav .nav-btn.active svg {
   /* Lavande plutôt que crème — voir dashboard.css pour l'explication. */
   color: #1C1A17;
+}
+/* Repassées en crème en sombre — même raisonnement que les écrans
+   précédents (dashboard.css et suivants) : le fond derrière la pill
+   devient sombre, la plaque frost à 25% va donc lire sombre plutôt que
+   claire, des icônes encre y seraient quasi invisibles. */
+:root[data-theme="dark"] .messages-redesign ~ .bottom-nav .nav-btn svg {
+  color: rgba(247,241,230,0.7);
+}
+:root[data-theme="dark"] .messages-redesign ~ .bottom-nav .nav-btn.active svg {
+  color: #F7F1E6;
 }
 
 .messages-screen {
@@ -135,4 +157,44 @@ body.messages-body-bg {
   height: 8px;
   border-radius: 999px;
   background: var(--msg-magenta);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Mode sombre — 15e écran migré du chantier (PR #153 CoachDashboard,
+   #154 MemberDetail, #155 Dashboard membre, #159 Nutrition, #160
+   Workout, #162 AICoach, #163 Weekly, #164 WorkoutSession, #165
+   WorkoutLibrary, #166 ClientsList, #168 CoachMessages, #170
+   CoachSettings, #171 CoachPrograms, #172 Settings), mêmes tokens
+   --dark-* de global.css. Bloc clair ci-dessus non touché (hex laissés
+   en dur). Aucun token global partagé non migré utilisé ici (vérifié —
+   contrairement à Settings/--danger) : rien à mesurer, rien à corriger
+   de ce côté. Conversation.jsx toujours hors scope (voir en-tête de
+   fichier). Testable via ThemeContext (main.jsx) — toggle Settings.jsx
+   toujours désactivé.
+   ══════════════════════════════════════════════════════════════════════ */
+:root[data-theme="dark"] .messages-redesign {
+  --msg-bg: var(--dark-bg);
+  --msg-screen-bg: var(--dark-bg);
+  --msg-card: var(--dark-surface);
+  --msg-ink: var(--dark-text-primary);
+  --msg-text-secondary: var(--dark-text-secondary);
+  --msg-text-muted: var(--dark-text-muted);
+  /* olive / olive-ink : inchangés en sombre, aucune surcharge de base —
+     voir cependant .msg-avatar ci-dessous (piège habituel). */
+}
+
+/* .msg-avatar : déjà accent-sur-clair (fond olive inchangé en sombre),
+   texte var(--msg-ink) épinglé sur olive-ink — piège habituel, comme sur
+   les 14 écrans précédents. */
+:root[data-theme="dark"] .messages-redesign .msg-avatar {
+  color: var(--msg-olive-ink);
+}
+
+/* .msg-unread-dot : même cas que .cm-unread-dot sur CoachMessages
+   (PR #168) — retrouvé indépendamment, pas copié : c'est le cas
+   "pastille de notification" cité en exemple dans la spécification
+   d'origine du chantier, une vraie fonction d'alerte (message non lu),
+   pas une décoration. Bascule sur l'accent alerte. */
+:root[data-theme="dark"] .messages-redesign .msg-unread-dot {
+  background: var(--dark-accent-alert);
 }

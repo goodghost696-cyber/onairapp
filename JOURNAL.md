@@ -6205,3 +6205,50 @@ suivre (draft → ready → merge squash après poll Vercel vert).
 `splash-redesign.css`), plus les points d'infrastructure à clarifier (`coach-nav-redesign.css` —
 contradiction non résolue sur son statut réel, voir audit précédent). `Conversation.jsx` toujours hors
 périmètre en attendant une décision de refonte.
+
+
+---
+
+## Session du 03/09/2026 (suite) — Messages (membre) migré (15e écran du chantier mode sombre)
+
+**Contexte** : suite des sessions PR #153-#172. Quinzième écran, équivalent membre de CoachMessages
+(PR #168) — vérifié pour cohérence interne, pas copié mécaniquement.
+
+**Réalisé** :
+- `messages-redesign.css` migré : bloc clair non touché, nouvelle surcharge
+  `:root[data-theme="dark"] .messages-redesign { ... }` faisant pointer chaque `--msg-*` vers son
+  token `--dark-*` global.
+- `body.messages-body-bg` et surcharge sombre des icônes de nav : ajoutées.
+- Aucune couleur pilotée en JS — `Messages.jsx` non touché. `Conversation.jsx` confirmé hors scope
+  (déjà documenté comme tel dans l'en-tête du fichier).
+
+**Aucun token global partagé non migré utilisé ici** (vérifié explicitement, comme demandé après le
+cas `--danger` sur Settings) — écran propre, rien à mesurer ni corriger de ce côté.
+
+**Deux conclusions retrouvées indépendamment, structurellement proches de CoachMessages sans être
+copiées** :
+- `.msg-avatar` (piège habituel, texte encre sur olive fixe) épinglé sur `olive-ink`.
+- `.msg-unread-dot` : même cas que `.cm-unread-dot` sur CoachMessages — le cas "pastille de
+  notification" cité en exemple dans la spécification d'origine du chantier, vraie fonction d'alerte,
+  bascule vers l'accent alerte.
+
+**Nouveau token local `--msg-olive-ink` ajouté** (absent, comme sur Settings/WorkoutLibrary
+récemment). En vérifiant la valeur à utiliser, **incohérence préexistante notée dans l'app** :
+`#55522E` (CoachDashboard/MemberDetail/ClientsList/CoachMessages/CoachSettings/CoachPrograms/
+**Workout**) vs `#6E6A3F` (Dashboard/Nutrition/Weekly/WorkoutLibrary) — pas une séparation propre par
+famille de handoff comme supposé lors de la migration WorkoutLibrary (où `#6E6A3F` avait été choisi en
+pensant suivre "la famille pastel chaud", alors que Workout lui-même utilise `#55522E`). `#55522E`
+retenu ici, cohérent avec le choix le plus récent (Settings) — différence à peine perceptible en
+sombre entre les deux valeurs, pas un problème visuel réel, juste une incohérence de fond notée pour
+mémoire.
+
+**Vérification** : `npm run build` OK, `grep` du bundle compilé confirmant tous les tokens `--dark-*`
+et `msg-olive-ink` présents.
+
+**Commit** : `aa63876` (cherry-pické depuis `5ade81c`) — branche `feat/dark-theme-messages`, PR à
+suivre (draft → ready → merge squash après poll Vercel vert).
+
+**Reste à faire — chantier mode sombre** : 4 écrans redesignés restants (`Scan-redesign.css`,
+`landing-redesign.css`, `auth-redesign.css`, `splash-redesign.css`), plus le point d'infrastructure
+non résolu sur `coach-nav-redesign.css`. `Conversation.jsx` toujours hors périmètre en attendant une
+décision de refonte.
