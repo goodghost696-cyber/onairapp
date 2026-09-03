@@ -5850,3 +5850,48 @@ sur Workout — statut neutre, pas une alerte, reste inchangé.
 
 **Reste à faire — chantier mode sombre** : ~12 écrans restants. `RestTimer.jsx` toujours hors scope
 (comme dans le restyle clair d'origine).
+
+
+---
+
+## Session du 03/09/2026 — WorkoutLibrary migré (9e écran du chantier mode sombre)
+
+**Contexte** : suite des sessions PR #153/#154/#155/#159/#160/#161/#162/#163/#164. Neuvième écran, la
+bibliothèque d'exercices (274 exercices au catalogue depuis l'intégration wger.de).
+
+**Réalisé** :
+- `workoutlibrary-redesign.css` migré : bloc clair non touché (diff purement additif, un seul fichier),
+  nouvelle surcharge `:root[data-theme="dark"] .workoutlibrary-redesign { ... }` faisant pointer chaque
+  `--wl-*` vers son token `--dark-*` global.
+- `body.workoutlibrary-body-bg` et surcharge sombre des icônes de nav : ajoutées dès cette migration.
+- Aucune couleur pilotée en JS — `WorkoutLibrary.jsx` non touché (contrairement à Nutrition/Weekly/
+  Workout). `ExerciseModal.jsx` confirmé hors scope (déjà documenté comme tel dans le fichier, partagé
+  avec CoachPrograms.jsx non touché).
+
+**Tokens réutilisés sans réinvention** : `--wl-placeholder` et `--wl-attribution` correspondent
+**exactement** aux valeurs déjà mappées sur WorkoutSession (PR #164) — `--dark-text-placeholder` et
+`--dark-text-faint` réutilisés tels quels, aucun nouveau token global nécessaire cette fois.
+
+**Nouveau token local** : `--wl-olive-ink` (`#6E6A3F`) ajouté — absent contrairement aux écrans
+précédents, même valeur que `--db-olive-ink`/`--nu-olive-ink`/`--wh-olive-ink` (même famille de handoff
+"pastel chaud"), pour `.wl-add-btn` (même piège texte-encre-sur-olive-fixe que les 8 écrans précédents).
+
+**Deux éléments "déjà sombres par conception", traités différemment selon leur complexité réelle** :
+- `.wl-toast` ("Ajouté à ta séance") : encre pleine + texte olive (accent indépendamment sûr, comme
+  `.finish-session-btn` sur WorkoutSession) → simple re-épinglage du fond sur `--dark-bg`.
+- `.wl-exercise-row.wl-added` (exercice déjà ajouté) : **plus complexe** — son texte
+  (`.wl-exercise-name`) référence `var(--wl-screen-bg)`, qui joue **aussi** le rôle de fond principal
+  d'écran (et doit donc foncer). Sans re-épinglage explicite du texte en plus du fond, il aurait suivi
+  ce même assombrissement et serait devenu illisible sur la ligne qui reste volontairement sombre. Fond
+  **et** texte re-épinglés explicitement — contrairement à `.finish-session-btn` qui n'avait besoin que
+  du fond seul. Sous-texte muscles (`rgba(247,241,230,0.6)`, codé en dur) laissé tel quel : déjà
+  correct une fois le fond de la ligne fixé.
+
+**Vérification** : `npm run build` OK, `grep` du bundle compilé confirmant tous les tokens `--dark-*`
+et `wl-olive-ink` présents.
+
+**Commit** : `44993d0` (cherry-pické depuis `5d03cca`) — branche `feat/dark-theme-workoutlibrary`, PR
+à suivre (draft → ready → merge squash après poll Vercel vert).
+
+**Reste à faire — chantier mode sombre** : ~11 écrans restants. `ExerciseModal.jsx`/`CoachPrograms.jsx`
+toujours hors scope.
