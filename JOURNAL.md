@@ -6431,3 +6431,84 @@ par build/grep (valeurs CSS présentes dans le bundle compilé), pas par un rend
 clair ET en sombre — seule une nouvelle capture confirmera que le résultat correspond bien au pattern
 Apple Music visé, sans effet de bord inattendu (notamment sur la pilule desktop, dont le fond a été
 découplé des fichiers per-écran modifiés ici).
+
+## Session du 03/09/2026 (suite) — Diagnostic + fix : cause racine du vide sous la nav (--app-height)
+
+**Contexte** : un espace vide/noir signalé de nouveau entre `.bottom-nav` et le vrai bord de l'écran
+sur iPhone, après le passage à un fond opaque en PR #176 (qui a rendu visible, sans le camoufler dans
+un flou, un défaut jusque-là masqué). Diagnostic en 2 passes, strictement read-only avant tout fix
+(consigne explicite à chaque étape) :
+
+**Passe 1 — vérification des valeurs CSS** : `bottom:0` sur `.bottom-nav` confirmé inchangé depuis
+PR #174 (diff complet #174→#176 sur `nav.css`/`member.css`/`dashboard.css`). Couverture du fond
+opaque sur la zone de padding-bottom (qui absorbe la safe-area) confirmée correcte sur le papier
+(`background` couvre par défaut toute la padding-box, comportement identique avant/après l'opacité).
+Aucune régression de valeur CSS trouvée — conclusion : soit un problème de composition/rendu WebKit
+(hypothèse posée mais non vérifiable depuis le code seul), soit un vrai vide externe à la boîte.
+
+**Passe 2 — test empirique (bordure de debug, PR #177, jamais mergée)** : `border: 3px solid red`
+ajouté temporairement sur `.bottom-nav` pour trancher visuellement. Résultat rapporté par
+l'utilisateur sur capture iPhone réelle : le cadre rouge s'arrête **avant** le bord réel de l'écran —
+un vrai vide noir externe reste visible hors du cadre. Confirme que `.bottom-nav` elle-même est
+**coupée** avant d'atteindre le bord physique, malgré `bottom:0` correct sur le papier. Bordure de
+debug retirée (build + grep confirmant son absence), PR #177 fermée sans merge dès la conclusion
+tirée, conformément à la consigne.
+
+**Cause racine identifiée (pas seulement le symptôme)** : `--app-height` (custom property CSS pilotant
+la hauteur explicite de `html`/`body`/`#root`, tous en `overflow: hidden`) est calculée dans
+`main.jsx` par `setRealViewportHeight()` — mesurée **une seule fois au lancement** via
+`window.visualViewport.height` (repli `window.innerHeight`), puis re-mesurée seulement sur
+`resize`/`orientationchange` (délibérément pas sur l'événement `resize` propre de `visualViewport`,
+pour une raison distincte détaillée plus bas). Le commentaire d'origine de ce fichier (écrit lors
+d'une session antérieure à ce chantier) documentait déjà un bug de timing analogue pour `dvh` seul :
+sur iOS WKWebView, une mesure de viewport peut ponctuellement rapporter une valeur plus courte que
+l'écran réel juste après le lancement ou après un recalcul de safe-area/layout. Ce même bug de timing
+s'applique tout autant à `visualViewport.height`/`innerHeight` — sauf qu'ici, contrairement à `dvh`
+(qui ne servait que de repli avant l'exécution du script), cette mesure JS pilote `--app-height` pour
+**le reste de la session**, sans recorrection automatique si le lancement a coïncidé avec une mesure
+ponctuellement trop courte.
+
+**Mécanisme du symptôme** : quand `--app-height` est sous-évalué, `html`/`body`/`#root` sont pinés à
+une hauteur plus courte que l'écran réel ; leur `overflow: hidden` clippe alors tout ce qui dépasse
+cette hauteur — y compris `.bottom-nav` en `position: fixed`, qui ne peut physiquement pas peindre
+au-delà de cette limite même avec `bottom: 0` correct. Ce qui devient visible en dessous n'est pas une
+couleur CSS de l'app : c'est la surface native du WebView/Safari, jamais peinte par le DOM à cet
+endroit. **Invisible avant PR #174** : la pilule flottante (marge + `bottom: env(safe-area-inset-
+bottom)`) restait toujours largement à l'intérieur de la zone couverte même en cas de sous-évaluation
+mineure de `--app-height` — un déficit de quelques pixels ne s'approchait jamais du bord assez près
+pour être visible. Devenu visible dès que la nav vise intentionnellement le vrai bord (`bottom: 0`,
+PR #174), amplifié par le fond opaque de PR #176 qui a supprimé le flou qui aurait pu adoucir la
+transition si un déficit s'était produit.
+
+**Fix appliqué (`main.jsx`)** : `Math.max()` entre la mesure JS existante
+(`visualViewport.height`/`innerHeight`) et `100dvh` lu directement via un élément sonde caché
+(`dvhPx()` — un `<div>` de taille nulle, `position: fixed; height: 100dvh; visibility: hidden`, lu via
+`getBoundingClientRect().height`), indépendant de toute API `visualViewport`. Les deux sources ont des
+défauts de timing différents (le bug documenté touche l'une OU l'autre selon le moment précis de la
+mesure, pas nécessairement les deux simultanément) — `Math.max` garantit qu'une lecture correcte
+d'une seule des deux sources suffit à éviter le clip, alors qu'une lecture erronée d'une seule source
+ne peut plus, seule, sous-évaluer `--app-height`.
+
+**Vérifié avant application, comme demandé** : ce fix ne réintroduit pas le bug clavier qui avait
+motivé l'abandon de `dvh` seul à l'origine (`#root` qui rétrécit sous le clavier ouvert, tirant le
+header sticky au-dessus de la status bar — capture réelle citée dans le commentaire d'origine).
+`dvh` ne rétrécit PAS pour le clavier virtuel, par spec — `dvhPx()` n'est donc jamais plus petit que
+la hauteur "clavier fermé". `Math.max(mesure, dvh)` ne peut donc rapporter qu'une valeur égale ou
+supérieure à "clavier fermé", jamais inférieure — même dans l'hypothèse où cette fonction serait
+redéclenchée clavier ouvert (ce qui n'arrive pas aujourd'hui : `resize`/`orientationchange` ne se
+déclenchent pas pour le clavier sur iOS, la fonction ne se réexécute donc jamais pendant qu'il est
+ouvert). Ce fix ne peut que pousser `--app-height` vers le HAUT par rapport à la version à source
+unique, jamais vers le bas — aucun risque identifié de régression sur ce point précis.
+
+**Vérification** : `npm run build` OK. Grep du bundle compilé confirmant la présence de la sonde dvh
+(`height:100dvh` inline), `getBoundingClientRect`, `Math.max` et `--app-height` dans le JS compilé.
+
+**Commit** : cherry-pické sur branche `fix/app-height-underreport` — PR à suivre (draft → ready →
+merge squash après poll Vercel vert).
+
+**⚠️ IMPORTANT — non résolu tant que non vérifié en rendu réel** : comme pour PR #174/#175/#176, ce
+fix ne doit PAS être considéré comme résolu après le merge. C'est précisément un bug de timing/rendu
+qui échappe par nature au build/grep (aucune valeur CSS statique à vérifier, le bug dépend du moment
+exact où le WebView mesure le viewport au lancement) — seule une vérification visuelle réelle sur
+iPhone (clair ET sombre, PWA standalone ET Safari tab si possible, puisque le bug de timing d'origine
+est documenté comme touchant les deux contextes) confirmera que le vide a bien disparu.
