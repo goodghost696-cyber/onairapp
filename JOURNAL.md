@@ -6646,3 +6646,71 @@ squash après poll Vercel vert).
 `auth-redesign.css`, `splash-redesign.css`), plus le point d'infrastructure non résolu sur
 `coach-nav-redesign.css`. `Conversation.jsx` toujours hors périmètre en attendant une décision de
 refonte.
+
+## Session du 03/09/2026 (suite) — auth-redesign (Login/CoachSignup) migré (17e écran du chantier mode sombre)
+
+**Contexte** : dix-septième écran, `auth-redesign.css` — demande initiale citait Landing.jsx, Login.jsx,
+CoachSignup.jsx comme utilisateurs de ce fichier, avec vérification explicite demandée du travail déjà
+fait en PR#149/#150/#151 avant migration.
+
+**Correction de périmètre faite avant toute modification** : `Landing.jsx` n'utilise **pas**
+`auth-redesign.css` — il importe `landing.css`/`landing-redesign.css` (fichiers séparés) et force
+`data-theme="dark"` sur `<html>` en JS **en permanence**, indépendamment du thème réel de
+l'utilisateur (commentaire du code lui-même : *"Landing is deliberately always dark... independent of
+the in-app theme toggle"*). Déjà listé séparément comme chantier restant. Périmètre réel confirmé :
+**Login.jsx + CoachSignup.jsx uniquement**.
+
+**Vérification du travail déjà fait (PR#149/#150/#151), comme demandé** :
+- PR#149/#150 (split-screen desktop, colonne droite fond encre fixe `#1C1A17`) vit dans `public.css`,
+  **hors** du fichier migré ici. Question posée et tranchée avec l'utilisateur avant toute
+  implémentation : reste **volontairement indépendante du thème** — déjà quasi-identique à
+  `--dark-bg` (#141310), panneau de marque décoratif (logo + cercles flous), cohérent avec
+  `Landing.jsx` qui force déjà le sombre en permanence. `public.css` non touché.
+- PR#151 (fix wordmark blanc→encre, `brand.css`) : sans rapport avec `auth-redesign.css`, non touché,
+  confirmé hors scope.
+
+**Réalisé** :
+- `auth-redesign.css` migré : bloc clair non touché, nouvelle surcharge
+  `:root[data-theme="dark"] .auth-redesign { ... }` faisant pointer chaque `--auth-*` vers son token
+  `--dark-*` global.
+- `body.auth-body-bg` : surcharge sombre ajoutée.
+- Aucune couleur pilotée en JS — `Login.jsx`/`CoachSignup.jsx` non touchés. Pas de `.bottom-nav` sur
+  ces 2 écrans (routes publiques, hors `MemberLayout`/`CoachLayout`) — pas de surcharge nav
+  nécessaire, contrairement aux écrans membre/coach.
+
+**Un piège -ink-sur-accent-fixe retrouvé et corrigé** : `.auth-tab.active` (onglet Connexion/
+Inscription actif, fond olive fixe).
+
+**Vérifié et écarté à l'inverse** : `.auth-primary-btn`/`.auth-secondary-btn` n'ont **pas** besoin de
+re-épinglage — `background` ET `color` y référencent le même couple `--auth-ink`/`--auth-bg`/
+`--auth-card` (pas d'accent fixe intercalé), l'inversion clair→sombre reste auto-cohérente — même
+raisonnement que `.sc-add-btn` sur Scan (PR #180), retrouvé indépendamment sur ce nouvel écran.
+
+**Nouveau token local `--auth-olive-ink` ajouté** (absent). Valeur `#55522E` retenue, cohérente avec
+le choix le plus récent du chantier.
+
+**`.auth-error`/`.auth-success`** (`var(--danger)`/`var(--success)`, tokens globaux partagés non
+migrés — même famille de cas que `--danger` sur Settings) : **contraste mesuré plutôt que supposé
+identique** au précédent, contexte différent (texte flottant directement sur `--auth-bg`/`--dark-bg`,
+pas sur une carte comme sur Settings). `#FF3B3B` sur `--dark-bg` (#141310) : **5,26:1**. `#1FD66B` sur
+`--dark-bg` : **9,64:1**. Les deux largement au-dessus du seuil AA 4,5:1 — **aucune surcharge
+nécessaire**, contrairement au cas Settings où le contraste mesuré était insuffisant. Bon rappel que
+la mesure doit être refaite à chaque contexte, pas généralisée depuis un cas similaire précédent.
+
+**Cas ambigu signalé et tranché avec l'utilisateur avant modification** : `.auth-invite-card`
+(bordure magenta, écran "code d'invitation" de CoachSignup.jsx) mesurée à **≈2,21:1** contre
+`--dark-surface`, sous le minimum **3:1** pour une bordure/composant UI (WCAG 1.4.11) — fonction
+décorative (mise en avant du code), pas une alerte au sens strict. Deux options présentées
+(`--dark-accent-alert` / magenta inchangé) — **`--dark-accent-alert`** retenu (≈5,1:1), cohérent avec
+les autres écrans du chantier.
+
+**Vérification** : `npm run build` OK, grep du bundle compilé confirmant tous les tokens `--dark-*`,
+le piège corrigé, la bordure `.auth-invite-card` sur l'accent alerte, et l'absence de toute surcharge
+`.bottom-nav` (attendu — pas d'erreur, ces écrans n'ont pas de nav).
+
+**Commit** : cherry-pické sur branche `feat/dark-theme-auth` — PR à suivre (draft → ready → merge
+squash après poll Vercel vert).
+
+**Reste à faire — chantier mode sombre** : 2 écrans redesignés restants (`landing-redesign.css`,
+`splash-redesign.css`), plus le point d'infrastructure non résolu sur `coach-nav-redesign.css`.
+`Conversation.jsx` toujours hors périmètre en attendant une décision de refonte.
