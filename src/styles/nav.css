@@ -49,22 +49,25 @@
      du chantier mode sombre (.finish-session-btn etc.), appliqué ici à
      la géométrie plutôt qu'à la couleur. */
   padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
-  /* Coins arrondis en haut seulement — un bandeau flush sur 3 bords n'a
-     pas de "bord" visible à arrondir là où il touche l'écran, seul le
-     bord supérieur (contre le contenu de la page) reste une transition
-     visuelle réelle. Valeur (24px) reprise du mockup Claude Design —
-     comme tout ce changement, à confirmer sur rendu réel avant d'être
-     considéré définitif (voir JOURNAL.md). */
-  border-radius: 24px 24px 0 0;
-  /* Effet frost demandé le 2026-08-16 : opacité de fond fixée à 25% et
-     flou ramené à 15px, sur la nav partagée ET sur les 9 surcharges par
-     écran (voir plus bas). Valeur littérale plutôt que var(--nav-glass)
-     (qui vaut 0.28) : le token vit dans global.css, hors périmètre de ce
-     changement. Le `saturate(1.5)` d'origine est retiré, la demande
-     spécifiant `blur(15px)` seul. */
-  background: rgba(255,255,255,0.25);
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
+  /* 2026-09-04 — coins carrés, aucun arrondi (référence Apple Music,
+     capture fournie) : remplace les coins hauts à 24px posés en PR #174.
+     Un bandeau système ancré aux 3 bords, dans ce pattern-là, ne se
+     distingue PAS du bord de l'écran par une transition arrondie — c'est
+     au contraire une plaque rectangulaire, sans séparation visuelle de
+     forme avec l'écran lui-même. */
+  border-radius: 0;
+  /* 2026-09-04 — fond opaque plein (référence Apple Music), remplace le
+     frost translucide (rgba + blur, demandé le 2026-08-16 sur la nav
+     partagée ET sur les 9 surcharges par écran, voir plus bas) : un
+     rgba avec alpha < 1 (même à 25%) et un backdrop-filter supposent un
+     contenu de page qui continue de se deviner à travers la nav — exactement
+     l'inverse du pattern demandé ici, une plaque opaque qui ne laisse
+     rien transparaître derrière elle. Blanc plein en clair : même valeur
+     que `--surface`/`--xx-card` de tous les écrans (déjà #FFFFFF partout,
+     vérifié par grep) — pas une couleur inventée, la même que celle de
+     n'importe quelle carte de l'app. Voir plus bas pour la variante
+     sombre. */
+  background: #FFFFFF;
   /* Un bandeau flush sur 3 bords n'a de bordure visuellement signifiante
      que sur le bord du haut (les 3 autres coïncident avec le bord réel
      de l'écran, rien à délimiter là) — remplace l'ancien `border: 1px
@@ -82,10 +85,23 @@
      carte CTA lavande de Dashboard). Un bandeau ancré aux 3 bords n'a de
      toute façon pas besoin de "flotter" visuellement — le border-top
      ci-dessus suffit à le séparer du contenu. */
-  /* Keeps the blur+background contained to the pill's own rounded shape —
-     without this, backdrop-filter can bleed square corners past the
-     border-radius on some renderers. */
   overflow: hidden;
+}
+
+/* 2026-09-04 — variante sombre du fond opaque ci-dessus. Même token que
+   toutes les cartes de l'app en mode sombre (`--dark-surface`, déjà
+   utilisé par .dashboard-cta-btn, .aic-card, .wh-card etc. — vérifié par
+   grep, pas une teinte inventée pour la nav). Sert de repli pour les
+   écrans qui n'ont pas leur propre surcharge sibling (Scan, Hydration,
+   WorkoutHistory, Conversation.jsx — non migrés au système de tokens
+   sombre) ; les 9 écrans avec surcharge (voir plus bas) pointent
+   maintenant eux aussi directement sur ce même token plutôt que de
+   dupliquer une valeur en dur par écran — une seule couleur sombre
+   cohérente dans toute l'app, plus dans l'esprit "chrome système
+   uniforme" du pattern Apple Music que 9 teintes proches mais
+   distinctes. */
+:root[data-theme="dark"] .bottom-nav {
+  background: var(--dark-surface);
 }
 
 /* Pastille de sélection (nav membre uniquement — BottomNav.jsx, pas
@@ -96,12 +112,10 @@
    eux — pas besoin de mesurer le DOM en JS. `left: 12px` reprend le padding
    horizontal de .bottom-nav ci-dessus ; translateX(n * 100%) déplace donc
    la pastille d'exactement un slot par index, 100% se référant à SA propre
-   largeur (= un slot). Teinte encre à faible opacité : les 5 écrans qui
-   affichent réellement cette nav (Dashboard/Nutrition/AICoach/Weekly/
-   Workout, voir les *-redesign.css correspondants) surchargent tous
-   l'icône active en #1C1A17 sur un fond frost rgba(28,26,23,0.25) — une
-   seule teinte suffit donc à rester cohérente partout, pas de surcharge
-   par écran nécessaire ici. */
+   largeur (= un slot). Teinte encre à faible opacité, non retouchée par
+   le passage au fond opaque du 2026-09-04 : elle reste lisible en clair
+   (fond blanc plein désormais, pas juste "clair" par transparence comme
+   avant) sans changement de valeur. */
 .nav-indicator {
   position: absolute;
   top: 6px;

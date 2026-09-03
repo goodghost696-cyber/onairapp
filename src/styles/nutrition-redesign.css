@@ -63,27 +63,23 @@ body.nutrition-body-bg {
   background: var(--dark-bg);
 }
 
-/* Fond frost sombre (.bottom-nav) — règle partagée par les 9 écrans
-   restylés, explication de référence ici (les autres fichiers y renvoient).
-   Deux temps, parce que l'arbitrage a été inversé :
+/* Fond de .bottom-nav — règle partagée par les 9 écrans restylés,
+   explication de référence ici (les autres fichiers y renvoient).
+   Historique en trois temps, l'arbitrage ayant changé de sens deux fois :
    - 2026-08-14 : posée en `#1C1A17` OPAQUE + `backdrop-filter: none`,
      généralisation du fix Dashboard (le glass clair de nav.css laissait
      voir les cartes pastel pleines derrière la pill).
    - 2026-08-16 : demande explicite d'un effet frost — opacité de fond à
-     25%, flou à 15px, ici ET dans nav.css. C'est une DÉCISION PRODUIT
-     INVERSÉE, pas une correction de bug : le contenu redevient
-     partiellement visible derrière la pill, cette fois voulu.
-   Technique inchangée (sélecteur sibling scopé à ce wrapper, couleurs en
-   dur car .bottom-nav est un sibling, pas un descendant — les custom
-   properties du wrapper ne l'atteignent pas). Teinte sombre conservée (et
-   non le glass blanc de nav.css) : à 25% elle assombrit juste assez le
-   contenu qui transparaît pour que les icônes en encre gardent leur
-   contraste — voir dashboard.css pour les mesures. */
-.nutrition-redesign ~ .bottom-nav {
-  background: rgba(28,26,23,0.25);
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
-}
+     25%, flou à 15px, ici ET dans nav.css. DÉCISION PRODUIT INVERSÉE, pas
+     une correction de bug : le contenu redevient partiellement visible
+     derrière la pill, cette fois voulu.
+   - 2026-09-04 : retour à l'opaque (référence Apple Music, capture
+     fournie), cette fois centralisé plutôt que dupliqué par écran —
+     .bottom-nav pointe directement sur #FFFFFF/var(--dark-surface) dans
+     nav.css, cette surcharge par écran n'existe plus. Cohérent avec les 8
+     autres écrans restylés : plus de teinte à accorder au contenu qui
+     transparaissait, puisque rien ne transparaît plus derrière un fond
+     plein. */
 .nutrition-redesign ~ .bottom-nav .nav-btn svg {
   color: rgba(28,26,23,0.7);
 }

@@ -121,28 +121,16 @@ body.dashboard-body-bg {
    filter/couleur d'icône, voir grep JOURNAL.md) — rien d'équivalent à
    retirer ailleurs. */
 
-/* Fond frost sombre (.bottom-nav). Historique de cette règle, parce qu'elle
-   a déjà changé de sens une fois :
-   - 2026-08-14 : posée en `#1C1A17` OPAQUE + `backdrop-filter: none`, parce
-     que le glass clair de nav.css laissait voir les cartes pastel pleines
-     (Eau lavande, Sommeil rose) juste derrière — jugé sale sur capture
-     réelle. Généralisée ensuite aux 8 autres écrans restylés.
-   - 2026-08-16 : demande explicite de revenir à un effet frost, opacité de
-     fond fixée à 25% et flou à 15px. C'est donc un ARBITRAGE PRODUIT
-     INVERSÉ, pas la correction d'un bug : les cartes pastel redeviennent
-     partiellement visibles derrière la pill, cette fois assumé.
-   Couleur toujours en dur (pas var(--db-ink)) : les custom properties de
-   .dashboard-redesign n'atteignent pas .bottom-nav, qui est un sibling,
-   pas un descendant — rgba(28,26,23,·) doit rester en sync manuel avec
-   --db-ink. Teinte sombre volontairement conservée (et non le glass blanc
-   de nav.css) : à 25% elle assombrit juste assez le contenu qui transparaît
-   pour que les icônes en encre gardent leur contraste, ce qu'un frost blanc
-   ne ferait pas. */
-.dashboard-redesign ~ .bottom-nav {
-  background: rgba(28,26,23,0.25);
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
-}
+/* Fond de .bottom-nav — historique du frost par-écran retiré le
+   2026-09-04 : voir nav.css pour le détail complet (référence Apple
+   Music, fond opaque plein remplace le frost translucide sur les 9
+   écrans qui avaient cette surcharge, dont celui-ci). `.bottom-nav`
+   pointe désormais directement sur `#FFFFFF`/`var(--dark-surface)` dans
+   nav.css — plus besoin de dupliquer une valeur ici en sync manuel avec
+   --db-ink comme c'était le cas pour le frost (teinte fixe, pas de fond à
+   accorder au contenu qui transparaît puisque rien ne transparaît plus).
+   Historique complet (2026-08-14 opaque → 2026-08-16 frost → 2026-09-04
+   opaque de nouveau, cette fois centralisé) conservé dans nav.css. */
 
 /* Conséquence directe du passage au frost 25% ci-dessus, pas un choix
    esthétique séparé. Ces icônes étaient en crème (#F7F1E6 à 55%) et l'actif
