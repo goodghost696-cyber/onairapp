@@ -5947,3 +5947,34 @@ suivre (draft → ready → merge squash après poll Vercel vert).
 - **Gap à corriger** : `.cd-avatar.status-*` sur CoachDashboard-redesign.css a le même contraste
   cassé que `.cl-avatar.status-*` avait ici — petit fix isolé à faire dans une prochaine session (3
   règles CSS, même mécanique que le fix appliqué ici)
+
+
+---
+
+## Session du 03/09/2026 (suite) — Fix : régression contraste avatars sur CoachDashboard
+
+**Contexte** : fix ciblé, isolé du chantier mode sombre écran par écran. Régression identifiée lors de
+la migration ClientsList (PR #166) : `CoachDashboard-redesign.css` (PR #153, déjà mergée) avait
+exactement le même défaut de contraste que celui trouvé et corrigé sur `.cl-avatar.status-*`.
+
+**Cause** : `.cd-avatar.status-*` utilise les variantes `-ink` (olive-ink/lavender-ink/pink-ink) comme
+texte **autoportant** (l'initiale du prénom) sur `--cd-screen-bg`, qui fonce en sombre — pas un accent
+plein derrière ce texte précis, juste une bordure de la même teinte. Les tons `-ink` sont conçus pour
+contraster sur **leur propre** accent clair, pas sur un fond neutre qui s'assombrit.
+
+**Réalisé** : même fix que ClientsList — bascule sur l'accent plein correspondant (olive/lavande/rose,
+inchangés) plutôt que sur la variante `-ink`, pour les 3 états (on-track/at-risk/inactive).
+
+**Vérifié non concerné** : `.cd-status-on-track`/`at-risk`/`inactive` (les badges pleins, pas les
+avatars) — déjà fond accent + texte `-ink`, motif déjà correct, comme MemberDetail. `CoachDashboard.jsx`
+vérifié aussi : aucun équivalent JS-piloté (comme `GOAL_COLORS` sur ClientsList) — uniquement des
+classes CSS, déjà couvertes par ce fix CSS seul, aucun JSX touché.
+
+**Vérification** : `npm run build` OK, `grep` du bundle compilé confirmant les 3 nouvelles règles
+présentes.
+
+**Commit** : `16dbccb` (cherry-pické depuis `d9aef69`) — branche `fix/coachdashboard-avatar-contrast`,
+PR à suivre (draft → ready → merge squash après poll Vercel vert).
+
+**Reste à faire — chantier mode sombre** : ~10 écrans restants, ce fix n'en fait pas partie (dette
+technique isolée maintenant soldée, comme le trou des icônes de nav sur Nutrition, PR #161).
