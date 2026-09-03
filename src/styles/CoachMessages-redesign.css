@@ -37,6 +37,9 @@
 body.coachmessages-body-bg {
   background: #EFE7D9;
 }
+:root[data-theme="dark"] body.coachmessages-body-bg {
+  background: var(--dark-bg);
+}
 
 .coachmessages-screen {
   position: relative;
@@ -163,4 +166,52 @@ body.coachmessages-body-bg {
     gap: 12px;
     align-items: start;
   }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Mode sombre — 11e écran migré du chantier (PR #153 CoachDashboard, #154
+   MemberDetail, #155 Dashboard membre, #159 Nutrition, #160 Workout,
+   #162 AICoach, #163 Weekly, #164 WorkoutSession, #165 WorkoutLibrary,
+   #166 ClientsList), mêmes tokens --dark-* de global.css. Bloc clair
+   ci-dessus non touché (hex laissés en dur). CoachNavBar (sidebar) NON
+   touchée : gère déjà sa propre couleur sombre depuis le chantier
+   desktop (PR #145-#152). Pas de bulles de conversation dans ce fichier
+   — elles vivent dans Conversation.jsx (écran séparé, partagé membre/
+   coach), hors scope ici. Testable via ThemeContext (main.jsx) — toggle
+   Settings.jsx toujours désactivé.
+   ══════════════════════════════════════════════════════════════════════ */
+:root[data-theme="dark"] .coachmessages-redesign {
+  --cm-bg: var(--dark-bg);
+  --cm-screen-bg: var(--dark-bg);
+  --cm-card: var(--dark-surface);
+  --cm-card-sunken: var(--dark-surface-sunken);
+  --cm-ink: var(--dark-text-primary);
+  --cm-text-secondary: var(--dark-text-secondary);
+  --cm-text-tertiary: var(--dark-text-tertiary);
+  --cm-text-muted: var(--dark-text-muted);
+  /* Même valeur exacte que --cl-placeholder/--wl-placeholder/
+     --ws-placeholder — même token global réutilisé (PR #164/#165/#166),
+     pas de nouveau token nécessaire. */
+  --cm-placeholder: var(--dark-text-placeholder);
+  /* olive / olive-ink : inchangés en sombre, aucune surcharge de base —
+     voir cependant .cm-avatar ci-dessous (piège habituel). Magenta reste
+     inchangé aussi (aucun autre usage sur cet écran), sauf pour le point
+     d'alerte non lu ci-dessous. */
+}
+
+/* .cm-avatar : déjà accent-sur-clair (fond olive inchangé en sombre),
+   texte var(--cm-ink) épinglé sur olive-ink — piège habituel, comme sur
+   les 10 écrans précédents. Pas de variante de statut ici (contrairement
+   à ClientsList/CoachDashboard) : un seul avatar uniforme, donc pas de
+   piège inverse (-ink comme texte autoportant) à corriger sur cet écran. */
+:root[data-theme="dark"] .coachmessages-redesign .cm-avatar {
+  color: var(--cm-olive-ink);
+}
+
+/* .cm-unread-dot : exactement le cas "pastille de notification" cité en
+   exemple dans la spécification d'origine du chantier — une vraie
+   fonction d'alerte (message non lu), pas une décoration. Bascule sur
+   l'accent alerte plutôt que de rester inchangé. */
+:root[data-theme="dark"] .coachmessages-redesign .cm-unread-dot {
+  background: var(--dark-accent-alert);
 }
