@@ -5895,3 +5895,55 @@ et `wl-olive-ink` présents.
 
 **Reste à faire — chantier mode sombre** : ~11 écrans restants. `ExerciseModal.jsx`/`CoachPrograms.jsx`
 toujours hors scope.
+
+
+---
+
+## Session du 03/09/2026 (suite) — ClientsList migré (10e écran du chantier mode sombre)
+
+**Contexte** : suite des sessions PR #153/#154/#155/#159/#160/#161/#162/#163/#164/#165. Dixième écran,
+**premier écran coach** du chantier mode sombre — contexte différent des 9 écrans membre précédents.
+
+**Réalisé** :
+- `ClientsList-redesign.css` migré : bloc clair non touché, nouvelle surcharge
+  `:root[data-theme="dark"] .clientslist-redesign { ... }` faisant pointer chaque `--cl-*` vers son
+  token `--dark-*` global. **CoachNavBar (sidebar) volontairement non touchée** : gère déjà sa propre
+  couleur sombre depuis le chantier desktop (PR #145-#152), `coach-nav-redesign.css` non modifié.
+- `--cl-placeholder` réutilise `--dark-text-placeholder` (même valeur exacte que WorkoutSession/
+  WorkoutLibrary) — aucun nouveau token global.
+
+**Catch trouvé indépendamment, d'une nature différente des pièges habituels** : `.cl-avatar.status-*`
+utilise les variantes `-ink` (olive-ink/lavender-ink/pink-ink) comme texte **autoportant** (l'initiale
+du prénom) sur `--cl-screen-bg`, qui fonce en sombre — pas un accent plein derrière ce texte précis,
+juste une bordure de la même teinte. Les tons `-ink` sont conçus pour contraster sur **leur propre**
+accent clair, pas sur un fond neutre qui s'assombrit — sans correction, l'initiale devenait peu
+lisible (ton sombre sur fond sombre). Bascule sur l'accent plein correspondant (olive/lavande/rose)
+plutôt que sur la variante `-ink`, validé avec l'utilisateur avant application.
+
+**Même problème retrouvé, piloté en JS cette fois** : `GOAL_COLORS` (`ClientsList.jsx`, badge
+d'objectif à côté du prénom) utilise aussi olive-ink/lavender-ink en texte simple sur la carte qui
+fonce. Nouvelle `GOAL_COLORS_DARK` posée en parallèle (custom property `--cl-goal-dark` par instance,
+lue par une règle sombre dédiée, `!important` nécessaire pour battre le style inline) — `GOAL_COLORS`
+original reste strictement inchangé en clair. "Perte de poids" (magenta) reste inchangé, déjà assez
+lumineux sur fond sombre contrairement aux teintes `-ink`.
+
+**Gap signalé, pas corrigé ici (hors scope de cette PR)** : en vérifiant ce motif, découvert que
+**CoachDashboard (PR #153, déjà mergée) a exactement le même problème** sur `.cd-avatar.status-*` —
+contraste déjà cassé sur un écran déjà livré, pas repéré à l'époque (MemberDetail, lui, utilise un
+motif différent — badge plein accent + ink — déjà correct). À traiter dans une PR de suivi dédiée,
+comme le trou des icônes de nav sur Nutrition (PR #161).
+
+`.cl-filter-chip.active` (piège habituel, texte encre sur fond olive fixe) épinglé sur `olive-ink`,
+comme sur les 9 écrans précédents.
+
+**Vérification** : `npm run build` OK, `grep` du bundle compilé (CSS et JS) confirmant tokens et
+wiring JSX. Diff JSX relu : uniquement des ajouts.
+
+**Commit** : `3bdc030` (cherry-pické depuis `89cb038`) — branche `feat/dark-theme-clientslist`, PR à
+suivre (draft → ready → merge squash après poll Vercel vert).
+
+**Reste à faire — chantier mode sombre** :
+- ~10 écrans restants
+- **Gap à corriger** : `.cd-avatar.status-*` sur CoachDashboard-redesign.css a le même contraste
+  cassé que `.cl-avatar.status-*` avait ici — petit fix isolé à faire dans une prochaine session (3
+  règles CSS, même mécanique que le fix appliqué ici)

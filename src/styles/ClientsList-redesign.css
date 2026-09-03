@@ -41,6 +41,9 @@
 body.clientslist-body-bg {
   background: #EFE7D9;
 }
+:root[data-theme="dark"] body.clientslist-body-bg {
+  background: var(--dark-bg);
+}
 
 .clientslist-screen {
   position: relative;
@@ -308,4 +311,72 @@ body.clientslist-body-bg {
     gap: 12px;
     align-items: start;
   }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Mode sombre — 10e écran migré du chantier (PR #153 CoachDashboard, #154
+   MemberDetail, #155 Dashboard membre, #159 Nutrition, #160 Workout,
+   #162 AICoach, #163 Weekly, #164 WorkoutSession, #165 WorkoutLibrary),
+   mêmes tokens --dark-* de global.css. Bloc clair ci-dessus non touché
+   (hex laissés en dur). CoachNavBar (sidebar) NON touchée ici : gère déjà
+   sa propre couleur sombre depuis le chantier desktop (PR #145-#152),
+   voir coach-nav-redesign.css. Testable via ThemeContext (main.jsx) —
+   toggle Settings.jsx toujours désactivé.
+   ══════════════════════════════════════════════════════════════════════ */
+:root[data-theme="dark"] .clientslist-redesign {
+  --cl-bg: var(--dark-bg);
+  --cl-screen-bg: var(--dark-bg);
+  --cl-card: var(--dark-surface);
+  --cl-card-sunken: var(--dark-surface-sunken);
+  --cl-track: var(--dark-border);
+  --cl-ink: var(--dark-text-primary);
+  --cl-text-secondary: var(--dark-text-secondary);
+  --cl-text-tertiary: var(--dark-text-tertiary);
+  --cl-text-muted: var(--dark-text-muted);
+  /* Même valeur exacte que --wl-placeholder/--ws-placeholder — même token
+     global réutilisé (PR #164/#165), pas de nouveau token nécessaire. */
+  --cl-placeholder: var(--dark-text-placeholder);
+  /* olive / olive-ink / lavande / lavande-ink / rose / rose-ink / magenta :
+     inchangés en sombre, aucune surcharge de base — voir cependant les 2
+     cas ci-dessous, où les variantes -ink sont utilisées comme texte
+     autoportant (pas appairées à leur propre fond accent), un cas
+     différent du piège "texte encre sur fond accent" déjà rencontré. */
+}
+
+/* .cl-filter-chip.active : déjà accent-sur-clair (fond olive inchangé en
+   sombre), texte var(--cl-ink) épinglé sur olive-ink — piège habituel,
+   déjà rencontré sur les 9 écrans précédents. */
+:root[data-theme="dark"] .clientslist-redesign .cl-filter-chip.active {
+  color: var(--cl-olive-ink);
+}
+
+/* .cl-avatar.status-* : PAS le piège habituel — ici c'est la variante
+   -ink (olive-ink/lavender-ink/pink-ink) qui sert de texte autoportant
+   (l'initiale du prénom), sur un fond --cl-screen-bg qui, lui, fonce en
+   sombre (pas un accent plein derrière ce texte précis, juste une
+   bordure de la même teinte). Les tons -ink sont conçus pour contraster
+   sur LEUR PROPRE accent clair, pas sur un fond neutre qui devient sombre
+   — sans correction, l'initiale deviendrait peu lisible (ton sombre sur
+   fond sombre). Bascule donc sur l'accent plein (olive/lavande/rose,
+   inchangés) plutôt que sur leur variante -ink. Trouvé en auditant cet
+   écran : CoachDashboard (PR #153, déjà mergée) a exactement le même
+   motif sur .cd-avatar.status-* et n'avait pas été corrigé à l'époque —
+   signalé séparément, pas corrigé ici (hors scope de cette PR). */
+:root[data-theme="dark"] .clientslist-redesign .cl-avatar.status-on-track {
+  color: var(--cl-olive);
+}
+:root[data-theme="dark"] .clientslist-redesign .cl-avatar.status-at-risk {
+  color: var(--cl-lavender);
+}
+:root[data-theme="dark"] .clientslist-redesign .cl-avatar.status-inactive {
+  color: var(--cl-pink);
+}
+
+/* .cl-goal-tag (badge d'objectif, ClientsList.jsx) : même problème que
+   les avatars ci-dessus, mais piloté en style inline (GOAL_COLORS) — voir
+   GOAL_COLORS_DARK dans le JSX, posée en custom property --cl-goal-dark
+   par instance, lue uniquement ici. !important nécessaire pour battre le
+   style inline existant (color, jamais retiré, reste la valeur claire). */
+:root[data-theme="dark"] .clientslist-redesign .cl-goal-tag {
+  color: var(--cl-goal-dark) !important;
 }
