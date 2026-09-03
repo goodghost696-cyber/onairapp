@@ -45,5 +45,22 @@
      it track the same width as the content above it. */
   #root.member-shell .bottom-nav {
     max-width: min(90vw, 720px);
+    /* 2026-09-03 — nav.css est passé d'une pilule flottante à un bandeau
+       plein-largeur ancré aux 3 bords (Option B, mobile uniquement : le
+       bug du vide sous la pilule ne concerne que le rendu mobile réel,
+       safe-area iOS). Sur desktop, rien de tout cela n'a de sens (pas de
+       safe-area, pas de geste de bord) — on restaure explicitement ici la
+       géométrie flottante d'origine (centrée, détachée du bord, coins
+       pleinement arrondis, bordure sur les 4 côtés) plutôt que de laisser
+       le bandeau plein-largeur mobile s'appliquer aussi ≥900px. */
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    bottom: env(safe-area-inset-bottom);
+    width: calc(100% - 24px);
+    align-items: center;
+    padding: 10px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--nav-border);
   }
 }

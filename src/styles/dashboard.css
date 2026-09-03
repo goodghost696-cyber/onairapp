@@ -106,10 +106,20 @@ body.dashboard-body-bg {
    revert (cassé en rendu réel, voir nav.css et JOURNAL.md), donc la
    valeur partagée de nav.css est de nouveau `env(safe-area-inset-
    bottom)` et cette règle explicite redevient nécessaire, pour la même
-   raison qu'au 14/08. */
-.dashboard-redesign ~ .bottom-nav {
-  bottom: env(safe-area-inset-bottom);
-}
+   raison qu'au 14/08.
+
+   Retirée pour de bon le 2026-09-03 (Option B, bandeau plein-largeur
+   ancré) : nav.css repasse à `bottom:0` de façon définitive, cette fois
+   sur une forme flush sur 3 bords (pas une pilule détachée agrandie —
+   voir nav.css pour la distinction structurelle qui évite de reproduire
+   l'échec de PR #156). Si cette règle restait en place, elle écraserait
+   silencieusement le nouveau `bottom:0` par l'ancienne valeur
+   `env(safe-area-inset-bottom)`, spécifiquement sur Dashboard, et
+   reproduirait exactement le vide que ce changement corrige. Vérifié :
+   c'était le SEUL écran des 9 avec une surcharge `bottom:` sur
+   `~ .bottom-nav` (les 8 autres ne touchent que background/backdrop-
+   filter/couleur d'icône, voir grep JOURNAL.md) — rien d'équivalent à
+   retirer ailleurs. */
 
 /* Fond frost sombre (.bottom-nav). Historique de cette règle, parce qu'elle
    a déjà changé de sens une fois :
