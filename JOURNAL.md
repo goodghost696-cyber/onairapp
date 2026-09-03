@@ -6110,3 +6110,47 @@ suivre (draft → ready → merge squash après poll Vercel vert).
 série "handoff (8)" sont maintenant tous migrés (CoachDashboard, MemberDetail, ClientsList,
 CoachMessages, CoachSettings — CoachPrograms reste à confirmer/vérifier). `Conversation.jsx` toujours
 hors périmètre en attendant une décision de refonte.
+
+
+---
+
+## Session du 03/09/2026 (suite) — CoachPrograms migré (13e écran, dernier écran coach du chantier mode sombre)
+
+**Contexte** : suite des sessions PR #153-#170. Treizième écran, **dernier écran coach restant** — les
+6 écrans de la série "handoff Redesign interface VOLTA (8)" sont maintenant tous migrés (CoachDashboard,
+MemberDetail, ClientsList, CoachMessages, CoachSettings, CoachPrograms).
+
+**Réalisé** :
+- `CoachPrograms-redesign.css` migré : bloc clair non touché, nouvelle surcharge
+  `:root[data-theme="dark"] .coachprograms-redesign { ... }` faisant pointer chaque `--cp-*` vers son
+  token `--dark-*` global.
+- Aucune couleur pilotée en JS — `CoachPrograms.jsx` non touché.
+- **Pas de nav sur cet écran** (confirmé PR #145, écran secondaire comme MemberDetail) — rien à
+  vérifier de ce côté.
+- **Aucun composant partagé non migré utilisé ici** (contrairement à `DeleteAccountButton.jsx` sur
+  CoachSettings) — vérifié comme demandé, écran propre.
+
+**`--cp-placeholder`** réutilise `--dark-text-placeholder` (même valeur exacte que les écrans
+précédents) — aucun nouveau token global.
+
+**`.cp-add-btn` / `.cp-sheet-assign-btn`** (piège habituel, texte encre sur olive fixe) épinglés sur
+`olive-ink`, comme sur les 12 écrans précédents.
+
+**`.cp-sheet-checkbox.checked`** : déjà "sombre par conception" (fond encre plein + glyphe "✓" olive
+indépendamment sûr) — même esprit que `.finish-session-btn`/`.wl-toast`. Fond ré-épinglé sur
+`--dark-bg`, glyphe olive non touché (déjà correct).
+
+**`--cp-magenta`** : usage **unique** sur tout l'écran (`.cp-delete-link.confirm`, "Confirmer ?" avant
+suppression d'un programme) — pas de token `--cp-danger` séparé comme sur CoachSettings, mais c'est la
+confirmation d'une action destructive : le cas le plus net de "vraie alerte" rencontré jusqu'ici.
+Bascule sur l'accent alerte.
+
+**Vérification** : `npm run build` OK, `grep` du bundle compilé confirmant tous les tokens `--dark-*`
+présents.
+
+**Commit** : `7826966` (cherry-pické depuis `35add36`) — branche `feat/dark-theme-coachprograms`, PR à
+suivre (draft → ready → merge squash après poll Vercel vert).
+
+**Reste à faire — chantier mode sombre** : ~7 écrans membre redesignés restants (Settings, Onboarding,
+Login/Signup possibles candidats — à confirmer selon l'audit initial). Tous les écrans coach sont
+maintenant migrés. `Conversation.jsx` toujours hors périmètre en attendant une décision de refonte.
