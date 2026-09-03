@@ -6252,3 +6252,83 @@ suivre (draft → ready → merge squash après poll Vercel vert).
 `landing-redesign.css`, `auth-redesign.css`, `splash-redesign.css`), plus le point d'infrastructure
 non résolu sur `coach-nav-redesign.css`. `Conversation.jsx` toujours hors périmètre en attendant une
 décision de refonte.
+
+## Session du 03/09/2026 (suite) — Fix nav membre : bandeau ancré (Option B) remplace la pilule flottante
+
+**Contexte** : bug remonté par l'utilisateur — "la pilule de nav membre n'est plus positionnée en bas
+de l'écran", avec 2 captures comparatives (hier vs aujourd'hui) confirmant visuellement un vide
+grandissant sous la pilule. Diagnostic en 2 passes, strictement read-only avant tout fix (consigne
+explicite) :
+- 1ère passe (diff des 2 derniers PR — Messages/Settings) : rien trouvé, ni dans nav.css ni dans les
+  fichiers de layout touchés récemment.
+- 2e passe (diff élargi depuis le dernier commit connu-bon `e89b6ef`, PR #158, jusqu'à HEAD, sur TOUT
+  fichier pouvant affecter la hauteur/position de `.bottom-nav` — pas seulement nav.css) : conclusion,
+  **ce n'est pas une régression de code**. Le vide sous la pilule est un bug préexistant, documenté et
+  jamais résolu depuis PR #156/#157/#158 (fond translucide de la pilule ne couvrant pas la safe-area
+  iOS), qui devient visiblement perceptible pour la première fois à mesure que davantage d'écrans
+  passent en mode sombre réel — la pilule frost se distinguait mal d'un fond crème non contrasté,
+  elle tranche nettement sur un fond sombre. Messages (PR #173, migré le jour même du signalement) est
+  le déclencheur de la perception, pas la cause.
+
+**Décision produit** : ne pas retenter un patch partiel sur la pilule (déjà tenté 2 fois, PR #156
+cassée en rendu réel, PR #158 insuffisante) — remplacement complet par un bandeau plein-largeur ancré
+aux 3 bords réels de l'écran (gauche/droite/bas), Option B validée sur mockup Claude Design.
+
+**Pourquoi cette fois est structurellement différente de PR #156** : PR #156 avait tenté d'étendre le
+fond jusqu'au bord réel sur une pilule *pleinement arrondie et détachée* — agrandir cette forme avait
+produit en rendu réel un renflement disproportionné (voir nav.css, historique complet en commentaire).
+Le bandeau de cette session est déjà flush sur 3 côtés dès sa géométrie de base : l'étendre jusqu'au
+bord ne fait qu'ajouter une bande plate en bas, sans déformer de silhouette à agrandir.
+
+**Réalisé** :
+- `nav.css` — `.bottom-nav` : `bottom/left/right: 0`, `width: 100%` (au lieu de la pilule centrée à
+  marge). `padding` bas passe à `calc(10px + env(safe-area-inset-bottom))` — la safe-area est
+  désormais absorbée en padding **interne**, sur le contenu, pas en décalage externe du conteneur
+  (le pattern documenté comme correct depuis les sessions précédentes, mal exécuté sur la pilule en
+  PR #156). `border-radius` limité aux coins hauts (`24px 24px 0 0`, valeur reprise du mockup —
+  **à confirmer sur rendu réel**, non vérifiable directement depuis cette session). `border`
+  simplifiée à `border-top` seul (les 3 autres bords coïncident désormais avec le bord réel de
+  l'écran).
+- `nav.css` — `.nav-indicator` : `bottom: 6px` remplacé par `height: calc(100% - 12px -
+  env(safe-area-inset-bottom))` — l'ancien calcul aurait décalé la pastille de sélection vers le bas,
+  hors alignement avec les icônes, une fois le padding bas agrandi par la safe-area.
+- `member.css` — nouvelle surcharge desktop (`@media (min-width: 900px)`) restaurant explicitement la
+  géométrie flottante d'origine (pilule centrée, détachée, coins pleinement arrondis, bordure 4
+  côtés) : le bandeau plein-largeur est un traitement spécifiquement mobile (safe-area iOS), sans
+  justification sur desktop où l'ancien rendu doit rester identique.
+- `dashboard.css` — suppression de la surcharge redondante `.dashboard-redesign ~ .bottom-nav {
+  bottom: env(safe-area-inset-bottom) }` (restaurée lors du revert de PR #156/#157). Laissée en place,
+  elle aurait silencieusement écrasé le nouveau `bottom: 0` **spécifiquement sur Dashboard**,
+  reproduisant exactement l'échec de PR #156. Vérifié par grep sur les 9 écrans ayant une surcharge
+  `~ .bottom-nav {...}` : Dashboard était le seul à toucher `bottom`, les 8 autres ne touchent que
+  `background`/`backdrop-filter`/couleur d'icône — rien d'équivalent ailleurs à corriger.
+
+**Non modifié, vérifié par calcul plutôt que par supposition** : aucun `padding-bottom`/clearance
+d'écran membre n'a besoin de changer. Preuve : l'empreinte totale de la nav depuis le vrai bas
+d'écran est identique entre l'ancien et le nouveau design (`safeArea + 58px` dans les deux cas — la
+pilule ajoutait `safeArea` en marge externe puis 58px de hauteur propre ; le bandeau ajoute 58px de
+hauteur propre dont `safeArea` en padding interne, à partir de `bottom: 0`). Vérifié contre chaque
+valeur de clearance réelle du code : `global.css` (`calc(76px + env(...))`), `fab.css`
+(`calc(60px + 16px + env(...))`), `workoutsession-redesign.css` (`calc(144px + env(...))`,
+`calc(160px + env(...))`), `RestTimer.css`, `AICoach.jsx` (valeurs hardcodées 185/100, marge large).
+
+**Vérification** : `npm run build` OK. Grep du bundle compilé confirmant `bottom:0` +
+`border-radius:24px 24px 0 0` sur `.bottom-nav`, `height:calc(...)` sur `.nav-indicator`, la
+surcharge desktop restaurant `border-radius:999px` sur `#root.member-shell .bottom-nav`, et
+confirmant explicitement l'absence de la surcharge `bottom:` retirée de `dashboard.css`. Mode clair
+et sombre vérifiés **par calcul** (la structure padding/geometrie ne dépend d'aucun token de couleur,
+donc identique dans les deux modes) — pas de rendu réel effectué depuis cette session.
+
+**Commit** : cherry-pické sur branche `feat/nav-bandeau-ancre` — PR à suivre (draft → ready → merge
+squash après poll Vercel vert).
+
+**⚠️ IMPORTANT — non résolu tant que non vérifié en rendu réel** : contrairement aux PR précédentes
+sur ce sujet, ce fix **ne doit pas être considéré comme terminé après le merge**. L'historique
+(PR #156 cassée en rendu réel malgré un build/grep propres, jamais vérifiée avant merge) impose une
+vérification visuelle réelle sur iPhone (mode clair ET sombre) avant de clore ce sujet. Point
+spécifiquement à vérifier en rendu réel : la valeur `border-radius: 24px` des coins hauts (reprise du
+mockup sans confirmation directe), et l'absence de tout renflement/débordement visuel du bandeau dans
+la zone de geste iOS.
+
+**Reste à faire — chantier mode sombre** : inchangé, voir entrée précédente (4 écrans restants +
+`coach-nav-redesign.css` + `Conversation.jsx` hors périmètre).
