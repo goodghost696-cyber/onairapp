@@ -6016,3 +6016,47 @@ et `cm-olive-ink` présents.
 
 **Reste à faire — chantier mode sombre** : ~9 écrans restants. `Conversation.jsx` (bulles de chat
 membre/coach) reste un candidat naturel pour une prochaine migration.
+
+
+---
+
+## Session du 03/09/2026 (suite) — Conversation.jsx vérifié, hors périmètre du chantier (pas de migration)
+
+**Contexte** : suite des sessions PR #153-#168. Vérification demandée de `Conversation.jsx` (bulles de
+chat, partagé membre/coach), identifié dans l'audit initial comme "déjà 100% var(), pas de hex en dur"
+— potentiellement déjà fonctionnel en sombre sans migration nécessaire.
+
+**Constat, vérifié avant tout changement (aucun code touché cette session)** : `Conversation.jsx` n'a
+aucun fichier CSS dédié — tout est en style inline référençant les tokens **globaux partagés "corail"**
+de `global.css` (`--bg`, `--accent`, `--accent-ink`, `--surface-2`, `--text-primary`, `--text-muted`,
+`--border`), pas les tokens `--dark-*` posés en PR #153 et consommés par les 11 écrans redesignés
+(chacun avec ses propres tokens locaux `--xx-*` scopés à son wrapper `.xxx-redesign`).
+
+Vérifié `:root` vs `:root[data-theme="dark"]` dans `global.css` : **identiques valeur pour valeur**
+(`--bg: #E8552B`, `--accent: #F0C14B`, etc. dans les deux blocs) — jamais touché par ce chantier, à
+raison, puisque partagé avec tous les écrans pas encore redesignés. **Conséquence concrète** :
+basculer `data-theme="dark"` n'a aujourd'hui strictement aucun effet visuel sur cet écran — mêmes
+couleurs corail dans les deux modes. Ce n'est donc PAS "déjà fonctionnel en sombre" malgré l'usage
+exclusif de `var()` — c'est un écran non couvert par ce chantier, via un mécanisme différent (tokens
+partagés non stylés) plutôt que du hex en dur.
+
+**Pourquoi pas de migration cette session** : contrairement aux 11 écrans précédents (tokens locaux
+scopés, surchargeables sans risque de fuite), Conversation.jsx n'a pas ce scoping. Deux vraies options
+identifiées, aux implications différentes :
+1. Lui donner son propre fichier `*-redesign.css` avec des tokens locaux scopés (comme les 11 autres)
+   — mais son rendu clair actuel (palette corail) diffère visuellement du système "pastel chaud" déjà
+   en place ailleurs ; ce serait une mini-refonte visuelle complète (clair + sombre), pas un simple
+   ajout de tokens sombres.
+2. Donner de vraies valeurs sombres au bloc global `--bg`/`--accent`/etc. — activerait le mode sombre
+   sur *tous* les écrans pas encore redesignés d'un coup, bien au-delà du périmètre d'un seul écran.
+
+**Décision de l'utilisateur** : rien pour l'instant — laisser Conversation.jsx tel quel (corail,
+inchangé par le thème), signalé ici comme écran identifié mais hors de la portée actuelle du chantier,
+à traiter plus tard avec une vraie décision de refonte (probablement l'option 1 ci-dessus, alignée
+avec la direction "pastel chaud" déjà adoptée partout ailleurs).
+
+**Aucun commit de code cette session** (uniquement cette entrée journal).
+
+**Reste à faire — chantier mode sombre** : ~9 écrans redesignés restants (candidats "classiques",
+même pattern que les 11 précédents). `Conversation.jsx` retiré de cette liste tant que la décision de
+refonte n'est pas prise — à ne pas retenter en l'état sans repasser par cette même discussion.
