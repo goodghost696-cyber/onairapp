@@ -860,3 +860,26 @@ body.coachdashboard-body-bg {
 :root[data-theme="dark"] .coachdashboard-redesign .cd-d-chart-bar.highest {
   background: var(--dark-accent-olive);
 }
+
+/* Fix régression identifiée sur ClientsList (PR #166) — même motif ici :
+   .cd-avatar.status-* utilise les variantes -ink (olive-ink/lavender-ink/
+   pink-ink) comme texte AUTOPORTANT (l'initiale du prénom) sur
+   --cd-screen-bg, qui fonce en sombre (voir surcharge ci-dessus) — pas un
+   accent plein derrière ce texte précis, juste une bordure de la même
+   teinte. Les tons -ink sont conçus pour contraster sur LEUR PROPRE
+   accent clair, pas sur un fond neutre qui s'assombrit — sans cette
+   correction, l'initiale devient peu lisible (ton sombre sur fond
+   sombre). Bascule sur l'accent plein correspondant (olive/lavande/rose,
+   inchangés) plutôt que sur la variante -ink. .cd-status-on-track/
+   at-risk/inactive (badges pleins, pas les avatars) ne sont PAS concernés
+   : déjà fond accent + texte -ink, motif déjà correct, comme sur
+   MemberDetail. */
+:root[data-theme="dark"] .coachdashboard-redesign .cd-avatar.status-on-track {
+  color: var(--cd-olive);
+}
+:root[data-theme="dark"] .coachdashboard-redesign .cd-avatar.status-at-risk {
+  color: var(--cd-lavender);
+}
+:root[data-theme="dark"] .coachdashboard-redesign .cd-avatar.status-inactive {
+  color: var(--cd-pink);
+}
