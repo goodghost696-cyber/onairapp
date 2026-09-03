@@ -5978,3 +5978,41 @@ PR à suivre (draft → ready → merge squash après poll Vercel vert).
 
 **Reste à faire — chantier mode sombre** : ~10 écrans restants, ce fix n'en fait pas partie (dette
 technique isolée maintenant soldée, comme le trou des icônes de nav sur Nutrition, PR #161).
+
+
+---
+
+## Session du 03/09/2026 (suite) — CoachMessages migré (11e écran du chantier mode sombre)
+
+**Contexte** : suite des sessions PR #153/#154/#155/#159-167. Onzième écran, écran coach, deuxième
+depuis ClientsList.
+
+**Réalisé** :
+- `CoachMessages-redesign.css` migré : bloc clair non touché, nouvelle surcharge
+  `:root[data-theme="dark"] .coachmessages-redesign { ... }` faisant pointer chaque `--cm-*` vers son
+  token `--dark-*` global. **CoachNavBar non touchée**, comme sur ClientsList.
+- `--cm-placeholder` réutilise `--dark-text-placeholder` (même valeur exacte que ClientsList/
+  WorkoutLibrary/WorkoutSession) — aucun nouveau token global.
+- Aucune couleur pilotée en JS — `CoachMessages.jsx` non touché.
+
+**Clarification de périmètre signalée** : ce fichier ne couvre que la **liste** des conversations
+(avatars/aperçus/heure) — pas de bulles de chat ici, elles vivent dans `Conversation.jsx` (écran
+séparé, partagé membre/coach), hors scope de cette migration.
+
+**`.cm-avatar`** (piège habituel, texte encre sur fond olive fixe) épinglé sur `olive-ink`, comme sur
+les 10 écrans précédents. Pas de variante de statut sur cet écran (avatar uniforme, contrairement à
+ClientsList/CoachDashboard) — pas de piège inverse à corriger ici (vérifié explicitement, comme
+demandé après la régression PR #167).
+
+**`.cm-unread-dot`** (magenta) : exactement le cas "pastille de notification" cité en exemple dans la
+spécification d'origine du chantier — vraie fonction d'alerte (message non lu), bascule vers l'accent
+alerte. Cas le plus net rencontré jusqu'ici.
+
+**Vérification** : `npm run build` OK, `grep` du bundle compilé confirmant tous les tokens `--dark-*`
+et `cm-olive-ink` présents.
+
+**Commit** : `747ae68` (cherry-pické depuis `826462c`) — branche `feat/dark-theme-coachmessages`, PR
+à suivre (draft → ready → merge squash après poll Vercel vert).
+
+**Reste à faire — chantier mode sombre** : ~9 écrans restants. `Conversation.jsx` (bulles de chat
+membre/coach) reste un candidat naturel pour une prochaine migration.
