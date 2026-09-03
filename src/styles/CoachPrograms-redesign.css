@@ -40,6 +40,9 @@
 body.coachprograms-body-bg {
   background: #EFE7D9;
 }
+:root[data-theme="dark"] body.coachprograms-body-bg {
+  background: var(--dark-bg);
+}
 
 .coachprograms-screen {
   position: relative;
@@ -406,4 +409,60 @@ body.coachprograms-body-bg {
     gap: 12px;
     align-items: start;
   }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Mode sombre — 13e écran migré du chantier, dernier écran coach restant
+   (PR #153 CoachDashboard, #154 MemberDetail, #155 Dashboard membre,
+   #159 Nutrition, #160 Workout, #162 AICoach, #163 Weekly, #164
+   WorkoutSession, #165 WorkoutLibrary, #166 ClientsList, #168
+   CoachMessages, #170 CoachSettings), mêmes tokens --dark-* de
+   global.css. Bloc clair ci-dessus non touché (hex laissés en dur). Pas
+   de nav sur cet écran (confirmé PR #145, écran secondaire comme
+   MemberDetail), rien à vérifier de ce côté. Aucun composant partagé
+   non migré utilisé ici (contrairement à DeleteAccountButton sur
+   CoachSettings). Testable via ThemeContext (main.jsx) — toggle
+   Settings.jsx toujours désactivé.
+   ══════════════════════════════════════════════════════════════════════ */
+:root[data-theme="dark"] .coachprograms-redesign {
+  --cp-bg: var(--dark-bg);
+  --cp-screen-bg: var(--dark-bg);
+  --cp-card: var(--dark-surface);
+  --cp-card-sunken: var(--dark-surface-sunken);
+  --cp-divider: var(--dark-border);
+  --cp-border: var(--dark-border);
+  --cp-ink: var(--dark-text-primary);
+  --cp-text-secondary: var(--dark-text-secondary);
+  --cp-text-tertiary: var(--dark-text-tertiary);
+  --cp-text-muted: var(--dark-text-muted);
+  /* Même valeur exacte que --cs-placeholder/--cl-placeholder/etc. — même
+     token global réutilisé, pas de nouveau token nécessaire. */
+  --cp-placeholder: var(--dark-text-placeholder);
+  /* --cp-magenta : usage unique sur tout l'écran (.cp-delete-link.confirm,
+     "Confirmer ?" avant suppression d'un programme) — pas de token
+     --cp-danger séparé comme sur CoachSettings, mais c'est la
+     confirmation d'une action destructive : la fonction d'alerte la plus
+     nette possible. Basculé sur l'accent alerte plutôt que resté
+     décoratif. */
+  --cp-magenta: var(--dark-accent-alert);
+  /* olive / olive-ink : inchangés en sombre, aucune surcharge de base —
+     voir cependant les 3 cas ci-dessous. */
+}
+
+/* .cp-add-btn / .cp-sheet-assign-btn : déjà accent-sur-clair (fond olive
+   inchangé en sombre), texte var(--cp-ink) épinglé sur olive-ink — piège
+   habituel, comme sur les 12 écrans précédents. */
+:root[data-theme="dark"] .coachprograms-redesign .cp-add-btn,
+:root[data-theme="dark"] .coachprograms-redesign .cp-sheet-assign-btn {
+  color: var(--cp-olive-ink);
+}
+
+/* .cp-sheet-checkbox.checked : déjà encre pleine + glyphe "✓" olive
+   (couleur héritée de la règle de base, indépendamment sûre) — déjà
+   "sombre par conception", même esprit que .finish-session-btn/
+   .wl-toast. Fond ré-épinglé sur --dark-bg plutôt que de suivre le
+   remap --cp-ink -> crème ; glyphe olive non touché (déjà correct). */
+:root[data-theme="dark"] .coachprograms-redesign .cp-sheet-checkbox.checked {
+  background: var(--dark-bg);
+  border-color: var(--dark-bg);
 }
