@@ -26,6 +26,11 @@
   --auth-olive: #EBEB7D;
   --auth-lavender: #A3AEFE;
   --auth-magenta: #B62472;
+  /* Absent jusqu'ici — ajouté pour le mode sombre (.auth-tab.active).
+     Valeur reprise des écrans les plus récemment migrés (#55522E) plutôt
+     que l'ancienne #6E6A3F — incohérence app-wide déjà notée dans
+     JOURNAL.md, pas une nouvelle teinte inventée. */
+  --auth-olive-ink: #55522E;
   font-family: 'Poppins', system-ui, -apple-system, sans-serif;
   background: var(--auth-bg);
   color: var(--auth-ink);
@@ -49,6 +54,9 @@
 
 body.auth-body-bg {
   background: #EFE7D9;
+}
+:root[data-theme="dark"] body.auth-body-bg {
+  background: var(--dark-bg);
 }
 
 /* Login.jsx uniquement — remplace le style inline qui portait ces mêmes
@@ -208,4 +216,62 @@ body.auth-body-bg {
   letter-spacing: 0.1em;
   color: var(--auth-ink);
   font-variant-numeric: tabular-nums;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Mode sombre — 17e écran migré du chantier (voir JOURNAL.md pour la
+   liste complète), mêmes tokens --dark-* de global.css. Bloc clair
+   ci-dessus non touché (hex laissés en dur). Aucune couleur pilotée en
+   JS — Login.jsx/CoachSignup.jsx non touchés. Landing.jsx N'UTILISE PAS
+   ce fichier (landing-redesign.css séparé, écran forcé en sombre en
+   permanence indépendamment du thème — hors scope, voir JOURNAL.md).
+   Pas de .bottom-nav sur ces 2 écrans (routes publiques, hors
+   MemberLayout/CoachLayout) — pas de surcharge nav nécessaire ici,
+   contrairement aux écrans membre/coach. Testable via ThemeContext
+   (main.jsx) — toggle Settings.jsx toujours désactivé.
+   ══════════════════════════════════════════════════════════════════════ */
+:root[data-theme="dark"] .auth-redesign {
+  --auth-bg: var(--dark-bg);
+  --auth-card: var(--dark-surface);
+  --auth-field-border: var(--dark-border);
+  --auth-ink: var(--dark-text-primary);
+  --auth-text-secondary: var(--dark-text-secondary);
+  --auth-text-muted: var(--dark-text-muted);
+  /* olive / lavender / magenta : inchangés en sombre, aucune surcharge de
+     base — voir cependant .auth-tab.active et .auth-invite-card
+     ci-dessous. .auth-primary-btn/.auth-secondary-btn n'ont pas besoin du
+     même traitement que .auth-tab.active : leurs deux couleurs (background
+     ET color) suivent toutes les deux ce même remap --auth-ink/--auth-bg/
+     --auth-card, sans accent fixe intercalé — l'inversion clair→sombre
+     reste donc auto-cohérente, vérifié avant de décider de ne pas y
+     toucher (même raisonnement que .sc-add-btn sur Scan). */
+}
+
+/* .auth-tab.active : déjà accent-sur-clair (fond olive inchangé en
+   sombre), texte var(--auth-ink) épinglé sur olive-ink — piège habituel,
+   comme sur les 16 écrans précédents. */
+:root[data-theme="dark"] .auth-redesign .auth-tab.active {
+  color: var(--auth-olive-ink);
+}
+
+/* .auth-error/.auth-success : tokens globaux partagés non migrés
+   (var(--danger)/var(--success), global.css), mêmes tokens que le cas
+   déjà traité sur Settings — mais contraste MESURÉ ici plutôt que
+   supposé identique, contexte différent (texte flottant directement sur
+   --auth-bg/--dark-bg, pas sur une carte). #FF3B3B sur --dark-bg
+   (#141310) : 5,26:1. #1FD66B sur --dark-bg : 9,64:1. Les deux largement
+   au-dessus du seuil AA 4,5:1 — aucune surcharge nécessaire,
+   contrairement au cas Settings où le contraste mesuré était
+   insuffisant. */
+
+/* .auth-invite-card : bordure magenta mesurée à ~2,21:1 contre
+   --dark-surface (sous le minimum 3:1 pour un composant UI/bordure,
+   WCAG 1.4.11) — cas signalé et tranché avec l'utilisateur avant
+   modification, fonction décorative (mise en avant du code
+   d'invitation), pas une alerte au sens strict. Bascule sur le même
+   accent alerte que les autres écrans (#FF6FA5, ~5,1:1 contre
+   --dark-surface) plutôt que de laisser un contraste insuffisant ou de
+   diverger vers une teinte neutre — décision retenue. */
+:root[data-theme="dark"] .auth-redesign .auth-invite-card {
+  border-color: var(--dark-accent-alert);
 }
