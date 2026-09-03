@@ -6154,3 +6154,54 @@ suivre (draft → ready → merge squash après poll Vercel vert).
 **Reste à faire — chantier mode sombre** : ~7 écrans membre redesignés restants (Settings, Onboarding,
 Login/Signup possibles candidats — à confirmer selon l'audit initial). Tous les écrans coach sont
 maintenant migrés. `Conversation.jsx` toujours hors périmètre en attendant une décision de refonte.
+
+
+---
+
+## Session du 03/09/2026 (suite) — Settings (membre) migré (14e écran du chantier mode sombre)
+
+**Contexte** : suite des sessions PR #153-#171. Quatorzième écran, le plus dense hex-en-dur des 6
+écrans restants identifiés dans l'audit précédent (16 hex).
+
+**Réalisé** :
+- `settings-redesign.css` migré : bloc clair non touché, nouvelle surcharge
+  `:root[data-theme="dark"] .settings-redesign { ... }` faisant pointer chaque `--set-*` vers son
+  token `--dark-*` global.
+- `body.settings-body-bg` et surcharge sombre des icônes de nav : ajoutées.
+
+**`DeleteAccountButton.jsx`** (composant partagé avec CoachSettings.jsx) : confirmé non touché — déjà
+explicitement hors scope dans l'en-tête du fichier CSS avant même cette session (le fichier le
+documentait déjà lui-même).
+
+**Deux tokens `-ink` manquants ajoutés** (contrairement aux écrans précédents) : `--set-olive-ink`
+(`#55522E`) et `--set-lavender-ink` (`#3F4780`), mêmes valeurs qu'ailleurs dans l'app, pour
+`.set-avatar-btn`/`.goal-chip.active`/`.lang-btn.active` (piège habituel, texte encre sur accent
+fixe). **Piège inverse vérifié absent** : `olive-ink`/`lavender-ink` n'étaient utilisés nulle part
+avant cette migration (aucun token n'existait pour ce faire), donc rien à retrouver de ce côté.
+
+**`.set-toggle.on .set-toggle-knob`** : remplissage encre plein sur piste olive fixe — mais un
+**remplissage** (le rond du toggle), pas du texte cette fois. Re-épinglé sur `--dark-bg` plutôt que de
+suivre le remap vers crème, même logique que `.finish-session-btn`/`.wl-toast`.
+
+**Décision validée avec l'utilisateur avant application** : 3 messages d'erreur utilisaient
+`var(--danger)`, le token global partagé non migré (même système que `Conversation.jsx`/
+`DeleteAccountButton.jsx`, identique clair/sombre) — 1 en CSS (`.set-avatar-error`), 2 en style inline
+dans `Settings.jsx` (notifications bloquées, erreur de consentement). Contraste mesuré à ~4,3:1 contre
+la carte sombre, sous le seuil AA (4,5:1) pour du texte normal — un vrai (léger) problème de
+lisibilité, pas qu'une question de principe. **Corrigés tous les 3** : nouvelle classe
+`set-danger-text` ajoutée en JSX aux 2 cas inline (sans toucher à leur couleur claire), lue par une
+règle sombre dédiée — aucun des trois ne touche au token `--danger` partagé lui-même ni aux autres
+écrans qui l'utilisent. Premier cas où une correction "shared token" a été appliquée plutôt que
+simplement signalée et laissée de côté (contrairement à Conversation.jsx dans son ensemble).
+
+**Vérification** : `npm run build` OK, `grep` du bundle compilé (CSS et JS) confirmant tous les
+tokens et le wiring JSX (`set-danger-text` présent 2× dans le JS, 1× dans le CSS compilé).
+
+**Commit** : `30d389a` (cherry-pické depuis `7b9a9aa`) — branche `feat/dark-theme-settings`, PR à
+suivre (draft → ready → merge squash après poll Vercel vert).
+
+**Reste à faire — chantier mode sombre** : 5 écrans redesignés restants identifiés dans l'audit
+(`messages-redesign.css`, `Scan-redesign.css`, `landing-redesign.css`, `auth-redesign.css`,
+`splash-redesign.css`), plus les points d'infrastructure à clarifier (`coach-nav-redesign.css` —
+contradiction non résolue sur son statut réel, voir audit précédent). `Conversation.jsx` toujours hors
+périmètre en attendant une décision de refonte.

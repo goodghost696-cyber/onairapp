@@ -36,7 +36,12 @@
   --set-neutral-chip: #F2ECE2;
   --set-neutral-chip-ink: #4A443C;
   --set-olive: #EBEB7D;
+  /* Absents jusqu'ici (contrairement aux écrans précédents) — ajoutés
+     pour le mode sombre (.set-avatar-btn, .goal-chip.active, .lang-btn.
+     active), mêmes valeurs que partout ailleurs dans l'app. */
+  --set-olive-ink: #55522E;
   --set-lavender: #A3AEFE;
+  --set-lavender-ink: #3F4780;
   --set-magenta: #B62472;
   --set-attribution: #8A8378;
   font-family: 'Poppins', system-ui, -apple-system, sans-serif;
@@ -59,6 +64,9 @@
 body.settings-body-bg {
   background: #EFE7D9;
 }
+:root[data-theme="dark"] body.settings-body-bg {
+  background: var(--dark-bg);
+}
 
 /* Fond opaque sombre (.bottom-nav) — généralisation (2026-08-14) du fix
    posé initialement sur Dashboard.jsx uniquement (dashboard.css, commit
@@ -78,6 +86,16 @@ body.settings-body-bg {
 .settings-redesign ~ .bottom-nav .nav-btn.active svg {
   /* Lavande plutôt que crème — voir dashboard.css pour l'explication. */
   color: #1C1A17;
+}
+/* Repassées en crème en sombre — même raisonnement que les écrans
+   précédents (dashboard.css et suivants) : le fond derrière la pill
+   devient sombre, la plaque frost à 25% va donc lire sombre plutôt que
+   claire, des icônes encre y seraient quasi invisibles. */
+:root[data-theme="dark"] .settings-redesign ~ .bottom-nav .nav-btn svg {
+  color: rgba(247,241,230,0.7);
+}
+:root[data-theme="dark"] .settings-redesign ~ .bottom-nav .nav-btn.active svg {
+  color: #F7F1E6;
 }
 
 .settings-screen {
@@ -379,4 +397,84 @@ body.settings-body-bg {
   cursor: pointer;
   margin-bottom: 12px;
   font-family: inherit;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Mode sombre — 14e écran migré du chantier (PR #153 CoachDashboard,
+   #154 MemberDetail, #155 Dashboard membre, #159 Nutrition, #160
+   Workout, #162 AICoach, #163 Weekly, #164 WorkoutSession, #165
+   WorkoutLibrary, #166 ClientsList, #168 CoachMessages, #170
+   CoachSettings, #171 CoachPrograms), mêmes tokens --dark-* de
+   global.css. Bloc clair ci-dessus non touché (hex laissés en dur).
+   DeleteAccountButton.jsx (composant partagé avec CoachSettings.jsx) NON
+   touché — déjà explicitement hors scope, voir en-tête de fichier.
+   Testable via ThemeContext (main.jsx) — toggle Settings.jsx toujours
+   désactivé.
+   ══════════════════════════════════════════════════════════════════════ */
+:root[data-theme="dark"] .settings-redesign {
+  --set-bg: var(--dark-bg);
+  --set-screen-bg: var(--dark-bg);
+  --set-card: var(--dark-surface);
+  --set-field-border: var(--dark-border);
+  --set-ink: var(--dark-text-primary);
+  --set-text-secondary: var(--dark-text-secondary);
+  --set-text-tertiary: var(--dark-text-tertiary);
+  --set-text-muted: var(--dark-text-muted);
+  --set-neutral-chip: var(--dark-surface-sunken);
+  /* Même valeur exacte que --wh-neutral-badge-ink (Workout, #4A443C) —
+     même token global réutilisé. */
+  --set-neutral-chip-ink: var(--dark-text-secondary);
+  /* Déclaré mais jamais utilisé (ni CSS ni JSX, vérifié) — mappé quand
+     même pour rester cohérent si un futur usage apparaît, même valeur
+     exacte que --ws-text-weak (WorkoutSession). */
+  --set-attribution: var(--dark-text-faint);
+  /* olive / olive-ink / lavande / lavande-ink / magenta : inchangés en
+     sombre, aucune surcharge de base — voir cependant les 2 cas ci-
+     dessous. */
+}
+
+/* .set-avatar-btn / .goal-chip.active / .lang-btn.active : déjà accent-
+   sur-clair (fond olive ou lavande inchangé en sombre), texte
+   var(--set-ink) épinglé sur le -ink de leur propre accent — piège
+   habituel, comme sur les 13 écrans précédents. Pas de piège inverse à
+   corriger ici : olive-ink/lavender-ink n'étaient utilisés nulle part
+   avant cette migration (vérifié), donc aucun usage préexistant en texte
+   autoportant à retrouver. */
+:root[data-theme="dark"] .settings-redesign .set-avatar-btn {
+  color: var(--set-lavender-ink);
+}
+:root[data-theme="dark"] .settings-redesign .goal-chip.active:nth-of-type(odd) {
+  color: var(--set-olive-ink);
+}
+:root[data-theme="dark"] .settings-redesign .goal-chip.active:nth-of-type(even) {
+  color: var(--set-lavender-ink);
+}
+:root[data-theme="dark"] .settings-redesign .lang-btn.active {
+  color: var(--set-olive-ink);
+}
+
+/* .set-toggle.on .set-toggle-knob : déjà encre pleine sur piste olive
+   fixe (comme les cas ci-dessus), mais c'est un remplissage (le rond du
+   toggle), pas du texte — suivre le remap --set-ink -> crème donnerait un
+   rond crème sur piste olive, deux tons clairs, contraste écrasé. Fond
+   re-épinglé sur --dark-bg plutôt que sur un accent : son rôle est de
+   rester un point sombre et net sur la piste claire, pas une couleur de
+   marque, même logique que .finish-session-btn/.wl-toast. */
+:root[data-theme="dark"] .settings-redesign .set-toggle.on .set-toggle-knob {
+  background: var(--dark-bg);
+}
+
+/* 3 messages d'erreur utilisant var(--danger), le token global partagé
+   non migré par ce chantier (même système que Conversation.jsx/
+   DeleteAccountButton.jsx — :root[data-theme="dark"] y est identique au
+   clair) : .set-avatar-error (échec upload photo, CSS) et 2 usages
+   inline dans Settings.jsx (notifications bloquées, erreur de
+   consentement — voir classe .set-danger-text ajoutée là-bas). Contraste
+   mesuré à ~4,3:1 contre la carte sombre, sous le seuil AA (4,5:1) pour
+   du texte normal — corrigés en épinglant sur l'accent alerte plutôt que
+   de laisser --danger inchangé, sans toucher au token partagé lui-même
+   ni aux autres écrans qui l'utilisent. */
+:root[data-theme="dark"] .settings-redesign .set-avatar-error,
+:root[data-theme="dark"] .settings-redesign .set-danger-text {
+  color: var(--dark-accent-alert) !important;
 }

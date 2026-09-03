@@ -340,7 +340,7 @@ export default function Settings() {
             <div className="flex justify-between items-center" style={{ padding: '14px 0', borderBottom: pushState !== 'unsupported' ? `1px solid var(--set-field-border)` : 'none' }}>
               <div>
                 <div className="text-sm text-secondary">Notifications push</div>
-                {pushState === 'denied' && <div className="text-xs" style={{ color: 'var(--danger)', marginTop: 2 }}>Bloquées dans les réglages du navigateur</div>}
+                {pushState === 'denied' && <div className="text-xs set-danger-text" style={{ color: 'var(--danger)', marginTop: 2 }}>Bloquées dans les réglages du navigateur</div>}
               </div>
               <Toggle on={pushState === 'subscribed'} onToggle={handleTogglePush} label="Notifications push" />
             </div>
@@ -392,7 +392,7 @@ export default function Settings() {
                     restent conservées et utilisables par toi.
                   </div>
                   {consentSaving && <div className="privacy-row-sub" style={{ marginTop: 6 }}>Enregistrement...</div>}
-                  {consentError && <div className="privacy-row-sub" style={{ marginTop: 6, color: 'var(--danger)' }}>{consentError}</div>}
+                  {consentError && <div className="privacy-row-sub set-danger-text" style={{ marginTop: 6, color: 'var(--danger)' }}>{consentError}</div>}
                 </div>
                 <Toggle
                   on={consentState.consent}
