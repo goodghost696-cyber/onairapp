@@ -8,15 +8,20 @@
    Historique à connaître avant de toucher ce fichier (voir landing.css) :
    le fond corail dégradé ici est un choix DÉLIBÉRÉ et répété deux fois
    ("la landing n'a rien à voir avec le reste de l'application", direction
-   corail 2026-08-06) — Landing force `data-theme="dark"` sur <html>
-   justement pour rester toujours sur cette identité, indépendamment du
-   thème choisi dans l'app. Avec le restyle pastel chaud qui a maintenant
-   gagné tout le reste de l'app connectée (7 écrans), la même bascule est
+   corail 2026-08-06). Avec le restyle pastel chaud qui a maintenant gagné
+   tout le reste de l'app connectée (7 écrans), la même bascule est
    appliquée ici pour la cohérence de première impression — cette identité
    crème EST desormais "le reste de l'application", donc l'argument
    d'origine (rester aligné avec le reste de l'app) va maintenant dans le
-   sens inverse. Pas de maquette pour valider ce choix : à confirmer
-   visuellement en priorité (voir rapport de session).
+   sens inverse.
+
+   2026-09-04 — Landing.jsx forçait jusqu'ici `data-theme="dark"` sur
+   `<html>` en permanence (retiré, voir Landing.jsx) : un mécanisme
+   antérieur au chantier mode sombre, sans rapport avec lui (verrouillage
+   contre l'ancien thème "light" alternatif de Réglages, désactivé depuis
+   le 15/08). Ce fichier suit désormais le vrai `data-theme` piloté par
+   ThemeContext, comme les 18 autres écrans du chantier — voir le bloc
+   sombre en bas de fichier.
 
    Pas de distinction fond d'app/fond d'écran ici : Landing n'est pas dans
    #root/MemberLayout (route "/" autonome, pas de nav flottante, pas de
@@ -24,8 +29,15 @@
    min-height:100% — voir le commentaire dans landing.css). Une seule
    teinte de fond suffit, comme pour splash-redesign.css. */
 .landing.landing-redesign {
-  background: #EFE7D9;
-  color: #1C1A17;
+  --ld-bg: #EFE7D9;
+  --ld-ink: #1C1A17;
+  --ld-cream: #F7F1E6;
+  --ld-brand: #B62472;
+  --ld-city: #736C60;
+  --ld-subtitle: #4A443C;
+  --ld-footer: rgba(28,26,23,0.4);
+  background: var(--ld-bg);
+  color: var(--ld-ink);
   font-family: 'Poppins', system-ui, -apple-system, sans-serif;
 }
 
@@ -36,30 +48,33 @@
 body.landing-body-bg {
   background: #EFE7D9;
 }
+:root[data-theme="dark"] body.landing-body-bg {
+  background: var(--dark-bg);
+}
 
 .landing-redesign .landing-brand {
-  color: #B62472;
+  color: var(--ld-brand);
 }
 
 .landing-redesign .landing-city {
-  color: #736C60;
+  color: var(--ld-city);
 }
 
 .landing-redesign .landing-kicker {
-  color: #B62472;
+  color: var(--ld-brand);
 }
 
 .landing-redesign .landing-subtitle {
-  color: #4A443C;
+  color: var(--ld-subtitle);
 }
 
 .landing-redesign .landing-footer {
-  color: rgba(28,26,23,0.4);
+  color: var(--ld-footer);
 }
 
 .landing-redesign .landing-btn-primary {
-  background: #1C1A17;
-  color: #F7F1E6;
+  background: var(--ld-ink);
+  color: var(--ld-cream);
 }
 
 /* Secondaire — contour encre plutôt que blanc translucide (qui ne se
@@ -67,6 +82,38 @@ body.landing-body-bg {
    déjà établis (Settings' "Enregistrer...", ex-set-outline-btn). */
 .landing-redesign .landing-btn-secondary {
   background: transparent;
-  color: #1C1A17;
-  border: 2px solid #1C1A17;
+  color: var(--ld-ink);
+  border: 2px solid var(--ld-ink);
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   Mode sombre — 18e écran migré du chantier (voir JOURNAL.md pour la
+   liste complète), mêmes tokens --dark-* de global.css. Bloc clair
+   ci-dessus non touché (hex laissés en dur, désormais via les tokens
+   locaux --ld-* introduits ci-dessus pour suivre l'architecture standard
+   des 17 écrans précédents — ce fichier n'avait jusqu'ici aucun token
+   local, tout en hex direct). Aucune couleur pilotée en JS pour ce
+   fichier — seul le forçage de data-theme (retiré, sans lien avec les
+   couleurs elles-mêmes) touchait du JS. */
+:root[data-theme="dark"] .landing.landing-redesign {
+  --ld-bg: var(--dark-bg);
+  --ld-ink: var(--dark-text-primary);
+  --ld-cream: var(--dark-bg);
+  --ld-city: var(--dark-text-muted);
+  --ld-subtitle: var(--dark-text-secondary);
+  --ld-footer: var(--dark-text-faint);
+  /* --ld-brand : cas ambigu signalé et tranché avec l'utilisateur avant
+     modification (voir JOURNAL.md) — magenta (#B62472) utilisé comme
+     texte direct (brand/kicker), mesuré à ~3,08:1 contre --dark-bg, sous
+     le seuil AA 4,5:1. Usage purement décoratif (marque), pas une alerte
+     — bascule sur --dark-accent-rose (~12,3:1) plutôt que
+     --dark-accent-alert, pour ne pas réutiliser le token réservé aux
+     fonctions d'alerte réelles sur un usage décoratif. */
+  --ld-brand: var(--dark-accent-rose);
+}
+/* .landing-btn-primary : background ET color référencent le même couple
+   --ld-ink/--ld-cream (pas d'accent fixe intercalé) — l'inversion
+   clair→sombre reste donc auto-cohérente (crème sur quasi-noir devient
+   quasi-noir sur crème), même raisonnement que .sc-add-btn (Scan) et
+   .auth-primary-btn (auth-redesign) — vérifié avant de décider de ne pas
+   ajouter de re-épinglage séparé ici non plus. */

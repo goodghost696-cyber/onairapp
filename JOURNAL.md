@@ -6714,3 +6714,71 @@ squash après poll Vercel vert).
 **Reste à faire — chantier mode sombre** : 2 écrans redesignés restants (`landing-redesign.css`,
 `splash-redesign.css`), plus le point d'infrastructure non résolu sur `coach-nav-redesign.css`.
 `Conversation.jsx` toujours hors périmètre en attendant une décision de refonte.
+
+## Session du 03/09/2026 (suite) — Landing/SplashIntro débloqués et migrés (18e et 19e écrans du chantier mode sombre)
+
+**Contexte** : les 2 sessions précédentes (read-only) avaient confirmé que `landing-redesign.css` et
+`splash-redesign.css` étaient tous deux verrouillés par un mécanisme distinct du chantier —
+`Landing.jsx` forçait `data-theme="dark"` sur `<html>` en permanence pendant son montage, et
+`SplashIntro.jsx` (monté exclusivement depuis `Landing.jsx`) héritait du même verrouillage. Cette
+session débloque les deux écrans puis les migre.
+
+**Étape 1 — désambiguïsation confirmée et forçage retiré** : le mécanisme forçant `data-theme="dark"`
+sur `Landing.jsx` est **antérieur au chantier mode sombre, sans rapport avec lui** — il verrouillait
+l'identité de marque de Landing contre l'ancien thème "light" alternatif de Réglages (désactivé
+depuis le 15/08), pas contre le système `--dark-*`. Ce forçage écrasait en permanence le vrai thème
+choisi par l'utilisateur (`ThemeContext`), y compris pour quelqu'un ayant explicitement choisi le
+clair — un vrai bug latent, invisible tant que personne n'utilisait ce thème alternatif inatteignable
+(voir étape 3). `useEffect` supprimé dans `Landing.jsx` : Landing suit désormais le même
+`data-theme` réel que les 17 écrans déjà migrés. `SplashIntro.jsx` débloqué du même coup (aucune
+modification propre nécessaire, son seul point de montage dans tout le repo est `Landing.jsx`).
+
+**Étape 2 — migration des couleurs, une fois débloqués** :
+- `landing-redesign.css` n'avait **aucun token local** jusqu'ici (tout en hex direct, contrairement
+  aux 17 écrans déjà migrés) — introduction des tokens `--ld-*` pour suivre l'architecture standard
+  du chantier, puis surcharge `:root[data-theme="dark"] .landing.landing-redesign` faisant pointer
+  chaque `--ld-*` vers son token `--dark-*` global.
+- `splash-redesign.css` : même traitement, 2 tokens introduits (`--sp-bg`/`--sp-ink`, seules valeurs
+  du fichier).
+- **Mark SVG (SplashIntro.jsx) vérifié et non touché**, comme demandé explicitement : dégradé
+  citron→lavande + lavande pleine codés en dur dans le composant, identité de marque volontairement
+  indépendante du thème (déjà confirmé en investigation précédente) — seul le fond crème/texte encre
+  autour du mark suit le mapping clair/sombre.
+- `body.landing-body-bg` : surcharge sombre ajoutée.
+- Aucune couleur pilotée en JS pour les couleurs elles-mêmes — seul le forçage de `data-theme`
+  (retiré à l'étape 1, sans lien avec les couleurs) touchait du JS.
+
+**Vérifié et écarté** : `.landing-btn-primary` n'a **pas** besoin de re-épinglage — `background` ET
+`color` y référencent le même couple `--ld-ink`/`--ld-cream` (pas d'accent fixe intercalé),
+l'inversion clair→sombre reste auto-cohérente — même raisonnement que `.sc-add-btn` (Scan) et
+`.auth-primary-btn` (auth-redesign), retrouvé indépendamment sur ce 3e écran.
+
+**Cas ambigu signalé et tranché avec l'utilisateur avant modification** : `--ld-brand` (magenta,
+texte direct de `.landing-brand`/`.landing-kicker` — pas une bordure/pastille comme le cas
+`.auth-invite-card` de la session précédente) mesuré à **≈3,08:1** contre `--dark-bg`, sous le seuil
+AA **4,5:1** pour du texte. Usage décoratif (marque), pas une alerte. Trois options présentées
+(`--dark-accent-rose` / `--dark-accent-alert` / inchangé) — **`--dark-accent-rose`** retenu
+(≈12,3:1), pour ne pas réutiliser le token réservé aux fonctions d'alerte réelles sur un usage
+purement décoratif — distinction délibérée par rapport au choix `--dark-accent-alert` fait sur
+`.auth-invite-card` (celui-là mettait en avant un code, plus proche d'une notification à ne pas
+manquer ; ici, un simple nom de marque).
+
+**Étape 3 — vérification du mécanisme "light" alternatif, rapport uniquement, rien supprimé comme
+demandé** : `useTheme()`/`toggleTheme()` ne sont référencés nulle part ailleurs dans l'app que
+`ThemeContext.jsx` lui-même et le bloc CSS `:root[data-theme="light"]` de `global.css` — **confirmé
+totalement mort côté UI**, câblé (state, localStorage, palette CSS complète) mais inatteignable,
+aucun bouton/écran ne l'appelle. Cohérent avec le "toggle Settings.jsx toujours désactivé" répété à
+chaque session de ce chantier. Laissé en l'état, comme demandé — décision de suppression éventuelle à
+prendre séparément.
+
+**Vérification** : `npm run build` OK. Grep du bundle compilé confirmant les tokens `--ld-*`/`--sp-*`
+et leurs surcharges `--dark-*`, `--ld-brand` sur `--dark-accent-rose`, et l'absence du forçage
+`data-theme` dans le JS compilé de `Landing.jsx`.
+
+**Commit** : cherry-pické sur branche `feat/dark-theme-landing-splash` — PR à suivre (draft → ready →
+merge squash après poll Vercel vert).
+
+**Reste à faire — chantier mode sombre** : plus aucun écran redesigné restant côté membre/public.
+Reste le point d'infrastructure non résolu sur `coach-nav-redesign.css`, et `Conversation.jsx`
+toujours hors périmètre en attendant une décision de refonte. Le mécanisme de thème "light" mort côté
+UI (étape 3 ci-dessus) reste à trancher séparément (suppression ou réactivation future).

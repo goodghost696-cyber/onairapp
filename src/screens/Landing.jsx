@@ -21,20 +21,18 @@ export default function Landing() {
     return () => clearTimeout(t)
   }, [])
 
-  // Landing is deliberately always dark (the neon splash), independent of
-  // the in-app theme toggle — but that toggle persists globally via
-  // data-theme on <html>, so body/#root's margins outside the 390px column
-  // would otherwise pick up the light theme's background while this
-  // screen's own content stays hardcoded dark (white borders bleeding in
-  // around the splash on any viewport wider than 390px). Force dark chrome
-  // while this screen is mounted, restore whatever was there before on
-  // unmount so the real app theme resumes correctly after login.
-  useEffect(() => {
-    const html = document.documentElement
-    const prev = html.getAttribute('data-theme')
-    html.setAttribute('data-theme', 'dark')
-    return () => { html.setAttribute('data-theme', prev || 'dark') }
-  }, [])
+  // Forçait auparavant data-theme="dark" sur <html> en permanence pendant
+  // le montage de cet écran (retiré 2026-09-04) — mécanisme antérieur au
+  // chantier mode sombre, sans rapport avec lui : il servait à verrouiller
+  // l'identité de marque de Landing contre l'ANCIEN thème "light"
+  // alternatif de Réglages (désactivé depuis le 15/08), pas à activer le
+  // système --dark-*. Depuis que ce fichier suit lui-même les tokens
+  // --dark-* (landing-redesign.css), ce verrou est devenu contre-productif :
+  // il écrasait en permanence le vrai thème choisi par l'utilisateur
+  // (ThemeContext/data-theme piloté globalement par main.jsx), y compris
+  // pour un utilisateur ayant explicitement choisi le clair — Landing
+  // suit désormais le même data-theme réel que les 18 autres écrans du
+  // chantier, plus de bascule locale à gérer ici.
 
   // Même fix que les 7 écrans restylés précédents (voir dashboard.css/
   // JOURNAL.md) : sans ça, la zone de padding-top de #root (safe-area/
