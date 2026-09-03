@@ -28,6 +28,11 @@
   --wl-text-muted: #736C60;
   --wl-placeholder: #A9A196;
   --wl-olive: #EBEB7D;
+  /* Absent jusqu'ici (contrairement aux écrans précédents) — ajouté pour
+     le mode sombre (.wl-add-btn), même valeur que --db-olive-ink/
+     --nu-olive-ink/--wh-olive-ink (même famille de handoff "pastel
+     chaud"). */
+  --wl-olive-ink: #6E6A3F;
   --wl-magenta: #B62472;
   --wl-attribution: #8A8378;
   font-family: 'Poppins', system-ui, -apple-system, sans-serif;
@@ -50,6 +55,9 @@
 body.workoutlibrary-body-bg {
   background: #EFE7D9;
 }
+:root[data-theme="dark"] body.workoutlibrary-body-bg {
+  background: var(--dark-bg);
+}
 
 /* Fond opaque sombre (.bottom-nav) — généralisation (2026-08-14) du fix
    posé initialement sur Dashboard.jsx uniquement (dashboard.css, commit
@@ -70,6 +78,16 @@ body.workoutlibrary-body-bg {
 .workoutlibrary-redesign ~ .bottom-nav .nav-btn.active svg {
   /* Lavande plutôt que crème — voir dashboard.css pour l'explication. */
   color: #1C1A17;
+}
+/* Repassées en crème en sombre — même raisonnement que les écrans
+   précédents (dashboard.css et suivants) : le fond derrière la pill
+   devient sombre, la plaque frost à 25% va donc lire sombre plutôt que
+   claire, des icônes encre y seraient quasi invisibles. */
+:root[data-theme="dark"] .workoutlibrary-redesign ~ .bottom-nav .nav-btn svg {
+  color: rgba(247,241,230,0.7);
+}
+:root[data-theme="dark"] .workoutlibrary-redesign ~ .bottom-nav .nav-btn.active svg {
+  color: #F7F1E6;
 }
 
 .workoutlibrary-screen {
@@ -226,4 +244,61 @@ body.workoutlibrary-body-bg {
   font-size: 10px;
   color: var(--wl-attribution);
   opacity: 0.7;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Mode sombre — 9e écran migré du chantier (PR #153 CoachDashboard, #154
+   MemberDetail, #155 Dashboard membre, #159 Nutrition, #160 Workout,
+   #162 AICoach, #163 Weekly, #164 WorkoutSession), mêmes tokens --dark-*
+   de global.css. Bloc clair ci-dessus non touché (hex laissés en dur).
+   ExerciseModal.jsx toujours hors scope (voir en-tête de fichier).
+   Testable via ThemeContext (main.jsx) — toggle Settings.jsx toujours
+   désactivé.
+   ══════════════════════════════════════════════════════════════════════ */
+:root[data-theme="dark"] .workoutlibrary-redesign {
+  --wl-bg: var(--dark-bg);
+  --wl-screen-bg: var(--dark-bg);
+  --wl-card: var(--dark-surface);
+  --wl-ink: var(--dark-text-primary);
+  --wl-text-muted: var(--dark-text-muted);
+  /* Mêmes valeurs exactes que --ws-placeholder/--ws-text-weak sur
+     WorkoutSession (PR #164) — mêmes tokens globaux réutilisés, pas de
+     nouveau token nécessaire. */
+  --wl-placeholder: var(--dark-text-placeholder);
+  --wl-attribution: var(--dark-text-faint);
+  /* olive / magenta : inchangés en sombre — magenta reste inchangé pour
+     son seul usage (.wl-eyebrow, branding), pas une alerte. */
+}
+
+/* .wl-add-btn : déjà accent-sur-clair (fond olive inchangé en sombre),
+   texte var(--wl-ink) épinglé sur olive-ink — même piège que sur les 8
+   écrans précédents. */
+:root[data-theme="dark"] .workoutlibrary-redesign .wl-add-btn {
+  color: var(--wl-olive-ink);
+}
+
+/* .wl-toast ("Ajouté à ta séance") : déjà encre pleine + texte olive en
+   clair, déjà "sombre par conception" comme .finish-session-btn sur
+   WorkoutSession — re-épinglé sur --dark-bg plutôt que de suivre le
+   remap --wl-ink -> crème. Texte olive non touché (déjà correct). */
+:root[data-theme="dark"] .workoutlibrary-redesign .wl-toast {
+  background: var(--dark-bg);
+}
+
+/* .wl-exercise-row.wl-added (exercice déjà ajouté à la séance) : même
+   cas que .wl-toast pour le fond (encre pleine, déjà "sombre par
+   conception") — mais son texte (.wl-exercise-name) référence
+   var(--wl-screen-bg), qui joue AUSSI le rôle de fond principal d'écran
+   ci-dessus (et doit donc foncer). Sans re-épinglage explicite du texte,
+   il suivrait ce même assombrissement et deviendrait illisible sur la
+   ligne qui, elle, reste volontairement sombre. Fond ET texte re-épinglés
+   explicitement plutôt qu'un seul des deux. Le sous-texte muscles
+   (rgba(247,241,230,0.6), codé en dur, pas une var) reste correct sans
+   y toucher : il suppose déjà un fond sombre, qui reste vrai une fois le
+   fond de la ligne fixé ci-dessous. */
+:root[data-theme="dark"] .workoutlibrary-redesign .card.wl-exercise-row.wl-added {
+  background: var(--dark-bg);
+}
+:root[data-theme="dark"] .workoutlibrary-redesign .wl-exercise-row.wl-added .wl-exercise-name {
+  color: var(--dark-text-primary);
 }
