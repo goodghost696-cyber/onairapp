@@ -9,7 +9,6 @@ const ResetPassword = lazy(() => import('./screens/ResetPassword'))
 const Dashboard = lazy(() => import('./screens/Dashboard'))
 const Nutrition = lazy(() => import('./screens/Nutrition'))
 const Workout = lazy(() => import('./screens/Workout'))
-const Hydration = lazy(() => import('./screens/Hydration'))
 const Weekly = lazy(() => import('./screens/Weekly'))
 const AICoach = lazy(() => import('./screens/AICoach'))
 const Scan = lazy(() => import('./screens/Scan'))
@@ -124,7 +123,6 @@ export default function App() {
           <Route path="/workout/maison" element={<WorkoutLibrary section="maison" />} />
           <Route path="/workout/salle" element={<WorkoutLibrary section="salle" />} />
           <Route path="/workout/dehors" element={<WorkoutLibrary section="dehors" />} />
-          <Route path="/hydration" element={<Hydration />} />
           <Route path="/weekly" element={<Weekly />} />
           <Route path="/scan" element={<Scan />} />
           <Route path="/ai-coach" element={<AICoach />} />

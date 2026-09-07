@@ -33,7 +33,11 @@ html {
   /* Safety net for the strip still visible at the very bottom of some
      screens when dvh/--app-height still doesn't fully cover the real
      screen for a frame (sub-pixel rounding, a mid-transition resize) —
-     this color shows through instead of the browser's default white. */
+     this color shows through instead of the browser's default white.
+     Conditionnel depuis 2026-09-08 (voir la surcharge sombre plus bas et
+     index.html) : ce filet doit désormais matcher le thème réel, sinon
+     ce même filet redevient lui-même un flash coral perceptible sur un
+     écran sombre. */
   background: #9C2A22;
 }
 
@@ -50,7 +54,19 @@ body {
      old #root placement or the previous fixed-attachment workaround, and
      avoids the color-banding a multi-stop gradient gets when stretched
      over a very tall scrolling box. #root's own background is transparent
-     so this shows through it. */
+     so this shows through it.
+     2026-09-08 — ce dégradé n'est plus vu QUE pendant la fenêtre entre le
+     premier paint CSS et le montage de React (chaque écran pose sa propre
+     classe body.xxx-body-bg dès son montage, qui gagne sur cette règle de
+     base) : les 4 derniers écrans qui en dépendaient réellement en continu
+     (Hydration, PlatformAdmin, ResetPassword, WorkoutHistory) ont
+     maintenant tous leur propre fond (Hydration supprimé — route
+     orpheline, JOURNAL.md — les 3 autres migrés en Option B). Fond de
+     repli théorique (thème imprévu/en cours de résolution) : le vrai fix
+     du flash vit dans le script synchrone d'index.html, qui pose
+     data-theme sur <html> avant le premier paint, faisant gagner la
+     surcharge sombre ci-dessous avant même que ce dégradé ait une chance
+     de s'afficher. */
   background: radial-gradient(140% 70% at 18% -8%, #FF8355 0%, #E8552B 45%, #C6371E 82%, #9C2A22 100%);
   display: flex;
   justify-content: center;
@@ -59,6 +75,17 @@ body {
   font-size: 15px;
   line-height: 22px;
   -webkit-font-smoothing: antialiased;
+}
+/* Fond de repli/filet de sécurité sombre — voir les deux commentaires
+   ci-dessus. data-theme est posé sur <html> par un script synchrone dans
+   index.html (avant tout paint, lu directement depuis localStorage) ET
+   par ThemeContext.jsx une fois React monté — les deux écrivent la même
+   valeur, donc aucune bascule visible entre les deux. */
+:root[data-theme="dark"] {
+  background: var(--dark-bg);
+}
+:root[data-theme="dark"] body {
+  background: var(--dark-bg);
 }
 
 #root {
