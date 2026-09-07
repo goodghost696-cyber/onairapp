@@ -82,6 +82,24 @@ Le texte ci-dessous est conservé pour mémoire du point de départ.
 
 **Pourquoi ne pas commencer maintenant** : coder un mécanisme de consentement avant d'avoir tranché opt-in vs opt-out et la formulation exacte reviendrait à jeter le travail, ou pire à afficher au membre une formulation juridiquement fausse. La clarification juridique vient d'abord, le code ensuite.
 
+## 🐛 2026-09-07 (suite) — Fix : wordmark VOLTA illisible sur ResetPassword en mode sombre (même bug que Landing, PR #182)
+
+**Contexte** : suite directe de l'entrée juste en dessous (fix du bloc `:root[data-theme="light"]`) — en vérifiant l'exception `.brand-wordmark` "encre fixe" documentée dans `brand.css` pour ResetPassword, son raisonnement s'est révélé lui-même obsolète.
+
+**Le bug** : `.brand-wordmark` (`brand.css`) reste fixé sur l'encre `#1C1A17`, sans aucune surcharge sombre générique — volontaire, documenté, pour ne pas casser les contextes qui restent réellement sur fond corail. Sauf que depuis Option B (PR #188, migration WorkoutHistory/ResetPassword/PlatformAdmin), le fond de `ResetPassword.jsx` suit désormais `--rp-bg` → `--dark-bg` (`#141310`, quasi noir) en mode sombre — exactement le même cas que celui déjà corrigé sur `Landing.jsx` (PR #182, wordmark illisible sur fond sombre, bug remonté sur capture réelle à l'époque). Contraste mesuré entre `#1C1A17` et `#141310` : **~1,07:1** — deux tons de noir quasi identiques, wordmark de fait invisible.
+
+Les deux commentaires qui justifiaient encore l'absence de remap (`brand.css:33-44`, `landing-redesign.css:121-128`) affirmaient tous les deux que "ResetPassword reste toujours sur fond corail" — vrai au moment où ils ont été écrits, **devenu faux** le jour même où Option B a été mergée (même date, 2026-09-08, sans que ces commentaires aient été mis à jour en conséquence).
+
+**Le fix** : même pattern que le fix Landing — re-épinglage scopé plutôt que remap de la classe générique (qui doit rester fixe pour d'éventuels contextes réellement toujours-corail) :
+```css
+:root[data-theme="dark"] .reset-password .brand-wordmark {
+  color: var(--dark-text-primary);
+}
+```
+Les deux commentaires obsolètes mis à jour pour refléter l'état réel.
+
+**Vérification** : `npm run build` + grep du bundle (`dist/assets/Logo-*.css`, chunk où `brand.css` est effectivement bundlé — pas dans `index-*.css`) confirmant la présence de la règle. Vérification visuelle via un harnais isolé (mêmes fichiers CSS réels du repo, dev server local) — l'outil de capture d'écran de la session a échoué de façon persistante (bug d'extension, pas lié au fix), donc vérification par `getComputedStyle()` sur le DOM rendu à la place : `color: rgb(28,26,23)` sur `background: rgb(20,19,16)` en simulant l'ancien état (illisible, confirmé), vs `color: rgb(247,241,230)` (= `--dark-text-primary`) sur le même fond une fois la vraie règle chargée depuis `brand.css` (lisible).
+
 ## 🐛 2026-09-07 — Fix : "Mode clair" ramenait le chrome partagé à une identité grayscale de juin au lieu de désigner simplement "pas de mode sombre"
 
 **Le bug** : trois identités se chevauchaient pour ce que l'app appelle un seul et même mode "clair".

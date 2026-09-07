@@ -35,13 +35,24 @@
    thème (PR #182), son fond passe à `--dark-bg` (quasi noir) en sombre —
    le wordmark encre restait figé dessus, quasi invisible (deux tons de
    noir superposés, bug remonté sur capture réelle). Cette classe reste
-   volontairement fixe ici (pas de bloc :root[data-theme="dark"] sur
-   .brand-wordmark lui-même) : `ResetPassword.jsx` n'est PAS migré et son
-   fond reste corail dans tous les cas — y faire suivre le remap sombre
-   casserait ce cas précis (texte clair sur corail, alors que le texte
-   voisin `--text-primary` y reste en encre par convention établie). Le
-   fix est scopé à `.landing-redesign .brand-wordmark` dans
-   `landing-redesign.css`, pas ici — voir ce fichier. */
+   volontairement fixe ici (pas de bloc :root[data-theme="dark"] générique
+   sur .brand-wordmark lui-même) : à l'époque, `ResetPassword.jsx` n'était
+   pas encore migré et son fond restait corail dans tous les cas — y faire
+   suivre le remap sombre aurait cassé ce cas précis (texte clair sur
+   corail, alors que le texte voisin `--text-primary` y reste en encre par
+   convention établie). Le fix a donc été scopé à `.landing-redesign
+   .brand-wordmark` dans `landing-redesign.css`, pas ici.
+
+   2026-09-07 (fix suivant) — le paragraphe ci-dessus décrivant le fond de
+   ResetPassword.jsx comme "corail dans tous les cas" est à son tour devenu
+   FAUX : Option B (PR #188, même date que le paragraphe précédent en
+   réalité) lui a donné un vrai fond scopé `--rp-bg`
+   (`ResetPassword.css`), qui suit `--dark-bg` en sombre — donc quasi noir,
+   exactement le même cas que Landing ci-dessus. Le wordmark encre y était
+   redevenu illisible (même contraste ~1,07:1 mesuré que le bug Landing
+   d'origine). Fix appliqué en conséquence : `.reset-password
+   .brand-wordmark` suit désormais `--dark-text-primary` en sombre, voir la
+   règle plus bas. */
 .brand-wordmark {
   font-family: 'Unbounded', 'Space Grotesk', sans-serif;
   font-weight: 800;
@@ -49,6 +60,16 @@
   color: #1C1A17;
   line-height: 1;
   display: inline-block;
+}
+
+/* Fix 2026-09-07 (JOURNAL.md) — voir commentaire ci-dessus. Même pattern
+   que le fix Landing (`landing-redesign.css`, PR #182) : re-épingler
+   .brand-wordmark vers le token de texte sombre là où son conteneur suit
+   effectivement --dark-bg, plutôt que de remapper la classe générique
+   (qui doit rester fixe pour les contextes réellement toujours-corail,
+   s'il en reste). */
+:root[data-theme="dark"] .reset-password .brand-wordmark {
+  color: var(--dark-text-primary);
 }
 
 .brand-mark {
