@@ -2,6 +2,29 @@
 <html lang="fr">
   <head>
     <meta charset="UTF-8" />
+    <!-- 2026-09-08 — anti-flash du thème. Placé en tout premier dans
+         <head>, en script classique (pas type="module", pas async/defer) :
+         bloque le parsing du reste de la page jusqu'à son exécution, donc
+         tourne AVANT que le CSS compilé (chargé plus bas par Vite) ne
+         puisse peindre quoi que ce soit — data-theme est déjà posé sur
+         <html> au moment où le premier paint peut avoir lieu, quel que
+         soit l'ordre exact d'injection du <link rel="stylesheet"> par
+         Vite. Sans lui, html/body affichaient toujours le fond corail
+         d'origine (global.css, inconditionnel) le temps que React monte
+         et que ThemeContext.jsx lise localStorage à son tour — un flash
+         rouge/corail perceptible avant chaque premier affichage,
+         particulièrement visible une fois le reste de l'app passé en
+         sombre par défaut. Même clé et même valeur de repli ('dark') que
+         ThemeContext.jsx, pour ne jamais diverger de ce que React posera
+         une fois monté. -->
+    <script>
+      (function() {
+        try {
+          var t = localStorage.getItem('onair_theme') || 'dark';
+          document.documentElement.setAttribute('data-theme', t);
+        } catch (e) {}
+      })();
+    </script>
     <link rel="icon" type="image/svg+xml" href="/logo-volta.svg" />
     <!-- viewport-fit=cover: without it, env(safe-area-inset-*) always resolves
          to 0 — meaning no code anywhere in this app could ever actually
