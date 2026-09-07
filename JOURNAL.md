@@ -31,7 +31,7 @@ Il existait déjà une "charte ON AIR Neon" documentée plus bas dans ce journal
 | Succès / Avertissement / Danger | `#1FD66B` / `#F5A623` / `#FF3B3B` | états système |
 | `theme-color` mobile (Safari/PWA) | `#EF6B41` | `index.html` + `manifest.json`, calé sur le dégradé de fond |
 
-**Palette alternative — mode clair** (activable dans Réglages, `:root[data-theme="light"]`) : fond `#F2F2EF`, texte quasi-noir `#0A0A0A`, or et violet assombris (`#8A6300`/`#4A52B0`, pour rester lisibles en texte/icône sur fond clair). Ce n'est **pas** la direction visuelle par défaut de l'app — un mode alternatif au choix de l'utilisateur, pas la charte de marque elle-même.
+**Palette alternative — mode clair** (activable dans Réglages, `:root[data-theme="light"]`) : depuis le fix du 2026-09-07 (voir entrée datée), **identique à la palette par défaut** ci-dessus — fond `#E8552B`, texte `#1B1710`, accent `#F0C14B`. "Clair" == "pas de mode sombre" pour le chrome partagé (nav, boutons, logo, inputs) ; il n'existe plus de 3ᵉ identité séparée. (Avant ce fix, ce bloc portait une ancienne palette grayscale de juin — fond `#F2F2EF`, texte `#0A0A0A`, or/violet assombris `#8A6300`/`#4A52B0` — antérieure au chantier pastel chaud et jamais mise à jour depuis ; gardé ici pour mémoire, ne reflète plus le code.)
 
 **Typographie**
 - Corps de texte / UI générale : **Space Grotesk** (400 à 700), Google Fonts
@@ -81,6 +81,23 @@ Le texte ci-dessous est conservé pour mémoire du point de départ.
 **À traiter avec** les CGU et la politique de confidentialité, dans le même chantier.
 
 **Pourquoi ne pas commencer maintenant** : coder un mécanisme de consentement avant d'avoir tranché opt-in vs opt-out et la formulation exacte reviendrait à jeter le travail, ou pire à afficher au membre une formulation juridiquement fausse. La clarification juridique vient d'abord, le code ensuite.
+
+## 🐛 2026-09-07 — Fix : "Mode clair" ramenait le chrome partagé à une identité grayscale de juin au lieu de désigner simplement "pas de mode sombre"
+
+**Le bug** : trois identités se chevauchaient pour ce que l'app appelle un seul et même mode "clair".
+1. `:root` (base, sans attribut) — l'identité pastel chaud/corail actuelle (`--bg:#E8552B`, `--accent:#F0C14B`…).
+2. `:root[data-theme="dark"]` — mêmes valeurs partagées que `:root` pour `--bg`/`--surface`/`--text-primary`/`--accent`/etc., plus les tokens `--dark-*` qui donnent leur vrai look sombre aux écrans migrés (nav, boutons et autres éléments de chrome partagé n'en changent pas).
+3. `:root[data-theme="light"]` — posé en juin, **avant** le chantier "direction corail" (2026-08-06), jamais mis à jour depuis : fond `#F2F2EF`, texte quasi-noir `#0A0A0A`, or/violet assombris `#8A6300`/`#4A52B0`.
+
+`ThemeContext.jsx`/`index.html` ne posent jamais autre chose que `dark` ou `light` sur `<html>` (`localStorage.getItem('onair_theme') || 'dark'`, avant même le premier paint) — il n'existe pas de 3ᵉ état "aucun attribut" en pratique. Donc dès qu'un utilisateur désactivait "Mode sombre" dans Réglages (`Settings.jsx`, libellé "Désactivé — palette claire"), le bloc (3) s'appliquait concrètement et faisait régresser tout le chrome partagé qui lit ces tokens globaux — nav du bas, `.btn-accent`, `brand.css`, inputs/modals génériques (`global.css`) — vers cette ancienne identité, en clash avec le fond/boutons/nav affichés par défaut et avec les 23 écrans redesignés.
+
+Les 23 écrans redesignés et les 3 écrans migrés en Option B (WorkoutHistory, ResetPassword, PlatformAdmin — voir entrée du 2026-09-08 plus bas) n'étaient eux-mêmes **pas** affectés : ils utilisent des tokens locaux scopés (`--db-*`, `--hd-*`, `--rp-*`, `--pa-*`) sans jamais référencer `--bg`/`--surface`/`--text-primary` globaux, donc restent en crème quel que soit `data-theme`. Le problème touchait spécifiquement le chrome partagé autour d'eux (nav, logo, boutons), pas leur propre contenu.
+
+**Le fix** : contenu de `:root[data-theme="light"]` (`global.css`) remplacé par les mêmes valeurs que `:root`, sur le modèle de ce que fait déjà `:root[data-theme="dark"]` pour les mêmes tokens partagés (les dupliquer plutôt que les laisser hériter, pour que chaque bloc theme reste explicite et grep-able — convention déjà en place dans le fichier). "Clair" ne désigne plus qu'une chose : l'absence de mode sombre, sans plus aucune divergence de chrome partagé par rapport à l'état par défaut de l'app.
+
+**Exception `.brand-wordmark` sur ResetPassword (`brand.css`)** — vérifiée, **non retirée** : le lockup "encre fixe" (pas de remap sombre sur `.brand-wordmark` lui-même) est motivé par le fond de `ResetPassword.jsx`, pas par le bloc `light` — sujet indépendant de ce fix. Point séparé identifié en creusant : le commentaire de `brand.css` justifiant cette exception ("le fond réel derrière le Logo est le dégradé corail de `<body>`, pas crème") date d'avant l'ajout de `body.reset-password-body-bg`/`--rp-bg` (Option B, 2026-09-08) — ce fond est donc **redevenu réellement variable** (crème en clair, quasi-noir `--dark-bg` en sombre) alors que le commentaire affirme encore qu'il reste corail "dans tous les cas". Le wordmark encre fixe sur un fond `--dark-bg` quasi-noir en sombre reproduirait potentiellement le même bug que celui déjà corrigé sur `Landing.jsx` (PR #182, wordmark illisible sur fond sombre) — **pas vérifié visuellement ni traité ici**, hors périmètre de ce fix, à vérifier dans une session dédiée.
+
+**Vérification** : `npm run build` + grep du bundle (`dist/assets/index-*.css`) confirmant l'absence de `#F2F2EF`/`#8A6300` et la présence de `:root[data-theme=light]{--bg: #E8552B;...}` identique à `:root`. Vérification visuelle via un harnais isolé (dev server local sans identifiants Supabase, connexion à l'app réelle impossible) chargeant les vrais `global.css`/`brand.css`/`WorkoutHistory.css`/`ResetPassword.css`/`PlatformAdmin.css`/`dashboard.css` du repo, `data-theme` basculé entre `light`/`dark` : chrome partagé identique dans les deux modes comme attendu, les 4 écrans à tokens scopés restent en crème sans divergence.
 
 ## 🎨 2026-08-30 (suite) — Ancien pictogramme (flèche) remplacé par le V-éclair partout où il restait
 
