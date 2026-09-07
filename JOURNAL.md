@@ -39,6 +39,7 @@ Il existait déjà une "charte ON AIR Neon" documentée plus bas dans ce journal
 
 **Forme**
 - Rayon carte `16px`, bouton `18px`, pill (nav, boutons ronds) `100px`
+- **Nav membre (`.bottom-nav`, `nav.css`) : pilule flottante détachée, PAS un bandeau plein-largeur.** Décision produit définitive (session du 03/09, voir entrée datée plus bas) après comparaison réelle des deux formes sur iPhone — **ne pas remplacer par un bandeau sans demande explicite de l'utilisateur**. Une PR de restauration du bandeau (#192) a été ouverte le 2026-09-07 sur relecture d'un ticket antérieur, puis **fermée sans merge** le jour même sur clarification directe de l'utilisateur : il voulait uniquement repositionner la pilule existante (voir entrée du 2026-09-07 suite), pas revenir au bandeau. `bottom` de la pilule suit `max(22px, env(safe-area-inset-bottom))` depuis cette même session (marge constante, réduit sans supprimer le vide sous la pilule sur iPhone à encoche — voir cette entrée pour le détail).
 
 **Icônes**
 - `lucide-react` pour l'essentiel de l'app (`Icon.jsx`, set cohérent de line-icons 24×24 `currentColor`)
@@ -81,6 +82,20 @@ Le texte ci-dessous est conservé pour mémoire du point de départ.
 **À traiter avec** les CGU et la politique de confidentialité, dans le même chantier.
 
 **Pourquoi ne pas commencer maintenant** : coder un mécanisme de consentement avant d'avoir tranché opt-in vs opt-out et la formulation exacte reviendrait à jeter le travail, ou pire à afficher au membre une formulation juridiquement fausse. La clarification juridique vient d'abord, le code ensuite.
+
+## 🧭 2026-09-07 (suite) — Nav membre : pilule repositionnée (marge basse constante), PR #192 (bandeau) fermée sans merge
+
+**Contexte** : demande de repositionner la pilule de nav membre plus près du bas de l'écran, référence nav Instagram, avec une contrainte explicite forte — position UNIQUEMENT, aucun changement de forme/couleurs/icônes/boutons/routes/labels. Une PR #192 (restauration du bandeau plein-largeur PR #174-178) était ouverte au même moment sur relecture d'un ticket antérieur ; clarifiée avec l'utilisateur et **fermée sans merge** — ce n'est pas ce qui était demandé ici, la contrainte "visuellement exactement la même pilule" exclut le bandeau.
+
+**Root cause identifiée avant toute modification** : `.bottom-nav { bottom: env(safe-area-inset-bottom); }` place le bord bas de la pilule au sommet de la safe-area sans rien peindre en dessous — jusqu'à 34px de vide transparent visible sur iPhone à encoche. Bug documenté et jamais résolu depuis PR #156/#157/#158 (juin-septembre) : un `bottom:0` + padding interne absorbant la safe-area avait déjà été tenté (PR #156) et **cassé en rendu réel sur iPhone** (pilule étirée verticalement de façon disproportionnée, vide déplacé à l'intérieur de sa propre forme) — reverté (PR #157). Le bandeau plein-largeur (PR #174-178) avait résolu ce même vide proprement, mais au prix d'un changement de forme — écarté à nouveau ici pour la même raison qu'en session du 03/09 (préférence pour la pilule).
+
+**Point d'arrêt explicite avant modification** (comme demandé par l'utilisateur si autre chose que la position s'avérait nécessaire) : impossible de satisfaire simultanément "visuellement identique" + "flush au bord comme Instagram" + "garder la forme pilule" — ces trois contraintes se sont déjà révélées incompatibles en test réel (PR #156). Options présentées à l'utilisateur : marge constante (réduit sans supprimer le vide), retenter #156, rouvrir le bandeau, ou ne rien changer. **Marge constante retenue.**
+
+**Fix** : `bottom: env(safe-area-inset-bottom)` → `bottom: max(22px, env(safe-area-inset-bottom))`, formule reprise telle quelle de `CoachNavBar` (`coach-nav-redesign.css`). Plafonne le vide perçu à 22px minimum au lieu de le laisser grandir jusqu'à 34px sur iPhone à encoche, sans étirer ni déformer la pilule — seule cette propriété change, `padding`/`align-items`/`height`/`border-radius`/`background`/`backdrop-filter`/`box-shadow` intacts. Contredit une demande antérieure de marge zéro (documentée dans `nav.css` depuis le 08-31) — reconfirmé explicitement avec l'utilisateur avant d'appliquer. Ne remplit pas la safe-area jusqu'au bord littéral comme un bandeau l'aurait fait : réduit le vide, ne le supprime pas entièrement — limite assumée et signalée.
+
+**Fichier touché** : uniquement `src/styles/nav.css` (1 propriété). `BottomNav.jsx` (5 boutons, icônes, ordre, routes, labels, animations) non touché — vérifié par diff, aucun autre fichier modifié.
+
+**Vérification** : `npm run build` + grep du bundle confirmant `.bottom-nav{bottom:max(22px,env(safe-area-inset-bottom));...}` avec le reste de la règle byte-identique (forme pilule `border-radius:999px`, fond translucide `#ffffff40`, `blur(15px)`, `box-shadow` lift, padding). Pas de typecheck disponible sur ce projet (JS pur, aucun script `tsc` dans `package.json`). **Vérification visuelle réelle sur iPhone non faite dans cette session** — à faire par l'utilisateur sur la preview Vercel avant merge, sujet avec un historique de régressions réelles sur ce point précis (PR #156).
 
 ## 🐛 2026-09-07 (suite) — Fix : wordmark VOLTA illisible sur ResetPassword en mode sombre (même bug que Landing, PR #182)
 
