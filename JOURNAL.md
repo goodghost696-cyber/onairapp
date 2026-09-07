@@ -6945,3 +6945,39 @@ alternatif toujours mort côté UI (signalé, jamais tranché), et le contraste 
 `.coach-nav-shortcut-label` (signalé, jamais corrigé). Le toggle mode sombre/clair étant désormais
 réellement accessible (session précédente), le premier vrai test utilisateur en conditions réelles
 devient possible sur l'ensemble de l'app.
+
+## Session du 07/09/2026 (suite) — Fix : lueur au changement de sélection sur la sidebar coach recolorée en lavande
+
+**Contexte** : signalé sur `CoachNavBar.jsx`/`coach-nav-redesign.css` — une lueur visible apparaissait
+au changement de sélection dans la sidebar coach. Diagnostic demandé avant toute correction.
+
+**Cause identifiée, différente de l'hypothèse posée dans la demande** : ni `box-shadow`, ni
+`filter: drop-shadow`, ni pseudo-élément dédié — vérifié qu'aucun n'existe sur `.coach-nav-indicator`
+(pastille glissante) ni `.coach-nav-item` (seuls les 2 `box-shadow` du fichier sont des ombres portées
+statiques en encre sur `.coach-nav` lui-même, sans rapport avec la sélection). **Cause réelle : l'anneau
+de focus natif du navigateur.** `.coach-nav-item` (`<button>`) n'a jamais eu de `outline: none`, ni ici
+ni dans le reset global (`button{}` de `global.css` ne touche pas `outline`). `CoachNavBar.jsx` navigue
+via `navigate(tab.path)` — une transition SPA, qui ne `blur()` jamais le bouton cliqué — l'onglet garde
+donc le focus natif après le changement d'écran, et l'anneau par défaut du navigateur restait visible
+dessus à chaque sélection. **Même bug, même cause, que celui déjà diagnostiqué et corrigé sur la nav
+membre en PR #175** (`nav.css`, `.nav-btn`) — jamais reporté ici puisque `coach-nav-redesign.css` vivait
+alors dans un chantier séparé, non couvert par cette correction.
+
+**Fix** : `outline: none` + règle `:focus-visible` dédiée (même technique que PR #175, pour ne pas
+casser l'accessibilité clavier — seul le résidu au tap tactile disparaît).
+
+**Cohérence clair/sombre vérifiée et tranchée avec l'utilisateur avant application** : la lueur existe
+dans **les deux thèmes** (comportement navigateur, pas conditionné par `data-theme`) — mais
+`--dark-accent-lavender` n'étant défini que sous `:root[data-theme="dark"]`, impossible à utiliser tel
+quel en clair (déclaration invalide, aucun anneau visible). Deux options présentées — **`--accent-secondary`**
+(#8B93E8, "bleu-violet" de la palette de base, `global.css`) retenu pour le clair : même famille
+lavande que le logo, sans inventer de nouvelle teinte ni dupliquer un hex en dur. `--dark-accent-lavender`
+(#A3AEFE) pour le sombre, comme demandé. Intensité/taille/timing inchangés (2px, `outline-offset` 2px,
+mêmes valeurs des deux côtés) — seule la teinte diffère entre les deux thèmes.
+
+**Vérification** : `npm run build` OK, grep du bundle compilé confirmant `outline:none` sur
+`.coach-nav-item`, la règle `:focus-visible` avec `--accent-secondary` en base, et sa surcharge
+`--dark-accent-lavender` sous `data-theme=dark`.
+
+**Commit** : cherry-pické sur branche `fix/coach-nav-focus-glow` — PR à suivre (draft → ready → merge
+squash après poll Vercel vert).
