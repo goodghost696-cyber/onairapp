@@ -29,13 +29,19 @@
      `#1C1A17`) est déjà utilisé directement sur ce même dégradé juste à
      côté (le texte "mot de passe oublié" sous le logo, ligne 70) —
      convention déjà établie dans l'app pour du texte sur fond corail.
-   Aucun usage sur fond sombre à préserver : la nouvelle colonne droite du
-   split-screen (PR#149/#150) affiche `public/logo-volta.svg` en `<img>`
-   direct, pas ce composant/cette classe — confirmé, pas de conflit. Le
-   splash (SplashIntro.jsx) a son propre span "VOLTA" séparé
-   (`.splash-word`), pas `.brand-wordmark` non plus. Simple changement de
-   couleur par défaut, pas de logique conditionnelle : rien d'autre à
-   gérer tant qu'aucun contexte sombre n'existe réellement. */
+
+   2026-09-08 — le constat "aucun usage sur fond sombre" ci-dessus est
+   devenu FAUX : Landing.jsx a depuis été débloqué pour suivre le vrai
+   thème (PR #182), son fond passe à `--dark-bg` (quasi noir) en sombre —
+   le wordmark encre restait figé dessus, quasi invisible (deux tons de
+   noir superposés, bug remonté sur capture réelle). Cette classe reste
+   volontairement fixe ici (pas de bloc :root[data-theme="dark"] sur
+   .brand-wordmark lui-même) : `ResetPassword.jsx` n'est PAS migré et son
+   fond reste corail dans tous les cas — y faire suivre le remap sombre
+   casserait ce cas précis (texte clair sur corail, alors que le texte
+   voisin `--text-primary` y reste en encre par convention établie). Le
+   fix est scopé à `.landing-redesign .brand-wordmark` dans
+   `landing-redesign.css`, pas ici — voir ce fichier. */
 .brand-wordmark {
   font-family: 'Unbounded', 'Space Grotesk', sans-serif;
   font-weight: 800;

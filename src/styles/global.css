@@ -622,6 +622,28 @@ button {
   animation: spin 800ms linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* RouteLoadingFallback (App.jsx) — fallback de <Suspense> global, croisé à
+   chaque changement de route lazy-loaded. Vit ici plutôt que dans un
+   *-redesign.css : ce n'est pas un écran, aucune des 21 PR du chantier
+   mode sombre ne l'a jamais couvert (angle mort structurel du découpage
+   en une PR par écran). Fixé en crème/encre pastel chaud le 2026-08-20,
+   avant que le chantier n'existe — recolorée ici (2026-09-08, bug de
+   flash blanc remonté) pour suivre le vrai thème au lieu de rester figée. */
+.route-loading-fallback {
+  background: #EFE7D9;
+}
+.route-loading-ring {
+  border: 2px solid rgba(28,26,23,0.2);
+  border-top-color: #1C1A17;
+}
+:root[data-theme="dark"] .route-loading-fallback {
+  background: var(--dark-bg);
+}
+:root[data-theme="dark"] .route-loading-ring {
+  border-color: var(--dark-border);
+  border-top-color: var(--dark-text-primary);
+}
 .scan-loading-text {
   font-size: 15px;
   color: var(--text-primary);

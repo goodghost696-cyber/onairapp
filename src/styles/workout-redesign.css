@@ -173,6 +173,28 @@ body.workout-body-bg {
   font-size: 13px;
   font-weight: 600;
 }
+
+/* Fix (2026-09-08, bug remonté sur capture réelle) : plusieurs endroits
+   de cet écran (libellé "exercice(s)" des cartes programme/bibliothèque,
+   état vide de l'historique) utilisent la classe utilitaire GÉNÉRIQUE
+   .text-muted (global.css) plutôt qu'une classe .wh-* dédiée — jamais
+   migrée vers --dark-*, elle reste fixée à l'encre, délavée sur les
+   fonds --wh-card/--wh-bg devenus sombres. Même famille de bug que
+   Settings — voir settings-redesign.css pour l'explication détaillée du
+   piège `.card .text-secondary/.text-muted` de global.css.
+   Scopé à `.screen` (PAS `.workout-redesign` seul) : la sheet "séance
+   déjà en cours" (Workout.jsx, styles inline, background:
+   var(--surface-solid), jamais migrée) est un SIBLING de `.screen`, pas
+   un descendant (elle se ferme puis se rouvre après le </div> de
+   `.workout-screen`, vérifié dans le JSX) — hors de portée de ce
+   sélecteur, donc pas affectée par erreur (son texte encre reste correct
+   sur son fond qui reste blanc dans tous les cas). La règle ci-dessus
+   (.card.card-hero .text-sm.text-muted, fixée sur --wh-olive-ink) garde
+   une spécificité plus haute (5 classes contre 2) et continue de
+   gagner sans changement. global.css lui-même n'est pas touché. */
+.workout-redesign .screen .text-muted {
+  color: var(--wh-text-muted);
+}
 .workout-redesign .progress-bar {
   height: 9px;
   border-radius: 999px;

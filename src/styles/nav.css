@@ -109,6 +109,28 @@
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition: transform 150ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* Fix PR #175 réappliqué (2026-09-08) — perdu par erreur lors du revert
+     PR #179 (retour à la pilule flottante, nav.css restauré octet pour
+     octet sur un commit antérieur à ce fix). Point méthodologique retenu
+     (voir JOURNAL.md) : un revert byte-exact d'un fichier peut effacer
+     silencieusement des fixes plus récents faits sur ce même fichier
+     entre-temps, sans rapport avec le sujet du revert — à vérifier
+     explicitement après coup, pas supposé.
+     `-webkit-tap-highlight-color: transparent` ci-dessus ne neutralise
+     que le flash tactile, pas l'anneau de focus natif. En SPA, un tap qui
+     déclenche une navigation ne recharge jamais la page donc ne blur()
+     jamais le bouton : il garde le focus natif après le changement
+     d'écran, et l'anneau par défaut de WebKit restait visible dessus —
+     rapporté à l'origine sur l'onglet actif/dernier tapé. `outline: none`
+     seul retirerait aussi l'anneau au clavier (accessibilité) — la règle
+     :focus-visible juste en dessous le restaure pour la navigation
+     clavier uniquement, sans réintroduire l'anneau résiduel au tap. */
+  outline: none;
+}
+
+.nav-btn:focus-visible {
+  outline: 2px solid var(--nav-border);
+  outline-offset: 2px;
 }
 
 /* Phosphor icons fill with currentColor by default. Inactive tabs stay
