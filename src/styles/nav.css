@@ -8,30 +8,30 @@
    Tabs/routes/icons themselves are untouched — only this container. */
 .bottom-nav {
   position: fixed;
-  /* Pushed to the true minimum on explicit request ("je la veux vraiment
-     en bottom de page"): no extra margin at all, not even a small floor —
-     bottom is exactly env(safe-area-inset-bottom). In a Safari tab (SAB=0)
-     the pill sits flush against the literal screen edge. In standalone
-     (SAB=34) it sits exactly on top of the home-indicator safe area and no
-     further — that 34px is not decorative margin, it's the minimum needed
-     so the icons aren't physically under the home-indicator gesture strip
-     (tapping there risks colliding with the swipe-up-to-switch-apps
-     gesture); it cannot go lower without that tradeoff. */
-  bottom: env(safe-area-inset-bottom);
-  /* Tentative de fix le 2026-08-31 (PR #156, revert le même jour) : le
-     vide transparent entre la pilule et le vrai bord d'écran sur iPhone/
-     PWA (safe-area) est un bug réel, non résolu — mais l'approche essayée
-     (bottom:0 + padding-bottom absorbant la safe-area en interne,
-     align-items:flex-start) a produit en rendu réel une pilule étirée
-     verticalement de façon disproportionnée, un vide énorme visible à
-     l'INTÉRIEUR de la pilule elle-même plutôt qu'un remplissage seamless
-     — l'hypothèse "le fond translucide existant suffit à couvrir la zone
-     agrandie proprement" était fausse en pratique pour cette pilule
-     flottante, détachée et frost (pas un bandeau plein-largeur). Revert
-     complet vers cet état d'origine. Prochaine tentative : NE PAS
-     réappliquer ce même raisonnement sans un rendu réel (screenshot/
-     device) pour vérifier avant de committer — voir JOURNAL.md pour le
-     détail complet des deux sessions. */
+  /* Historique de cette valeur : posée à zéro marge absolue (`env(safe-
+     area-inset-bottom)` seul) sur demande explicite ("je la veux vraiment
+     en bottom de page"), 2026-08-31. Un `bottom:0` + padding interne pour
+     supprimer le vide sous la pilule a été tenté la même semaine (PR
+     #156) et cassé en rendu réel sur iPhone (pilule étirée verticalement,
+     vide déplacé À L'INTÉRIEUR de sa forme) — reverté (PR #157), vide
+     sous la pilule accepté comme compromis documenté (JOURNAL.md, PR
+     #156/#157/#158). Le chantier bandeau plein-largeur (PR #174-178) a
+     ensuite résolu ce même vide proprement, avant un retour définitif à
+     la pilule par préférence esthétique (2026-09-03) qui a réaccepté ce
+     vide comme compromis assumé.
+     2026-09-08 — demande explicite : réduire ce vide sans changer la
+     forme de la pilule (donc sans retenter #156). `max(22px, env(...))`
+     reprend telle quelle la formule déjà utilisée par CoachNavBar
+     (coach-nav-redesign.css) : un plancher constant de 22px, jamais nul,
+     qui plafonne le vide perçu au lieu de le laisser grandir jusqu'à
+     34px sur un iPhone à encoche — sans étirer ni déformer la pilule
+     elle-même (seul `bottom` change ici, `padding`/`align-items`/
+     `height` intacts). Contredit la demande "zéro marge" du 08-31
+     ci-dessus — reconfirmé explicitement avant d'appliquer. Ne remplit
+     toujours pas la safe-area jusqu'au bord littéral de l'écran (ça
+     redemanderait #156 ou le bandeau) : réduit le vide, ne le supprime
+     pas entièrement. */
+  bottom: max(22px, env(safe-area-inset-bottom));
   left: 50%;
   transform: translateX(-50%);
   z-index: 100;
