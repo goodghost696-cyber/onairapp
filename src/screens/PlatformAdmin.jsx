@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { isGymAccessActive, trialDaysLeft } from '../utils/billing'
+import '../styles/PlatformAdmin.css'
 
 // The missing "toutes les salles VOLTA" overview flagged in JOURNAL.md
 // 2026-08-10 — until now, checking who signed up meant querying the
@@ -17,6 +18,14 @@ export default function PlatformAdmin() {
   const [counts, setCounts] = useState({})
   const [ai, setAi] = useState({})
   const [error, setError] = useState('')
+
+  // Même mécanisme que les 21 écrans du chantier mode sombre (fond
+  // derrière .app-wrapper) — absent jusqu'ici puisque cet écran n'avait
+  // jamais de fond propre en clair.
+  useEffect(() => {
+    document.body.classList.add('platform-admin-body-bg')
+    return () => document.body.classList.remove('platform-admin-body-bg')
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -46,16 +55,21 @@ export default function PlatformAdmin() {
     return () => { cancelled = true }
   }, [])
 
+  // Couleur pilotée en JS, vérifiée avant modification comme demandé :
+  // décision (quel statut -> quelle couleur) non touchée, seul le nom du
+  // token référencé dans le string change (--success/--text-secondary/
+  // --danger -> --pa-success/--pa-text-secondary/--pa-danger, voir
+  // PlatformAdmin.css) pour suivre le mapping sombre automatiquement.
   const statusLabel = (gym) => {
-    if (gym.subscription_status === 'active') return { text: 'Actif', color: 'var(--success)' }
+    if (gym.subscription_status === 'active') return { text: 'Actif', color: 'var(--pa-success)' }
     if (gym.subscription_status === 'trialing') {
       return isGymAccessActive(gym)
-        ? { text: `Essai — ${trialDaysLeft(gym)} j`, color: 'var(--text-secondary)' }
-        : { text: 'Essai terminé', color: 'var(--danger)' }
+        ? { text: `Essai — ${trialDaysLeft(gym)} j`, color: 'var(--pa-text-secondary)' }
+        : { text: 'Essai terminé', color: 'var(--pa-danger)' }
     }
-    if (gym.subscription_status === 'past_due') return { text: 'Paiement en échec', color: 'var(--danger)' }
-    if (gym.subscription_status === 'canceled') return { text: 'Annulé', color: 'var(--danger)' }
-    return { text: gym.subscription_status, color: 'var(--text-secondary)' }
+    if (gym.subscription_status === 'past_due') return { text: 'Paiement en échec', color: 'var(--pa-danger)' }
+    if (gym.subscription_status === 'canceled') return { text: 'Annulé', color: 'var(--pa-danger)' }
+    return { text: gym.subscription_status, color: 'var(--pa-text-secondary)' }
   }
 
   const totals = gyms ? {
@@ -67,21 +81,21 @@ export default function PlatformAdmin() {
   } : null
 
   return (
-    <div className="app-wrapper">
+    <div className="app-wrapper platform-admin">
       <div style={{ padding: '80px 20px 100px', minHeight: '100dvh' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-          <button onClick={() => navigate(-1)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', padding: 4, fontSize: 20, lineHeight: 1, fontFamily: 'inherit' }}>
+          <button onClick={() => navigate(-1)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--pa-text-secondary)', padding: 4, fontSize: 20, lineHeight: 1, fontFamily: 'inherit' }}>
             ←
           </button>
-          <h1 style={{ fontSize: 24, fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--text-primary)', margin: 0 }}>
+          <h1 style={{ fontSize: 24, fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--pa-text-primary)', margin: 0 }}>
             Toutes les salles
           </h1>
         </div>
-        <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '0 0 20px' }}>
+        <p style={{ fontSize: 13, color: 'var(--pa-text-secondary)', margin: '0 0 20px' }}>
           Vue d'ensemble plateforme — réservée à ton compte.
         </p>
 
-        {error && <div style={{ padding: 16, color: 'var(--danger)', fontSize: 13 }}>{error}</div>}
+        {error && <div style={{ padding: 16, color: 'var(--pa-danger)', fontSize: 13 }}>{error}</div>}
 
         {totals && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(104px, 1fr))', gap: 8, marginBottom: 24 }}>
@@ -92,18 +106,18 @@ export default function PlatformAdmin() {
               ['Membres', totals.members],
               ['Appels IA / mois', totals.aiCalls],
             ].map(([label, value]) => (
-              <div key={label} style={{ background: 'var(--surface)', border: '2px solid var(--border-strong)', borderRadius: 14, padding: '12px 10px', textAlign: 'center' }}>
-                <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--text-primary)', fontVariantNumeric: 'tabular-nums' }}>{value}</div>
-                <div style={{ fontSize: 9, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-muted)', marginTop: 2 }}>{label}</div>
+              <div key={label} style={{ background: 'var(--pa-surface)', border: '2px solid var(--pa-border-strong)', borderRadius: 14, padding: '12px 10px', textAlign: 'center' }}>
+                <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--pa-text-primary)', fontVariantNumeric: 'tabular-nums' }}>{value}</div>
+                <div style={{ fontSize: 9, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--pa-text-muted)', marginTop: 2 }}>{label}</div>
               </div>
             ))}
           </div>
         )}
 
-        {gyms === null && !error && <div style={{ padding: 20, textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>Chargement…</div>}
+        {gyms === null && !error && <div style={{ padding: 20, textAlign: 'center', color: 'var(--pa-text-muted)', fontSize: 13 }}>Chargement…</div>}
 
         {gyms && gyms.length === 0 && (
-          <div style={{ padding: 20, textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>Aucune salle pour l'instant.</div>
+          <div style={{ padding: 20, textAlign: 'center', color: 'var(--pa-text-muted)', fontSize: 13 }}>Aucune salle pour l'instant.</div>
         )}
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -115,20 +129,20 @@ export default function PlatformAdmin() {
             const tokens = (usage.input_tokens || 0) + (usage.output_tokens || 0)
             const overQuota = gym.ai_quota_calls != null && aiCalls >= gym.ai_quota_calls
             return (
-              <div key={gym.id} style={{ background: 'var(--surface)', border: '2px solid var(--border-strong)', borderRadius: 16, padding: 16 }}>
+              <div key={gym.id} style={{ background: 'var(--pa-surface)', border: '2px solid var(--pa-border-strong)', borderRadius: 16, padding: 16 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
                   <div>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)' }}>{gym.name}</div>
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--pa-text-primary)' }}>{gym.name}</div>
+                    <div style={{ fontSize: 11, color: 'var(--pa-text-muted)', marginTop: 2 }}>
                       Créée le {new Date(gym.created_at).toLocaleDateString('fr-FR')} · code {gym.invite_code}
                     </div>
                   </div>
                   <span style={{ fontSize: 11, fontWeight: 700, color: status.color, whiteSpace: 'nowrap' }}>{status.text}</span>
                 </div>
-                <div style={{ display: 'flex', gap: 16, marginTop: 12, fontSize: 12, color: 'var(--text-secondary)', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: 16, marginTop: 12, fontSize: 12, color: 'var(--pa-text-secondary)', flexWrap: 'wrap' }}>
                   <span>{c.coaches} coach{c.coaches !== 1 ? 's' : ''}</span>
                   <span>{c.members} membre{c.members !== 1 ? 's' : ''}</span>
-                  <span style={{ color: overQuota ? 'var(--danger)' : 'var(--text-secondary)' }}>
+                  <span style={{ color: overQuota ? 'var(--pa-danger)' : 'var(--pa-text-secondary)' }}>
                     {aiCalls} appel{aiCalls !== 1 ? 's' : ''} IA
                     {gym.ai_quota_calls != null ? ` / ${gym.ai_quota_calls}` : ''}
                   </span>

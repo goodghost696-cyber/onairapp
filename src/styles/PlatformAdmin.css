@@ -1,0 +1,60 @@
+/* Écran interne "Toutes les salles" (PlatformAdmin.jsx, outil admin
+   plateforme réservé à un seul compte via user.isPlatformAdmin, jamais
+   customer-facing) — jamais eu de restyle "pastel chaud" comme les 21
+   écrans du chantier (pas de fichier *-redesign.css, tous les styles
+   étaient en dur inline, référençant directement les tokens globaux
+   partagés). Palette corail d'origine conservée en clair par choix
+   explicite (2026-09-08) : cet écran garde son identité actuelle, seul
+   le mode sombre est ajouté.
+
+   Tokens locaux --pa-* introduits pour donner une vraie variante sombre
+   sans toucher aux tokens globaux partagés --surface/--text-primary/
+   --text-secondary/--text-muted/--border-strong/--danger/--success
+   (utilisés par 34 fichiers dans tout le repo, dont des composants
+   partagés et au moins un écran déjà migré avec le même défaut — risque
+   de régression écarté en scopant ici). Wrapper .platform-admin posé sur
+   .app-wrapper (PlatformAdmin.jsx). Les styles restent inline dans le
+   JSX (référençant var(--pa-*) au lieu de var(--surface) etc.) plutôt
+   que convertis en classNames : la cascade CSS résout ces var() depuis
+   le wrapper ancêtre exactement pareil, layout/valeurs non touchés à
+   part le nom du token référencé. */
+.platform-admin {
+  --pa-bg: #EFE7D9;
+  --pa-surface: #FFFFFF;
+  --pa-border-strong: rgba(0,0,0,0.14);
+  --pa-text-primary: #1B1710;
+  --pa-text-secondary: rgba(27,23,16,0.62);
+  --pa-text-muted: rgba(27,23,16,0.42);
+  /* Non retouchées en sombre : mesuré lors du fix auth-redesign (session
+     précédente) que #FF3B3B/#1FD66B ont déjà un excellent contraste
+     contre --dark-bg (5,26:1 / 9,64:1) — pas de remap nécessaire. */
+  --pa-danger: #FF3B3B;
+  --pa-success: #1FD66B;
+}
+
+/* Fond de page — pilotée par useEffect (PlatformAdmin.jsx), même
+   mécanisme que les 21 écrans précédents. Pas de surcharge en clair :
+   cet écran n'a jamais eu de fond propre — seul le mode sombre ajoute un
+   vrai fond, voir plus bas. */
+body.platform-admin-body-bg {
+  background: var(--pa-bg);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Mode sombre — Option B confirmée avec l'utilisateur : palette claire
+   (corail) inchangée, seul le mode sombre suit les tokens --dark-* du
+   chantier. Couleur pilotée en JS trouvée et traitée, comme demandé de
+   vérifier : statusLabel() (abonnement de chaque salle) et la couleur du
+   compteur d'appels IA (en quota dépassé ou non) retournent un STRING
+   `var(--xx)` directement utilisé en style inline — logique de décision
+   non touchée, seul le nom du token référencé dans le string change
+   (--success/--text-secondary/--danger -> --pa-success/--pa-text-
+   secondary/--pa-danger), suit donc ce mapping automatiquement. */
+:root[data-theme="dark"] .platform-admin {
+  --pa-bg: var(--dark-bg);
+  --pa-surface: var(--dark-surface);
+  --pa-border-strong: var(--dark-border);
+  --pa-text-primary: var(--dark-text-primary);
+  --pa-text-secondary: var(--dark-text-secondary);
+  --pa-text-muted: var(--dark-text-muted);
+}

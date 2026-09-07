@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import '../styles/WorkoutHistory.css';
@@ -8,26 +9,36 @@ export default function WorkoutHistory() {
   const { appData } = useApp();
   const session = (appData.sessionHistory || []).find(s => String(s.id) === id);
 
+  // Même mécanisme que les 21 écrans du chantier mode sombre (fond
+  // derrière .app-wrapper, overscroll iOS compris) — absent jusqu'ici
+  // puisque cet écran n'avait jamais de fond propre en clair (le dégradé
+  // corail de <body> montrait déjà à travers, sans besoin de le
+  // répliquer). Ajouté maintenant pour porter le fond sombre.
+  useEffect(() => {
+    document.body.classList.add('wh-history-body-bg')
+    return () => document.body.classList.remove('wh-history-body-bg')
+  }, [])
+
   if (!session) return (
-    <div className="app-wrapper">
+    <div className="app-wrapper wh-history">
       <div className="screen">
-        <p style={{ color: 'var(--text-muted)', padding: '40px 0', textAlign: 'center' }}>Séance introuvable</p>
+        <p className="hd-muted" style={{ padding: '40px 0', textAlign: 'center' }}>Séance introuvable</p>
       </div>
 
     </div>
   );
 
   return (
-    <div className="app-wrapper">
+    <div className="app-wrapper wh-history">
       <div className="screen">
         <div className="screen-header" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '20px 0 8px' }}>
-          <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }} onClick={() => navigate('/workout')}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" strokeWidth="1.5" strokeLinecap="round">
+          <button className="hd-back" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }} onClick={() => navigate('/workout')}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
               <polyline points="15 18 9 12 15 6"/>
             </svg>
           </button>
           <div>
-            <p style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1 }}>{session.date}</p>
+            <p className="hd-muted" style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 1 }}>{session.date}</p>
             <h1 className="text-xl bold">{session.type}</h1>
           </div>
         </div>
