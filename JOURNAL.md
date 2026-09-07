@@ -7062,3 +7062,65 @@ merge squash après poll Vercel vert).
 **État global** : 4 des 5 bugs remontés sur capture réelle sont corrigés. Reste ouvert : le flash
 rouge à l'ouverture (bloqué par la même contrainte "ne pas casser les 4 écrans non migrés" que le
 point 2), à trancher séparément — migrer ces 4 écrans lèverait le blocage.
+
+## Session du 08/09/2026 (suite) — WorkoutHistory/ResetPassword/PlatformAdmin migrés (Option B) — Hydration.jsx volontairement laissé de côté
+
+**Contexte** : décision prise sur le blocage identifié en fin de session précédente (flash rouge, 4
+écrans jamais migrés). Option B confirmée avec l'utilisateur pour 3 des 4 écrans — palette claire
+(corail) inchangée, seul le mode sombre suit les tokens `--dark-*` du chantier.
+
+**`Hydration.jsx` explicitement NON migré cette session** — pas un oubli. Confirmé lors du rapport de
+la session précédente comme route orpheline : aucun `navigate('/hydration')` nulle part dans le code,
+`Dashboard.jsx` a sa propre UI complète de suivi d'eau (sélecteur de bouteilles, déjà migrée) qui a
+vraisemblablement remplacé cet écran. Décision de suppression ou de conservation en dette dormante à
+trancher séparément par l'utilisateur — laissé tel quel dans l'intervalle, y compris son fond corail
+inconditionnel qui empêche toujours la fermeture complète du chantier "flash rouge".
+
+**Trouvaille importante avant implémentation, qui a changé l'approche prévue** : la demande initiale
+suggérait de modifier directement les valeurs du bloc `:root[data-theme="dark"]` **partagé** de
+`global.css` (déjà existant, jusqu'ici identique au clair). Vérifié avant de le faire : ce bloc est
+référencé par **34 fichiers** dans tout le repo — pas seulement les 3 écrans ciblés. Parmi eux, des
+composants transverses (`RestTimer`, `ExerciseModal`, `DeleteAccountButton`, `CoachNav`, `fab.css`) et,
+plus significatif, **une 4ᵉ occurrence jamais détectée du même bug déjà corrigé deux fois cette
+semaine** (Settings, Workout) : `Weekly.jsx`, écran pourtant déjà migré (PR #163), a son classement
+("leaderboard") en style inline référençant `var(--text-muted)`/`var(--text-primary)`/`var(--accent)`/
+`var(--border)` directement, sans passer par ses propres tokens `--wk-*`. Modifier le bloc partagé
+aurait changé ce fragment de Weekly sans le vouloir ni le tester.
+
+**Décision tranchée avec l'utilisateur avant toute implémentation** : overrides scopés par écran (même
+technique que les 21 écrans précédents), `global.css` non touché. Trois nouveaux/existants fichiers :
+
+- **`WorkoutHistory.css`** (fichier déjà dédié, classes déjà uniques — `.history-detail-*`,
+  `.history-stat*`, `.set-*`) : tokens locaux `--hd-*` introduits, surcharge sombre ajoutée. Wrapper
+  `wh-history` posé sur `.app-wrapper`. Les 3 usages de tokens partagés restés en inline (stroke SVG du
+  bouton retour, 2 paragraphes muted) convertis en classNames `.hd-back`/`.hd-muted`.
+- **`ResetPassword.css`** (nouveau — écran 100% en styles inline avant, même situation que
+  `Conversation.jsx` avant sa propre migration) : tokens locaux `--rp-*`, wrapper `reset-password`.
+  `<Logo>` reste **encre fixe**, non touché — cohérent avec la décision déjà prise lors du fix du
+  wordmark Landing (session précédente) : cet écran reste sur fond corail dans les deux thèmes, le
+  logo doit y rester lisible sans suivre aucun remap sombre.
+- **`PlatformAdmin.css`** (nouveau) : tokens locaux `--pa-*`, wrapper `platform-admin`. **Couleur
+  pilotée en JS trouvée et traitée**, comme demandé de vérifier : `statusLabel()` (statut d'abonnement
+  d'une salle) et la couleur du compteur d'appels IA (quota dépassé ou non) retournent un *string*
+  `var(--xx)` directement utilisé en style inline — la logique de décision elle-même n'a pas été
+  touchée, seul le nom du token référencé dans le string a changé (`--success`/`--text-secondary`/
+  `--danger` → `--pa-success`/`--pa-text-secondary`/`--pa-danger`), donc suit le mapping sombre
+  automatiquement sans risque de rupture de la logique métier.
+
+**Danger/success non remesurés** : `ResetPassword.css`/`PlatformAdmin.css` réutilisent directement la
+mesure déjà faite lors du fix `auth-redesign` (session précédente) — `#FF3B3B`/`#1FD66B` contre
+`--dark-bg` : 5,26:1 / 9,64:1, largement suffisant, pas de nouvelle mesure nécessaire pour ce contexte
+identique (texte flottant directement sur le fond d'écran).
+
+**Vérification** : `npm run build` OK. Grep du bundle compilé confirmant les blocs clair/sombre des 3
+écrans (`WorkoutHistory-*.css`, `ResetPassword-*.css`, `PlatformAdmin-*.css`) et l'absence de toute
+référence résiduelle aux tokens partagés (`var(--surface)`/`var(--text-primary)`/etc.) dans les 3
+fichiers JSX.
+
+**Commit** : cherry-pické sur branche `feat/dark-theme-3-screens` — PR à suivre (draft → ready →
+merge squash après poll Vercel vert).
+
+**État du chantier** : 23 écrans suivent désormais un vrai mode sombre (20 restylés pastel chaud +
+3 en Option B). Seul `Hydration.jsx` reste sur fond corail inconditionnel — le flash rouge à
+l'ouverture de l'app ne peut donc pas encore être considéré comme totalement fermé tant qu'une
+décision sur cet écran (suppression ou migration) n'est pas prise séparément.

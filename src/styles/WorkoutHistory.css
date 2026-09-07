@@ -1,3 +1,37 @@
+/* Écran de détail d'une séance passée (WorkoutHistory.jsx) — jamais eu de
+   restyle "pastel chaud" comme les 21 écrans du chantier (pas de fichier
+   *-redesign.css, palette corail d'origine conservée en clair par choix
+   explicite, 2026-09-08). Tokens locaux --hd-* introduits ici pour lui
+   donner une vraie variante sombre, sans toucher aux tokens globaux
+   partagés --surface/--text-primary/--text-muted/--border (utilisés par
+   34 fichiers dans tout le repo, dont des composants partagés et au
+   moins un écran déjà migré avec le même défaut — risque de régression
+   écarté en scopant ici plutôt qu'en modifiant le bloc partagé).
+   Wrapper .wh-history posé sur .app-wrapper (WorkoutHistory.jsx). */
+.wh-history {
+  --hd-bg: #EFE7D9;
+  --hd-card: #FFFFFF;
+  --hd-border: rgba(0,0,0,0.08);
+  --hd-text-primary: #1B1710;
+  --hd-text-muted: rgba(27,23,16,0.42);
+}
+
+/* Fond de page — pilotée par useEffect (WorkoutHistory.jsx), même
+   mécanisme que les 21 écrans précédents. Pas de surcharge ici pour le
+   clair : cet écran n'a jamais eu de fond propre (le dégradé corail de
+   <body>, global.css, montrait déjà à travers), donc rien à reproduire
+   — seul le mode sombre ajoute un vrai fond, voir plus bas. */
+body.wh-history-body-bg {
+  background: var(--hd-bg);
+}
+
+.hd-muted {
+  color: var(--hd-text-muted);
+}
+.hd-back {
+  color: var(--hd-text-primary);
+}
+
 .history-detail-stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -6,8 +40,8 @@
 }
 
 .history-stat {
-  background: var(--surface);
-  border: 0.5px solid var(--border);
+  background: var(--hd-card);
+  border: 0.5px solid var(--hd-border);
   border-radius: 12px;
   padding: 12px;
   text-align: center;
@@ -16,20 +50,20 @@
 .history-stat-val {
   font-size: 20px;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--hd-text-primary);
 }
 
 .history-stat-label {
   font-size: 10px;
   letter-spacing: 1.5px;
   text-transform: uppercase;
-  color: var(--text-muted);
+  color: var(--hd-text-muted);
   margin-top: 4px;
 }
 
 .history-detail-card {
-  background: var(--surface);
-  border: 0.5px solid var(--border);
+  background: var(--hd-card);
+  border: 0.5px solid var(--hd-border);
   border-radius: 16px;
   padding: 14px 16px;
   margin-bottom: 10px;
@@ -38,17 +72,17 @@
 .history-detail-name {
   font-size: 16px;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--hd-text-primary);
   margin-bottom: 10px;
   padding-bottom: 8px;
-  border-bottom: 0.5px solid var(--border);
+  border-bottom: 0.5px solid var(--hd-border);
 }
 
 .history-detail-set-row {
   display: flex;
   justify-content: space-between;
   padding: 6px 0;
-  border-bottom: 0.5px solid var(--border);
+  border-bottom: 0.5px solid var(--hd-border);
 }
 
 .history-detail-set-row:last-child {
@@ -57,11 +91,25 @@
 
 .set-num-label {
   font-size: 13px;
-  color: var(--text-muted);
+  color: var(--hd-text-muted);
 }
 
 .set-detail {
   font-size: 13px;
-  color: var(--text-primary);
+  color: var(--hd-text-primary);
   font-weight: 500;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Mode sombre — Option B confirmée avec l'utilisateur : palette claire
+   (corail) inchangée, seul le mode sombre suit les tokens --dark-* du
+   chantier. Aucune couleur pilotée en JS sur cet écran (vérifié) — le
+   seul état conditionnel (session introuvable) ne change pas de couleur
+   selon son contenu, juste son texte. */
+:root[data-theme="dark"] .wh-history {
+  --hd-bg: var(--dark-bg);
+  --hd-card: var(--dark-surface);
+  --hd-border: var(--dark-border);
+  --hd-text-primary: var(--dark-text-primary);
+  --hd-text-muted: var(--dark-text-muted);
 }
