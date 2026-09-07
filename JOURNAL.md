@@ -7124,3 +7124,48 @@ merge squash après poll Vercel vert).
 3 en Option B). Seul `Hydration.jsx` reste sur fond corail inconditionnel — le flash rouge à
 l'ouverture de l'app ne peut donc pas encore être considéré comme totalement fermé tant qu'une
 décision sur cet écran (suppression ou migration) n'est pas prise séparément.
+
+## Session du 08/09/2026 (suite) — Hydration.jsx supprimé, flash rouge à l'ouverture fermé
+
+**Suppression** — même précédent que `Sleep.jsx` (JOURNAL.md, 2026-08-13) : import lazy + route
+`/hydration` retirés de `App.jsx`, `src/screens/Hydration.jsx` et `src/styles/hydration.css` (déjà
+vide, confirmé inutilisé) supprimés. Vérifié avant suppression, comme demandé : grep exhaustif sur
+tout `src/`, aucune autre référence fonctionnelle — seules 3 mentions en commentaires historiques
+subsistent (`Conversation-redesign.css`, `member.css`, `settings-redesign.css`), laissées telles
+quelles (états exacts au moment de leur écriture, même convention que pour ne pas réécrire
+l'historique du JOURNAL.md).
+
+**Flash rouge à l'ouverture — fermé.** Une fois Hydration retiré, plus aucun écran de l'app ne dépend
+du fond corail inconditionnel de `html`/`body` (`global.css`) — les 3 derniers écrans qui en
+dépendaient encore (PlatformAdmin/ResetPassword/WorkoutHistory) ont été migrés en Option B la session
+précédente.
+
+**Fix implémenté** (meilleure approche vérifiée avant de choisir, comme demandé) :
+- `index.html` : script synchrone ajouté en tout premier dans `<head>` (avant même le favicon), en
+  `<script>` classique (pas `type="module"`, pas `async`/`defer`) — bloque le parsing du reste de la
+  page jusqu'à son exécution, donc tourne **avant** que le CSS compilé ne puisse peindre quoi que ce
+  soit, quel que soit l'ordre d'injection du `<link rel="stylesheet">` par Vite. Confirmé empiriquement
+  dans `dist/index.html` : Vite injecte ce lien en tout dernier dans `<head>`, ce script tourne donc de
+  toute façon en premier. Lit `localStorage.getItem('onair_theme')` (repli `'dark'` — même clé et même
+  valeur de repli que `ThemeContext.jsx`, aucune divergence possible) et pose `data-theme` sur `<html>`
+  avant le premier paint.
+- `global.css` : `html`/`body` gardent leur fond corail comme valeur de base (filet de sécurité
+  théorique) mais gagnent une surcharge `:root[data-theme="dark"]`/`:root[data-theme="dark"] body` vers
+  `--dark-bg`. Le script d'`index.html` posant déjà `data-theme` avant le premier paint, cette
+  surcharge gagne immédiatement — le corail ne s'affiche plus jamais, même une frame, sur un thème
+  sombre.
+
+**Vérification** : `npm run build` OK, réussi sans erreur (confirme qu'aucun autre écran ne référence
+l'import/la route supprimés). Grep du bundle compilé confirmant : aucune référence fonctionnelle à
+`Hydration` nulle part (la seule occurrence du mot dans le JS compilé est la chaîne interne React
+`suppressHydrationWarning`, sans rapport), script anti-flash présent dans `dist/index.html`, surcharges
+`--dark-bg` confirmées sur `:root` et `body` dans le CSS compilé.
+
+**Commit** : cherry-pické sur branche `chore/remove-hydration-fix-flash` — PR à suivre (draft → ready
+→ merge squash après poll Vercel vert).
+
+**Clôture du chantier mode sombre** : les 5 bugs remontés sur capture iPhone réelle sont maintenant
+tous corrigés (wordmark Landing, texte délavé Settings/Workout, focus nav perdu, flash blanc entre
+pages, flash rouge à l'ouverture). 23 écrans suivent un vrai mode sombre, `Hydration.jsx` supprimé.
+Reste ouvert, hors périmètre de ce chantier : le mécanisme de thème "light" alternatif toujours mort
+côté UI, et le contraste marginal préexistant de `.coach-nav-shortcut-label`.
