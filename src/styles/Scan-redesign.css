@@ -62,32 +62,13 @@ body.scan-body-bg {
   background: var(--dark-bg);
 }
 
-/* Fond de .bottom-nav — même règle que les 9 autres écrans membre avec
-   nav visible (voir nutrition-redesign.css pour l'explication complète,
-   historique frost/opaque). 16e écran à recevoir cette surcharge — Scan
-   n'en avait aucune jusqu'ici (jamais migré), contrairement aux 9 autres
-   qui l'avaient déjà avant même le chantier mode sombre. */
-.scan-redesign ~ .bottom-nav {
-  background: rgba(28,26,23,0.25);
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
-}
-.scan-redesign ~ .bottom-nav .nav-btn svg {
-  color: rgba(28,26,23,0.7);
-}
-.scan-redesign ~ .bottom-nav .nav-btn.active svg {
-  color: #1C1A17;
-}
-/* Repassées en crème en sombre — même raisonnement que les écrans
-   précédents (dashboard.css et suivants) : le fond derrière la pill
-   devient sombre, la plaque frost à 25% va donc lire sombre plutôt que
-   claire, des icônes encre y seraient quasi invisibles. */
-:root[data-theme="dark"] .scan-redesign ~ .bottom-nav .nav-btn svg {
-  color: rgba(247,241,230,0.7);
-}
-:root[data-theme="dark"] .scan-redesign ~ .bottom-nav .nav-btn.active svg {
-  color: #F7F1E6;
-}
+/* Fond de .bottom-nav — voir nutrition-redesign.css pour l'explication
+   complète (historique frost → opaque). Pas de surcharge par écran ici :
+   .bottom-nav pointe directement sur #FFFFFF/var(--dark-surface) (fond)
+   et var(--text-secondary)/#A3AEFE (icônes) dans nav.css — Scan, migré
+   après le passage à l'opaque (2026-09-04), n'a jamais eu besoin de sa
+   propre surcharge, contrairement aux 9 écrans restylés avant cette date
+   qui en gardent une pour l'historique (voir nutrition-redesign.css). */
 
 /* ── Header ── */
 .sc-header {
