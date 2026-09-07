@@ -120,12 +120,14 @@ body.landing-body-bg {
 
 /* Fix (2026-09-08, bug remonté sur capture réelle) : .brand-wordmark
    (brand.css, partagé par <Logo>) reste fixé sur l'encre `#1C1A17` dans
-   TOUS ses autres contextes (ResetPassword.jsx, jamais migré, toujours
-   sur fond corail) — voir brand.css pour l'explication complète du
+   ses autres contextes — voir brand.css pour l'explication complète du
    pourquoi ce n'est PAS corrigé à la source. Re-épinglé uniquement ici,
    scopé à Landing : le fond de `.landing-split-left` (colonne où <Logo>
    s'affiche) suit --ld-ink/--ld-bg (déjà migrés ci-dessus), donc le
-   wordmark doit suivre le même remap pour rester lisible dessus. */
+   wordmark doit suivre le même remap pour rester lisible dessus.
+   (ResetPassword.jsx, cité ici à l'origine comme "toujours sur fond
+   corail", a depuis eu le même problème et le même fix, scopé à
+   .reset-password — voir brand.css, 2026-09-07.) */
 :root[data-theme="dark"] .landing-redesign .brand-wordmark {
   color: var(--dark-text-primary);
 }
