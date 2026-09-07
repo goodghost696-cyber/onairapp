@@ -6851,3 +6851,32 @@ merge squash après poll Vercel vert).
 `Conversation.jsx` toujours hors périmètre (décision de refonte à prendre). Mécanisme de thème
 "light" toujours mort côté UI (à trancher séparément). Contraste marginal de
 `.coach-nav-shortcut-label` (ci-dessus) à évaluer si prioritaire.
+
+## Session du 07/09/2026 (suite) — Réintégration du toggle mode sombre/clair dans Réglages
+
+**Contexte** : `useTheme()`/`toggleTheme()` (`ThemeContext.jsx`) existaient et fonctionnaient déjà
+(confirmé PR #182 — pilote correctement `data-theme` sur `<html>`), mais n'étaient appelés par aucun
+bouton UI depuis le retrait de la section "Apparence" de `Settings.jsx` le 15/08. Motif d'origine à
+l'époque : *"le restyle pastel chaud est une palette fixe, sans variante sombre"* — devenu obsolète
+maintenant que 20 écrans ont une vraie variante `--dark-*` (chantier mode sombre, PR #153 à #183).
+
+**Réalisé** : section "APPARENCE" réintégrée dans `Settings.jsx`, exactement à l'endroit laissé en
+commentaire lors du retrait (entre Confidentialité et Langue). Même composant `Toggle` et même
+structure de carte que "Notifications push" juste au-dessus (déjà migré en PR #172) — cohérence
+visuelle immédiate avec le reste de l'écran, aucune modification CSS nécessaire, uniquement du JSX.
+
+**Valeur par défaut vérifiée cohérente, comme demandé** : `theme` (`ThemeContext`) reflète directement
+l'état réel au chargement (`localStorage.getItem('onair_theme') || 'dark'`) — le toggle n'a aucune
+logique d'initialisation séparée à gérer, `on={theme === 'dark'}` suffit à refléter l'état réel dès le
+premier rendu, pas un état arbitraire.
+
+**Vérification** : `npm run build` OK, grep du bundle compilé confirmant la section "APPARENCE", le
+libellé "Mode sombre" et `toggleTheme` référencés dans le JS compilé.
+
+**Commit** : cherry-pické sur branche `feat/settings-theme-toggle` — PR à suivre (draft → ready →
+merge squash après poll Vercel vert).
+
+**Conséquence directe** : le mode sombre devient réellement accessible aux utilisateurs pour la
+première fois depuis le début du chantier — jusqu'ici actif par défaut (localStorage vide → `'dark'`)
+mais sans aucun moyen de revenir au clair ou de vérifier son fonctionnement en conditions réelles.
+Premier vrai test utilisateur du chantier à anticiper une fois déployé.
