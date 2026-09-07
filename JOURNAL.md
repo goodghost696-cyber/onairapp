@@ -6981,3 +6981,84 @@ mêmes valeurs des deux côtés) — seule la teinte diffère entre les deux th�
 
 **Commit** : cherry-pické sur branche `fix/coach-nav-focus-glow` — PR à suivre (draft → ready → merge
 squash après poll Vercel vert).
+
+## Session du 08/09/2026 — 4 corrections de bugs remontés sur capture iPhone réelle (mode sombre) + investigation du flash rouge
+
+**Contexte** : audit sur capture réelle ayant remonté 5 bugs distincts (rapport de diagnostic livré en
+amont, sans fix, session précédente). Cette session corrige les 3 causes confirmées côté lisibilité/nav,
+plus le flash blanc entre pages ; le flash rouge à l'ouverture est investigué mais volontairement non
+corrigé (voir plus bas).
+
+**1. Wordmark "VOLTA" invisible sur Landing** (`brand.css`/`landing-redesign.css`) : `.brand-wordmark`
+(classe partagée par `<Logo>`) restait fixée sur l'encre `#1C1A17` depuis PR #151, posée sur
+l'hypothèse *"aucun usage sur fond sombre"* — devenue fausse depuis que Landing suit le vrai thème
+(PR #182, 07/09). Fix **scopé à `.landing-redesign .brand-wordmark` uniquement**, pas dans `brand.css`
+lui-même : `ResetPassword.jsx`, seul autre point d'usage de `<Logo>` dans tout le repo, n'est pas migré
+et reste sur fond corail dans tous les cas — y faire suivre le remap sombre global aurait cassé ce cas
+précis (texte clair sur corail, alors que le texte voisin `--text-primary` y reste en encre par
+convention déjà établie).
+
+**2. Texte délavé sur Settings et Workout** (`settings-redesign.css`/`workout-redesign.css`) :
+plusieurs rangées de ces deux écrans utilisent les classes utilitaires **génériques**
+`.text-secondary`/`.text-muted` (`global.css`) plutôt qu'une classe `.set-*`/`.wh-*` dédiée — jamais
+migrées. Pire, à l'intérieur d'une `.card`, une règle globale plus spécifique
+(`.card .text-secondary`/`.text-muted`, `rgba(27,23,16,·)` en dur) force l'encre sur l'hypothèse
+*"une carte est toujours claire"* — vraie pour les écrans jamais migrés, fausse ici puisque
+`.settings-redesign .card`/`.workout-redesign .card` suivent déjà `--set-card`/`--wh-card` vers
+`--dark-surface`.
+**Fix scopé précisément pour ne pas casser les sheets non migrées** (repérées au préalable, comme
+demandé) : `Synchroniser mes données` (Settings) et `Séance déjà en cours` (Workout) — toutes deux en
+styles inline, `background: var(--surface-solid)`, jamais migrées, texte encre déjà correct dessus.
+`.settings-redesign .card .text-secondary/.text-muted` (leur sheet n'est pas une `.card`) et
+`.workout-redesign .screen .text-muted` (leur sheet est un *sibling* de `.screen`, pas un descendant —
+vérifié précisément dans le JSX avant de choisir ce scope). **`global.css` lui-même non touché**, comme
+demandé explicitement — le risque de casser d'autres écrans non migrés qui comptent sur
+`.card .text-secondary/.text-muted` pour rester lisibles sur fond clair reste entier ailleurs, seuls
+ces deux écrans sont corrigés.
+
+**3. Anneau de focus perdu sur la pilule de nav** (`nav.css`) : `.nav-btn` n'avait plus de
+`outline: none` ni de règle `:focus-visible` — le fix posé en PR #175 (même bug que celui corrigé sur
+la sidebar coach en PR #186 : l'anneau de focus natif du navigateur reste visible sur le bouton tapé
+puisqu'une navigation SPA ne le `blur()` jamais) a été **perdu lors du revert PR #179**, qui a restauré
+`nav.css` octet pour octet sur un commit antérieur à ce fix. Réappliqué à l'identique.
+
+**⚠️ Point méthodologique retenu, à appliquer pour tout revert futur** : un revert byte-exact d'un
+fichier (`git checkout <commit_antérieur> -- <fichier>`) restaure littéralement tout son contenu à
+cet instant précis — y compris l'effacement silencieux de tout fix, même sans rapport avec le sujet
+du revert, posé sur ce même fichier entre le commit cible et HEAD. Ce n'est pas une hypothèse : deux
+fixes distincts (PR #175 sur `nav.css`, retrouvé ici perdu par PR #179 ; potentiellement d'autres à
+l'avenir) ont déjà été perdus de cette façon exacte sur ce chantier. **Un revert byte-exact doit
+systématiquement être suivi d'un diff complet entre l'état pré-revert et l'état post-revert du/des
+fichier(s) concerné(s)**, pas seulement une vérification que le sujet du revert lui-même est bien
+résolu — c'est ce diff qui a permis de confirmer ici qu'aucune AUTRE perte n'existait (tout le reste
+du diff étant le retour intentionnel bandeau → pilule, objet même du revert).
+
+**4. Flash blanc/crème à chaque changement de page** (`App.jsx`/`global.css`) : `RouteLoadingFallback`
+(fallback de `<Suspense>`, croisé à chaque navigation lazy-loaded, donc transverse à tout changement
+d'écran) était stylé en dur (crème `#EFE7D9` + anneau encre `#1C1A17`) depuis une session du
+2026-08-20 — **antérieure au chantier mode sombre**, jamais couverte par aucune des 21 PR par écran
+(angle mort structurel : ce n'est pas un "écran", donc hors du découpage en une PR par fichier
+`*-redesign.css`). Couleurs déplacées en classNames (`.route-loading-fallback`/`.route-loading-ring`,
+`global.css`) avec surcharge `:root[data-theme="dark"]`.
+
+**Investigué mais volontairement NON corrigé — flash rouge/corail à l'ouverture de l'app** : cause
+confirmée (`html`/`body` ont un fond corail **inconditionnel** dans `global.css`, peint dès que le CSS
+charge, avant que React ne monte et n'applique le vrai thème via `ThemeContext`) — mais un fix complet
+nécessiterait de conditionner ce fond par `data-theme`, ce qui **casserait les 4 écrans jamais migrés**
+(`Hydration`, `PlatformAdmin`, `ResetPassword`, `WorkoutHistory`), qui comptent sur ce fond corail
+systématiquement visible derrière leur contenu transparent pour rester lisibles — exactement le risque
+que l'utilisateur avait explicitement signalé de ne pas prendre sur le point 2 ci-dessus. Aucun fix
+appliqué sans décision explicite sur le sort de ces 4 écrans (les migrer aussi, ou leur donner un fond
+opaque propre) — reste un chantier ouvert, pas résolu par cette session.
+
+**Vérification** : `npm run build` OK. Grep du bundle compilé confirmant : surcharge sombre sur
+`.brand-wordmark` (chunk `Landing`), `.card .text-secondary`/`.text-muted` (chunk `Settings`) et
+`.screen .text-muted` (chunk `Workout`), `outline:none` + `:focus-visible` sur `.nav-btn` (bundle
+partagé), `.route-loading-fallback`/`.route-loading-ring` avec surcharge sombre (bundle partagé).
+
+**Commit** : cherry-pické sur branche `fix/dark-theme-batch-fixes` — PR à suivre (draft → ready →
+merge squash après poll Vercel vert).
+
+**État global** : 4 des 5 bugs remontés sur capture réelle sont corrigés. Reste ouvert : le flash
+rouge à l'ouverture (bloqué par la même contrainte "ne pas casser les 4 écrans non migrés" que le
+point 2), à trancher séparément — migrer ces 4 écrans lèverait le blocage.
