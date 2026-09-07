@@ -5,8 +5,25 @@
    écrans pas encore migrés ne voient jamais ces règles.
 
    Tokens du handoff (README design_handoff_coach) : fond encre #1C1A17
-   opaque, pilule 999px, pastille olive #EBEB7D. */
+   opaque, pilule 999px, pastille olive #EBEB7D.
+
+   2026-09-07 — migré vers le système --dark-* du chantier mode sombre.
+   Erreur corrigée au passage (voir JOURNAL.md) : ce fichier avait été
+   affirmé "déjà géré séparément depuis PR#145-#152" dans 3 sessions
+   successives (ClientsList, CoachMessages, CoachSettings/CoachPrograms)
+   — confusion entre "a une couleur ink fixe posée par le handoff design"
+   et "réagit au thème sombre du chantier" : aucun bloc
+   :root[data-theme="dark"] n'a jamais existé ici avant ce commit.
+
+   Mode clair inchangé par décision explicite (pas une migration
+   mécanique) : #1C1A17 reste le fond de la sidebar dans les DEUX thèmes
+   — chrome de nav volontairement sombre, déjà accepté en production
+   depuis PR#145, pas retouché ici. Seul le mode sombre gagne une teinte
+   différente (--dark-surface plutôt que --dark-bg, choix délibéré : voir
+   le bloc sombre en bas de fichier pour la justification complète). */
 .coach-nav {
+  --cn-bg: #1C1A17;
+  --cn-magenta: #B62472;
   position: fixed;
   left: 20px;
   right: 20px;
@@ -15,7 +32,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #1C1A17;
+  background: var(--cn-bg);
   border-radius: 999px;
   padding: 10px 12px;
   box-shadow: 0 18px 34px -12px rgba(28,26,23,0.5);
@@ -77,6 +94,13 @@
 .coach-nav-item svg {
   flex-shrink: 0;
 }
+/* Piège -ink-sur-accent-fixe vérifié : #1C1A17 ici est l'encre ON la
+   pastille olive (--cn-olive-ink, fixe), PAS le fond de la nav
+   (--cn-bg, ci-dessus) — mêmes chiffres, rôles différents. Volontairement
+   PAS dérivé de --cn-bg (qui, lui, change en sombre) : l'olive de la
+   pastille (#EBEB7D) reste identique dans les deux thèmes, donc l'encre
+   qui doit rester lisible dessus doit rester fixe elle aussi, jamais
+   suivre le remap du fond. */
 .coach-nav-item.active {
   color: #1C1A17;
 }
@@ -117,6 +141,12 @@
   display: none;
 }
 
+/* Pastille de notification (message non lu) — vraie fonction d'alerte,
+   voir bloc sombre plus bas. La bordure reprend --cn-bg (pas #1C1A17 en
+   dur) pour continuer à se fondre dans le fond de la nav quelle que
+   soit sa teinte réelle (sombre : --dark-surface) — sans ça, un anneau
+   #1C1A17 resterait visible autour du point sur un fond --dark-surface
+   plus clair, cassant l'effet "découpe dans le fond" voulu. */
 .coach-nav-badge {
   position: absolute;
   top: 2px;
@@ -124,8 +154,8 @@
   width: 8px;
   height: 8px;
   border-radius: 999px;
-  background: #B62472;
-  border: 1.5px solid #1C1A17;
+  background: var(--cn-magenta);
+  border: 1.5px solid var(--cn-bg);
 }
 
 /* Raccourcis + compte coach — n'existent qu'en mode sidebar (voir mockup
@@ -321,4 +351,43 @@
   .coach-nav-account {
     display: flex;
   }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Mode sombre — 20e écran migré du chantier (voir JOURNAL.md pour la
+   liste complète et la correction de l'erreur propagée sur ce fichier
+   depuis PR#166). Mode clair non touché par décision explicite (voir
+   commentaire en tête de fichier) : #1C1A17 reste le fond de la sidebar
+   dans les deux thèmes, seule sa teinte sombre change.
+
+   --cn-bg sur --dark-surface plutôt que --dark-bg (mapping validé avant
+   implémentation) : #1C1A17 est déjà quasi identique à --dark-bg
+   (#141310) — sur les écrans coach déjà migrés (CoachDashboard,
+   ClientsList, CoachMessages, CoachSettings, CoachPrograms), le fond de
+   page devient précisément --dark-bg une fois le thème sombre actif. Un
+   --cn-bg resté proche de cette même valeur aurait rendu la sidebar
+   quasiment indiscernable du contenu qui l'entoure, alors qu'elle
+   tranchait nettement contre un fond clair jusqu'ici — --dark-surface
+   (#332F29, plus clair) restaure cette séparation visuelle plutôt que de
+   la faire disparaître.
+
+   Pastille olive/encre-sur-olive vérifiées lisibles sur ce nouveau fond
+   avant d'appliquer (contraste olive #EBEB7D contre #332F29 : très
+   large marge, aucun risque) — --cn-olive/--cn-olive-ink n'ont d'ailleurs
+   pas besoin d'exister comme tokens séparés, aucun des deux ne change de
+   valeur ici (voir .coach-nav-item.active ci-dessus pour le piège
+   -ink-sur-accent-fixe déjà vérifié). Textes crème (rgba(247,241,230,·),
+   plusieurs paliers d'opacité) non retouchés non plus : déjà lisibles
+   sur un fond sombre quel qu'il soit (#1C1A17 comme --dark-surface),
+   aucun des deux ne nécessite de virer clair. */
+:root[data-theme="dark"] .coach-nav {
+  --cn-bg: var(--dark-surface);
+  /* .coach-nav-badge (pastille de notification, message non lu) : vraie
+     fonction d'alerte, sans ambiguïté — bascule sur l'accent alerte comme
+     les autres écrans du chantier. Mesuré avant d'appliquer : #B62472
+     contre --dark-surface ≈ 2,21:1 (même valeur que .auth-invite-card,
+     session précédente), sous le minimum 3:1 pour un élément graphique
+     non-textuel (WCAG 1.4.11) — confirme qu'un changement était
+     nécessaire, pas seulement cohérent avec les autres écrans. */
+  --cn-magenta: var(--dark-accent-alert);
 }
