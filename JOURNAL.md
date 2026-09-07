@@ -6782,3 +6782,72 @@ merge squash après poll Vercel vert).
 Reste le point d'infrastructure non résolu sur `coach-nav-redesign.css`, et `Conversation.jsx`
 toujours hors périmètre en attendant une décision de refonte. Le mécanisme de thème "light" mort côté
 UI (étape 3 ci-dessus) reste à trancher séparément (suppression ou réactivation future).
+
+## Session du 07/09/2026 — coach-nav-redesign (sidebar coach) migré (20e écran du chantier mode sombre) — correction d'une erreur propagée sur 3 sessions
+
+**⚠️ Correction d'erreur, à lire avant toute référence future à `CoachNavBar`/`coach-nav-redesign.css`
+dans ce journal.** Depuis la migration de ClientsList (10e écran, PR #166), ce fichier était affirmé
+« déjà géré séparément depuis PR#145-#152 » — affirmation reprise telle quelle, sans re-vérification,
+dans 2 sessions suivantes (CoachMessages PR#168, CoachSettings/CoachPrograms PR#170/#171). **C'était
+faux.** Confusion entre deux choses différentes : la sidebar a bien une couleur ink **fixe** posée par
+le handoff design (PR#145-#152 — vrai, c'est un choix de chrome de nav volontairement sombre), mais
+ça ne veut pas dire qu'elle **réagit** au thème sombre du chantier (faux) — aucun bloc
+`:root[data-theme="dark"]` n'a jamais existé dans `coach-nav-redesign.css` avant ce commit. Confirmé
+par un audit dédié en session précédente (read-only), puis vérifié une seconde fois en tête de cette
+session avant de migrer quoi que ce soit. Les entrées passées citées ci-dessus ne sont pas corrigées
+rétroactivement (pas de réécriture de l'historique) — cette entrée fait foi pour la suite.
+
+**Décision explicite prise avant implémentation, pas une migration mécanique** : le mode clair reste
+**inchangé** — `#1C1A17` reste le fond de la sidebar dans les **deux** thèmes, un chrome de nav
+volontairement sombre déjà accepté en production depuis PR#145 (option confirmée avec l'utilisateur
+plutôt que de trancher seul, entre "garder ink fixe en clair" et "créer une vraie variante claire").
+Seul le mode sombre gagne une teinte différente.
+
+**Mapping validé avant implémentation** : `--cn-bg` sur `--dark-surface` (#332F29) plutôt que
+`--dark-bg` (#141310) — `#1C1A17` est déjà quasi identique à `--dark-bg`, un mapping direct aurait
+rendu la sidebar indiscernable du contenu qui l'entoure une fois celui-ci sombre par défaut (les 5
+écrans coach déjà migrés passent précisément à `--dark-bg`). `--dark-surface` restaure la séparation
+visuelle que la sidebar avait jusqu'ici contre un fond clair, plutôt que de la faire disparaître.
+
+**Réalisé** :
+- `.coach-nav-badge` (pastille de notification, message non lu) : vraie fonction d'alerte, bascule
+  sur `--dark-accent-alert`. Mesuré avant application : `#B62472` contre `--dark-surface` ≈ **2,21:1**
+  (même valeur que `.auth-invite-card`, session précédente), sous le minimum **3:1** pour un élément
+  graphique non-textuel (WCAG 1.4.11) — confirme la nécessité du changement, pas juste une cohérence
+  de style.
+- Bordure du badge : `#1C1A17` en dur → `var(--cn-bg)`, pour continuer à se fondre dans le fond de la
+  nav quelle que soit sa teinte réelle (sans ça, un anneau `#1C1A17` resterait visible autour du point
+  sur le nouveau fond `--dark-surface`, plus clair).
+
+**Piège -ink-sur-accent-fixe vérifié et documenté plutôt que corrigé** : `.coach-nav-item.active`
+(encre sur pastille olive fixe, `#EBEB7D` inchangée en sombre) était **déjà** correctement codé en
+dur (`#1C1A17`, pas dérivé d'une variable) — confirmé qu'aucune correction n'était nécessaire, juste
+une clarification en commentaire pour éviter toute confusion future avec `--cn-bg` (mêmes chiffres,
+rôles distincts : l'un est le fond de la nav qui change en sombre, l'autre l'encre-sur-olive qui ne
+doit jamais changer).
+
+**Vérifié avant de conclure** : olive/encre-sur-olive restent lisibles sur le nouveau fond
+`--dark-surface` (marge très large, aucun risque). Textes crème à divers paliers d'opacité
+(`rgba(247,241,230,·)`, utilisés pour les onglets inactifs, raccourcis, compte) non retouchés —
+déjà lisibles sur un fond sombre quel qu'il soit (`#1C1A17` comme `--dark-surface`), aucun des deux
+ne nécessite de virer clair.
+
+**Trouvé en marge, non corrigé (hors scope de cette migration)** : `.coach-nav-shortcut-label`
+("RACCOURCIS") a un contraste marginal déjà présent **avant** ce commit — `rgba(247,241,230,0.4)`
+contre le fond ink, mesuré à ≈3,52:1 contre `#1C1A17` (mode clair actuel, inchangé) et ≈3,24:1 contre
+`--dark-surface` (mode sombre) — sous le seuil AA 4,5:1 dans les deux cas, mais ce n'est pas une
+régression introduite ici : c'est une valeur d'origine (PR#145) jamais mesurée jusqu'à maintenant,
+légèrement aggravée par le nouveau fond mais déjà insuffisante avant. Signalé pour mémoire, pas
+corrigé — hors du périmètre "migration vers `--dark-*`", à traiter séparément si jugé prioritaire.
+
+**Vérification** : `npm run build` OK, grep du bundle compilé confirmant les tokens
+`--cn-bg`/`--cn-magenta`, leurs surcharges `--dark-surface`/`--dark-accent-alert`, la bordure du badge
+sur `--cn-bg`, et l'encre fixe de l'onglet actif inchangée.
+
+**Commit** : cherry-pické sur branche `feat/dark-theme-coach-nav` — PR à suivre (draft → ready →
+merge squash après poll Vercel vert).
+
+**État du chantier mode sombre** : 20 écrans migrés, plus aucun écran candidat direct restant.
+`Conversation.jsx` toujours hors périmètre (décision de refonte à prendre). Mécanisme de thème
+"light" toujours mort côté UI (à trancher séparément). Contraste marginal de
+`.coach-nav-shortcut-label` (ci-dessus) à évaluer si prioritaire.
