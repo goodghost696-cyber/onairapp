@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useApp } from '../context/AppContext'
 import { useLanguage } from '../context/LanguageContext'
+import { useTheme } from '../context/ThemeContext'
 import { supabase } from '../lib/supabase'
 import { BOUNDS, clamp } from '../utils/validation'
 import { isPushSupported, getPushSubscriptionState, subscribeToPush, unsubscribeFromPush, isIOSNotStandalone } from '../utils/push'
@@ -43,6 +44,7 @@ export default function Settings() {
   const { user, logout, updateUserProfile } = useAuth()
   const { appData, updateData } = useApp()
   const { lang, setLanguage, t } = useLanguage()
+  const { theme, toggleTheme } = useTheme()
   const [showHealthSync, setShowHealthSync] = useState(false)
   const [healthData, setHealthData] = useState({ steps: '', sleep_hours: '', sleep_minutes: '' })
   const [syncToast, setSyncToast] = useState(false)
@@ -404,15 +406,32 @@ export default function Settings() {
           </>
         )}
 
-        {/* Section "Apparence" (toggle Mode sombre/clair) retirée
-            (2026-08-15, tâche 4 du rapport d'investigation JOURNAL.md) :
-            le restyle "pastel chaud" est une palette fixe, sans variante
-            sombre — le toggle n'avait plus rien à faire varier de façon
-            cohérente sur les écrans déjà restylés (voir aussi le sujet 3
-            du rapport : le thème "dark" n'a jamais été vraiment distinct
-            du défaut depuis le pivot vers le corail). ThemeContext.jsx et
-            la logique data-theme elle-même ne sont pas touchées — retiré
-            uniquement le contrôle utilisateur, pas le mécanisme. */}
+        {/* Section "Apparence" — réintégrée (2026-09-07). Retirée le
+            2026-08-15 (tâche 4 du rapport d'investigation JOURNAL.md) au
+            motif que "le restyle pastel chaud est une palette fixe, sans
+            variante sombre" : ce motif est désormais obsolète, 20 écrans
+            ont depuis une vraie variante --dark-* (chantier mode sombre,
+            PR #153 à #183). ThemeContext.jsx/toggleTheme() n'avaient
+            jamais été touchés entre-temps (seul le contrôle UI avait
+            disparu) — `theme` reflète directement l'état réel au chargement
+            (localStorage 'onair_theme', 'dark' par défaut si absent),
+            aucune initialisation séparée à gérer ici. Même composant
+            Toggle et même structure de carte que "Notifications push"
+            juste au-dessus, pour rester visuellement cohérent avec le
+            reste de l'écran. */}
+        <div className="section-label">APPARENCE</div>
+        <div className="card card-animated" style={{ '--delay': '210ms' }}>
+          <div className="flex justify-between items-center" style={{ padding: '14px 0' }}>
+            <div>
+              <div className="text-sm text-secondary">Mode sombre</div>
+              <div className="text-xs text-muted" style={{ marginTop: 2 }}>
+                {theme === 'dark' ? 'Activé' : 'Désactivé — palette claire'}
+              </div>
+            </div>
+            <Toggle on={theme === 'dark'} onToggle={toggleTheme} label="Mode sombre" />
+          </div>
+        </div>
+
 
         <div className="section-label">{t('language_section')}</div>
         <div className="lang-selector card-animated" style={{ '--delay': '240ms' }}>
