@@ -6880,3 +6880,68 @@ merge squash après poll Vercel vert).
 première fois depuis le début du chantier — jusqu'ici actif par défaut (localStorage vide → `'dark'`)
 mais sans aucun moyen de revenir au clair ou de vérifier son fonctionnement en conditions réelles.
 Premier vrai test utilisateur du chantier à anticiper une fois déployé.
+
+## Session du 07/09/2026 (suite) — Conversation migré (21e et dernier écran candidat du chantier mode sombre)
+
+**Contexte** : dernier écran non couvert, décision de refonte différée depuis le début du chantier,
+tranchée maintenant. Contrairement aux 20 écrans précédents, `Conversation.jsx` n'avait **jamais reçu
+de restyle du tout** — tous ses styles étaient inline, référençant directement les tokens globaux
+**partagés** de `global.css` (`--bg`/`--accent`/`--accent-ink`/`--surface-2`/`--text-primary`/
+`--text-muted`/`--border`), dont le bloc `:root[data-theme="dark"]` est resté identique au clair pour
+ne pas casser les écrans non-redesignés qui s'en servent encore (`Hydration`, `PlatformAdmin`,
+`ResetPassword`, `WorkoutHistory`). **Ce bloc partagé n'a pas été touché**, comme demandé — nouveau
+fichier `Conversation-redesign.css`, tokens scopés `--conv-*` indépendants, suivant le pattern
+standard du chantier.
+
+**Couleur pilotée en JS trouvée et traitée, comme demandé de vérifier** : le fond de bulle dépendait
+d'un ternaire inline `isMine ? 'var(--accent)' : 'var(--surface-2)'` — `isMine = m.sender_id ===
+user?.id`, **pas** une condition `role==='coach'`/`'member'` comme l'hypothèse posée dans la demande :
+fonctionne à l'identique côté coach et membre, juste "est-ce que j'ai envoyé ce message". Converti en
+classe conditionnelle (`.conv-bubble.mine`/`.theirs`) plutôt que variable inline — logique JS de
+calcul de `isMine` elle-même non touchée, uniquement l'habillage.
+
+**Refonte complète des styles inline de couleur vers des classNames** (layout inline — position,
+padding, tailles — non touché) : header, bouton retour (SVG `stroke` → `currentColor`), avatar, titre,
+bulles, horodatage, barre de saisie, champ input, bouton envoyer (SVG `fill` → `currentColor`). Mode
+clair reprend exactement les valeurs actuelles (mêmes hex/rgba que les `var()` globales utilisées
+jusqu'ici) — **aucun changement visuel en clair**, uniquement un renommage vers des tokens locaux.
+
+**Trouvé en vérifiant les tokens globaux partagés non migrés** (même catégorie de piège que
+`--danger` sur Settings) : la règle globale `input{color:var(--text-primary)}` (`global.css`) aurait
+laissé le texte tapé en encre fixe sur un champ devenu sombre — illisible. Surchargée en scope
+(`.conv-redesign input.conv-input`), même technique pour `::placeholder` et `:focus`.
+
+**Décision de branding appliquée, pas une couleur d'alerte** : mes propres messages passent à
+`--dark-accent-lavender` en sombre (cohérent avec la teinte du logo VOLTA), pas au gold hérité du
+clair. **Piège -ink-sur-accent-fixe vérifié avant application** : le texte sur cette lavande fixe ne
+suit **pas** `--conv-text-primary` (qui deviendrait crème, cas classique de deux tons clairs qui
+s'écrasent mutuellement, même famille que `.finish-session-btn` sur WorkoutSession) — épinglé sur
+l'encre lavande fixe `#3F4780`, la même valeur déjà posée sur tous les accents lavande du chantier
+(Settings/CoachPrograms/etc.), pas une teinte inventée ici. Messages de l'autre interlocuteur :
+`--dark-surface`, comme demandé.
+
+**Avatar de l'interlocuteur** : réutilise le même couple mine-bg/mine-ink que la bulle "mes messages"
+— déjà le cas dans le code d'origine (un seul accent partagé pour les deux rôles), conservé à
+l'identique plutôt que d'inventer un 3e accent non demandé.
+
+**Fond de la zone de messages ajouté** (`var(--conv-bg)`, absent avant sur cette zone précise) : en
+sombre, sans cet ajout, le dégradé corail du `body` partagé (jamais migré) aurait continué à
+transparaître derrière des bulles devenues sombres — incohérent avec le reste de l'écran. Sans effet
+visible en clair (coral plat quasi identique au dégradé qu'il remplace à cet endroit précis).
+
+**Vérification** : `npm run build` OK. Grep du bundle compilé confirmant tous les tokens `--conv-*`
+et leurs surcharges `--dark-*`, les classNames `conv-*` présents, et l'absence de toute référence
+inline restante à `--accent`/`--surface-2`/`--text-primary` dans le JS de `Conversation.jsx` (la seule
+occurrence de `var(--accent)` restante dans le même chunk compilé appartient à `CoachNav.jsx`,
+composant importé distinct, hors scope).
+
+**Commit** : cherry-pické sur branche `feat/dark-theme-conversation` — PR à suivre (draft → ready →
+merge squash après poll Vercel vert).
+
+**État du chantier mode sombre — clôture** : 21 écrans migrés, **aucun écran candidat restant**. Le
+chantier ouvert le 31/08 (PR #153, CoachDashboard) est maintenant complet côté couverture d'écrans.
+Restent deux points hors périmètre de la couverture elle-même : le mécanisme de thème "light"
+alternatif toujours mort côté UI (signalé, jamais tranché), et le contraste marginal préexistant de
+`.coach-nav-shortcut-label` (signalé, jamais corrigé). Le toggle mode sombre/clair étant désormais
+réellement accessible (session précédente), le premier vrai test utilisateur en conditions réelles
+devient possible sur l'ensemble de l'app.

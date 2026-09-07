@@ -1,0 +1,162 @@
+/* ══════════════════════════════════════════════════════════════════════
+   Restyle vers le système de tokens sombre — Conversation.jsx, dernier
+   écran du chantier mode sombre (21e écran). Contrairement aux 20 écrans
+   précédents, cet écran n'avait jamais reçu de restyle "pastel chaud" du
+   tout : tous ses styles étaient inline, référençant directement les
+   tokens globaux PARTAGÉS de global.css (--bg/--accent/--accent-ink/
+   --surface-2/--text-primary/--text-muted/--border), dont le bloc
+   :root[data-theme="dark"] est resté identique au clair pour ne pas
+   casser les écrans non-redesignés qui s'en servent encore (Hydration,
+   PlatformAdmin, ResetPassword, WorkoutHistory) — CE BLOC PARTAGÉ N'EST
+   PAS TOUCHÉ ICI, comme demandé.
+
+   Fichier nouveau, à l'image des autres *-redesign.css : tokens scopés
+   --conv-*, indépendants des tokens globaux partagés. Mode clair (bloc
+   .conv-redesign ci-dessous) reprend EXACTEMENT les valeurs actuelles
+   (mêmes hex/rgba que les var() globales utilisées jusqu'ici) — aucun
+   changement visuel en clair, uniquement un renommage vers des tokens
+   locaux. Mode sombre (bloc en bas de fichier) suit les tokens --dark-*.
+
+   Couleurs pilotées en JS trouvées et traitées : le fond de bulle
+   dépendait d'un ternaire inline `isMine ? 'var(--accent)' : 'var(--surface-2)'`
+   (isMine = m.sender_id === user?.id, PAS une condition role==='coach'/
+   'member' — fonctionne à l'identique côté coach et membre). Converti en
+   classe conditionnelle (.conv-bubble.mine / .theirs) plutôt que
+   variable inline, pattern standard du chantier. Logique JS de calcul de
+   isMine elle-même non touchée. */
+.conv-redesign {
+  --conv-bg: #E8552B;
+  --conv-border: rgba(0,0,0,0.08);
+  --conv-text-primary: #1B1710;
+  --conv-text-muted: rgba(27,23,16,0.42);
+  --conv-surface-2: #FBF3ED;
+  /* "Mes messages" — actuellement le même accent (or) que --accent/
+     --accent-ink globaux, valeurs reprises telles quelles (pas une
+     nouvelle teinte). Distinct de --conv-bubble-theirs-* : les deux ne
+     doivent jamais partager un seul token, voir le mapping sombre plus
+     bas où ils divergent (lavande vs surface neutre, décision de
+     branding demandée explicitement). */
+  --conv-bubble-mine-bg: #F0C14B;
+  --conv-bubble-mine-ink: #1A1608;
+  --conv-bubble-theirs-bg: #FBF3ED;
+  --conv-bubble-theirs-ink: #1B1710;
+  background: var(--conv-bg);
+  height: 100vh;
+  min-height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+  position: relative;
+}
+
+.conv-header {
+  background: var(--conv-bg);
+  border-bottom: 0.5px solid var(--conv-border);
+}
+
+.conv-back {
+  color: var(--conv-text-primary);
+}
+
+/* Avatar de l'interlocuteur — réutilise le même couple mine-bg/mine-ink
+   que la bulle "mes messages" (c'est déjà comme ça dans le code
+   d'origine : un seul et même accent réutilisé pour les deux, jamais un
+   token séparé) — conservé à l'identique plutôt que d'inventer un 3e
+   accent non demandé. */
+.conv-avatar {
+  background: var(--conv-bubble-mine-bg);
+  color: var(--conv-bubble-mine-ink);
+}
+
+.conv-title {
+  color: var(--conv-text-primary);
+}
+
+/* Override scopé de la classe utilitaire partagée .text-muted (global.css)
+   — même technique déjà établie dans ce fichier pour .card .text-secondary/
+   .text-muted (surface toujours claire quel que soit le thème de l'app).
+   Ici c'est l'inverse : le token partagé --text-muted ne change jamais de
+   valeur (bloc sombre partagé volontairement identique au clair, voir
+   l'en-tête de ce fichier) alors que CET écran, lui, doit suivre son
+   propre mapping sombre — sans cette surcharge, "Chargement..."/"Aucun
+   message..." resteraient à l'encre partagée, illisibles sur un fond
+   sombre. */
+.conv-redesign .text-muted {
+  color: var(--conv-text-muted);
+}
+
+.conv-bubble.mine {
+  background: var(--conv-bubble-mine-bg);
+  color: var(--conv-bubble-mine-ink);
+}
+.conv-bubble.theirs {
+  background: var(--conv-bubble-theirs-bg);
+  color: var(--conv-bubble-theirs-ink);
+}
+
+.conv-time {
+  color: var(--conv-text-muted);
+}
+
+.conv-input-row {
+  background: var(--conv-bg);
+}
+
+/* Surcharge scopée de la règle globale `input{}` (global.css) — même
+   raison que .text-muted ci-dessus : background/border/color/placeholder
+   par défaut sont des tokens partagés non migrés (--glass/--text-primary/
+   --text-muted), qui resteraient à l'encre fixe sur un champ devenu
+   sombre. `border` en shorthand ci-dessous écrase proprement le
+   `border: 1px solid var(--glass-border)` global (spécificité de classe
+   contre élément, aucun !important nécessaire). */
+.conv-redesign input.conv-input {
+  background: var(--conv-surface-2);
+  border: 0.5px solid var(--conv-border);
+  color: var(--conv-text-primary);
+}
+.conv-redesign input.conv-input::placeholder {
+  color: var(--conv-text-muted);
+}
+.conv-redesign input.conv-input:focus {
+  border-color: var(--conv-bubble-mine-bg);
+}
+
+.conv-send {
+  background: var(--conv-bubble-mine-bg);
+  color: var(--conv-bubble-mine-ink);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Mode sombre — 21e et dernier écran candidat du chantier (voir
+   JOURNAL.md pour la liste complète). Bloc clair ci-dessus non touché.
+   Le bloc PARTAGÉ :root[data-theme="dark"] de global.css (--bg/--accent/
+   etc., resté identique au clair pour Hydration/PlatformAdmin/
+   ResetPassword/WorkoutHistory) n'est PAS modifié — cet écran a
+   désormais ses propres tokens --conv-*, complètement indépendants. */
+:root[data-theme="dark"] .conv-redesign {
+  --conv-bg: var(--dark-bg);
+  --conv-border: var(--dark-border);
+  --conv-text-primary: var(--dark-text-primary);
+  --conv-text-muted: var(--dark-text-muted);
+  /* Fond des bulles de l'AUTRE interlocuteur — surface neutre, comme
+     n'importe quelle carte de l'app en sombre (--dark-surface). */
+  --conv-surface-2: var(--dark-surface);
+  /* Décision de branding demandée explicitement, pas juste une couleur
+     d'alerte : mes propres messages passent à l'accent lavande de la
+     palette sombre (--dark-accent-lavender, cohérent avec la teinte du
+     logo VOLTA), pas au gold hérité du clair (--accent global, jamais
+     pensé pour un fond sombre). */
+  --conv-bubble-mine-bg: var(--dark-accent-lavender);
+  /* Piège -ink-sur-accent-fixe vérifié avant application : --dark-
+     accent-lavender ne change pas de valeur ailleurs (fixe dans les deux
+     thèmes une fois le mode sombre actif), donc le texte dessus doit
+     rester une encre FIXE elle aussi — PAS suivre --conv-text-primary
+     (qui devient --dark-text-primary, crème). Crème-sur-lavande pastel
+     serait un cas classique de "deux tons clairs, contraste écrasé" (même
+     famille de piège que .finish-session-btn sur WorkoutSession) — évité
+     en réutilisant --dark-lavender-ink (#3F4780), la même encre fixe déjà
+     posée à l'identique sur tous les accents lavande du chantier
+     (settings/coach-programs/etc.), pas une teinte inventée ici. */
+  --conv-bubble-mine-ink: #3F4780;
+  --conv-bubble-theirs-bg: var(--dark-surface);
+  --conv-bubble-theirs-ink: var(--dark-text-primary);
+}
