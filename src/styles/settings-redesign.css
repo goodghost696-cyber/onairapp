@@ -323,6 +323,33 @@ body.settings-body-bg {
   letter-spacing: normal;
 }
 
+/* Fix (2026-09-08, bug remonté sur capture réelle) : plusieurs rangées de
+   cette page (Notifications push, Apparence, Synchroniser mes données)
+   utilisent les classes utilitaires GÉNÉRIQUES .text-secondary/.text-muted
+   (global.css) plutôt qu'une classe .set-* dédiée — jamais migrées vers
+   --dark-*, elles restent fixées à l'encre. Pire : à l'intérieur d'une
+   .card, global.css a SA PROPRE règle plus spécifique (`.card
+   .text-secondary`/`.text-muted`, rgba(27,23,16,·) en dur) posée sur
+   l'hypothèse "une carte est toujours claire" — vraie pour les écrans
+   jamais migrés, fausse ici puisque `.settings-redesign .card` (ligne
+   ~220) suit déjà --set-card vers --dark-surface. Résultat : encre fixe
+   sur fond devenu sombre, texte délavé.
+   Scopé à `.card` uniquement (PAS `.settings-redesign` seul) : la sheet
+   "Synchroniser mes données" (Settings.jsx, styles inline,
+   background: var(--surface-solid), jamais migrée) contient aussi des
+   .text-muted mais n'est PAS une .card — un scope plus large l'aurait
+   affectée par erreur et cassé son texte (encre correcte aujourd'hui,
+   sur un fond qui reste blanc dans tous les cas). global.css lui-même
+   n'est pas touché : le risque de casser d'autres écrans non migrés qui
+   comptent sur `.card .text-secondary/.text-muted` pour rester lisibles
+   sur fond clair reste entier ailleurs, seul cet écran-ci est corrigé. */
+.settings-redesign .card .text-secondary {
+  color: var(--set-text-secondary);
+}
+.settings-redesign .card .text-muted {
+  color: var(--set-text-muted);
+}
+
 /* ── Toggle (Notifications/Apparence) ── */
 .set-toggle {
   display: flex;

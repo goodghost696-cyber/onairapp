@@ -43,14 +43,19 @@ import PublicLayout from './layouts/PublicLayout'
 // between two crème screens on a slow chunk fetch. Explicit crème
 // background + ink ring, same values as auth-redesign.css/manifest.json
 // rather than the old global tokens.
+//
+// 2026-09-08 — colors moved from inline style to classNames
+// (.route-loading-fallback/-ring, global.css) so a :root[data-theme=
+// "dark"] override can apply — this component predates the whole dark-
+// theme chantier and was never covered by any of its 21 per-screen PRs
+// (it's not a "screen"), so it kept flashing crème/ink between two dark
+// screens on every lazy-loaded route change, reported as a white flash.
 function RouteLoadingFallback() {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#EFE7D9' }}>
-      <div style={{
+    <div className="route-loading-fallback" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+      <div className="route-loading-ring" style={{
         width: 32,
         height: 32,
-        border: '2px solid rgba(28,26,23,0.2)',
-        borderTopColor: '#1C1A17',
         borderRadius: '50%',
         animation: 'spin 800ms linear infinite',
       }} />

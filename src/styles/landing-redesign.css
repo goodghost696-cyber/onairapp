@@ -117,3 +117,15 @@ body.landing-body-bg {
    quasi-noir sur crème), même raisonnement que .sc-add-btn (Scan) et
    .auth-primary-btn (auth-redesign) — vérifié avant de décider de ne pas
    ajouter de re-épinglage séparé ici non plus. */
+
+/* Fix (2026-09-08, bug remonté sur capture réelle) : .brand-wordmark
+   (brand.css, partagé par <Logo>) reste fixé sur l'encre `#1C1A17` dans
+   TOUS ses autres contextes (ResetPassword.jsx, jamais migré, toujours
+   sur fond corail) — voir brand.css pour l'explication complète du
+   pourquoi ce n'est PAS corrigé à la source. Re-épinglé uniquement ici,
+   scopé à Landing : le fond de `.landing-split-left` (colonne où <Logo>
+   s'affiche) suit --ld-ink/--ld-bg (déjà migrés ci-dessus), donc le
+   wordmark doit suivre le même remap pour rester lisible dessus. */
+:root[data-theme="dark"] .landing-redesign .brand-wordmark {
+  color: var(--dark-text-primary);
+}
