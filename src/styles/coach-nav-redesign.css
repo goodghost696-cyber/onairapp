@@ -90,6 +90,34 @@
   cursor: pointer;
   color: rgba(247,241,230,0.55);
   -webkit-tap-highlight-color: transparent;
+  /* 2026-09-07 — cause exacte de la "lueur au changement de sélection"
+     signalée : ni box-shadow, ni filter, ni pseudo-élément dédié
+     n'existaient ici — c'était l'anneau de focus natif du navigateur.
+     `.coach-nav-item` est un <button>, jamais blur() par
+     CoachNavBar.jsx (navigate() est une transition SPA, pas un
+     rechargement) : l'onglet cliqué garde donc le focus natif après le
+     changement d'écran, et l'anneau par défaut du navigateur restait
+     visible dessus à chaque sélection. Même bug, même cause, que celui
+     déjà diagnostiqué et corrigé sur la nav membre (nav.css, PR #175)
+     — jamais reporté ici car fichier alors dans un chantier séparé.
+     `outline: none` seul casserait l'accessibilité clavier — voir la
+     règle :focus-visible juste en dessous, qui restaure un anneau
+     (recoloré en lavande, comme demandé) uniquement pour la navigation
+     clavier, sans réintroduire le résidu au tap tactile. */
+  outline: none;
+}
+/* Existe dans les deux thèmes (comportement navigateur, pas conditionné
+   par data-theme) — --dark-accent-lavender n'étant défini que sous
+   :root[data-theme="dark"], la teinte claire ne peut pas être la même
+   variable. --accent-secondary (#8B93E8, "bleu-violet" de la palette de
+   base, global.css) retenue pour le clair : même famille lavande que le
+   logo, sans inventer de nouvelle teinte ni dupliquer un hex en dur. */
+.coach-nav-item:focus-visible {
+  outline: 2px solid var(--accent-secondary);
+  outline-offset: 2px;
+}
+:root[data-theme="dark"] .coach-nav-item:focus-visible {
+  outline-color: var(--dark-accent-lavender);
 }
 .coach-nav-item svg {
   flex-shrink: 0;
