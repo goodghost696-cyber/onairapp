@@ -38,7 +38,8 @@ Il existait déjà une "charte ON AIR Neon" documentée plus bas dans ce journal
 - Titres de marque et gros chiffres ("hero numbers" — calories, etc.) : **Unbounded** (600 à 900), volontairement scopé à `.brand-wordmark`/`.hero-number`/`.text-2xl`, pas une police globale
 
 **Forme**
-- Rayon carte `16px`, bouton `18px`, pill (nav, boutons ronds) `100px`
+- Rayon carte `16px`, bouton `18px`, pill (boutons ronds, cartes) `100px`
+- **Nav membre (`.bottom-nav`, `nav.css`) : bandeau plein-largeur ANCRÉ aux 3 bords, coins carrés (`border-radius: 0`), PAS une pilule flottante.** Décision produit définitive (2026-09-07, voir entrée datée) après comparaison réelle des deux formes sur iPhone, tranchée deux fois dans le même sens (une première fois en PR #174-178, un aller-retour en PR #179 puis re-confirmée après comparaison avec la nav Instagram) — **ne pas revenir à la pilule flottante sans demande explicite de l'utilisateur**, ce n'est plus un arbitrage ouvert.
 
 **Icônes**
 - `lucide-react` pour l'essentiel de l'app (`Icon.jsx`, set cohérent de line-icons 24×24 `currentColor`)
@@ -81,6 +82,22 @@ Le texte ci-dessous est conservé pour mémoire du point de départ.
 **À traiter avec** les CGU et la politique de confidentialité, dans le même chantier.
 
 **Pourquoi ne pas commencer maintenant** : coder un mécanisme de consentement avant d'avoir tranché opt-in vs opt-out et la formulation exacte reviendrait à jeter le travail, ou pire à afficher au membre une formulation juridiquement fausse. La clarification juridique vient d'abord, le code ensuite.
+
+## 🧭 2026-09-07 (suite) — Nav membre : bandeau plein-largeur restauré définitivement, abandon du revert PR #179
+
+**Décision** : après comparaison réelle avec la nav d'Instagram (capture fournie), retour explicite au bandeau plein-largeur ancré (Option B, PR #174-178), abandonné entre-temps par PR #179 (retour à la pilule flottante). Décision produit, pas un fix de bug — voir la section "Charte graphique" en tête de ce fichier, mise à jour en conséquence : **ne plus revenir à la pilule sans demande explicite future**.
+
+**Méthode** : pas de nouveau calcul — restauration de l'état déjà atteint et vérifié visuellement à la fin de la série PR #174-178, c'est-à-dire le commit `f3416cc` (PR #178, fix `--app-height`), **pas** l'état intermédiaire cassé de PR #174 seule (lueur qui déborde/halo de focus résiduel, corrigés par PR #175 ; coins arrondis puis carrés changés par PR #176 — tout ça déjà réglé au moment de `f3416cc`).
+
+**Fichiers restaurés byte-exact à `f3416cc`** (rien d'autre ne les avait touchés depuis PR #179, vérifié par `git log f3416cc..HEAD` par fichier avant de choisir cette méthode) : `nav.css`, `member.css`, `dashboard.css`, `main.jsx` (le fix `--app-height` — `Math.max` entre la mesure JS et une sonde `dvh` cachée — posé en PR #178 contre le bug de timing iOS qui sous-évalue `visualViewport.height`/`innerHeight` juste après le lancement), et 6 écrans redesignés (`aicoach-redesign.css`, `messages-redesign.css`, `nutrition-redesign.css`, `weekly-redesign.css`, `workoutlibrary-redesign.css`, `workoutsession-redesign.css`).
+
+**Découverte en creusant, hors de la liste initiale mais nécessaire** : PR #179 n'avait pas touché que `nav.css`/`member.css`/`dashboard.css`/`main.jsx` — il avait aussi réintroduit, sur 8 écrans redesignés + `Scan-redesign.css` par la suite, une surcharge de fond frost par écran (`.xxx-redesign ~ .bottom-nav { background: rgba(28,26,23,0.25); backdrop-filter: blur(15px); }`) nécessaire pour la pilule translucide mais plus pour un bandeau opaque centralisé dans `nav.css` — et dont la spécificité CSS (2 classes) l'aurait de toute façon emporté sur la règle centrale de `nav.css`, laissant un fond flou visible sous un bandeau censé être opaque. Sans ce constat, la restauration aurait semblé complète sur les 4 fichiers cités mais serait restée visuellement cassée sur 9 écrans sur 10 de l'app membre.
+- `settings-redesign.css`/`workout-redesign.css` : édition chirurgicale (retrait du seul hunk frost), pas un restore byte-exact — pour préserver le fix PR #187 (texte délavé) posé depuis sur ces mêmes fichiers. Diff vérifié vide contre `f3416cc` sauf ce hunk PR #187.
+- `Scan-redesign.css` : n'existait pas encore sous forme bandeau (migré sombre en PR #180, après le retour à la pilule) — sa surcharge frost entièrement retirée, le reste de son chantier mode sombre (tokens `--sc-*`, chips, erreurs) intact.
+
+**Vérifié qu'aucun fix posé depuis PR #179 n'est perdu** : seul `nav.css` avait été retouché depuis (PR #187, `outline: none` + `:focus-visible` sur `.nav-btn`, perdu une première fois par le revert #179 puis réappliqué) — déjà présent nativement dans `f3416cc` (même lignée que PR #175, avant le revert), donc le restore byte-exact ne le reperd pas. Les fixes PR #180-191 (wordmark Landing/ResetPassword, contraste Settings/Workout, focus nav coach, flash blanc, mécanisme light) sont sur des fichiers non touchés ici ou déjà indépendants du choix pilule/bandeau, vérifié par `git log f3416cc..HEAD` par groupe de fichiers avant toute modification.
+
+**Vérification** : `npm run build` + grep du bundle confirmant `.bottom-nav{bottom:0;border-radius:0;background:#fff;...}` (pas de `backdrop-filter`, pas de `box-shadow`) et `Math.max` dans le bundle JS pour `--app-height`. Vérification visuelle par `getComputedStyle()` sur un harnais isolé (mêmes limites que les fixes précédents : pas d'accès à l'app authentifiée en local, outil de capture d'écran de la session hors service) — confirmé en clair et en sombre : fond opaque, `backdropFilter: none`, `boxShadow: none`, `borderRadius: 0px`, `outlineStyle: none` sur un bouton `focus()` via JS (simulation du bug SPA-focus-jamais-blur). **Pas de vérification sur iPhone réel dans cette session** — explicitement signalé, à faire par l'utilisateur sur la preview Vercel avant merge, comme demandé et comme l'exige l'historique de ce sujet précis (PR #157 avait déjà cassé en rendu réel sur iPhone après avoir semblé correct autrement).
 
 ## 🐛 2026-09-07 (suite) — Fix : wordmark VOLTA illisible sur ResetPassword en mode sombre (même bug que Landing, PR #182)
 
