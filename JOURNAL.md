@@ -82,6 +82,63 @@ Le texte ci-dessous est conservé pour mémoire du point de départ.
 
 **Pourquoi ne pas commencer maintenant** : coder un mécanisme de consentement avant d'avoir tranché opt-in vs opt-out et la formulation exacte reviendrait à jeter le travail, ou pire à afficher au membre une formulation juridiquement fausse. La clarification juridique vient d'abord, le code ensuite.
 
+## 📝 2026-09-11 — CLAUDE.md : 4 ajouts issus de l'audit du repo `claude-code-best-practice`
+
+**Contexte** : sur demande explicite, consultation du repo communautaire
+[shanraisshan/claude-code-best-practice](https://github.com/shanraisshan/claude-code-best-practice)
+(README, dossiers `best-practice/`, `tips/`, son propre `CLAUDE.md`) pour en
+extraire des idées concrètes applicables à notre contexte (dev solo, une
+seule branche de prod, zéro test automatisé, historique de bugs CSS/nav/
+timing documenté ici). La quasi-totalité du repo (orchestration multi-
+agents, 273 subagents, workflows Command→Agent→Skill) ne s'applique pas à
+ce projet et a été écartée — 4 idées retenues, rapport d'abord présenté
+pour validation avant tout ajout, comme demandé.
+
+**Ajouté à `CLAUDE.md`** (rien réécrit ni restructuré, insertions ciblées
+aux emplacements déjà identifiés dans le rapport) :
+1. **Étape 0** en tête de la section 2 (Convention de workflow) :
+   investiguer la cause racine et signaler tout écart avant de modifier —
+   formalise une pratique déjà systématique dans ce journal ("investigation
+   d'abord, comme demandé", "écart signalé avant exécution") qui n'était
+   nulle part écrite dans `CLAUDE.md`.
+2. **Note sous l'étape "commit"** (section 2) : un hook `PreToolUse`
+   bloquant `git commit` si `dist/` est absent ou plus ancien que les
+   sources modifiées — rend l'étape build→grep structurelle plutôt que
+   dépendante de la mémoire d'une session à l'autre. **Documentaire
+   seulement à ce stade** : le hook lui-même n'est pas encore configuré
+   dans `.claude/settings.json`, à faire dans une session dédiée si validé
+   à l'usage.
+3. **5e puce de la section 3** (Dette technique) : checklist des pièges
+   CSS/timing qui se sont répétés plusieurs fois dans ce journal (media
+   query oubliant `display`, mécanisme de pastille de nav transposé d'un
+   axe à l'autre sans revérification, collision d'`id` de gradient SVG sur
+   montage simultané, couleur "fixe" justifiée par un commentaire sur un
+   fond qui a changé depuis, staleness du Service Worker cache-first) —
+   à relire avant tout fix visuel/nav plutôt que de redécouvrir la même
+   classe de bug une fois de plus.
+4. **Note d'hygiène de contexte** en section 5 (Historique) : ce fichier
+   fait maintenant plus de 5200 lignes et est censé être lu en entier au
+   démarrage de chaque session — recommandation de privilégier les
+   sections vivantes + les entrées récentes, avec un seuil indicatif
+   (~3000 lignes) au-delà duquel envisager d'archiver dans
+   `JOURNAL_ARCHIVE.md`. Pas d'archivage fait maintenant (fichier pas
+   encore au seuil), seulement la règle posée pour plus tard.
+
+**Vérification** : changement Markdown pur, aucun code applicatif touché —
+étapes build/grep du workflow standard non applicables ici (signalé et
+confirmé avec l'utilisateur avant de procéder). `git diff` sur `CLAUDE.md`
+confirme 4 insertions ciblées, aucune ligne existante supprimée ou
+reformulée en dehors des points ci-dessus.
+
+**Point de synchro signalé avant de commencer** : la branche locale
+`claude/charming-mendel-dj1GQ` était encore 1 commit en avance sur
+`origin` (`4fae2cc`, fix marge pilule nav — déjà relevé en session
+précédente, sans rapport avec ce changement). Ce commit documentaire est
+donc parti d'une branche de travail fraîche basée sur `origin/claude/
+charming-mendel-dj1GQ` (pas sur ce HEAD local en avance), pour ne pas
+faire transiter accidentellement ce commit nav non revu vers la prod à
+l'occasion d'un changement de doc.
+
 ## 🐛 2026-09-07 (suite) — Fix : wordmark VOLTA illisible sur ResetPassword en mode sombre (même bug que Landing, PR #182)
 
 **Contexte** : suite directe de l'entrée juste en dessous (fix du bloc `:root[data-theme="light"]`) — en vérifiant l'exception `.brand-wordmark` "encre fixe" documentée dans `brand.css` pour ResetPassword, son raisonnement s'est révélé lui-même obsolète.
