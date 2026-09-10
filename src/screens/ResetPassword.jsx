@@ -13,6 +13,14 @@ export default function ResetPassword() {
   const { t } = useLanguage()
 
   const [ready, setReady] = useState(false)
+  // Audit pré-lancement (P0) : sans ça, un lien expiré/déjà utilisé/visité
+  // sans token (detectSessionInUrl ne déclenche alors jamais
+  // PASSWORD_RECOVERY et getSession() ne renvoie aucune session) laissait
+  // `ready` à false pour toujours — écran bloqué indéfiniment sur "...",
+  // aucun message, aucune issue. Timeout ci-dessous : si `ready` n'est
+  // toujours pas passé à true après 5s, on considère le lien invalide et on
+  // propose de repartir sur le flux "mot de passe oublié" existant.
+  const [linkInvalid, setLinkInvalid] = useState(false)
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [error, setError] = useState('')
@@ -31,6 +39,17 @@ export default function ResetPassword() {
     })
     return () => subscription.unsubscribe()
   }, [])
+
+  // Effet séparé de celui ci-dessus, dépendant de `ready` : se ré-évalue à
+  // chaque changement de `ready` plutôt que de lire une valeur figée dans
+  // une closure du premier effet (qui ne se relance jamais). Dès que `ready`
+  // passe à true (lien valide), le cleanup annule le timeout avant qu'il ne
+  // puisse se déclencher — pas de course possible entre les deux issues.
+  useEffect(() => {
+    if (ready) return
+    const timeout = setTimeout(() => setLinkInvalid(true), 5000)
+    return () => clearTimeout(timeout)
+  }, [ready])
 
   // Même mécanisme que les 21 écrans du chantier mode sombre (fond
   // derrière .app-wrapper, overscroll iOS compris) — absent jusqu'ici
@@ -88,6 +107,15 @@ export default function ResetPassword() {
             {error && <span className="rp-error-text" style={{ fontSize: 11, letterSpacing: '0.05em' }}>{error}</span>}
             <button className="btn-accent" onClick={handleSubmit} disabled={saving} style={{ marginTop: 4, opacity: saving ? 0.7 : 1 }}>
               {saving ? '...' : t('update_password_btn')}
+            </button>
+          </div>
+        ) : linkInvalid ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <span className="rp-error-text" style={{ fontSize: 13, textAlign: 'center' }}>
+              Ce lien a expiré ou n'est plus valide.
+            </span>
+            <button className="btn-accent" onClick={() => navigate('/login')} style={{ marginTop: 4 }}>
+              Retour à la connexion
             </button>
           </div>
         ) : (

@@ -82,6 +82,20 @@ Le texte ci-dessous est conservé pour mémoire du point de départ.
 
 **Pourquoi ne pas commencer maintenant** : coder un mécanisme de consentement avant d'avoir tranché opt-in vs opt-out et la formulation exacte reviendrait à jeter le travail, ou pire à afficher au membre une formulation juridiquement fausse. La clarification juridique vient d'abord, le code ensuite.
 
+## 🐛 2026-09-11 (suite) — Fix P0 : ResetPassword.jsx bloqué indéfiniment sur lien expiré/invalide
+
+**Contexte** : point relevé lors de l'audit pré-lancement (§3, "Password reset") — un lien de réinitialisation expiré, déjà utilisé, ou l'URL `/reset-password` visitée directement sans token valide laissait `ready` à `false` pour toujours (`detectSessionInUrl` ne déclenche alors jamais `PASSWORD_RECOVERY`, et `getSession()` ne renvoie aucune session). L'utilisateur restait bloqué sur l'écran d'attente ("..."), sans message, sans issue, sans moyen de redemander un lien.
+
+**Fix** : `src/screens/ResetPassword.jsx` — nouvel état `linkInvalid` + un `useEffect` séparé, dépendant de `ready`, qui arme un `setTimeout(5000)` mettant `linkInvalid` à `true` si `ready` n'est toujours pas passé à `true` d'ici là. Le cleanup de l'effet annule le timeout dès que `ready` devient `true` (lien valide reçu) — pas de course possible entre les deux issues. Nouvelle branche de rendu : message *"Ce lien a expiré ou n'est plus valide."* + bouton *"Retour à la connexion"* qui renvoie vers `/login`, où le lien existant "Mot de passe oublié ?" permet une nouvelle demande — pas de nouveau flux créé, réutilisation de l'existant comme demandé.
+
+**Fichier touché** : uniquement `src/screens/ResetPassword.jsx`. Aucun changement à `Login.jsx`/`AuthContext.jsx`/au flux d'envoi d'email — le bouton renvoie simplement vers `/login`, l'utilisateur clique lui-même sur "Mot de passe oublié ?" une fois là (un clic de plus qu'une redirection auto-ouverte, mais zéro risque ajouté sur un second fichier pour un fix P0).
+
+**Vérification** : `npm run build` + grep du bundle compilé (`ResetPassword-*.js`) confirmant la présence du texte du message, du bouton, et du timeout (`5e3`, forme minifiée de 5000 par esbuild).
+
+**Test réel, en live (pas juste lecture de code)** : `.env` local temporaire avec des clés Supabase factices (gitignored, jamais commité, supprimé juste après — même précédent que la session du 2026-08-20), `npm run build` + `npm run preview`, navigation vers `/reset-password` sans aucun token dans l'URL. Confirmé à l'écran : écran d'attente pendant ~5s, puis apparition du message et du bouton (plus de blocage infini) ; clic sur "Retour à la connexion" confirmé redirigeant bien vers `/login`, formulaire de connexion normal avec "Mot de passe oublié ?" disponible.
+
+**Non testé** (hors scope de cette session, régression jugée improbable sur un changement de 2 lignes de logique) : le chemin nominal (vrai lien valide reçu par email, cliqué avant les 5s) — inchangé par ce fix, protégé par le cleanup du `useEffect`, mais pas revérifié en conditions réelles avec un vrai lien Supabase.
+
 ## 📝 2026-09-11 — CLAUDE.md : 4 ajouts issus de l'audit du repo `claude-code-best-practice`
 
 **Contexte** : sur demande explicite, consultation du repo communautaire
